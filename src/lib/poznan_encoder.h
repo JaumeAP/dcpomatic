@@ -36,8 +36,7 @@ public:
 protected:
 
 	boost::shared_ptr<EncodedData> do_encode (
-		boost::shared_ptr<const dcp::XYZImage> input,
-		dcp::NoteHandler note_handler
+		boost::shared_ptr<const dcp::XYZImage> input
 		);
 
 	void parameters_changed ();
@@ -46,11 +45,15 @@ private:
 	void* open_library (std::string name);
 	
 	type_parameters _param;
-	
+
 	void (*_init_device) (type_parameters *);
-	void (*_mct) (type_image *, type_parameters *);
+	void (*_color_coder_lossy) (type_image *, type_parameters *);
 	void (*_fwt) (type_tile *);	
 	void (*_quantize_tile) (type_tile *);	
 	void (*_encode_tile) (type_tile *);	
-	void (*_write_codestream) (type_image *);
+	void (*_init_params) (type_image *, type_parameters *);
+	void (*_set_coding_parameters) (type_image *, type_parameters *);
+	void (*_init_tiles) (type_image *, type_parameters *);
+	void (*_init_buffer) (type_buffer *);
+	void (*_encode_codestream) (type_buffer *, type_image *);
 };

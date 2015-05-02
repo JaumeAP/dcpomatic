@@ -131,7 +131,7 @@ DCPVideo::encode_locally (dcp::NoteHandler note)
 	}
 
 	shared_ptr<EncodedData> enc = encoder->encode (
-		xyz, note, _j2k_bandwidth, _frames_per_second, _resolution, _frame->eyes() == EYES_LEFT || _frame->eyes() == EYES_RIGHT
+		xyz, _j2k_bandwidth, _frames_per_second, _resolution, _frame->eyes() == EYES_LEFT || _frame->eyes() == EYES_RIGHT
 		);
 
 	switch (_frame->eyes()) {

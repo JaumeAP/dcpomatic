@@ -19,6 +19,8 @@
 
 #include "poznan_encoder.h"
 #include "exceptions.h"
+#include "encoded_data.h"
+#include <dcp/xyz_image.h>
 #include <dlfcn.h>
 
 #include "i18n.h"
@@ -34,15 +36,23 @@ PoznanEncoder::PoznanEncoder ()
 	void* tier1 = open_library ("tier1");
 	void* gpu_coeff_coder = open_library ("gpu_coeff_coder");
 	void* tier2 = open_library ("tier2");
+	void* types = open_library ("types");
 	
 	_init_device = (void (*)(type_parameters *)) dlsym (config, "init_device");
-	_mct = (void (*)(type_image *, type_parameters *)) dlsym (preprocessing, "mct");
+	_color_coder_lossy = (void (*)(type_image *, type_parameters *)) dlsym (preprocessing, "color_coder_lossy");
 	_fwt = (void (*)(type_tile *)) dlsym (dwt, "fwt");
 	_quantize_tile = (void (*)(type_tile *)) dlsym (tier1, "quantize_tile");
 	_encode_tile = (void (*)(type_tile *)) dlsym (gpu_coeff_coder, "encode_tile");
-	_write_codestream = (void (*)(type_image *)) dlsym (tier2, "write_codestream");
+	_init_params = (void (*)(type_image *, type_parameters *)) dlsym (types, "init_params");
+	_set_coding_parameters = (void (*)(type_image *, type_parameters *)) dlsym (types, "set_coding_parameters");
+	_init_tiles = (void (*)(type_image *, type_parameters *)) dlsym (types, "init_tiles");
+	_init_buffer = (void (*)(type_buffer *)) dlsym (types, "init_buffer");
+	_encode_codestream = (void (*)(type_buffer *, type_image *)) dlsym (tier2, "encode_codestream");
 	
-	if (!_init_device || !_mct || !_fwt || !_quantize_tile || !_encode_tile || !_write_codestream) {
+	if (
+		!_init_device || !_color_coder_lossy || !_fwt || !_quantize_tile ||
+		!_encode_tile || !_init_params || !_set_coding_parameters || !_init_tiles ||
+		!_init_buffer || !_encode_codestream) {
 		throw JPEG2000EncoderUnavailableException (name(), "missing symbol");
 	}
 }
@@ -109,16 +119,32 @@ PoznanEncoder::name () const
 }
 
 shared_ptr<EncodedData>
-PoznanEncoder::do_encode (shared_ptr<const dcp::XYZImage> input, dcp::NoteHandler note_handler)
+PoznanEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
 {
 	type_image img;
-	_mct (&img, &_param);
+	_init_params (&img, &_param);
+	img.width = input->size().width;
+	img.height = input->size().height;
+	img.depth = 12;
+	img.num_components = 3;
+	img.num_range_bits = 12;
+	img.sign = UNSIGNED;
+	img.num_dlvls = _param.param_tile_comp_dlvls;
+
+	_set_coding_parameters (&img, &_param);
+	_init_tiles (&img, &_param);
+	
+	_color_coder_lossy (&img, &_param);
 	for (size_t i = 0; i < img.num_tiles; ++i) {
 		type_tile* tile = &(img.tile[i]);
 		_fwt (tile);
 		_quantize_tile (tile);
 		_encode_tile (tile);
 	}
-	_write_codestream (&img);
-	return shared_ptr<EncodedData> ();
+
+	type_buffer buffer;
+	_init_buffer (&buffer);
+	_encode_codestream (&buffer, &img);
+
+	return shared_ptr<EncodedData> (new EncodedData (buffer.data, buffer.bytes_count));
 }

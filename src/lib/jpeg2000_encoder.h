@@ -49,7 +49,6 @@ public:
 	 */
 	boost::shared_ptr<EncodedData> encode (
 		boost::shared_ptr<const dcp::XYZImage> input,
-		dcp::NoteHandler note_handler,
 		int bandwidth,
 		int frame_rate,
 		Resolution resolution,
@@ -64,8 +63,7 @@ public:
 protected:
 
 	virtual boost::shared_ptr<EncodedData> do_encode (
-		boost::shared_ptr<const dcp::XYZImage> input,
-		dcp::NoteHandler note_handler
+		boost::shared_ptr<const dcp::XYZImage> input
 		) = 0;
 
 	virtual void parameters_changed () {}

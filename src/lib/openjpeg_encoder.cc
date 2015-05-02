@@ -35,7 +35,7 @@ OpenJPEGEncoder::name () const
 }
 
 shared_ptr<EncodedData>
-OpenJPEGEncoder::do_encode (shared_ptr<const dcp::XYZImage> input, dcp::NoteHandler note)
+OpenJPEGEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
 {
 	/* Set the max image and component sizes based on frame_rate */
 	int max_cs_len = ((float) _bandwidth.get()) / 8 / _frame_rate.get();

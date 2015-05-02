@@ -30,5 +30,5 @@ public:
 	}
 
 protected:
-	boost::shared_ptr<EncodedData> do_encode (boost::shared_ptr<const dcp::XYZImage> input, dcp::NoteHandler note_handler);
+	boost::shared_ptr<EncodedData> do_encode (boost::shared_ptr<const dcp::XYZImage> input);
 };

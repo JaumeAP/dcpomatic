@@ -68,7 +68,7 @@ JPEG2000Encoder::from_id (string id)
 }
 
 shared_ptr<EncodedData>
-JPEG2000Encoder::encode (shared_ptr<const dcp::XYZImage> input,	dcp::NoteHandler note, int bandwidth, int frame_rate, Resolution resolution, bool threed)
+JPEG2000Encoder::encode (shared_ptr<const dcp::XYZImage> input,	int bandwidth, int frame_rate, Resolution resolution, bool threed)
 {
 	std::cout << "Encoding with " << name() << "\n";
 	
@@ -85,5 +85,5 @@ JPEG2000Encoder::encode (shared_ptr<const dcp::XYZImage> input,	dcp::NoteHandler
 		parameters_changed ();
 	}
 
-	return do_encode (input, note);
+	return do_encode (input);
 }
