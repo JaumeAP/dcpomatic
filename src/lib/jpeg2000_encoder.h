@@ -67,16 +67,13 @@ protected:
 		boost::shared_ptr<const dcp::XYZImage> input,
 		dcp::NoteHandler note_handler
 		) = 0;
-	
-	virtual void set_bandwidth (int bandwidth) = 0;
-	virtual void set_frame_rate (int frame_rate) = 0;
-	virtual void set_resolution (Resolution resolution) = 0;
-	virtual void set_threed (bool threed) = 0;
 
-	boost::optional<int> _last_bandwidth;
-	boost::optional<int> _last_frame_rate;
-	boost::optional<Resolution> _last_resolution;
-	boost::optional<bool> _last_threed;
+	virtual void parameters_changed () {}
+
+	boost::optional<int> _bandwidth;
+	boost::optional<int> _frame_rate;
+	boost::optional<Resolution> _resolution;
+	boost::optional<bool> _threed;
 
 	static std::vector<boost::shared_ptr<JPEG2000Encoder> > _encoders;
 };

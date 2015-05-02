@@ -31,15 +31,4 @@ public:
 
 protected:
 	boost::shared_ptr<EncodedData> do_encode (boost::shared_ptr<const dcp::XYZImage> input, dcp::NoteHandler note_handler);
-
-private:
-	void set_bandwidth (int bandwidth);
-	void set_threed (bool threed);
-	void set_resolution (Resolution resolution);
-	void set_frame_rate (int frame_rate);
-
-	int _bandwidth;
-	bool _threed;
-	Resolution _resolution;
-	int _frame_rate;
 };

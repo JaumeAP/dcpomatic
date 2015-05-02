@@ -18,6 +18,8 @@
 */
 
 #include "jpeg2000_encoder.h"
+#include <poznan/config/parameters.h>
+#include <poznan/types/image_types.h>
 #include <string>
 
 class PoznanEncoder : public JPEG2000Encoder
@@ -37,9 +39,19 @@ protected:
 		boost::shared_ptr<const dcp::XYZImage> input,
 		dcp::NoteHandler note_handler
 		);
+
+	void parameters_changed ();
 	
-	void set_bandwidth (int bandwidth);
-	void set_frame_rate (int frame_rate);
-	void set_resolution (Resolution resolution);
-	void set_threed (bool threed);
+private:
+	void* open_library (std::string name);
+	void setup_device ();
+	
+	type_parameters _param;
+	
+	void (*_init_device) (type_parameters *);
+	void (*_mct) (type_image *, type_parameters *);
+	void (*_fwt) (type_tile *);	
+	void (*_quantize_tile) (type_tile *);	
+	void (*_encode_tile) (type_tile *);	
+	void (*_write_codestream) (type_image *);
 };

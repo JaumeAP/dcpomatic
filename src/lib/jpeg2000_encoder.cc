@@ -70,24 +70,17 @@ JPEG2000Encoder::from_id (string id)
 shared_ptr<EncodedData>
 JPEG2000Encoder::encode (shared_ptr<const dcp::XYZImage> input,	dcp::NoteHandler note, int bandwidth, int frame_rate, Resolution resolution, bool threed)
 {
-	if (!_last_bandwidth || _last_bandwidth.get() != bandwidth) {
-		_last_bandwidth = bandwidth;
-		set_bandwidth (bandwidth);
-	}
+	if (!_bandwidth || _bandwidth.get() != bandwidth ||
+	    !_frame_rate || _frame_rate.get() != frame_rate ||
+	    !_resolution || _resolution.get() != resolution ||
+	    !_threed || _threed.get() != threed) {
 
-	if (!_last_frame_rate || _last_frame_rate.get() != frame_rate) {
-		_last_frame_rate = frame_rate;
-		set_frame_rate (frame_rate);
-	}
-
-	if (!_last_resolution || _last_resolution.get() != resolution) {
-		_last_resolution = resolution;
-		set_frame_rate (resolution);
-	}
-	
-	if (!_last_threed || _last_threed.get() != threed) {
-		_last_threed = threed;
-		set_frame_rate (threed);
+		_bandwidth = bandwidth;
+		_frame_rate = frame_rate;
+		_resolution = resolution;
+		_threed = threed;
+		
+		parameters_changed ();
 	}
 
 	return do_encode (input, note);

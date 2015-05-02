@@ -19,7 +19,6 @@
 
 #include "poznan_encoder.h"
 #include "exceptions.h"
-#include "poznan/config/parameters.h"
 #include <dlfcn.h>
 
 #include "i18n.h"
@@ -29,50 +28,79 @@ using boost::shared_ptr;
 
 PoznanEncoder::PoznanEncoder ()
 {
-	/* XXX: need cross-platform implementation of dlopen etc. */
+	void* config = open_library ("config");
+	void* preprocessing = open_library ("preprocessing");
+	void* dwt = open_library ("dwt");
+	void* tier1 = open_library ("tier1");
+	void* tier2 = open_library ("tier2");
 	
-	void* config = dlopen ("libdcpomatic-config.so", RTLD_LAZY | RTLD_GLOBAL);
-	if (!config) {
-		throw JPEG2000EncoderUnavailableException (name(), "could not find libdcpomatic-config.so");
-	}
-
-	void* misc = dlopen ("libdcpomatic-misc.so", RTLD_LAZY | RTLD_GLOBAL);
-	if (!misc) {
-		throw JPEG2000EncoderUnavailableException (name(), "could not find libdcpomatic-misc.so");
-	}
+	_init_device = (void (*)(type_parameters *)) dlsym (config, "init_device");
+	_mct = (void (*)(type_image *, type_parameters *)) dlsym (preprocessing, "mct");
+	_fwt = (void (*)(type_tile *)) dlsym (dwt, "fwt");
+	_quantize_tile = (void (*)(type_tile *)) dlsym (tier1, "quantize_tile");
+	_encode_tile = (void (*)(type_tile *)) dlsym (tier1, "encode_tile");
+	_write_codestream = (void (*)(type_image *)) dlsym (tier2, "write_codestream");
 	
-	void (*init_device) (type_parameters *);
-	init_device = (void (*)(type_parameters *)) dlsym (config, "init_device");
-	if (!init_device) {
+	if (!_init_device || !_mct || !_fwt || !_quantize_tile || !_encode_tile || !_write_codestream) {
 		throw JPEG2000EncoderUnavailableException (name(), "missing symbol");
 	}
-		
-	type_parameters param;
 
-	/* One tile which covers entire image */
-	param.param_tile_w = -1;
-	param.param_tile_h = -1;
+	setup_device ();
+}
 
-	/* XXX */
-	/*
-	uint8_t param_tile_comp_dlvls;
-	uint8_t param_cblk_exp_w; ///Maximum codeblock size is 2^6 x 2^6 ( 64 x 64 ).
-	uint8_t param_cblk_exp_h; ///Maximum codeblock size is 2^6 x 2^6 ( 64 x 64 ).
-	uint8_t param_wavelet_type; ///Lossy encoding
-	uint8_t param_use_mct;//Multi-component transform
-	*/
-	param.param_device = 0;
-	/*
-	uint32_t param_target_size;//Target size of output file
-	float param_bp;//Bits per pixel per component
-	uint8_t param_use_part2_mct; // Multiple component transform as in 15444-2
-	uint8_t param_mct_compression_method; // 0 klt 2 wavelet
-	uint32_t param_mct_klt_iterations; // max number of iterations of Gram-Schmidt algorithm
-	float param_mct_klt_border_eigenvalue; // cut-off for dumping components 
-	float param_mct_klt_err; // error sufficient for Gram-Schmit algorithm to end iteration
-	*/
+void *
+PoznanEncoder::open_library (string library_name)
+{
+	/* XXX: need cross-platform implementation of dlopen etc. */
 	
-	init_device (&param);
+	library_name = "libdcpomatic-" + library_name + ".so";
+	void* lib = dlopen (library_name.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+	if (!lib) {
+		throw JPEG2000EncoderUnavailableException (name(), "could not find " + library_name);
+	}
+	return lib;
+}
+
+void
+PoznanEncoder::setup_device ()
+{
+	/* One tile which covers entire image */
+	_param.param_tile_w = -1;
+	_param.param_tile_h = -1;
+
+	/* Wavelet decomposition levels */
+	_param.param_tile_comp_dlvls = _resolution.get() == RESOLUTION_2K ? 5 : 6;
+
+	/* Power of 2 for maximum codeblock size */
+	_param.param_cblk_exp_w = 5;
+	_param.param_cblk_exp_h = 5;
+
+	/* DWT 9/7 transform */
+	_param.param_wavelet_type = 1;
+
+	/* Use MCT */
+	_param.param_use_mct = 1;
+
+	/* Device to run on */
+	_param.param_device = 0;
+
+	/* Target file size */
+	_param.param_target_size = (_bandwidth.get() / _frame_rate.get()) / 8;
+	if (_threed.get ()) {
+		_param.param_target_size /= 2;
+	}
+
+	/* Bits per pixel per component */
+	_param.param_bp = 12;
+
+	/* Don't know about these: use the defaults */
+	_param.param_use_part2_mct = 0;
+	_param.param_mct_compression_method = 0;
+	_param.param_mct_klt_iterations = 10000;
+	_param.param_mct_klt_border_eigenvalue = 0.000001;
+	_param.param_mct_klt_err = 1.0e-7;
+	
+	_init_device (&_param);
 }
 
 string
@@ -81,32 +109,23 @@ PoznanEncoder::name () const
 	return _("CUDA (GPU) encoder (Poznan Supercomputing and Networking Center)");
 }
 
-void
-PoznanEncoder::set_bandwidth (int bandwidth)
-{
-	/* XXX */
-}
-
-void
-PoznanEncoder::set_frame_rate (int frame_rate)
-{
-	/* XXX */
-}
-
-void
-PoznanEncoder::set_resolution (Resolution resolution)
-{
-	/* XXX */
-}
-
-void
-PoznanEncoder::set_threed (bool threed)
-{
-	/* XXX */
-}
-
 shared_ptr<EncodedData>
 PoznanEncoder::do_encode (shared_ptr<const dcp::XYZImage> input, dcp::NoteHandler note_handler)
 {
+	type_image img;
+	_mct (&img, &_param);
+	for (size_t i = 0; i < img.num_tiles; ++i) {
+		type_tile* tile = &(img.tile[i]);
+		_fwt (tile);
+		_quantize_tile (tile);
+		_encode_tile (tile);
+	}
+	_write_codestream (&img);
 	return shared_ptr<EncodedData> ();
+}
+
+void
+PoznanEncoder::parameters_changed ()
+{
+	setup_device ();
 }

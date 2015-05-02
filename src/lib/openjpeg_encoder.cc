@@ -38,8 +38,8 @@ shared_ptr<EncodedData>
 OpenJPEGEncoder::do_encode (shared_ptr<const dcp::XYZImage> input, dcp::NoteHandler note)
 {
 	/* Set the max image and component sizes based on frame_rate */
-	int max_cs_len = ((float) _bandwidth) / 8 / _frame_rate;
-	if (_threed) {
+	int max_cs_len = ((float) _bandwidth.get()) / 8 / _frame_rate.get();
+	if (_threed.get()) {
 		/* In 3D we have only half the normal bandwidth per eye */
 		max_cs_len /= 2;
 	}
@@ -90,8 +90,8 @@ OpenJPEGEncoder::do_encode (shared_ptr<const dcp::XYZImage> input, dcp::NoteHand
 	parameters.tcp_rates[0] = 0;
 	parameters.tcp_numlayers++;
 	parameters.cp_disto_alloc = 1;
-	parameters.cp_rsiz = _resolution == RESOLUTION_2K ? CINEMA2K : CINEMA4K;
-	if (_resolution == RESOLUTION_4K) {
+	parameters.cp_rsiz = _resolution.get() == RESOLUTION_2K ? CINEMA2K : CINEMA4K;
+	if (_resolution.get() == RESOLUTION_4K) {
 		parameters.numpocs = 2;
 		parameters.POC[0].tile = 1;
 		parameters.POC[0].resno0 = 0; 
@@ -110,7 +110,7 @@ OpenJPEGEncoder::do_encode (shared_ptr<const dcp::XYZImage> input, dcp::NoteHand
 	}
 	
 	parameters.cp_comment = strdup (N_("DCP-o-matic"));
-	parameters.cp_cinema = _resolution == RESOLUTION_2K ? CINEMA2K_24 : CINEMA4K_24;
+	parameters.cp_cinema = _resolution.get() == RESOLUTION_2K ? CINEMA2K_24 : CINEMA4K_24;
 
 	/* 3 components, so use MCT */
 	parameters.tcp_mct = 1;
@@ -147,27 +147,3 @@ OpenJPEGEncoder::do_encode (shared_ptr<const dcp::XYZImage> input, dcp::NoteHand
 	return enc;
 }
 
-
-void
-OpenJPEGEncoder::set_bandwidth (int bandwidth)
-{
-	_bandwidth = bandwidth;
-}
-
-void
-OpenJPEGEncoder::set_frame_rate (int frame_rate)
-{
-	_frame_rate = frame_rate;
-}
-
-void
-OpenJPEGEncoder::set_resolution (Resolution resolution)
-{
-	_resolution = resolution;
-}
-
-void
-OpenJPEGEncoder::set_threed (bool threed)
-{
-	_threed = threed;
-}
