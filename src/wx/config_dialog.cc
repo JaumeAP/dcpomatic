@@ -232,12 +232,13 @@ private:
 		table->Add (bottom_table, wxGBPosition (r, 0), wxGBSpan (2, 2), wxEXPAND);
 		++r;
 
-		add_label_to_sizer (table, _panel, _("JPEG2000 encoder"), true);
+		add_label_to_grid_bag_sizer (table, _panel, _("JPEG2000 encoder"), true, wxGBPosition (r, 0));
 		_encoder = new wxChoice (_panel, wxID_ANY);
 		BOOST_FOREACH (shared_ptr<JPEG2000Encoder> i, JPEG2000Encoder::all()) {
 			_encoder->Append (std_to_wx (i->name ()));
 		}
-		table->Add (_encoder, 1);
+		table->Add (_encoder, wxGBPosition (r, 1));
+		++r;
 
 		_set_language->Bind (wxEVT_COMMAND_CHECKBOX_CLICKED, boost::bind (&GeneralPage::set_language_changed, this));
 		_language->Bind     (wxEVT_COMMAND_CHOICE_SELECTED,  boost::bind (&GeneralPage::language_changed,     this));
