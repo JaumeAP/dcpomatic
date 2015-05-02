@@ -44,7 +44,6 @@ protected:
 	
 private:
 	void* open_library (std::string name);
-	void setup_device ();
 	
 	type_parameters _param;
 	

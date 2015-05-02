@@ -32,20 +32,19 @@ PoznanEncoder::PoznanEncoder ()
 	void* preprocessing = open_library ("preprocessing");
 	void* dwt = open_library ("dwt");
 	void* tier1 = open_library ("tier1");
+	void* gpu_coeff_coder = open_library ("gpu_coeff_coder");
 	void* tier2 = open_library ("tier2");
 	
 	_init_device = (void (*)(type_parameters *)) dlsym (config, "init_device");
 	_mct = (void (*)(type_image *, type_parameters *)) dlsym (preprocessing, "mct");
 	_fwt = (void (*)(type_tile *)) dlsym (dwt, "fwt");
 	_quantize_tile = (void (*)(type_tile *)) dlsym (tier1, "quantize_tile");
-	_encode_tile = (void (*)(type_tile *)) dlsym (tier1, "encode_tile");
+	_encode_tile = (void (*)(type_tile *)) dlsym (gpu_coeff_coder, "encode_tile");
 	_write_codestream = (void (*)(type_image *)) dlsym (tier2, "write_codestream");
 	
 	if (!_init_device || !_mct || !_fwt || !_quantize_tile || !_encode_tile || !_write_codestream) {
 		throw JPEG2000EncoderUnavailableException (name(), "missing symbol");
 	}
-
-	setup_device ();
 }
 
 void *
@@ -62,7 +61,7 @@ PoznanEncoder::open_library (string library_name)
 }
 
 void
-PoznanEncoder::setup_device ()
+PoznanEncoder::parameters_changed ()
 {
 	/* One tile which covers entire image */
 	_param.param_tile_w = -1;
@@ -122,10 +121,4 @@ PoznanEncoder::do_encode (shared_ptr<const dcp::XYZImage> input, dcp::NoteHandle
 	}
 	_write_codestream (&img);
 	return shared_ptr<EncodedData> ();
-}
-
-void
-PoznanEncoder::parameters_changed ()
-{
-	setup_device ();
 }

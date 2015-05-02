@@ -37,15 +37,15 @@ void
 JPEG2000Encoder::setup_encoders ()
 {
 	try {
-		_encoders.push_back (shared_ptr<JPEG2000Encoder> (new OpenJPEGEncoder ()));
-	} catch (JPEG2000EncoderUnavailableException &) {
-		
+		_encoders.push_back (shared_ptr<JPEG2000Encoder> (new PoznanEncoder ()));
+	} catch (JPEG2000EncoderUnavailableException& e) {
+		std::cerr << e.what() << "\n";
 	}
 
 	try {
-		_encoders.push_back (shared_ptr<JPEG2000Encoder> (new PoznanEncoder ()));
+		_encoders.push_back (shared_ptr<JPEG2000Encoder> (new OpenJPEGEncoder ()));
 	} catch (JPEG2000EncoderUnavailableException &) {
-
+		
 	}
 }
 
@@ -70,6 +70,8 @@ JPEG2000Encoder::from_id (string id)
 shared_ptr<EncodedData>
 JPEG2000Encoder::encode (shared_ptr<const dcp::XYZImage> input,	dcp::NoteHandler note, int bandwidth, int frame_rate, Resolution resolution, bool threed)
 {
+	std::cout << "Encoding with " << name() << "\n";
+	
 	if (!_bandwidth || _bandwidth.get() != bandwidth ||
 	    !_frame_rate || _frame_rate.get() != frame_rate ||
 	    !_resolution || _resolution.get() != resolution ||
