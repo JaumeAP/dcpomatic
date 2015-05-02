@@ -37,6 +37,7 @@ class CinemaSoundProcessor;
 class DCPContentType;
 class Ratio;
 class Cinema;
+class JPEG2000Encoder;
 
 /** @class Config
  *  @brief A singleton class holding configuration.
@@ -244,6 +245,9 @@ public:
 		return _win32_console;
 	}
 #endif
+	boost::optional<std::string> encoder () {
+		return _encoder;
+	}
 
 	std::vector<boost::filesystem::path> history () const {
 		return _history;
@@ -457,6 +461,15 @@ public:
 
 	void set_cinemas_file (boost::filesystem::path file);
 
+	void set_encoder (std::string id) {
+		if (_encoder && _encoder.get() == id) {
+			return;
+		}
+
+		_encoder = id;
+		changed ();
+	}
+
 	void clear_history () {
 		_history.clear ();
 		changed ();
@@ -559,6 +572,7 @@ private:
 #ifdef DCPOMATIC_WINDOWS
 	bool _win32_console;
 #endif
+	boost::optional<std::string> _encoder;
 	std::vector<boost::filesystem::path> _history;
 	std::vector<dcp::EncryptedKDM> _dkdms;
 	boost::filesystem::path _cinemas_file;

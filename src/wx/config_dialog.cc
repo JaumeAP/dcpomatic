@@ -232,8 +232,15 @@ private:
 		table->Add (bottom_table, wxGBPosition (r, 0), wxGBSpan (2, 2), wxEXPAND);
 		++r;
 
-		_set_language->Bind (wxEVT_COMMAND_CHECKBOX_CLICKED,   boost::bind (&GeneralPage::set_language_changed, this));
-		_language->Bind     (wxEVT_COMMAND_CHOICE_SELECTED,    boost::bind (&GeneralPage::language_changed,     this));
+		add_label_to_sizer (table, _panel, _("JPEG2000 encoder"), true);
+		_encoder = new wxChoice (_panel, wxID_ANY);
+		BOOST_FOREACH (shared_ptr<JPEG2000Encoder> i, JPEG2000Encoder::all()) {
+			_encoder->Append (std_to_wx (i->name ()));
+		}
+		table->Add (_encoder, 1);
+
+		_set_language->Bind (wxEVT_COMMAND_CHECKBOX_CLICKED, boost::bind (&GeneralPage::set_language_changed, this));
+		_language->Bind     (wxEVT_COMMAND_CHOICE_SELECTED,  boost::bind (&GeneralPage::language_changed,     this));
 		_cinemas_file->Bind (wxEVT_COMMAND_FILEPICKER_CHANGED, boost::bind (&GeneralPage::cinemas_file_changed, this));
 
 		_num_local_encoding_threads->SetRange (1, 128);
@@ -289,9 +296,23 @@ private:
 		checked_set (_check_for_test_updates, config->check_for_test_updates ());
 		checked_set (_issuer, config->dcp_issuer ());
 		checked_set (_creator, config->dcp_creator ());
+<<<<<<< 0f3c2864599f9e5a5ec001266b4aefb0205d1e1f
 		checked_set (_cinemas_file, config->cinemas_file());
 
 		setup_sensitivity ();
+=======
+
+		if (!config->encoder ()) {
+			checked_set (_encoder, 0);
+		} else {
+			vector<shared_ptr<JPEG2000Encoder> > encoders = JPEG2000Encoder::all ();
+			for (size_t i = 0; i < encoders.size(); ++i) {
+				if (encoders[i]->id() == config->encoder().get ()) {
+					checked_set (_encoder, i);
+				}
+			}
+		}
+>>>>>>> Basic classes for different JPEG2000 encoders; config to choose one.
 	}
 
 	void setup_sensitivity ()
@@ -374,6 +395,7 @@ private:
 	wxCheckBox* _check_for_test_updates;
 	wxTextCtrl* _issuer;
 	wxTextCtrl* _creator;
+	wxChoice* _encoder;
 };
 
 class DefaultsPage : public StandardPage

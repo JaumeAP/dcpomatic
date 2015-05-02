@@ -390,6 +390,9 @@ def configure(conf):
 
     conf.find_program('msgfmt', var='MSGFMT')
 
+    # Check for headers of poznan JPEG2000 encoding library
+    conf.check(header_name="poznan/config/parameters.h")
+
     datadir = conf.env.DATADIR
     if not datadir:
         datadir = os.path.join(conf.env.PREFIX, 'share')

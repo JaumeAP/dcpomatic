@@ -36,6 +36,7 @@
 #include "audio_processor.h"
 #include "safe_stringstream.h"
 #include "compose.hpp"
+#include "jpeg2000_encoder.h"
 #include <dcp/util.h>
 #include <dcp/picture_asset.h>
 #include <dcp/sound_asset.h>
@@ -335,6 +336,7 @@ dcpomatic_setup ()
 	Pango::init ();
 	dcp::init ();
 
+	JPEG2000Encoder::setup_encoders ();
 	Ratio::setup_ratios ();
 	PresetColourConversion::setup_colour_conversion_presets ();
 	VideoContentScale::setup_scales ();

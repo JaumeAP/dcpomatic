@@ -80,3 +80,9 @@ ProgrammingError::ProgrammingError (string file, int line)
 {
 
 }
+
+JPEG2000EncoderUnavailableException::JPEG2000EncoderUnavailableException (string encoder_name, string message)
+	: StringError (String::compose (_("Encoder %1 unavailable: %2"), encoder_name, message))
+{
+
+}

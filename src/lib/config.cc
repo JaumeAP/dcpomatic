@@ -29,6 +29,7 @@
 #include "util.h"
 #include "cross.h"
 #include "raw_convert.h"
+#include "jpeg2000_encoder.h"
 #include <dcp/colour_matrix.h>
 #include <dcp/certificate_chain.h>
 #include <libcxml/cxml.h>
@@ -104,6 +105,7 @@ Config::set_defaults ()
 	_win32_console = false;
 #endif
 	_cinemas_file = path ("cinemas.xml");
+	_encoder = optional<string> ();
 
 	_allowed_dcp_frame_rates.clear ();
 	_allowed_dcp_frame_rates.push_back (24);
@@ -298,6 +300,8 @@ Config::read ()
 		f.read_file (_cinemas_file);
 		read_cinemas (f);
 	}
+
+	_encoder = f.optional_string_child ("Encoder");
 }
 
 /** @return Filename to write configuration to */
@@ -432,6 +436,10 @@ Config::write_config_xml () const
 		decryption->add_child("Certificate")->add_child_text (i.certificate (true));
 	}
 	decryption->add_child("PrivateKey")->add_child_text (_decryption_chain->key().get ());
+
+	if (_encoder) {
+		root->add_child("Encoder")->add_child_text (_encoder.get ());
+	}
 
 	for (vector<boost::filesystem::path>::const_iterator i = _history.begin(); i != _history.end(); ++i) {
 		root->add_child("History")->add_child_text (i->string ());

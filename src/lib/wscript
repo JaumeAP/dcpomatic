@@ -88,16 +88,19 @@ sources = """
           j2k_image_proxy.cc
           job.cc
           job_manager.cc
+          jpeg2000_encoder.cc
           json_server.cc
           log.cc
           log_entry.cc
           magick_image_proxy.cc
           md5_digester.cc
           mid_side_decoder.cc
+          openjpeg_encoder.cc
           player.cc
           player_subtitles.cc
           player_video.cc
           playlist.cc
+          poznan_encoder.cc
           position_image.cc
           ratio.cc
           raw_image_proxy.cc

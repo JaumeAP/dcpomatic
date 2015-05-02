@@ -1,6 +1,5 @@
 /*
     Copyright (C) 2012-2015 Carl Hetherington <cth@carlh.net>
-    Taken from code Copyright (C) 2010-2011 Terrence Meiczinger
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,6 +38,7 @@
 #include "player_video.h"
 #include "raw_convert.h"
 #include "compose.hpp"
+#include "jpeg2000_encoder.h"
 #include <libcxml/cxml.h>
 #include <dcp/openjpeg_image.h>
 #include <dcp/rgb_xyz.h>
@@ -121,12 +121,17 @@ DCPVideo::convert_to_xyz (shared_ptr<const PlayerVideo> frame, dcp::NoteHandler 
 Data
 DCPVideo::encode_locally (dcp::NoteHandler note)
 {
-	Data enc = compress_j2k (
-		convert_to_xyz (_frame, note),
-		_j2k_bandwidth,
-		_frames_per_second,
-		_frame->eyes() == EYES_LEFT || _frame->eyes() == EYES_RIGHT,
-		_resolution == RESOLUTION_4K
+	shared_ptr<JPEG2000Encoder> encoder;
+	if (Config::instance()->encoder ()) {
+		encoder = JPEG2000Encoder::from_id (Config::instance()->encoder().get ());
+	}
+
+	if (!encoder) {
+		encoder = JPEG2000Encoder::all().front ();
+	}
+
+	shared_ptr<EncodedData> enc = encoder->encode (
+		xyz, note, _j2k_bandwidth, _frames_per_second, _resolution, _frame->eyes() == EYES_LEFT || _frame->eyes() == EYES_RIGHT
 		);
 
 	switch (_frame->eyes()) {

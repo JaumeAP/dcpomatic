@@ -240,6 +240,26 @@ public:
 	ProgrammingError (std::string file, int line);
 };
 
+class JPEG2000EncoderUnavailableException : public std::runtime_error
+{
+public:
+	JPEG2000EncoderUnavailableException (std::string encoder_name, std::string message);
+
+	~JPEG2000EncoderUnavailableException () throw () {}
+
+	std::string encoder_name () const {
+		return _encoder_name;
+	}
+
+	std::string message () const {
+		return _message;
+	}
+
+private:
+	std::string _encoder_name;
+	std::string _message;
+};
+
 class TextEncodingError : public std::runtime_error
 {
 public:
