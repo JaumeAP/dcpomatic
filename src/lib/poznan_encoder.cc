@@ -20,6 +20,8 @@
 #include "poznan_encoder.h"
 #include "exceptions.h"
 #include "encoded_data.h"
+#include "raw_convert.h"
+#include <poznan/tier2/markers.h>
 #include <dcp/xyz_image.h>
 #include <dlfcn.h>
 
@@ -37,22 +39,26 @@ PoznanEncoder::PoznanEncoder ()
 	void* gpu_coeff_coder = open_library ("gpu_coeff_coder");
 	void* tier2 = open_library ("tier2");
 	void* types = open_library ("types");
+	void* misc = open_library ("misc");
 	
 	_init_device = (void (*)(type_parameters *)) dlsym (config, "init_device");
-	_color_coder_lossy = (void (*)(type_image *, type_parameters *)) dlsym (preprocessing, "color_coder_lossy");
+	_color_coder_lossy = (void (*)(type_image *)) dlsym (preprocessing, "color_coder_lossy");
 	_fwt = (void (*)(type_tile *)) dlsym (dwt, "fwt");
 	_quantize_tile = (void (*)(type_tile *)) dlsym (tier1, "quantize_tile");
 	_encode_tile = (void (*)(type_tile *)) dlsym (gpu_coeff_coder, "encode_tile");
-	_init_params = (void (*)(type_image *, type_parameters *)) dlsym (types, "init_params");
 	_set_coding_parameters = (void (*)(type_image *, type_parameters *)) dlsym (types, "set_coding_parameters");
-	_init_tiles = (void (*)(type_image *, type_parameters *)) dlsym (types, "init_tiles");
+	_init_tiles = (void (*)(type_image **, type_parameters *)) dlsym (types, "init_tiles");
 	_init_buffer = (void (*)(type_buffer *)) dlsym (types, "init_buffer");
 	_encode_codestream = (void (*)(type_buffer *, type_image *)) dlsym (tier2, "encode_codestream");
+	_cuda_h_allocate_mem = (void (*)(void **, uint64_t)) dlsym (misc, "cuda_h_allocate_mem");
+	_cuda_memcpy_htd = (void (*)(void *, void *, uint64_t)) dlsym (misc, "cuda_memcpy_htd");
+	_cuda_h_free = (void (*)(void *)) dlsym (misc, "cuda_h_free");
 	
 	if (
 		!_init_device || !_color_coder_lossy || !_fwt || !_quantize_tile ||
-		!_encode_tile || !_init_params || !_set_coding_parameters || !_init_tiles ||
-		!_init_buffer || !_encode_codestream) {
+		!_encode_tile || !_set_coding_parameters || !_init_tiles ||
+		!_init_buffer || !_encode_codestream || !_cuda_h_allocate_mem ||
+		!_cuda_memcpy_htd || !_cuda_h_free) {
 		throw JPEG2000EncoderUnavailableException (name(), "missing symbol");
 	}
 }
@@ -121,30 +127,71 @@ PoznanEncoder::name () const
 shared_ptr<EncodedData>
 PoznanEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
 {
-	type_image img;
-	_init_params (&img, &_param);
-	img.width = input->size().width;
-	img.height = input->size().height;
-	img.depth = 12;
-	img.num_components = 3;
-	img.num_range_bits = 12;
-	img.sign = UNSIGNED;
-	img.num_dlvls = _param.param_tile_comp_dlvls;
+	type_image* img = new type_image;
 
-	_set_coding_parameters (&img, &_param);
+	img->width = input->size().width;
+	img->height = input->size().height;
+	img->depth = 12;
+	img->num_components = 3;
+	img->num_range_bits = 12;
+	img->sign = UNSIGNED;
+	img->num_dlvls = _param.param_tile_comp_dlvls;
+
+	img->wavelet_type = _param.param_wavelet_type;
+	img->use_mct = _param.param_use_mct;
+	img->use_part2_mct = _param.param_use_part2_mct;
+	img->mct_compression_method = _param.param_mct_compression_method;
+
+	img->coding_style = CODING_STYLE;
+	img->prog_order = LY_RES_COMP_POS_PROG;
+	img->num_layers = NUM_LAYERS;
+
+	_set_coding_parameters (img, &_param);
 	_init_tiles (&img, &_param);
-	
-	_color_coder_lossy (&img, &_param);
-	for (size_t i = 0; i < img.num_tiles; ++i) {
-		type_tile* tile = &(img.tile[i]);
-		_fwt (tile);
-		_quantize_tile (tile);
-		_encode_tile (tile);
+
+	_color_coder_lossy (img);
+
+	type_tile* tile = &(img->tile[0]);
+
+	/* XXX: it's a shame about this int -> float conversion */
+	for (int i = 0; i < 3; ++i) {
+		type_tile_comp* c = &tile->tile_comp[i];
+		std::cout << "Tile comp " << i << ": " << c->width << "x" << c->height << "\n";
+		int const pixels = c->width * c->height;
+		_cuda_h_allocate_mem ((void **) &c->img_data, pixels * sizeof (type_data));
+		for (int j = 0; j < pixels; ++j) {
+			c->img_data[j] = float (input->data(i)[j]) / 4095;
+			//c->img_data[j] = input->data(i)[j];
+		}
+		_cuda_memcpy_htd (c->img_data, c->img_data_d, pixels * sizeof (type_data));
+		_cuda_h_free (c->img_data);
 	}
+	
+	std::cout << "Tile " << tile->width << "x" << tile->height << "\n";
+	_fwt (tile);
+	_quantize_tile (tile);
+	_encode_tile (tile);
 
 	type_buffer buffer;
 	_init_buffer (&buffer);
-	_encode_codestream (&buffer, &img);
+	_encode_codestream (&buffer, img);
 
-	return shared_ptr<EncodedData> (new EncodedData (buffer.data, buffer.bytes_count));
+	std::cout << img->num_tiles << " tiles.\n";
+	std::cout << "got " << buffer.bytes_count << " bytes.\n";
+	shared_ptr<EncodedData> encoded (new EncodedData (buffer.data, buffer.bytes_count));
+
+	/* XXX! */
+	static int shit = 0;
+	{
+		string name = raw_convert<string> (shit);
+		FILE* f = fopen (name.c_str(), "wb");
+		fwrite (buffer.data, 1, buffer.bytes_count, f);
+		fclose (f);
+		++shit;
+	}
+
+	free (buffer.data);
+	delete img;
+
+	return encoded;
 }

@@ -47,13 +47,15 @@ private:
 	type_parameters _param;
 
 	void (*_init_device) (type_parameters *);
-	void (*_color_coder_lossy) (type_image *, type_parameters *);
+	void (*_color_coder_lossy) (type_image *);
 	void (*_fwt) (type_tile *);	
 	void (*_quantize_tile) (type_tile *);	
 	void (*_encode_tile) (type_tile *);	
-	void (*_init_params) (type_image *, type_parameters *);
 	void (*_set_coding_parameters) (type_image *, type_parameters *);
-	void (*_init_tiles) (type_image *, type_parameters *);
+	void (*_init_tiles) (type_image **, type_parameters *);
 	void (*_init_buffer) (type_buffer *);
 	void (*_encode_codestream) (type_buffer *, type_image *);
+	void (*_cuda_h_allocate_mem) (void **, uint64_t);
+	void (*_cuda_memcpy_htd) (void *, void *, uint64_t);
+	void (*_cuda_h_free) (void *);
 };
