@@ -25,7 +25,6 @@
 #include "image.h"
 #include "magick_image_proxy.h"
 #include "j2k_image_proxy.h"
-#include "film.h"
 #include "exceptions.h"
 
 #include "i18n.h"
