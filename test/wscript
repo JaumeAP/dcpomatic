@@ -99,3 +99,11 @@ def build(bld):
 
     obj.target = 'unit-tests'
     obj.install_path = ''
+
+    obj = bld(features='cxx cxxprogram')
+    obj.name = 'poznan'
+    obj.uselib = 'DCP'
+    obj.use = 'libdcpomatic2'
+    obj.source = "poznan.cc"
+    obj.target = 'poznan'
+    obj.install_path = ''

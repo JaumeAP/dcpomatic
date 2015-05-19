@@ -1,0 +1,14 @@
+#!/bin/bash
+
+export LD_LIBRARY_PATH=build/src/lib:poznan:$LD_LIBRARY_PATH
+export DCPOMATIC_LINUX_SHARE_PREFIX=`pwd`
+if [ "$1" == "--debug" ]; then
+    shift;
+    gdb --args build/test/poznan $*
+elif [ "$1" == "--valgrind" ]; then
+    shift;
+    valgrind --tool="memcheck" --leak-check=full build/test/poznan $*
+else
+    build/test/poznan $*
+fi
+
