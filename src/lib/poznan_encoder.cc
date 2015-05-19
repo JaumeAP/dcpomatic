@@ -28,6 +28,7 @@
 #include "i18n.h"
 
 using std::string;
+using std::cout;
 using boost::shared_ptr;
 
 PoznanEncoder::PoznanEncoder ()
@@ -67,11 +68,11 @@ void *
 PoznanEncoder::open_library (string library_name)
 {
 	/* XXX: need cross-platform implementation of dlopen etc. */
-	
+
 	library_name = "libdcpomatic-" + library_name + ".so";
 	void* lib = dlopen (library_name.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 	if (!lib) {
-		throw JPEG2000EncoderUnavailableException (name(), "could not find " + library_name);
+		throw JPEG2000EncoderUnavailableException (name(), "could not find " + library_name + " (" + dlerror() + ")");
 	}
 	return lib;
 }
