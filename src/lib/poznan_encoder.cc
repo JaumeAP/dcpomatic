@@ -144,7 +144,7 @@ PoznanEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
 	img->mct_compression_method = _param.param_mct_compression_method;
 
 	img->coding_style = CODING_STYLE;
-	img->prog_order = LY_RES_COMP_POS_PROG;
+	img->prog_order = COMP_POS_RES_LY_PROG;
 	img->num_layers = NUM_LAYERS;
 
 	_set_coding_parameters (img, &_param);
