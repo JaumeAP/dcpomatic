@@ -19,9 +19,9 @@
 */
 
 #include "openjpeg_encoder.h"
-#include "encoded_data.h"
+#include "data.h"
 #include "exceptions.h"
-#include <dcp/xyz_image.h>
+#include <dcp/openjpeg_image.h>
 
 #include "i18n.h"
 
@@ -34,8 +34,8 @@ OpenJPEGEncoder::name () const
 	return _("OpenJPEG library");
 }
 
-shared_ptr<EncodedData>
-OpenJPEGEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
+Data
+OpenJPEGEncoder::do_encode (shared_ptr<const dcp::OpenJPEGImage> input)
 {
 	/* Set the max image and component sizes based on frame_rate */
 	int max_cs_len = ((float) _bandwidth.get()) / 8 / _frame_rate.get();
@@ -59,11 +59,11 @@ OpenJPEGEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
 	parameters.tile_size_on = false;
 	parameters.cp_tdx = 1;
 	parameters.cp_tdy = 1;
-	
+
 	/* Tile part */
 	parameters.tp_flag = 'C';
 	parameters.tp_on = 1;
-	
+
 	/* Tile and Image shall be at (0,0) */
 	parameters.cp_tx0 = 0;
 	parameters.cp_ty0 = 0;
@@ -74,19 +74,19 @@ OpenJPEGEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
 	parameters.cblockw_init = 32;
 	parameters.cblockh_init = 32;
 	parameters.csty |= 0x01;
-	
+
 	/* The progression order shall be CPRL */
 	parameters.prog_order = CPRL;
-	
+
 	/* No ROI */
 	parameters.roi_compno = -1;
-	
+
 	parameters.subsampling_dx = 1;
 	parameters.subsampling_dy = 1;
-	
+
 	/* 9-7 transform */
 	parameters.irreversible = 1;
-	
+
 	parameters.tcp_rates[0] = 0;
 	parameters.tcp_numlayers++;
 	parameters.cp_disto_alloc = 1;
@@ -94,27 +94,27 @@ OpenJPEGEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
 	if (_resolution.get() == RESOLUTION_4K) {
 		parameters.numpocs = 2;
 		parameters.POC[0].tile = 1;
-		parameters.POC[0].resno0 = 0; 
+		parameters.POC[0].resno0 = 0;
 		parameters.POC[0].compno0 = 0;
 		parameters.POC[0].layno1 = 1;
 		parameters.POC[0].resno1 = parameters.numresolution - 1;
 		parameters.POC[0].compno1 = 3;
 		parameters.POC[0].prg1 = CPRL;
 		parameters.POC[1].tile = 1;
-		parameters.POC[1].resno0 = parameters.numresolution - 1; 
+		parameters.POC[1].resno0 = parameters.numresolution - 1;
 		parameters.POC[1].compno0 = 0;
 		parameters.POC[1].layno1 = 1;
 		parameters.POC[1].resno1 = parameters.numresolution;
 		parameters.POC[1].compno1 = 3;
 		parameters.POC[1].prg1 = CPRL;
 	}
-	
+
 	parameters.cp_comment = strdup (N_("DCP-o-matic"));
 	parameters.cp_cinema = _resolution.get() == RESOLUTION_2K ? CINEMA2K_24 : CINEMA4K_24;
 
 	/* 3 components, so use MCT */
 	parameters.tcp_mct = 1;
-	
+
 	/* set max image */
 	parameters.max_comp_size = max_comp_size;
 	parameters.tcp_rates[0] = ((float) (3 * input->size().width * input->size().height * 12)) / (max_cs_len * 8);
@@ -138,7 +138,7 @@ OpenJPEGEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
 		throw EncodeError (N_("JPEG2000 encoding failed"));
 	}
 
-	shared_ptr<EncodedData> enc (new LocallyEncodedData (cio->buffer, cio_tell (cio)));
+	Data enc (cio->buffer, cio_tell (cio));
 
 	opj_cio_close (cio);
 	free (parameters.cp_comment);

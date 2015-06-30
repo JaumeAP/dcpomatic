@@ -11,7 +11,7 @@ using boost::shared_ptr;
 int main ()
 {
 	JPEG2000Encoder::setup_encoders ();
-	
+
 	shared_ptr<JPEG2000Encoder> encoder = JPEG2000Encoder::from_id ("poznan");
 
 	shared_ptr<Image> rgb (new Image (PIX_FMT_RGB24, dcp::Size (1998, 1080), false));
@@ -42,8 +42,6 @@ int main ()
 		}
 	}
 
-	vector<PresetColourConversion> presets = Config::instance()->colour_conversions ();
-	shared_ptr<const dcp::XYZImage> xyz = dcp::rgb_to_xyz (rgb->data()[0], rgb->size(), rgb->stride()[0], presets.front().conversion);
-
-	shared_ptr<EncodedData> j2k = encoder->encode (xyz, 100000000, 24, RESOLUTION_2K, false);
+	shared_ptr<const dcp::OpenJPEGImage> xyz = dcp::rgb_to_xyz (rgb->data()[0], rgb->size(), rgb->stride()[0], ColourConversion::rec709_to_xyz ());
+	Data j2k = encoder->encode (xyz, 100000000, 24, RESOLUTION_2K, false);
 }

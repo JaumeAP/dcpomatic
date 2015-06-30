@@ -19,10 +19,10 @@
 
 #include "poznan_encoder.h"
 #include "exceptions.h"
-#include "encoded_data.h"
+#include "data.h"
 #include "raw_convert.h"
 #include <poznan/tier2/markers.h>
-#include <dcp/xyz_image.h>
+#include <dcp/openjpeg_image.h>
 #include <dlfcn.h>
 
 #include "i18n.h"
@@ -41,7 +41,7 @@ PoznanEncoder::PoznanEncoder ()
 	void* tier2 = open_library ("tier2");
 	void* types = open_library ("types");
 	void* misc = open_library ("misc");
-	
+
 	_init_device = (void (*)(type_parameters *)) dlsym (config, "init_device");
 	_color_coder_lossy = (void (*)(type_image *)) dlsym (preprocessing, "color_coder_lossy");
 	_fwt = (void (*)(type_tile *)) dlsym (dwt, "fwt");
@@ -54,7 +54,7 @@ PoznanEncoder::PoznanEncoder ()
 	_cuda_h_allocate_mem = (void (*)(void **, uint64_t)) dlsym (misc, "cuda_h_allocate_mem");
 	_cuda_memcpy_htd = (void (*)(void *, void *, uint64_t)) dlsym (misc, "cuda_memcpy_htd");
 	_cuda_h_free = (void (*)(void *)) dlsym (misc, "cuda_h_free");
-	
+
 	if (
 		!_init_device || !_color_coder_lossy || !_fwt || !_quantize_tile ||
 		!_encode_tile || !_set_coding_parameters || !_init_tiles ||
@@ -115,7 +115,7 @@ PoznanEncoder::parameters_changed ()
 	_param.param_mct_klt_iterations = 10000;
 	_param.param_mct_klt_border_eigenvalue = 0.000001;
 	_param.param_mct_klt_err = 1.0e-7;
-	
+
 	_init_device (&_param);
 }
 
@@ -125,8 +125,8 @@ PoznanEncoder::name () const
 	return _("CUDA (GPU) encoder (Poznan Supercomputing and Networking Center)");
 }
 
-shared_ptr<EncodedData>
-PoznanEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
+Data
+PoznanEncoder::do_encode (shared_ptr<const dcp::OpenJPEGImage> input)
 {
 	type_image* img = new type_image;
 
@@ -167,7 +167,7 @@ PoznanEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
 		_cuda_memcpy_htd (c->img_data, c->img_data_d, pixels * sizeof (type_data));
 		_cuda_h_free (c->img_data);
 	}
-	
+
 	std::cout << "Tile " << tile->width << "x" << tile->height << "\n";
 	_fwt (tile);
 	_quantize_tile (tile);
@@ -179,7 +179,7 @@ PoznanEncoder::do_encode (shared_ptr<const dcp::XYZImage> input)
 
 	std::cout << img->num_tiles << " tiles.\n";
 	std::cout << "got " << buffer.bytes_count << " bytes.\n";
-	shared_ptr<EncodedData> encoded (new EncodedData (buffer.data, buffer.bytes_count));
+	Data encoded (buffer.data, buffer.bytes_count);
 
 	/* XXX! */
 	static int shit = 0;

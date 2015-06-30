@@ -21,22 +21,21 @@
 #define DCPOMATIC_JPEG2000_ENCODER_H
 
 #include "types.h"
+#include "data.h"
 #include <dcp/types.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/optional.hpp>
 #include <list>
 
 namespace dcp {
-	class XYZImage;
+	class OpenJPEGImage;
 }
-
-class EncodedData;
 
 class JPEG2000Encoder
 {
 public:
 	virtual ~JPEG2000Encoder () {}
-	
+
 	/** @return Internationalised descriptive name for this encoder */
 	virtual std::string name () const = 0;
 	/** @return Non-internationalised ID for this encoder */
@@ -44,11 +43,11 @@ public:
 
 	/** @param input XYZ input frame.
 	 *  @param note_handler Handler for notes about the encode.
-	 
+
 	 *  @return Encoded JPEG2000 data.
 	 */
-	boost::shared_ptr<EncodedData> encode (
-		boost::shared_ptr<const dcp::XYZImage> input,
+	Data encode (
+		boost::shared_ptr<const dcp::OpenJPEGImage> input,
 		int bandwidth,
 		int frame_rate,
 		Resolution resolution,
@@ -62,8 +61,8 @@ public:
 
 protected:
 
-	virtual boost::shared_ptr<EncodedData> do_encode (
-		boost::shared_ptr<const dcp::XYZImage> input
+	virtual Data do_encode (
+		boost::shared_ptr<const dcp::OpenJPEGImage> input
 		) = 0;
 
 	virtual void parameters_changed () {}

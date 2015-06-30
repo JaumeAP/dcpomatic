@@ -26,7 +26,7 @@ class PoznanEncoder : public JPEG2000Encoder
 {
 public:
 	PoznanEncoder ();
-	
+
 	std::string name () const;
 
 	std::string id () const {
@@ -35,22 +35,22 @@ public:
 
 protected:
 
-	boost::shared_ptr<EncodedData> do_encode (
-		boost::shared_ptr<const dcp::XYZImage> input
+	Data do_encode (
+		boost::shared_ptr<const dcp::OpenJPEGImage> input
 		);
 
 	void parameters_changed ();
-	
+
 private:
 	void* open_library (std::string name);
-	
+
 	type_parameters _param;
 
 	void (*_init_device) (type_parameters *);
 	void (*_color_coder_lossy) (type_image *);
-	void (*_fwt) (type_tile *);	
-	void (*_quantize_tile) (type_tile *);	
-	void (*_encode_tile) (type_tile *);	
+	void (*_fwt) (type_tile *);
+	void (*_quantize_tile) (type_tile *);
+	void (*_encode_tile) (type_tile *);
 	void (*_set_coding_parameters) (type_image *, type_parameters *);
 	void (*_init_tiles) (type_image **, type_parameters *);
 	void (*_init_buffer) (type_buffer *);

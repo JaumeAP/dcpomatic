@@ -45,7 +45,7 @@ JPEG2000Encoder::setup_encoders ()
 	try {
 		_encoders.push_back (shared_ptr<JPEG2000Encoder> (new OpenJPEGEncoder ()));
 	} catch (JPEG2000EncoderUnavailableException &) {
-		
+
 	}
 }
 
@@ -67,11 +67,11 @@ JPEG2000Encoder::from_id (string id)
 	return shared_ptr<JPEG2000Encoder> ();
 }
 
-shared_ptr<EncodedData>
-JPEG2000Encoder::encode (shared_ptr<const dcp::XYZImage> input,	int bandwidth, int frame_rate, Resolution resolution, bool threed)
+Data
+JPEG2000Encoder::encode (shared_ptr<const dcp::OpenJPEGImage> input, int bandwidth, int frame_rate, Resolution resolution, bool threed)
 {
 	std::cout << "Encoding with " << name() << "\n";
-	
+
 	if (!_bandwidth || _bandwidth.get() != bandwidth ||
 	    !_frame_rate || _frame_rate.get() != frame_rate ||
 	    !_resolution || _resolution.get() != resolution ||
@@ -81,7 +81,7 @@ JPEG2000Encoder::encode (shared_ptr<const dcp::XYZImage> input,	int bandwidth, i
 		_frame_rate = frame_rate;
 		_resolution = resolution;
 		_threed = threed;
-		
+
 		parameters_changed ();
 	}
 

@@ -130,7 +130,7 @@ DCPVideo::encode_locally (dcp::NoteHandler note)
 		encoder = JPEG2000Encoder::all().front ();
 	}
 
-	shared_ptr<EncodedData> enc = encoder->encode (
+	Data enc = encoder->encode (
 		xyz, _j2k_bandwidth, _frames_per_second, _resolution, _frame->eyes() == EYES_LEFT || _frame->eyes() == EYES_RIGHT
 		);
 
