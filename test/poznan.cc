@@ -28,20 +28,21 @@ int main ()
 
 	for (int x = 666; x < 1332; ++x) {
 		for (int y = 0; y < 1080; ++y) {
-			rgb->data()[0][y * line_size + x * 3] = 255;
-			rgb->data()[0][y * line_size + x * 3 + 1] = 0;
+			rgb->data()[0][y * line_size + x * 3] = 0;
+			rgb->data()[0][y * line_size + x * 3 + 1] = 255;
 			rgb->data()[0][y * line_size + x * 3 + 2] = 0;
 		}
 	}
 
 	for (int x = 1332; x < 1998; ++x) {
 		for (int y = 0; y < 1080; ++y) {
-			rgb->data()[0][y * line_size + x * 3] = 255;
+			rgb->data()[0][y * line_size + x * 3] = 0;
 			rgb->data()[0][y * line_size + x * 3 + 1] = 0;
-			rgb->data()[0][y * line_size + x * 3 + 2] = 0;
+			rgb->data()[0][y * line_size + x * 3 + 2] = 255;
 		}
 	}
 
 	shared_ptr<const dcp::OpenJPEGImage> xyz = dcp::rgb_to_xyz (rgb->data()[0], rgb->size(), rgb->stride()[0], ColourConversion::rec709_to_xyz ());
 	Data j2k = encoder->encode (xyz, 100000000, 24, RESOLUTION_2K, false);
+	j2k.write ("poznan.j2k");
 }

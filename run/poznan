@@ -12,3 +12,5 @@ else
     build/test/poznan $*
 fi
 
+#j2k_dump -i poznan.j2k > poznan.dump
+#diff -u good.dump poznan.dump

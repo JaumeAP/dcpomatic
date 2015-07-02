@@ -58,4 +58,5 @@ private:
 	void (*_cuda_h_allocate_mem) (void **, uint64_t);
 	void (*_cuda_memcpy_htd) (void *, void *, uint64_t);
 	void (*_cuda_h_free) (void *);
+	void (*_check_cuda_error) (char const *);
 };

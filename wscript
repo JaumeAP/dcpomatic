@@ -267,6 +267,9 @@ def configure(conf):
     else:
         conf.env.LIB_XMLSEC = ['xmlsec1-openssl', 'xmlsec1']
 
+    # XXX
+    conf.env.LIB_CUDA = ['cudart']
+
     # FFmpeg
     if conf.options.static_ffmpeg:
         names = ['avformat', 'avfilter', 'avcodec', 'avutil', 'swscale', 'postproc']

@@ -24,6 +24,7 @@
 #include <poznan/tier2/markers.h>
 #include <dcp/openjpeg_image.h>
 #include <dlfcn.h>
+#include <thrust/system/cuda/error.h>
 
 #include "i18n.h"
 
@@ -143,30 +144,31 @@ PoznanEncoder::do_encode (shared_ptr<const dcp::OpenJPEGImage> input)
 	img->use_part2_mct = _param.param_use_part2_mct;
 	img->mct_compression_method = _param.param_mct_compression_method;
 
-	img->coding_style = CODING_STYLE;
+	img->coding_style = CODING_STYLE_PRECINCTS_DEFINED;
 	img->prog_order = COMP_POS_RES_LY_PROG;
 	img->num_layers = NUM_LAYERS;
 
 	_set_coding_parameters (img, &_param);
 	_init_tiles (&img, &_param);
 
-	_color_coder_lossy (img);
-
 	type_tile* tile = &(img->tile[0]);
 
 	/* XXX: it's a shame about this int -> float conversion */
 	for (int i = 0; i < 3; ++i) {
 		type_tile_comp* c = &tile->tile_comp[i];
+		c->tile_comp_no = i;
 		std::cout << "Tile comp " << i << ": " << c->width << "x" << c->height << "\n";
 		int const pixels = c->width * c->height;
 		_cuda_h_allocate_mem ((void **) &c->img_data, pixels * sizeof (type_data));
 		for (int j = 0; j < pixels; ++j) {
-			c->img_data[j] = float (input->data(i)[j]) / 4095;
+			c->img_data[j] = float (input->data(i)[j]);
 			//c->img_data[j] = input->data(i)[j];
 		}
 		_cuda_memcpy_htd (c->img_data, c->img_data_d, pixels * sizeof (type_data));
 		_cuda_h_free (c->img_data);
 	}
+
+	_color_coder_lossy (img);
 
 	std::cout << "Tile " << tile->width << "x" << tile->height << "\n";
 	_fwt (tile);
@@ -176,20 +178,13 @@ PoznanEncoder::do_encode (shared_ptr<const dcp::OpenJPEGImage> input)
 	type_buffer buffer;
 	_init_buffer (&buffer);
 	_encode_codestream (&buffer, img);
+	if (cudaGetLastError () != cudaSuccess) {
+		throw EncodeError ("CUDA error");
+	}
 
 	std::cout << img->num_tiles << " tiles.\n";
 	std::cout << "got " << buffer.bytes_count << " bytes.\n";
 	Data encoded (buffer.data, buffer.bytes_count);
-
-	/* XXX! */
-	static int shit = 0;
-	{
-		string name = raw_convert<string> (shit);
-		FILE* f = fopen (name.c_str(), "wb");
-		fwrite (buffer.data, 1, buffer.bytes_count, f);
-		fclose (f);
-		++shit;
-	}
 
 	free (buffer.data);
 	delete img;
