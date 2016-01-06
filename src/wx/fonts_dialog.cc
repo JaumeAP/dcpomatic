@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2014-2015 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2014-2016 Carl Hetherington <cth@carlh.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,9 @@
 #include "font_files_dialog.h"
 #include "lib/font.h"
 #include "lib/subtitle_content.h"
+#include "lib/cross.h"
 #include <wx/wx.h>
+#include <wx/imaglist.h>
 #include <boost/foreach.hpp>
 #include <iostream>
 
@@ -31,12 +33,20 @@ using std::list;
 using std::string;
 using std::cout;
 using boost::shared_ptr;
+using boost::optional;
 
 FontsDialog::FontsDialog (wxWindow* parent, shared_ptr<SubtitleContent> content)
 	: wxDialog (parent, wxID_ANY, _("Fonts"))
 	, _content (content)
 {
 	_fonts = new wxListCtrl (this, wxID_ANY, wxDefaultPosition, wxSize (550, 200), wxLC_REPORT | wxLC_SINGLE_SEL);
+
+	wxImageList* image_list = new wxImageList ();
+	boost::filesystem::path p = shared_path() / "warning.png";
+	wxBitmap warning;
+	warning.LoadFile (std_to_wx(p.string()), wxBITMAP_TYPE_PNG);
+	image_list->Add (warning);
+	_fonts->AssignImageList (image_list, wxIMAGE_LIST_SMALL);
 
 	{
 		wxListItem ip;
@@ -94,6 +104,35 @@ FontsDialog::FontsDialog (wxWindow* parent, shared_ptr<SubtitleContent> content)
 }
 
 void
+FontsDialog::set_variant (int n, shared_ptr<Font> font, FontFiles::Variant variant)
+{
+	if (font->file(variant)) {
+		wxListItem item;
+
+		item.SetId (n);
+		optional<boost::filesystem::path> const p = font->file (variant);
+		if (p && boost::filesystem::file_size (p.get()) >= (640 * 1024)) {
+			item.SetImage (0);
+		}
+		item.SetText (font->file(variant).get().leaf().string ());
+
+		switch (variant) {
+		case FontFiles::NORMAL:
+			_fonts->SetColumn (1, item);
+			break;
+		case FontFiles::ITALIC:
+			_fonts->SetColumn (2, item);
+			break;
+		case FontFiles::BOLD:
+			_fonts->SetColumn (3, item);
+			break;
+		default:
+			DCPOMATIC_ASSERT (false);
+		}
+	}
+}
+
+void
 FontsDialog::setup ()
 {
 	shared_ptr<SubtitleContent> content = _content.lock ();
@@ -108,9 +147,9 @@ FontsDialog::setup ()
 		item.SetId (n);
 		_fonts->InsertItem (item);
 		_fonts->SetItem (n, 0, std_to_wx (i->id ()));
-		if (i->file(FontFiles::NORMAL)) {
-			_fonts->SetItem (n, 1, i->file(FontFiles::NORMAL).get().leaf().string ());
-		}
+		set_variant (n, i, FontFiles::NORMAL);
+		set_variant (n, i, FontFiles::BOLD);
+		set_variant (n, i, FontFiles::ITALIC);
 		++n;
 	}
 

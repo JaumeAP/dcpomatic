@@ -22,6 +22,7 @@
 #include "key_dialog.h"
 #include "isdcf_metadata_dialog.h"
 #include "audio_dialog.h"
+#include "warning.h"
 #include "lib/ratio.h"
 #include "lib/config.h"
 #include "lib/dcp_content_type.h"
@@ -30,6 +31,7 @@
 #include "lib/ffmpeg_content.h"
 #include "lib/audio_processor.h"
 #include "lib/dcp_content.h"
+#include "lib/cross.h"
 #include <dcp/key.h>
 #include <dcp/raw_convert.h>
 #include <wx/wx.h>
@@ -49,6 +51,7 @@ using std::max;
 using std::make_pair;
 using boost::lexical_cast;
 using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 
 DCPPanel::DCPPanel (wxNotebook* n, boost::shared_ptr<Film> film)
 	: _audio_dialog (0)
@@ -64,9 +67,9 @@ DCPPanel::DCPPanel (wxNotebook* n, boost::shared_ptr<Film> film)
 
 	int r = 0;
 
-	add_label_to_sizer (grid, _panel, _("Name"), true, wxGBPosition (r, 0));
+	add_label_to_sizer (grid, _panel, _("Name"), true, wxGBPosition (r, 0), wxGBSpan (1, 2));
 	_name = new wxTextCtrl (_panel, wxID_ANY);
-	grid->Add (_name, wxGBPosition(r, 1), wxDefaultSpan, wxEXPAND | wxLEFT | wxRIGHT);
+	grid->Add (_name, wxGBPosition(r, 2), wxDefaultSpan, wxEXPAND | wxLEFT | wxRIGHT);
 	++r;
 
 	int flags = wxALIGN_CENTER_VERTICAL;
@@ -83,7 +86,7 @@ DCPPanel::DCPPanel (wxNotebook* n, boost::shared_ptr<Film> film)
 		s->Add (_edit_isdcf_button, 1, wxEXPAND | wxRIGHT, DCPOMATIC_SIZER_X_GAP);
 		_copy_isdcf_name_button = new wxButton (_panel, wxID_ANY, _("Copy as name"));
 		s->Add (_copy_isdcf_name_button, 1, wxEXPAND | wxLEFT, DCPOMATIC_SIZER_X_GAP);
-		grid->Add (s, wxGBPosition (r, 1), wxDefaultSpan, wxEXPAND);
+		grid->Add (s, wxGBPosition (r, 2), wxDefaultSpan, wxEXPAND);
 		++r;
 	}
 
@@ -95,12 +98,12 @@ DCPPanel::DCPPanel (wxNotebook* n, boost::shared_ptr<Film> film)
 		wxALIGN_CENTRE_HORIZONTAL | wxST_NO_AUTORESIZE | wxST_ELLIPSIZE_MIDDLE
 		);
 
-	grid->Add (_dcp_name, wxGBPosition(r, 0), wxGBSpan (1, 2), wxALIGN_CENTER_VERTICAL | wxEXPAND);
+	grid->Add (_dcp_name, wxGBPosition(r, 0), wxGBSpan (1, 3), wxALIGN_CENTER_VERTICAL | wxEXPAND);
 	++r;
 
 	add_label_to_sizer (grid, _panel, _("Content Type"), true, wxGBPosition (r, 0));
 	_dcp_content_type = new wxChoice (_panel, wxID_ANY);
-	grid->Add (_dcp_content_type, wxGBPosition (r, 1));
+	grid->Add (_dcp_content_type, wxGBPosition (r, 2));
 	++r;
 
 	_notebook = new wxNotebook (_panel, wxID_ANY);
@@ -110,11 +113,11 @@ DCPPanel::DCPPanel (wxNotebook* n, boost::shared_ptr<Film> film)
 	_notebook->AddPage (make_audio_panel (), _("Audio"), false);
 
 	_signed = new wxCheckBox (_panel, wxID_ANY, _("Signed"));
-	grid->Add (_signed, wxGBPosition (r, 0), wxGBSpan (1, 2));
+	grid->Add (_signed, wxGBPosition (r, 0));
 	++r;
 
 	_encrypted = new wxCheckBox (_panel, wxID_ANY, _("Encrypted"));
-	grid->Add (_encrypted, wxGBPosition (r, 0), wxGBSpan (1, 2));
+	grid->Add (_encrypted, wxGBPosition (r, 0));
 	++r;
 
         wxClientDC dc (_panel);
@@ -122,19 +125,19 @@ DCPPanel::DCPPanel (wxNotebook* n, boost::shared_ptr<Film> film)
         size.SetHeight (-1);
 
 	{
-               add_label_to_sizer (grid, _panel, _("Key"), true, wxGBPosition (r, 0));
-               wxBoxSizer* s = new wxBoxSizer (wxHORIZONTAL);
-               _key = new wxStaticText (_panel, wxID_ANY, "", wxDefaultPosition, size);
-               s->Add (_key, 1, wxALIGN_CENTER_VERTICAL);
-               _edit_key = new wxButton (_panel, wxID_ANY, _("Edit..."));
-               s->Add (_edit_key);
-               grid->Add (s, wxGBPosition (r, 1));
-               ++r;
+		add_label_to_sizer (grid, _panel, _("Key"), true, wxGBPosition (r, 0));
+		wxBoxSizer* s = new wxBoxSizer (wxHORIZONTAL);
+		_key = new wxStaticText (_panel, wxID_ANY, "", wxDefaultPosition, size);
+		s->Add (_key, 1, wxALIGN_CENTER_VERTICAL);
+		_edit_key = new wxButton (_panel, wxID_ANY, _("Edit..."));
+		s->Add (_edit_key);
+		grid->Add (s, wxGBPosition (r, 2));
+		++r;
 	}
 
 	add_label_to_sizer (grid, _panel, _("Reels"), true, wxGBPosition (r, 0));
 	_reel_type = new wxChoice (_panel, wxID_ANY);
-	grid->Add (_reel_type, wxGBPosition (r, 1), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
+	grid->Add (_reel_type, wxGBPosition (r, 2), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
 	++r;
 
 	add_label_to_sizer (grid, _panel, _("Reel length"), true, wxGBPosition (r, 0));
@@ -144,13 +147,15 @@ DCPPanel::DCPPanel (wxNotebook* n, boost::shared_ptr<Film> film)
 		_reel_length = new wxSpinCtrl (_panel, wxID_ANY);
 		s->Add (_reel_length);
 		add_label_to_sizer (s, _panel, _("GB"), false);
-		grid->Add (s, wxGBPosition (r, 1));
+		grid->Add (s, wxGBPosition (r, 2));
 		++r;
 	}
 
 	add_label_to_sizer (grid, _panel, _("Standard"), true, wxGBPosition (r, 0));
+	_standard_warning = new Warning (_panel);
+	grid->Add (_standard_warning->get(), wxGBPosition (r, 1));
 	_standard = new wxChoice (_panel, wxID_ANY);
-	grid->Add (_standard, wxGBPosition (r, 1), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
+	grid->Add (_standard, wxGBPosition (r, 2), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
 	++r;
 
 	_upload_after_make_dcp = new wxCheckBox (_panel, wxID_ANY, _("Upload DCP to TMS after it is made"));
@@ -185,6 +190,8 @@ DCPPanel::DCPPanel (wxNotebook* n, boost::shared_ptr<Film> film)
 	_standard->Append (_("Interop"));
 
 	Config::instance()->Changed.connect (boost::bind (&DCPPanel::config_changed, this));
+
+	setup_warnings ();
 }
 
 void
@@ -418,6 +425,8 @@ DCPPanel::film_changed (int p)
 	default:
 		break;
 	}
+
+	setup_warnings ();
 }
 
 void
@@ -432,6 +441,8 @@ DCPPanel::film_content_changed (int property)
 	    property == DCPContentProperty::REFERENCE_SUBTITLE) {
 		setup_dcp_name ();
 	}
+
+	setup_warnings ();
 }
 
 
@@ -616,6 +627,7 @@ DCPPanel::setup_frame_rate_widget ()
 	}
 
 	_frame_rate_sizer->Layout ();
+	_video_grid->Layout ();
 }
 
 wxPanel *
@@ -623,24 +635,28 @@ DCPPanel::make_video_panel ()
 {
 	wxPanel* panel = new wxPanel (_notebook);
 	wxSizer* sizer = new wxBoxSizer (wxVERTICAL);
-	wxGridBagSizer* grid = new wxGridBagSizer (DCPOMATIC_SIZER_X_GAP, DCPOMATIC_SIZER_Y_GAP);
-	sizer->Add (grid, 0, wxALL, 8);
+	_video_grid = new wxGridBagSizer (DCPOMATIC_SIZER_X_GAP, DCPOMATIC_SIZER_Y_GAP);
+	sizer->Add (_video_grid, 0, wxALL, 8);
 	panel->SetSizer (sizer);
 
 	int r = 0;
 
-	add_label_to_sizer (grid, panel, _("Container"), true, wxGBPosition (r, 0));
+	add_label_to_sizer (_video_grid, panel, _("Container"), true, wxGBPosition (r, 0));
+	_container_warning = new Warning (panel);
+	_video_grid->Add (_container_warning->get(), wxGBPosition (r, 1));
 	{
 		wxBoxSizer* s = new wxBoxSizer (wxHORIZONTAL);
 		_container = new wxChoice (panel, wxID_ANY);
 		s->Add (_container, 1, wxEXPAND | wxRIGHT, DCPOMATIC_SIZER_X_GAP);
 		_container_size = new wxStaticText (panel, wxID_ANY, wxT (""));
 		s->Add (_container_size, 1, wxLEFT | wxALIGN_CENTER_VERTICAL);
-		grid->Add (s, wxGBPosition (r,1 ), wxDefaultSpan, wxEXPAND);
+		_video_grid->Add (s, wxGBPosition (r, 2), wxDefaultSpan, wxEXPAND);
 		++r;
 	}
 
-	add_label_to_sizer (grid, panel, _("Frame Rate"), true, wxGBPosition (r, 0));
+	add_label_to_sizer (_video_grid, panel, _("Frame Rate"), true, wxGBPosition (r, 0));
+	_frame_rate_warning = new Warning (panel);
+	_video_grid->Add (_frame_rate_warning->get(), wxGBPosition (r, 1));
 	{
 		_frame_rate_sizer = new wxBoxSizer (wxHORIZONTAL);
 		_frame_rate_choice = new wxChoice (panel, wxID_ANY);
@@ -649,27 +665,31 @@ DCPPanel::make_video_panel ()
 		_frame_rate_sizer->Add (_frame_rate_spin, 1, wxALIGN_CENTER_VERTICAL);
 		setup_frame_rate_widget ();
 		_best_frame_rate = new wxButton (panel, wxID_ANY, _("Use best"));
-		_frame_rate_sizer->Add (_best_frame_rate, 1, wxALIGN_CENTER_VERTICAL);
-		grid->Add (_frame_rate_sizer, wxGBPosition (r, 1));
+		_frame_rate_sizer->Add (_best_frame_rate, 0, wxALIGN_CENTER_VERTICAL);
+		_video_grid->Add (_frame_rate_sizer, wxGBPosition (r, 2));
 		++r;
 	}
 
 	_three_d = new wxCheckBox (panel, wxID_ANY, _("3D"));
-	grid->Add (_three_d, wxGBPosition (r, 0), wxGBSpan (1, 2));
+	_video_grid->Add (_three_d, wxGBPosition (r, 0));
+	_three_d_warning = new Warning (panel);
+	_video_grid->Add (_three_d_warning->get(), wxGBPosition (r, 1));
 	++r;
 
-	add_label_to_sizer (grid, panel, _("Resolution"), true, wxGBPosition (r, 0));
+	add_label_to_sizer (_video_grid, panel, _("Resolution"), true, wxGBPosition (r, 0), wxGBSpan (1, 2));
 	_resolution = new wxChoice (panel, wxID_ANY);
-	grid->Add (_resolution, wxGBPosition (r, 1));
+	_video_grid->Add (_resolution, wxGBPosition (r, 2));
 	++r;
 
 	{
-		add_label_to_sizer (grid, panel, _("JPEG2000 bandwidth"), true, wxGBPosition (r, 0));
+		add_label_to_sizer (_video_grid, panel, _("JPEG2000 bandwidth"), true, wxGBPosition (r, 0));
+		_j2k_bandwidth_warning = new Warning (panel);
+		_video_grid->Add (_j2k_bandwidth_warning->get(), wxGBPosition (r, 1));
 		wxSizer* s = new wxBoxSizer (wxHORIZONTAL);
 		_j2k_bandwidth = new wxSpinCtrl (panel, wxID_ANY);
 		s->Add (_j2k_bandwidth, 1);
 		add_label_to_sizer (s, panel, _("Mbit/s"), false);
-		grid->Add (s, wxGBPosition (r, 1));
+		_video_grid->Add (s, wxGBPosition (r, 2));
 	}
 	++r;
 
@@ -742,16 +762,18 @@ DCPPanel::make_audio_panel ()
 	add_label_to_sizer (grid, panel, _("Channels"), true, wxGBPosition (r, 0));
 	_audio_channels = new wxChoice (panel, wxID_ANY);
 	setup_audio_channels_choice ();
-	grid->Add (_audio_channels, wxGBPosition (r, 1));
+	_audio_channels_warning = new Warning (panel);
+	grid->Add (_audio_channels_warning->get(), wxGBPosition (r, 1));
+	grid->Add (_audio_channels, wxGBPosition (r, 2));
 	++r;
 
-	add_label_to_sizer (grid, panel, _("Processor"), true, wxGBPosition (r, 0));
+	add_label_to_sizer (grid, panel, _("Processor"), true, wxGBPosition (r, 0), wxGBSpan (1, 2));
 	_audio_processor = new wxChoice (panel, wxID_ANY);
 	_audio_processor->Append (_("None"), new wxStringClientData (N_("none")));
 	BOOST_FOREACH (AudioProcessor const * ap, AudioProcessor::all ()) {
 		_audio_processor->Append (std_to_wx (ap->name ()), new wxStringClientData (std_to_wx (ap->id ())));
 	}
-	grid->Add (_audio_processor, wxGBPosition (r, 1));
+	grid->Add (_audio_processor, wxGBPosition (r, 2));
 	++r;
 
 	_show_audio = new wxButton (panel, wxID_ANY, _("Show audio..."));
@@ -817,4 +839,74 @@ DCPPanel::reel_length_changed ()
 	}
 
 	_film->set_reel_length (_reel_length->GetValue() * 1000000000LL);
+}
+
+void
+DCPPanel::setup_warnings ()
+{
+	if (!_film) {
+		_container_warning->disable ();
+		return;
+	}
+
+	ContentList content = _film->content ();
+
+	int flat_or_narrower = 0;
+	int scope = 0;
+	BOOST_FOREACH (shared_ptr<const Content> i, content) {
+		shared_ptr<const VideoContent> vc = dynamic_pointer_cast<const VideoContent> (i);
+		if (vc) {
+			Ratio const * r = vc->scale().ratio ();
+			if (r && r->id() == "239") {
+				++scope;
+			} else if (r && r->id() != "239" && r->id() != "full-frame") {
+				++flat_or_narrower;
+			}
+		}
+	}
+
+	_container_warning->disable ();
+	_frame_rate_warning->disable ();
+	_j2k_bandwidth_warning->disable ();
+	_three_d_warning->disable ();
+	_audio_channels_warning->disable ();
+	_standard_warning->disable ();
+
+	if (scope && !flat_or_narrower && _film->container()->id() == "185") {
+		_container_warning->enable (_("All of your content is in Scope (2.39:1) but your DCP's container is Flat (1.85:1).  This will letter-box your content inside a Flat (1.85:1) frame.  You may prefer to set the container to Scope (2.39:1)."));
+	}
+
+	if (!scope && flat_or_narrower && _film->container()->id() == "239") {
+		_container_warning->enable (_("All of your content is at 1.85:1 or narrower but your DCP's container is Scope (2.39:1).  This will pillar-box your content inside a Flat (1.85:1) frame.  You may prefer to set the container to Flat."));
+	}
+
+	if (_film->video_frame_rate() != 24 && _film->video_frame_rate() != 48) {
+		_frame_rate_warning->enable (wxString::Format (_("Your DCP frame rate (%d fps) may cause problems in a few (mostly older) projectors.  If possible, use 24 or 48 frames per second."), _film->video_frame_rate()));
+	}
+
+	if (_film->j2k_bandwidth() >= 245000000) {
+		_j2k_bandwidth_warning->enable (_("A few projectors have problems playing back very high bit-rate DCPs.  It is a good idea to drop the JPEG2000 bandwidth down to about 200Mbit/s; this is unlikely to have any visible effect on the image."));
+	}
+
+	int three_d = 0;
+	BOOST_FOREACH (shared_ptr<const Content> i, content) {
+		shared_ptr<const VideoContent> vc = dynamic_pointer_cast<const VideoContent> (i);
+		if (vc && vc->video_frame_type() != VIDEO_FRAME_TYPE_2D) {
+			++three_d;
+		}
+	}
+
+	if (three_d > 0 && !_film->three_d()) {
+		_three_d_warning->enable (_("You are using 3D content but your DCP is set to 2D.  Set the DCP to 3D if you want to play it back on a 3D system (e.g. Real-D, MasterImage etc.)"));
+	}
+
+	if (_film->audio_channels() < 6) {
+		_audio_channels_warning->enable (_("Your DCP has fewer than 6 audio channels.  This may cause problems on some projectors."));
+	}
+
+	if (_film->interop() && _film->video_frame_rate() != 24 && _film->video_frame_rate() != 48) {
+		_standard_warning->enable (_("You are set up for an Interop DCP at a frame rate which is not officially supported.  You are advised to make a SMPTE DCP instead."));
+	}
+
+	_video_grid->Layout ();
 }

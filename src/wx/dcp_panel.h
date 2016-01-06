@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2014 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2015 Carl Hetherington <cth@carlh.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 
 */
 
+#include <wx/bitmap.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
@@ -30,7 +31,11 @@ class wxChoice;
 class wxButton;
 class wxSpinCtrl;
 class wxSizer;
+class wxStaticBitmap;
+class wxWindow;
+class wxGridBagSizer;
 
+class Warning;
 class AudioDialog;
 
 class Film;
@@ -79,6 +84,7 @@ private:
 	void setup_container ();
 	void setup_dcp_name ();
 	void setup_audio_channels_choice ();
+	void setup_warnings ();
 
 	int minimum_allowed_audio_channels () const;
 
@@ -95,21 +101,27 @@ private:
 	wxTextCtrl* _name;
 	wxStaticText* _dcp_name;
 	wxCheckBox* _use_isdcf_name;
+	Warning* _container_warning;
 	wxChoice* _container;
 	wxStaticText* _container_size;
 	wxButton* _edit_isdcf_button;
 	wxButton* _copy_isdcf_name_button;
+	Warning* _j2k_bandwidth_warning;
  	wxSpinCtrl* _j2k_bandwidth;
+	Warning* _frame_rate_warning;
 	wxChoice* _dcp_content_type;
 	wxChoice* _frame_rate_choice;
 	wxSpinCtrl* _frame_rate_spin;
 	wxSizer* _frame_rate_sizer;
+	Warning* _audio_channels_warning;
 	wxChoice* _audio_channels;
 	wxChoice* _audio_processor;
 	wxButton* _show_audio;
 	wxButton* _best_frame_rate;
+	Warning* _three_d_warning;
 	wxCheckBox* _three_d;
 	wxChoice* _resolution;
+	Warning* _standard_warning;
 	wxChoice* _standard;
 	wxCheckBox* _signed;
 	wxCheckBox* _encrypted;
@@ -118,6 +130,8 @@ private:
 	wxChoice* _reel_type;
 	wxSpinCtrl* _reel_length;
 	wxCheckBox* _upload_after_make_dcp;
+
+	wxGridBagSizer* _video_grid;
 
 	AudioDialog* _audio_dialog;
 

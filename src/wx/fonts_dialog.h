@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2014-2015 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2014-2016 Carl Hetherington <cth@carlh.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 
 */
 
+#include "lib/font_files.h"
 #include <wx/listctrl.h>
 #include <wx/wx.h>
 #include <boost/shared_ptr.hpp>
@@ -24,6 +25,7 @@
 #include <boost/filesystem.hpp>
 
 class SubtitleContent;
+class Font;
 
 class FontsDialog : public wxDialog
 {
@@ -35,6 +37,7 @@ private:
 	void setup_sensitivity ();
 	void selection_changed ();
 	void edit_clicked ();
+	void set_variant (int n, boost::shared_ptr<Font> font, FontFiles::Variant variant);
 
 	boost::weak_ptr<SubtitleContent> _content;
 	wxListCtrl* _fonts;
