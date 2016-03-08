@@ -1,0 +1,3 @@
+Run hacks/setup_cuda
+run/poznan tries to convert a RGB test pattern to J2K with the Poznan encoder.
+
