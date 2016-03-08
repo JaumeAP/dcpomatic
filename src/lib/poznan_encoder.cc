@@ -71,7 +71,7 @@ PoznanEncoder::open_library (string library_name)
 {
 	/* XXX: need cross-platform implementation of dlopen etc. */
 
-	library_name = "libdcpomatic-" + library_name + ".so";
+	library_name = "lib" + library_name + "-cth.so";
 	void* lib = dlopen (library_name.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 	if (!lib) {
 		throw JPEG2000EncoderUnavailableException (name(), "could not find " + library_name + " (" + dlerror() + ")");
