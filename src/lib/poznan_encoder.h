@@ -18,8 +18,8 @@
 */
 
 #include "jpeg2000_encoder.h"
-#include <poznan/config/parameters.h>
-#include <poznan/types/image_types.h>
+#include <poznan-jpeg2k-cth/config/parameters.h>
+#include <poznan-jpeg2k-cth/types/image_types.h>
 #include <string>
 
 class PoznanEncoder : public JPEG2000Encoder
@@ -35,7 +35,7 @@ public:
 
 protected:
 
-	Data do_encode (
+	dcp::Data do_encode (
 		boost::shared_ptr<const dcp::OpenJPEGImage> input
 		);
 

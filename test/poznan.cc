@@ -7,6 +7,7 @@
 
 using std::vector;
 using boost::shared_ptr;
+using dcp::Data;
 
 int main ()
 {
@@ -14,7 +15,7 @@ int main ()
 
 	shared_ptr<JPEG2000Encoder> encoder = JPEG2000Encoder::from_id ("poznan");
 
-	shared_ptr<Image> rgb (new Image (PIX_FMT_RGB24, dcp::Size (1998, 1080), false));
+	shared_ptr<Image> rgb (new Image (AV_PIX_FMT_RGB24, dcp::Size (1998, 1080), false));
 
 	int const line_size = 1998 * 3;
 

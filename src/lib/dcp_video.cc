@@ -121,6 +121,8 @@ DCPVideo::convert_to_xyz (shared_ptr<const PlayerVideo> frame, dcp::NoteHandler 
 Data
 DCPVideo::encode_locally (dcp::NoteHandler note)
 {
+	shared_ptr<dcp::OpenJPEGImage> xyz = convert_to_xyz (_frame, note);
+
 	shared_ptr<JPEG2000Encoder> encoder;
 	if (Config::instance()->encoder ()) {
 		encoder = JPEG2000Encoder::from_id (Config::instance()->encoder().get ());

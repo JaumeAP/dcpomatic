@@ -28,6 +28,7 @@
 using std::vector;
 using std::string;
 using boost::shared_ptr;
+using dcp::Data;
 
 #define LOG_GENERAL(...) log()->log (String::compose (__VA_ARGS__), Log::TYPE_GENERAL);
 

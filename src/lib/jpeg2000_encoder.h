@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2015 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2015-2016 Carl Hetherington <cth@carlh.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
 #define DCPOMATIC_JPEG2000_ENCODER_H
 
 #include "types.h"
-#include "data.h"
 #include <dcp/types.h>
+#include <dcp/data.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/optional.hpp>
 #include <list>
@@ -46,7 +46,7 @@ public:
 
 	 *  @return Encoded JPEG2000 data.
 	 */
-	Data encode (
+	dcp::Data encode (
 		boost::shared_ptr<const dcp::OpenJPEGImage> input,
 		int bandwidth,
 		int frame_rate,
@@ -61,7 +61,7 @@ public:
 
 protected:
 
-	virtual Data do_encode (
+	virtual dcp::Data do_encode (
 		boost::shared_ptr<const dcp::OpenJPEGImage> input
 		) = 0;
 

@@ -19,10 +19,10 @@
 
 #include "poznan_encoder.h"
 #include "exceptions.h"
-#include "data.h"
 #include "raw_convert.h"
-#include <poznan/tier2/markers.h>
+#include <poznan-jpeg2k-cth/tier2/markers.h>
 #include <dcp/openjpeg_image.h>
+#include <dcp/data.h>
 #include <dlfcn.h>
 #include <thrust/system/cuda/error.h>
 
@@ -31,6 +31,7 @@
 using std::string;
 using std::cout;
 using boost::shared_ptr;
+using dcp::Data;
 
 PoznanEncoder::PoznanEncoder ()
 {

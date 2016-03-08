@@ -40,6 +40,7 @@
 #include "lib/raw_convert.h"
 #include "lib/cross.h"
 #include "lib/exceptions.h"
+#include "lib/jpeg2000_encoder.h"
 #include <dcp/exceptions.h>
 #include <dcp/certificate_chain.h>
 #include <wx/stdpaths.h>
@@ -232,7 +233,7 @@ private:
 		table->Add (bottom_table, wxGBPosition (r, 0), wxGBSpan (2, 2), wxEXPAND);
 		++r;
 
-		add_label_to_grid_bag_sizer (table, _panel, _("JPEG2000 encoder"), true, wxGBPosition (r, 0));
+		add_label_to_sizer (table, _panel, _("JPEG2000 encoder"), true, wxGBPosition (r, 0));
 		_encoder = new wxChoice (_panel, wxID_ANY);
 		BOOST_FOREACH (shared_ptr<JPEG2000Encoder> i, JPEG2000Encoder::all()) {
 			_encoder->Append (std_to_wx (i->name ()));
@@ -297,11 +298,9 @@ private:
 		checked_set (_check_for_test_updates, config->check_for_test_updates ());
 		checked_set (_issuer, config->dcp_issuer ());
 		checked_set (_creator, config->dcp_creator ());
-<<<<<<< 0f3c2864599f9e5a5ec001266b4aefb0205d1e1f
 		checked_set (_cinemas_file, config->cinemas_file());
 
 		setup_sensitivity ();
-=======
 
 		if (!config->encoder ()) {
 			checked_set (_encoder, 0);
@@ -313,7 +312,6 @@ private:
 				}
 			}
 		}
->>>>>>> Basic classes for different JPEG2000 encoders; config to choose one.
 	}
 
 	void setup_sensitivity ()
