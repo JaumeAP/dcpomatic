@@ -25,11 +25,14 @@
 #include <dcp/data.h>
 #include <dlfcn.h>
 #include <thrust/system/cuda/error.h>
+#include <cfloat>
 
 #include "i18n.h"
 
 using std::string;
 using std::cout;
+using std::min;
+using std::max;
 using boost::shared_ptr;
 using dcp::Data;
 
@@ -55,6 +58,7 @@ PoznanEncoder::PoznanEncoder ()
 	_encode_codestream = (void (*)(type_buffer *, type_image *)) dlsym (tier2, "encode_codestream");
 	_cuda_h_allocate_mem = (void (*)(void **, uint64_t)) dlsym (misc, "cuda_h_allocate_mem");
 	_cuda_memcpy_htd = (void (*)(void *, void *, uint64_t)) dlsym (misc, "cuda_memcpy_htd");
+	_cuda_memcpy_dth = (void (*)(void *, void *, uint64_t)) dlsym (misc, "cuda_memcpy_dth");
 	_cuda_h_free = (void (*)(void *)) dlsym (misc, "cuda_h_free");
 
 	if (
@@ -158,20 +162,47 @@ PoznanEncoder::do_encode (shared_ptr<const dcp::OpenJPEGImage> input)
 	for (int i = 0; i < 3; ++i) {
 		type_tile_comp* c = &tile->tile_comp[i];
 		c->tile_comp_no = i;
-		std::cout << "Tile comp " << i << ": " << c->width << "x" << c->height << "\n";
 		int const pixels = c->width * c->height;
 		_cuda_h_allocate_mem ((void **) &c->img_data, pixels * sizeof (type_data));
 		for (int j = 0; j < pixels; ++j) {
 			c->img_data[j] = float (input->data(i)[j]);
-			//c->img_data[j] = input->data(i)[j];
 		}
 		_cuda_memcpy_htd (c->img_data, c->img_data_d, pixels * sizeof (type_data));
 		_cuda_h_free (c->img_data);
 	}
 
+	for (int i = 0; i < 3; ++i) {
+		type_tile_comp* c = &tile->tile_comp[i];
+		int const pixels = c->width * c->height;
+		float* data = new float[pixels];
+		_cuda_memcpy_dth (c->img_data_d, data, pixels * sizeof (type_data));
+		float yuv_min = FLT_MAX;
+		float yuv_max = -FLT_MAX;
+		for (int j = 0; j < pixels; ++j) {
+			yuv_min = min (yuv_min, data[j]);
+			yuv_max = max (yuv_max, data[j]);
+		}
+		delete[] data;
+		printf("RGB component %d range %f to %f\n", i, yuv_min, yuv_max);
+	}
+
 	_color_coder_lossy (img);
 
-	std::cout << "Tile " << tile->width << "x" << tile->height << "\n";
+	for (int i = 0; i < 3; ++i) {
+		type_tile_comp* c = &tile->tile_comp[i];
+		int const pixels = c->width * c->height;
+		float* data = new float[pixels];
+		_cuda_memcpy_dth (c->img_data_d, data, pixels * sizeof (type_data));
+		float yuv_min = FLT_MAX;
+		float yuv_max = -FLT_MAX;
+		for (int j = 0; j < pixels; ++j) {
+			yuv_min = min (yuv_min, data[j]);
+			yuv_max = max (yuv_max, data[j]);
+		}
+		delete[] data;
+		printf("YCbCr component %d range %f to %f\n", i, yuv_min, yuv_max);
+	}
+
 	_fwt (tile);
 	_quantize_tile (tile);
 	_encode_tile (tile);
@@ -183,8 +214,7 @@ PoznanEncoder::do_encode (shared_ptr<const dcp::OpenJPEGImage> input)
 		throw EncodeError ("CUDA error");
 	}
 
-	std::cout << img->num_tiles << " tiles.\n";
-	std::cout << "got " << buffer.bytes_count << " bytes.\n";
+	cout << "Output " << buffer.bytes_count << " bytes.\n";
 	Data encoded (buffer.data, buffer.bytes_count);
 
 	free (buffer.data);

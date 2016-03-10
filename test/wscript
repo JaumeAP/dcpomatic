@@ -102,7 +102,7 @@ def build(bld):
 
     obj = bld(features='cxx cxxprogram')
     obj.name = 'poznan'
-    obj.uselib = 'DCP CUDA'
+    obj.uselib = 'DCP CUDA MAGICK BOOST_FILESYSTEM SNDFILE'
     obj.use = 'libdcpomatic2'
     obj.source = "poznan.cc"
     obj.target = 'poznan'
