@@ -1,3 +1,5 @@
 Run hacks/setup_cuda
 run/poznan tries to convert a RGB test pattern to J2K with the Poznan encoder.
 
+j2k_to_image -i poznan.j2k -o poznan.png -r 4 gives a clean image; compare with
+enc_dwt_after.bmp and the result is the same size as the first DWT-ed image.

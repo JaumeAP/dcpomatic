@@ -168,7 +168,7 @@ PoznanEncoder::do_encode (shared_ptr<const dcp::OpenJPEGImage> input)
 			c->img_data[j] = float (input->data(i)[j]);
 		}
 		_cuda_memcpy_htd (c->img_data, c->img_data_d, pixels * sizeof (type_data));
-		_cuda_h_free (c->img_data);
+//		_cuda_h_free (c->img_data);
 	}
 
 	for (int i = 0; i < 3; ++i) {
@@ -176,14 +176,14 @@ PoznanEncoder::do_encode (shared_ptr<const dcp::OpenJPEGImage> input)
 		int const pixels = c->width * c->height;
 		float* data = new float[pixels];
 		_cuda_memcpy_dth (c->img_data_d, data, pixels * sizeof (type_data));
-		float yuv_min = FLT_MAX;
-		float yuv_max = -FLT_MAX;
+		float rgb_min = FLT_MAX;
+		float rgb_max = -FLT_MAX;
 		for (int j = 0; j < pixels; ++j) {
-			yuv_min = min (yuv_min, data[j]);
-			yuv_max = max (yuv_max, data[j]);
+			rgb_min = min (rgb_min, data[j]);
+			rgb_max = max (rgb_max, data[j]);
 		}
 		delete[] data;
-		printf("RGB component %d range %f to %f\n", i, yuv_min, yuv_max);
+		printf("RGB component %d range %f to %f\n", i, rgb_min, rgb_max);
 	}
 
 	_color_coder_lossy (img);
@@ -191,20 +191,71 @@ PoznanEncoder::do_encode (shared_ptr<const dcp::OpenJPEGImage> input)
 	for (int i = 0; i < 3; ++i) {
 		type_tile_comp* c = &tile->tile_comp[i];
 		int const pixels = c->width * c->height;
-		float* data = new float[pixels];
-		_cuda_memcpy_dth (c->img_data_d, data, pixels * sizeof (type_data));
+		_cuda_memcpy_dth (c->img_data_d, c->img_data, pixels * sizeof (type_data));
+		for (int j = 0; j < pixels; ++j) {
+			c->img_data[j] = 0;
+		}
+		_cuda_memcpy_htd (c->img_data, c->img_data_d, pixels * sizeof (type_data));
 		float yuv_min = FLT_MAX;
 		float yuv_max = -FLT_MAX;
 		for (int j = 0; j < pixels; ++j) {
-			yuv_min = min (yuv_min, data[j]);
-			yuv_max = max (yuv_max, data[j]);
+			yuv_min = min (yuv_min, c->img_data[j]);
+			yuv_max = max (yuv_max, c->img_data[j]);
 		}
-		delete[] data;
+//		delete[] data;
 		printf("YCbCr component %d range %f to %f\n", i, yuv_min, yuv_max);
 	}
 
 	_fwt (tile);
 	_quantize_tile (tile);
+
+	int checked = 0;
+
+	for (int i = 0; i < 3; ++i) {
+		type_tile_comp* comp = &tile->tile_comp[i];
+		for (int j = 0; j < comp->num_rlvls; ++j) {
+			type_res_lvl* lvl = &comp->res_lvls[j];
+			for (int k = 0; k < lvl->num_subbands; ++k) {
+				type_subband* sb = &lvl->subbands[k];
+
+				printf("copying subband %d of %d; %d cblks of %d by %d\n", k, lvl->num_subbands, sb->num_cblks, comp->cblk_w, comp->cblk_h);
+				int32_t* data;
+				_cuda_h_allocate_mem ((void **) &data, sb->num_cblks * comp->cblk_w * comp->cblk_h * sizeof(int32_t));
+				_cuda_memcpy_dth (data, sb->cblks_data_d, sb->num_cblks * comp->cblk_w * comp->cblk_h * sizeof(int32_t));
+				for (int l = 0; l < (sb->num_cblks * comp->cblk_w * comp->cblk_h); ++l) {
+					if (data[l] != 0) {
+						printf("AWOOGA: %d\n", data[l]);
+					}
+					data[l] = 0;
+					++checked;
+				}
+				_cuda_memcpy_htd (sb->cblks_data_d, data, sb->num_cblks * comp->cblk_w * comp->cblk_h * sizeof(int32_t));
+				_cuda_h_free (data);
+
+#if 0
+				for (int l = 0; l < sb->num_cblks; ++l) {
+					type_codeblock* cb = &sb->cblks[l];
+					int32_t* data_h;
+					_cuda_h_allocate_mem ((void **) &data_h, cb->width * cb->height * sizeof (int32_t));
+					_cuda_memcpy_dth (data_h, cb->data_d, cb->width * cb->height * sizeof (int32_t));
+					for (int m = 0; m < cb->width * cb->height; ++m) {
+						if (data_h[m] != 0) {
+							printf("AWOOGA: %d\n", data_h[m]);
+						}
+						data_h[m] = 0xf0f0f0f0;
+						++checked;
+					}
+					_cuda_memcpy_htd (cb->data_d, data_h, cb->width * cb->height * sizeof (int32_t));
+					_cuda_h_free (data_h);
+				}
+#endif
+			}
+		}
+	}
+
+	printf ("checked %d\n", checked);
+
+	/* T1 encoder */
 	_encode_tile (tile);
 
 	type_buffer buffer;

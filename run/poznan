@@ -12,6 +12,13 @@ else
     build/test/poznan $*
 fi
 
+rm *.png
 j2k_dump -i openjpeg.j2k > openjpeg.dump
+j2k_to_image -i openjpeg.j2k -o openjpeg.png
 j2k_dump -i poznan.j2k > poznan.dump
+j2k_to_image -i poznan.j2k -o poznan.png
+j2k_to_image -i poznan.j2k -o poznan1.png -r 1
+j2k_to_image -i poznan.j2k -o poznan2.png -r 2
+j2k_to_image -i poznan.j2k -o poznan3.png -r 3
+j2k_to_image -i poznan.j2k -o poznan4.png -r 4
 diff -u openjpeg.dump poznan.dump
