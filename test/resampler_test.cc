@@ -27,7 +27,6 @@
 #include "lib/resampler.h"
 
 using std::pair;
-using std::cout;
 using boost::shared_ptr;
 
 static void
