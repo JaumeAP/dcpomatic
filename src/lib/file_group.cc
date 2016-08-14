@@ -28,7 +28,6 @@
 #include "cross.h"
 
 using std::vector;
-using std::cout;
 
 /** Construct a FileGroup with no files */
 FileGroup::FileGroup ()
