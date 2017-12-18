@@ -44,6 +44,7 @@
 #include <arpa/inet.h>
 #endif
 #include <fstream>
+#include <iostream>
 
 #include "i18n.h"
 
