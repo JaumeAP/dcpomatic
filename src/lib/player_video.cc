@@ -87,7 +87,7 @@ PlayerVideo::PlayerVideo (shared_ptr<cxml::Node> node, shared_ptr<Socket> socket
 	if (node->optional_number_child<int> ("SubtitleX")) {
 
 		shared_ptr<Image> image (
-			new Image (AV_PIX_FMT_BGRA, dcp::Size (node->number_child<int> ("SubtitleWidth"), node->number_child<int> ("SubtitleHeight")), true)
+			new Image (AV_PIX_FMT_BGRA, true, dcp::Size (node->number_child<int> ("SubtitleWidth"), node->number_child<int> ("SubtitleHeight")), true)
 			);
 
 		image->read_from_socket (socket);
@@ -111,7 +111,7 @@ PlayerVideo::set_subtitle (PositionImage image)
  *  @param fast true to be fast at the expense of quality.
  */
 shared_ptr<Image>
-PlayerVideo::image (dcp::NoteHandler note, function<AVPixelFormat (AVPixelFormat)> pixel_format, bool aligned, bool fast) const
+PlayerVideo::image (dcp::NoteHandler note, function<AVPixelFormat (AVPixelFormat)> pixel_format, bool full_range, bool aligned, bool fast) const
 {
 	pair<shared_ptr<Image>, int> prox = _in->image (optional<dcp::NoteHandler> (note), _inter_size);
 	shared_ptr<Image> im = prox.first;
@@ -150,7 +150,7 @@ PlayerVideo::image (dcp::NoteHandler note, function<AVPixelFormat (AVPixelFormat
 	}
 
 	shared_ptr<Image> out = im->crop_scale_window (
-		total_crop, _inter_size, _out_size, yuv_to_rgb, pixel_format (_in->pixel_format()), aligned, fast
+		total_crop, _inter_size, _out_size, yuv_to_rgb, pixel_format (_in->pixel_format()), full_range, aligned, fast
 		);
 
 	if (_subtitle) {

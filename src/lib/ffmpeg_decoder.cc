@@ -87,7 +87,7 @@ FFmpegDecoder::FFmpegDecoder (shared_ptr<const FFmpegContent> c, shared_ptr<Log>
 		video.reset (new VideoDecoder (this, c, log));
 		_pts_offset = pts_offset (c->ffmpeg_audio_streams(), c->first_video(), c->active_video_frame_rate());
 		/* It doesn't matter what size or pixel format this is, it just needs to be black */
-		_black_image.reset (new Image (AV_PIX_FMT_RGB24, dcp::Size (128, 128), true));
+		_black_image.reset (new Image (AV_PIX_FMT_RGB24, true, dcp::Size (128, 128), true));
 		_black_image->make_black ();
 	} else {
 		_pts_offset = ContentTime ();
@@ -498,6 +498,10 @@ FFmpegDecoder::decode_video_packet ()
 		return false;
 	}
 
+	if (_frame->color_range == AVCOL_RANGE_UNSPECIFIED) {
+		_frame->color_range = AVCOL_RANGE_JPEG;
+	}
+
 	boost::mutex::scoped_lock lm (_filter_graphs_mutex);
 
 	shared_ptr<VideoFilterGraph> graph;
@@ -605,7 +609,7 @@ FFmpegDecoder::decode_bitmap_subtitle (AVSubtitleRect const * rect, ContentTime 
 	/* Note BGRA is expressed little-endian, so the first byte in the word is B, second
 	   G, third R, fourth A.
 	*/
-	shared_ptr<Image> image (new Image (AV_PIX_FMT_BGRA, dcp::Size (rect->w, rect->h), true));
+	shared_ptr<Image> image (new Image (AV_PIX_FMT_BGRA, true, dcp::Size (rect->w, rect->h), true));
 
 #ifdef DCPOMATIC_HAVE_AVSUBTITLERECT_PICT
 	/* Start of the first line in the subtitle */

@@ -50,7 +50,7 @@ RawImageProxy::RawImageProxy (shared_ptr<cxml::Node> xml, shared_ptr<Socket> soc
 		xml->number_child<int> ("Width"), xml->number_child<int> ("Height")
 		);
 
-	_image.reset (new Image (static_cast<AVPixelFormat> (xml->number_child<int> ("PixelFormat")), size, true));
+	_image.reset (new Image (static_cast<AVPixelFormat> (xml->number_child<int>("PixelFormat")), xml->bool_child("FullRange"), size, true));
 	_image->read_from_socket (socket);
 }
 
@@ -67,6 +67,7 @@ RawImageProxy::add_metadata (xmlpp::Node* node) const
 	node->add_child("Width")->add_child_text (raw_convert<string> (_image->size().width));
 	node->add_child("Height")->add_child_text (raw_convert<string> (_image->size().height));
 	node->add_child("PixelFormat")->add_child_text (raw_convert<string> (static_cast<int> (_image->pixel_format ())));
+	node->add_child("FullRange")->add_child_text (_image->full_range() ? "1" : "0");
 }
 
 void

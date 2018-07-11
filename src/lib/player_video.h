@@ -63,7 +63,7 @@ public:
 	void set_subtitle (PositionImage);
 
 	void prepare ();
-	boost::shared_ptr<Image> image (dcp::NoteHandler note, boost::function<AVPixelFormat (AVPixelFormat)> pixel_format, bool aligned, bool fast) const;
+	boost::shared_ptr<Image> image (dcp::NoteHandler note, boost::function<AVPixelFormat (AVPixelFormat)> pixel_format, bool full_range, bool aligned, bool fast) const;
 
 	static AVPixelFormat always_rgb (AVPixelFormat);
 	static AVPixelFormat keep_xyz_or_rgb (AVPixelFormat);

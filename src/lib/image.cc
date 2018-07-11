@@ -121,7 +121,7 @@ Image::planes () const
  */
 shared_ptr<Image>
 Image::crop_scale_window (
-	Crop crop, dcp::Size inter_size, dcp::Size out_size, dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool out_aligned, bool fast
+	Crop crop, dcp::Size inter_size, dcp::Size out_size, dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool out_full_range, bool out_aligned, bool fast
 	) const
 {
 	/* Empirical testing suggests that sws_scale() will crash if
@@ -154,7 +154,7 @@ Image::crop_scale_window (
 	   To get around this, we ask Image to overallocate its buffers by the overrun.
 	*/
 
-	shared_ptr<Image> out (new Image (out_format, out_size, out_aligned, (out_size.width - inter_size.width) / 2));
+	shared_ptr<Image> out (new Image (out_format, out_full_range, out_size, out_aligned, (out_size.width - inter_size.width) / 2));
 	out->make_black ();
 
 	/* Size of the image after any crop */
@@ -179,8 +179,8 @@ Image::crop_scale_window (
 
 	sws_setColorspaceDetails (
 		scale_context,
-		sws_getCoefficients (lut[yuv_to_rgb]), 0,
-		sws_getCoefficients (lut[yuv_to_rgb]), 0,
+		sws_getCoefficients (lut[yuv_to_rgb]), _full_range,
+		sws_getCoefficients (lut[yuv_to_rgb]), out_full_range,
 		0, 1 << 16, 1 << 16
 		);
 
@@ -229,9 +229,9 @@ Image::crop_scale_window (
 }
 
 shared_ptr<Image>
-Image::convert_pixel_format (dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool out_aligned, bool fast) const
+Image::convert_pixel_format (dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool out_full_range, bool out_aligned, bool fast) const
 {
-	return scale(size(), yuv_to_rgb, out_format, out_aligned, fast);
+	return scale(size(), yuv_to_rgb, out_format, out_full_range, out_aligned, fast);
 }
 
 /** @param out_size Size to scale to.
@@ -242,14 +242,14 @@ Image::convert_pixel_format (dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format,
  *  fast bilinear rather than bicubic scaling.
  */
 shared_ptr<Image>
-Image::scale (dcp::Size out_size, dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool out_aligned, bool fast) const
+Image::scale (dcp::Size out_size, dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool out_full_range, bool out_aligned, bool fast) const
 {
 	/* Empirical testing suggests that sws_scale() will crash if
 	   the input image is not aligned.
 	*/
 	DCPOMATIC_ASSERT (aligned ());
 
-	shared_ptr<Image> scaled (new Image (out_format, out_size, out_aligned));
+	shared_ptr<Image> scaled (new Image (out_format, out_full_range, out_size, out_aligned));
 
 	struct SwsContext* scale_context = sws_getContext (
 		size().width, size().height, pixel_format(),
@@ -581,7 +581,7 @@ Image::alpha_blend (shared_ptr<const Image> other, Position<int> position)
 	}
 	case AV_PIX_FMT_YUV420P:
 	{
-		shared_ptr<Image> yuv = other->convert_pixel_format (dcp::YUV_TO_RGB_REC709, _pixel_format, false, false);
+		shared_ptr<Image> yuv = other->convert_pixel_format (dcp::YUV_TO_RGB_REC709, _pixel_format, _full_range, false, false);
 		dcp::Size const ts = size();
 		dcp::Size const os = yuv->size();
 		for (int ty = start_ty, oy = start_oy; ty < ts.height && oy < os.height; ++ty, ++oy) {
@@ -616,7 +616,7 @@ Image::alpha_blend (shared_ptr<const Image> other, Position<int> position)
 	}
 	case AV_PIX_FMT_YUV420P10:
 	{
-		shared_ptr<Image> yuv = other->convert_pixel_format (dcp::YUV_TO_RGB_REC709, _pixel_format, false, false);
+		shared_ptr<Image> yuv = other->convert_pixel_format (dcp::YUV_TO_RGB_REC709, _pixel_format, _full_range, false, false);
 		dcp::Size const ts = size();
 		dcp::Size const os = yuv->size();
 		for (int ty = start_ty, oy = start_oy; ty < ts.height && oy < os.height; ++ty, ++oy) {
@@ -651,7 +651,7 @@ Image::alpha_blend (shared_ptr<const Image> other, Position<int> position)
 	}
 	case AV_PIX_FMT_YUV422P10LE:
 	{
-		shared_ptr<Image> yuv = other->convert_pixel_format (dcp::YUV_TO_RGB_REC709, _pixel_format, false, false);
+		shared_ptr<Image> yuv = other->convert_pixel_format (dcp::YUV_TO_RGB_REC709, _pixel_format, _full_range, false, false);
 		dcp::Size const ts = size();
 		dcp::Size const os = yuv->size();
 		for (int ty = start_ty, oy = start_oy; ty < ts.height && oy < os.height; ++ty, ++oy) {
@@ -782,9 +782,10 @@ Image::bytes_per_pixel (int c) const
  *  @param aligned true to make each row of this image aligned to a 32-byte boundary.
  *  @param extra_pixels Amount of extra "run-off" memory to allocate at the end of each plane in pixels.
  */
-Image::Image (AVPixelFormat p, dcp::Size s, bool aligned, int extra_pixels)
+Image::Image (AVPixelFormat p, bool f, dcp::Size s, bool aligned, int extra_pixels)
 	: _size (s)
 	, _pixel_format (p)
+	, _full_range (f)
 	, _aligned (aligned)
 	, _extra_pixels (extra_pixels)
 {
@@ -829,6 +830,7 @@ Image::Image (Image const & other)
 	: boost::enable_shared_from_this<Image>(other)
 	, _size (other._size)
 	, _pixel_format (other._pixel_format)
+	, _full_range (other._full_range)
 	, _aligned (other._aligned)
 	, _extra_pixels (other._extra_pixels)
 {
@@ -865,11 +867,23 @@ Image::Image (AVFrame* frame)
 			q += frame->linesize[i];
 		}
 	}
+
+	switch (frame->color_range) {
+	case AVCOL_RANGE_MPEG:
+		_full_range = false;
+		break;
+	case AVCOL_RANGE_JPEG:
+		_full_range = true;
+		break;
+	default:
+		DCPOMATIC_ASSERT (false);
+	}
 }
 
 Image::Image (shared_ptr<const Image> other, bool aligned)
 	: _size (other->_size)
 	, _pixel_format (other->_pixel_format)
+	, _full_range (other->_full_range)
 	, _aligned (aligned)
 	, _extra_pixels (other->_extra_pixels)
 {
@@ -905,6 +919,7 @@ Image::swap (Image & other)
 {
 	std::swap (_size, other._size);
 	std::swap (_pixel_format, other._pixel_format);
+	std::swap (_full_range, other._full_range);
 
 	for (int i = 0; i < 4; ++i) {
 		std::swap (_data[i], other._data[i]);
@@ -974,7 +989,7 @@ merge (list<PositionImage> images)
 		all.extend (dcpomatic::Rect<int> (i->position, i->image->size().width, i->image->size().height));
 	}
 
-	shared_ptr<Image> merged (new Image (images.front().image->pixel_format (), dcp::Size (all.width, all.height), true));
+	shared_ptr<Image> merged (new Image (images.front().image->pixel_format(), images.front().image->full_range(), dcp::Size (all.width, all.height), true));
 	merged->make_transparent ();
 	for (list<PositionImage>::const_iterator i = images.begin(); i != images.end(); ++i) {
 		merged->alpha_blend (i->image, i->position - all.position());
@@ -986,7 +1001,7 @@ merge (list<PositionImage> images)
 bool
 operator== (Image const & a, Image const & b)
 {
-	if (a.planes() != b.planes() || a.pixel_format() != b.pixel_format() || a.aligned() != b.aligned()) {
+	if (a.planes() != b.planes() || a.pixel_format() != b.pixel_format() || a.full_range() != b.full_range() || a.aligned() != b.aligned()) {
 		return false;
 	}
 
@@ -1155,6 +1170,8 @@ Image::as_png () const
 #else
 		using namespace MagickLib;
 #endif
+
+	/* XXX: take full_range into account here */
 
 	string format;
 	switch (_pixel_format) {

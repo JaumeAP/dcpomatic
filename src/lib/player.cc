@@ -251,7 +251,7 @@ Player::set_video_container_size (dcp::Size s)
 
 	_video_container_size = s;
 
-	_black_image.reset (new Image (AV_PIX_FMT_RGB24, _video_container_size, true));
+	_black_image.reset (new Image (AV_PIX_FMT_RGB24, true,_video_container_size, true));
 	_black_image->make_black ();
 
 	Changed (PlayerProperty::VIDEO_CONTAINER_SIZE, false);
@@ -308,6 +308,7 @@ Player::transform_image_subtitles (list<ImageSubtitle> subs) const
 					scaled_size,
 					dcp::YUV_TO_RGB_REC601,
 					i->image->pixel_format (),
+					true,
 					true,
 					_fast
 					),

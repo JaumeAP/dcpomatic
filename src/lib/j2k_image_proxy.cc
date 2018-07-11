@@ -157,7 +157,7 @@ J2KImageProxy::image (optional<dcp::NoteHandler>, optional<dcp::Size> target_siz
 {
 	int const reduce = prepare (target_size);
 
-	shared_ptr<Image> image (new Image (_pixel_format, _decompressed->size(), true));
+	shared_ptr<Image> image (new Image (_pixel_format, true, _decompressed->size(), true));
 
 	/* Copy data in whatever format (sRGB or XYZ) into our Image; I'm assuming
 	   the data is 12-bit either way.

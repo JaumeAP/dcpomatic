@@ -41,7 +41,7 @@ class Socket;
 class Image : public boost::enable_shared_from_this<Image>
 {
 public:
-	Image (AVPixelFormat p, dcp::Size s, bool aligned, int extra_pixels = 0);
+	Image (AVPixelFormat p, bool full_range, dcp::Size s, bool aligned, int extra_pixels = 0);
 	explicit Image (AVFrame *);
 	explicit Image (Image const &);
 	Image (boost::shared_ptr<const Image>, bool);
@@ -60,10 +60,10 @@ public:
 	dcp::Size sample_size (int) const;
 	float bytes_per_pixel (int) const;
 
-	boost::shared_ptr<Image> convert_pixel_format (dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool aligned, bool fast) const;
-	boost::shared_ptr<Image> scale (dcp::Size out_size, dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool aligned, bool fast) const;
+	boost::shared_ptr<Image> convert_pixel_format (dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool out_full_range, bool aligned, bool fast) const;
+	boost::shared_ptr<Image> scale (dcp::Size out_size, dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool out_full_range, bool aligned, bool fast) const;
 	boost::shared_ptr<Image> crop_scale_window (
-		Crop crop, dcp::Size inter_size, dcp::Size out_size, dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool aligned, bool fast
+		Crop crop, dcp::Size inter_size, dcp::Size out_size, dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_format, bool out_full_range, bool out_aligned, bool fast
 		) const;
 
 	void make_black ();
@@ -77,6 +77,10 @@ public:
 
 	AVPixelFormat pixel_format () const {
 		return _pixel_format;
+	}
+
+	bool full_range () const {
+		return _full_range;
 	}
 
 	size_t memory_used () const;
@@ -95,6 +99,7 @@ private:
 
 	dcp::Size _size;
 	AVPixelFormat _pixel_format; ///< FFmpeg's way of describing the pixel format of this Image
+	bool _full_range;
 	uint8_t** _data; ///< array of pointers to components
 	int* _line_size; ///< array of sizes of the data in each line, in bytes (without any alignment padding bytes)
 	int* _stride; ///< array of strides for each line, in bytes (including any alignment padding bytes)

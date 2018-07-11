@@ -270,9 +270,11 @@ FFmpegEncoder::go ()
 void
 FFmpegEncoder::video (shared_ptr<PlayerVideo> video, DCPTime time)
 {
+	/* XXX: what should full_range be here? */
 	shared_ptr<Image> image = video->image (
 		bind (&Log::dcp_log, _film->log().get(), _1, _2),
 		bind (&force_pixel_format, _1, _pixel_format),
+		true,
 		true,
 		false
 		);
