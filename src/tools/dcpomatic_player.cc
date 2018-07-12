@@ -747,8 +747,14 @@ private:
 
 		signal_manager = new wxSignalManager (this);
 
-		PlayServer* server = new PlayServer (_frame);
-		new thread (boost::bind (&PlayServer::run, server));
+		try {
+			PlayServer* server = new PlayServer (_frame);
+			new thread (boost::bind (&PlayServer::run, server));
+		} catch (...) {
+			/* Never mind; perhaps another player is already running
+			   and listening for requests to play DCPs.
+			*/
+		}
 
 		if (!_dcp_to_load.empty() && boost::filesystem::is_directory (_dcp_to_load)) {
 			try {
