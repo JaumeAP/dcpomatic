@@ -20,7 +20,6 @@
 
 #include "nag_dialog.h"
 #include "wx_util.h"
-#include <wx/richtext/richtextctrl.h>
 #include <boost/foreach.hpp>
 
 using boost::shared_ptr;
