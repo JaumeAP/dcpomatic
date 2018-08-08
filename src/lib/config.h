@@ -27,6 +27,7 @@
 
 #include "isdcf_metadata.h"
 #include "types.h"
+#include "state.h"
 #include <dcp/name_format.h>
 #include <dcp/certificate_chain.h>
 #include <dcp/encrypted_kdm.h>
@@ -45,7 +46,7 @@ class DKDMGroup;
 /** @class Config
  *  @brief A singleton class holding configuration.
  */
-class Config : public boost::noncopyable
+class Config : public State
 {
 public:
 	/** @return number of threads which a master DoM should use for J2K encoding on the local machine */
@@ -801,12 +802,8 @@ public:
 	static bool have_existing (std::string);
 	static boost::filesystem::path config_file ();
 
-	/** If set, this overrides the standard path (in home, Library, AppData or wherever) for config.xml and cinemas.xml */
-	static boost::optional<boost::filesystem::path> override_path;
-
 private:
 	Config ();
-	static boost::filesystem::path path (std::string file, bool create_directories = true);
 	void read ();
 	void set_defaults ();
 	void set_kdm_email_to_default ();

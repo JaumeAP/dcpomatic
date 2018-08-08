@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2015 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2018 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -23,6 +23,7 @@
  */
 
 #include "transcode_job.h"
+#include "analytics.h"
 #include "dcp_encoder.h"
 #include "upload_job.h"
 #include "job_manager.h"
@@ -44,6 +45,7 @@ using std::fixed;
 using std::setprecision;
 using std::cout;
 using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 
 /** @param film Film to use */
 TranscodeJob::TranscodeJob (shared_ptr<const Film> film)
@@ -92,6 +94,11 @@ TranscodeJob::run ()
 		}
 
 		LOG_GENERAL (N_("Transcode job completed successfully: %1 fps"), fps);
+
+		if (dynamic_pointer_cast<DCPEncoder>(_encoder)) {
+			Analytics::instance()->successful_dcp_encode();
+		}
+
 		_encoder.reset ();
 
 		/* XXX: this shouldn't be here */

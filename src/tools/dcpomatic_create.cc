@@ -210,7 +210,7 @@ main (int argc, char* argv[])
 	}
 
 	if (config) {
-		Config::override_path = *config;
+		State::override_path = *config;
 	}
 
 	if (!content_ratio) {
