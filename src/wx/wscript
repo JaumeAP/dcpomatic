@@ -67,6 +67,7 @@ sources = """
           full_config_dialog.cc
           gain_calculator_dialog.cc
           hints_dialog.cc
+          html_dialog.cc
           job_view.cc
           job_view_dialog.cc
           job_manager_view.cc

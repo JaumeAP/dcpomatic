@@ -35,3 +35,4 @@ def build(bld):
         bld.install_files('${PREFIX}/share/dcpomatic2', 'select.png')
         bld.install_files('${PREFIX}/share/dcpomatic2', 'snap.png')
         bld.install_files('${PREFIX}/share/dcpomatic2', 'sequence.png')
+        bld.install_files('${PREFIX}/share/dcpomatic2', 'me.jpg')

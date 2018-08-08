@@ -45,10 +45,12 @@
 #include "wx/export_dialog.h"
 #include "wx/paste_dialog.h"
 #include "wx/focus_manager.h"
+#include "wx/html_dialog.h"
 #include "lib/film.h"
 #include "lib/config.h"
 #include "lib/util.h"
 #include "lib/video_content.h"
+#include "lib/analytics.h"
 #include "lib/content.h"
 #include "lib/version.h"
 #include "lib/signal_manager.h"
@@ -79,6 +81,7 @@
 #include <wx/cmdline.h>
 #include <wx/preferences.h>
 #include <wx/splash.h>
+#include <wx/wxhtml.h>
 #ifdef __WXMSW__
 #include <shellapi.h>
 #endif
@@ -276,6 +279,8 @@ public:
 
 		_config_changed_connection = Config::instance()->Changed.connect (boost::bind (&DOMFrame::config_changed, this, _1));
 		config_changed (Config::OTHER);
+
+		_analytics_message_connection = Analytics::instance()->Message.connect(boost::bind(&DOMFrame::analytics_message, this, _1, _2));
 
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::file_new, this),                ID_file_new);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::file_open, this),               ID_file_open);
@@ -1001,6 +1006,9 @@ private:
 		*/
 		_config_changed_connection.disconnect ();
 
+		/* Also stop hearing about analytics-related stuff */
+		_analytics_message_connection.disconnect ();
+
 		ev.Skip ();
 	}
 
@@ -1291,6 +1299,13 @@ private:
 		_film_viewer->forward_frame ();
 	}
 
+	void analytics_message (string title, string html)
+	{
+		HTMLDialog* d = new HTMLDialog(this, std_to_wx(title), std_to_wx(html));
+		d->ShowModal();
+		d->Destroy();
+	}
+
 	FilmEditor* _film_editor;
 	FilmViewer* _film_viewer;
 	VideoWaveformDialog* _video_waveform_dialog;
@@ -1305,6 +1320,7 @@ private:
 	int _history_position;
 	wxMenuItem* _history_separator;
 	boost::signals2::scoped_connection _config_changed_connection;
+	boost::signals2::scoped_connection _analytics_message_connection;
 	bool _update_news_requested;
 	shared_ptr<Content> _clipboard;
 };

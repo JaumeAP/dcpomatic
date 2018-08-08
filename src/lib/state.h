@@ -18,6 +18,9 @@
 
 */
 
+#ifndef DCPOMATIC_STATE_H
+#define DCPOMATIC_STATE_H
+
 #include <boost/noncopyable.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
@@ -34,3 +37,5 @@ public:
 protected:
 	static boost::filesystem::path path (std::string file, bool create_directories = true);
 };
+
+#endif

@@ -19,8 +19,10 @@
 */
 
 #include "state.h"
+#include "signaller.h"
+#include <boost/signals2.hpp>
 
-class Analytics : public State
+class Analytics : public State, public Signaller
 {
 public:
 	Analytics ();
@@ -29,6 +31,8 @@ public:
 
 	void write () const;
 	void read ();
+
+	boost::signals2::signal<void (std::string, std::string)> Message;
 
 	static Analytics* instance ();
 
