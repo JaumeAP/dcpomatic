@@ -35,6 +35,7 @@ public:
 	Event (cxml::ConstNodePtr node);
 
 	void set (std::string k, std::string v);
+	std::string get (std::string k) const;
 
 	void as_xml (xmlpp::Element* parent) const;
 	std::string dump () const;
@@ -61,8 +62,9 @@ public:
 private:
 	int successful_dcp_encodes () const;
 
-	/** Mutex to protect _events */
+	/** Mutex to protect _id and _events */
 	mutable boost::mutex _mutex;
+	std::string _id;
 	std::list<Event> _events;
 	static Analytics* _instance;
 	static int const _current_version;

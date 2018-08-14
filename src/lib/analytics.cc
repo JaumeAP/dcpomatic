@@ -22,6 +22,7 @@
 #include "exceptions.h"
 #include "job.h"
 #include <dcp/raw_convert.h>
+#include <dcp/util.h>
 #include <libcxml/cxml.h>
 #include <libxml++/libxml++.h>
 #include <boost/filesystem.hpp>
@@ -60,6 +61,16 @@ Event::set (string k, string v)
 	_data[k] = v;
 }
 
+string
+Event::get (string k) const
+{
+	map<string, string>::const_iterator i = _data.find (k);
+	if (i == _data.end()) {
+		return "";
+	}
+	return i->second;
+}
+
 void
 Event::as_xml (xmlpp::Element* parent) const
 {
@@ -82,6 +93,7 @@ Event::dump () const
 }
 
 Analytics::Analytics ()
+	: _id (dcp::make_uuid())
 {
 
 }
@@ -90,17 +102,20 @@ int
 Analytics::successful_dcp_encodes () const
 {
 	boost::mutex::scoped_lock lm (_mutex);
+	int n = 0;
 	BOOST_FOREACH (Event e, _events) {
-		std::cout << e.dump() << "\n";
+		if (e.get("type") == "job_state" && e.get("json_name") == "transcode" && e.get("status") == "finished_ok") {
+			++n;
+		}
 	}
-	return 0;
+	return n;
 }
 
 void
 Analytics::job_state_changed (shared_ptr<Job> job)
 {
 	Event ev;
-	ev.set ("type", "job-state");
+	ev.set ("type", "job_state");
 	ev.set ("json_name", job->json_name());
 	ev.set ("sub_name", job->sub_name());
 	ev.set ("error-summary", job->error_summary());
@@ -152,6 +167,7 @@ Analytics::write () const
 
 	root->add_child("Version")->add_child_text(raw_convert<string>(_current_version));
 	boost::mutex::scoped_lock lm (_mutex);
+	root->add_child("Id")->add_child_text(_id);
 	BOOST_FOREACH (Event e, _events) {
 		e.as_xml (root->add_child("Event"));
 	}
@@ -172,6 +188,7 @@ try
 	cxml::Document f ("Analytics");
 	f.read_file (path("analytics.xml"));
 	boost::mutex::scoped_lock lm (_mutex);
+	_id = f.string_child("Id");
 	BOOST_FOREACH (cxml::ConstNodePtr i, f.node_children("Event")) {
 		_events.push_back (Event(i));
 	}
