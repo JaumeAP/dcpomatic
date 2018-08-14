@@ -1433,6 +1433,8 @@ private:
 			UpdateChecker::instance()->run ();
 		}
 
+		Analytics::instance()->start ();
+
 		return true;
 	}
 	catch (exception& e)

@@ -21,9 +21,11 @@
 #include "analytics.h"
 #include "exceptions.h"
 #include "job.h"
+#include "cross.h"
 #include <dcp/raw_convert.h>
 #include <dcp/util.h>
 #include <libcxml/cxml.h>
+#include <curl/curl.h>
 #include <libxml++/libxml++.h>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
@@ -94,8 +96,74 @@ Event::dump () const
 
 Analytics::Analytics ()
 	: _id (dcp::make_uuid())
+	, _thread (0)
 {
 
+}
+
+Analytics::~Analytics ()
+{
+	if (!_thread) {
+		return;
+	}
+
+	_thread->interrupt();
+	if (_thread->joinable()) {
+		try {
+			_thread->join();
+		} catch (...) {
+			/* Too late to do anything about this */
+		}
+	}
+
+	delete _thread;
+}
+
+void
+Analytics::start ()
+{
+	_thread = new boost::thread (boost::bind(&Analytics::thread, this));
+#ifdef DCPOMATIC_LINUX
+	pthread_setname_np (_thread->native_handle(), "update-checker");
+#endif
+}
+
+void
+Analytics::thread ()
+try
+{
+	while (true) {
+
+		{
+			boost::mutex::scoped_lock lm (_mutex);
+			if (_events.empty ()) {
+				continue;
+			}
+
+			CURL* curl = curl_easy_init ();
+			if (!curl) {
+				continue;
+			}
+
+			curl_easy_setopt (curl, CURLOPT_URL, "https://dcpomatic.com/analytics");
+			xmlpp::Document doc;
+			xmlpp_document (doc);
+			curl_easy_setopt (curl, CURLOPT_POST, 1);
+			curl_easy_setopt (curl, CURLOPT_COPYPOSTFIELDS, doc.write_to_string().c_str());
+			CURLcode res = curl_easy_perform (curl);
+			if (res == CURLE_OK) {
+				_events.clear ();
+			}
+			curl_easy_cleanup (curl);
+			write ();
+
+		}
+
+		dcpomatic_sleep (60);
+	}
+}
+catch (...) {
+	/* Never mind */
 }
 
 int
@@ -125,9 +193,8 @@ Analytics::job_state_changed (shared_ptr<Job> job)
 	{
 		boost::mutex::scoped_lock lm (_mutex);
 		_events.push_back (ev);
+		write ();
 	}
-
-	write ();
 
 	if (successful_dcp_encodes() == 3) {
 		emit (
@@ -159,20 +226,26 @@ Analytics::job_state_changed (shared_ptr<Job> job)
 	}
 }
 
+/** Must be called with a lock held on _mutex*/
 void
-Analytics::write () const
+Analytics::xmlpp_document (xmlpp::Document& doc) const
 {
-	xmlpp::Document doc;
 	xmlpp::Element* root = doc.create_root_node ("Analytics");
 
 	root->add_child("Version")->add_child_text(raw_convert<string>(_current_version));
-	boost::mutex::scoped_lock lm (_mutex);
 	root->add_child("Id")->add_child_text(_id);
 	BOOST_FOREACH (Event e, _events) {
 		e.as_xml (root->add_child("Event"));
 	}
+}
 
+/** Must be called with a lock held on _mutex */
+void
+Analytics::write () const
+{
 	try {
+		xmlpp::Document doc;
+		xmlpp_document (doc);
 		doc.write_to_file_formatted(path("analytics.xml").string());
 	} catch (xmlpp::exception& e) {
 		string s = e.what ();

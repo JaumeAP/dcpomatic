@@ -49,11 +49,11 @@ class Analytics : public State, public Signaller
 {
 public:
 	Analytics ();
+	~Analytics ();
+
+	void start ();
 
 	void job_state_changed (boost::shared_ptr<Job> job);
-
-	void write () const;
-	void read ();
 
 	boost::signals2::signal<void (std::string, std::string)> Message;
 
@@ -61,11 +61,16 @@ public:
 
 private:
 	int successful_dcp_encodes () const;
+	void xmlpp_document (xmlpp::Document &) const;
+	void write () const;
+	void read ();
+	void thread ();
 
 	/** Mutex to protect _id and _events */
 	mutable boost::mutex _mutex;
 	std::string _id;
 	std::list<Event> _events;
+	boost::thread* _thread;
 	static Analytics* _instance;
 	static int const _current_version;
 };
