@@ -28,6 +28,7 @@
 class State : public boost::noncopyable
 {
 public:
+	virtual ~State() {}
 	virtual void read () = 0;
 	virtual void write () const = 0;
 
