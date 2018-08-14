@@ -286,11 +286,14 @@ Job::set_state (State s)
 			finished = true;
 			_sub_name.clear ();
 		}
+
 	}
 
 	if (finished) {
 		emit (boost::bind (boost::ref (Finished)));
 	}
+
+	Analytics::instance()->job_state_changed (this);
 }
 
 /** @return DCPTime (in seconds) that this sub-job has been running */

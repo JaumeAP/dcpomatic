@@ -22,12 +22,28 @@
 #include "signaller.h"
 #include <boost/signals2.hpp>
 
+class Event
+{
+public:
+	Event ();
+	Event (cxml::ConstNodePtr node);
+
+	void set (std::string k, std::string v);
+
+	void as_xml (cxml::NodePtr parent) const;
+	std::string dump () const;
+
+private:
+	struct timeval _time;
+	std::map<std::string k, std::string v) _data;
+};
+
 class Analytics : public State, public Signaller
 {
 public:
 	Analytics ();
 
-	void successful_dcp_encode ();
+	void job_state_changed (boost::shared_ptr<Job> job);
 
 	void write () const;
 	void read ();
@@ -37,8 +53,9 @@ public:
 	static Analytics* instance ();
 
 private:
-	int _successful_dcp_encodes;
-
+	/** Mutex to protect _events */
+	boost::mutex _mutex;
+	std::list<Event> _events;
 	static Analytics* _instance;
 	static int const _current_version;
 };

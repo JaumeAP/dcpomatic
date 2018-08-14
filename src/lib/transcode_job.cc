@@ -23,7 +23,6 @@
  */
 
 #include "transcode_job.h"
-#include "analytics.h"
 #include "dcp_encoder.h"
 #include "upload_job.h"
 #include "job_manager.h"
@@ -94,10 +93,6 @@ TranscodeJob::run ()
 		}
 
 		LOG_GENERAL (N_("Transcode job completed successfully: %1 fps"), fps);
-
-		if (dynamic_pointer_cast<DCPEncoder>(_encoder)) {
-			Analytics::instance()->successful_dcp_encode();
-		}
 
 		_encoder.reset ();
 
