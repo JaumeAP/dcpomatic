@@ -20,20 +20,30 @@
 
 #include "analytics.h"
 #include "exceptions.h"
+#include "job.h"
 #include <dcp/raw_convert.h>
 #include <libcxml/cxml.h>
 #include <libxml++/libxml++.h>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+#include <iostream>
 
 #include "i18n.h"
 
 using std::string;
+using std::map;
 using dcp::raw_convert;
 using boost::algorithm::trim;
+using boost::shared_ptr;
 
 Analytics* Analytics::_instance;
 int const Analytics::_current_version = 1;
+
+Event::Event ()
+{
+	gettimeofday (&_time, 0);
+}
 
 Event::Event (cxml::ConstNodePtr node)
 {
@@ -51,13 +61,24 @@ Event::set (string k, string v)
 }
 
 void
-Event::as_xml (cxml::NodePtr parent)
+Event::as_xml (xmlpp::Element* parent) const
 {
 	/* It would be nice if this had timezone */
-	parent->add_child("Time")->add_child_text(raw_convert<int64_t>(_time.tv_sec));
+	parent->add_child("Time")->add_child_text(raw_convert<string>(_time.tv_sec));
 	for (map<string, string>::const_iterator i = _data.begin(); i != _data.end(); ++i) {
 		parent->add_child(i->first)->add_child_text(i->second);
 	}
+}
+
+string
+Event::dump () const
+{
+	string d;
+	d += raw_convert<string>(_time.tv_sec) + "\n";
+	for (map<string, string>::const_iterator i = _data.begin(); i != _data.end(); ++i) {
+		d += i->first + ": " + i->second + "\n";
+	}
+	return d;
 }
 
 Analytics::Analytics ()
@@ -70,8 +91,9 @@ Analytics::successful_dcp_encodes () const
 {
 	boost::mutex::scoped_lock lm (_mutex);
 	BOOST_FOREACH (Event e, _events) {
-		cout << e.dump() << "\n";
+		std::cout << e.dump() << "\n";
 	}
+	return 0;
 }
 
 void

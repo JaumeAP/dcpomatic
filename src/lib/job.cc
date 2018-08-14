@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2016 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2018 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -28,6 +28,7 @@
 #include "exceptions.h"
 #include "film.h"
 #include "log.h"
+#include "analytics.h"
 #include "compose.hpp"
 #include <dcp/exceptions.h>
 #include <sub/exceptions.h>
@@ -293,7 +294,7 @@ Job::set_state (State s)
 		emit (boost::bind (boost::ref (Finished)));
 	}
 
-	Analytics::instance()->job_state_changed (this);
+	Analytics::instance()->job_state_changed (shared_from_this());
 }
 
 /** @return DCPTime (in seconds) that this sub-job has been running */

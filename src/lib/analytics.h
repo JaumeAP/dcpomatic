@@ -20,7 +20,13 @@
 
 #include "state.h"
 #include "signaller.h"
+#include <libcxml/cxml.h>
+#include <libxml++/libxml++.h>
 #include <boost/signals2.hpp>
+#include <string>
+#include <map>
+
+class Job;
 
 class Event
 {
@@ -30,12 +36,12 @@ public:
 
 	void set (std::string k, std::string v);
 
-	void as_xml (cxml::NodePtr parent) const;
+	void as_xml (xmlpp::Element* parent) const;
 	std::string dump () const;
 
 private:
 	struct timeval _time;
-	std::map<std::string k, std::string v) _data;
+	std::map<std::string, std::string> _data;
 };
 
 class Analytics : public State, public Signaller
@@ -53,8 +59,10 @@ public:
 	static Analytics* instance ();
 
 private:
+	int successful_dcp_encodes () const;
+
 	/** Mutex to protect _events */
-	boost::mutex _mutex;
+	mutable boost::mutex _mutex;
 	std::list<Event> _events;
 	static Analytics* _instance;
 	static int const _current_version;
