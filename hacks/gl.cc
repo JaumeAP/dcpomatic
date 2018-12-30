@@ -1,6 +1,9 @@
 #include <wx/wx.h>
 #include <wx/glcanvas.h>
 #include <boost/bind.hpp>
+#include <iostream>
+
+using std::cout;
 
 class GLView : public wxGLCanvas
 {
@@ -45,10 +48,31 @@ void GLView::paint (wxPaintEvent &)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	//create test checker image
-	unsigned char texDat[64];
-	for (int i = 0; i < 64; ++i)
-		texDat[i] = ((i + (i / 8)) % 2) * 128 + 127;
+	int const width = 1998;
+	int const height = 1080;
+	unsigned char image[width * height * 3];
+	unsigned char* p = image;
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			if (((y / 16) % 3) == 0) {
+				*p++ = char(x * 256 / width);
+			} else {
+				*p++ = 0;
+			}
+			if (((y / 16) % 3) == 1) {
+				*p++ = char(x * 256 / width);
+			} else {
+				*p++ = 0;
+			}
+			if (((y / 16) % 3) == 2) {
+				*p++ = char(x * 256 / width);
+			} else {
+				*p++ = 0;
+			}
+		}
+	}
+
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 	//upload to GPU texture
 	GLuint tex;
@@ -56,23 +80,33 @@ void GLView::paint (wxPaintEvent &)
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 8, 8, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, texDat);
+	GLenum e = glGetError ();
+	if (e != GL_NO_ERROR) {
+		cout << "something else failed " << e << "\n";
+	}
+	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	e = glGetError ();
+	if (e != GL_NO_ERROR) {
+		cout << "glTexImage2D failed " << e << " ";
+		if (e == GL_INVALID_VALUE) {
+			cout << "invalid value\n";
+		} else if (e == GL_INVALID_ENUM) {
+			cout << "invalid enum\n";
+		} else {
+			cout << "unknown\n";
+		}
+	}
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	//match projection to window resolution (could be in reshape callback)
-//    glMatrixMode(GL_PROJECTION);
-//    glOrtho(0, 800, 0, 600, -1, 1);
-//    glMatrixMode(GL_MODELVIEW);
 
 	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3f(1, 1, 1);
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glEnable(GL_TEXTURE_2D);
 	glBegin(GL_QUADS);
-	glTexCoord2i(0, 0); glVertex2f(0, 0);
-	glTexCoord2i(0, 1); glVertex2f(0, 100);
-	glTexCoord2i(1, 1); glVertex2f(100, 100);
-	glTexCoord2i(1, 0); glVertex2f(100, 0);
+	glTexCoord2i(0, 0); glVertex2i(0, 0);
+	glTexCoord2i(0, 1); glVertex2i(0, height);
+	glTexCoord2i(1, 1); glVertex2i(width, height);
+	glTexCoord2i(1, 0); glVertex2i(width, 0);
 	glEnd();
 	glDisable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
