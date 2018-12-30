@@ -1,2 +1,1 @@
-g++ -o gl gl.cc `wx-config --cflags --libs` -lGL -lGL -lwx_gtk2u_gl-3.0
-
+g++ -o gl gl.cc `wx-config --cflags --libs --gl-libs` -lGL
