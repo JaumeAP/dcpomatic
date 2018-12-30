@@ -6,25 +6,44 @@ class GLView : public wxGLCanvas
 {
 public:
 	GLView (wxFrame* parent);
+	~GLView ();
 
 private:
 	void paint (wxPaintEvent& event);
-        void Render();
+
+	wxGLContext* _context;
 };
 
 GLView::GLView(wxFrame *parent)
-	: wxGLCanvas(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("GLCanvas"))
+	: wxGLCanvas (parent, wxID_ANY, 0)
 {
+	_context = new wxGLContext (this);
 	Bind (wxEVT_PAINT, boost::bind(&GLView::paint, this, _1));
+}
+
+GLView::~GLView ()
+{
+	delete _context;
 }
 
 void GLView::paint (wxPaintEvent &)
 {
-	SetCurrent();
-	wxPaintDC(this);
-	glClearColor(0.0, 0.0, 0.0, 0.0);
+	SetCurrent (*_context);
+	wxPaintDC (this);
 	glClear(GL_COLOR_BUFFER_BIT);
-	glViewport(0, 0, (GLint)GetSize().x, (GLint)GetSize().y);
+
+	glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glViewport (0, 0, GetSize().x, GetSize().y);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	glOrtho (0, GetSize().x, GetSize().y, 0, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
 	//create test checker image
 	unsigned char texDat[64];
@@ -50,10 +69,10 @@ void GLView::paint (wxPaintEvent &)
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glEnable(GL_TEXTURE_2D);
 	glBegin(GL_QUADS);
-	glTexCoord2i(0, 0); glVertex2f(-0.5, -0.5);
-	glTexCoord2i(0, 1); glVertex2f(-0.5, 0.5);
-	glTexCoord2i(1, 1); glVertex2f(0.5, 0.5);
-	glTexCoord2i(1, 0); glVertex2f(0.5, -0.5);
+	glTexCoord2i(0, 0); glVertex2f(0, 0);
+	glTexCoord2i(0, 1); glVertex2f(0, 100);
+	glTexCoord2i(1, 1); glVertex2f(100, 100);
+	glTexCoord2i(1, 0); glVertex2f(100, 0);
 	glEnd();
 	glDisable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
