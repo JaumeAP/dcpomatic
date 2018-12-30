@@ -29,6 +29,23 @@ GLView::~GLView ()
 	delete _context;
 }
 
+static void
+check_gl_error (char const * last)
+{
+	GLenum const e = glGetError ();
+	if (e != GL_NO_ERROR) {
+		cout << last << " failed " << e << " (";
+		if (e == GL_INVALID_VALUE) {
+			cout << "invalid value";
+		} else if (e == GL_INVALID_ENUM) {
+			cout << "invalid enum";
+		} else {
+			cout << "unknown";
+		}
+		cout << ")\n";
+	}
+}
+
 void GLView::paint (wxPaintEvent &)
 {
 	SetCurrent (*_context);
@@ -80,22 +97,9 @@ void GLView::paint (wxPaintEvent &)
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	GLenum e = glGetError ();
-	if (e != GL_NO_ERROR) {
-		cout << "something else failed " << e << "\n";
-	}
+	check_gl_error ("glTexParameteri");
 	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	e = glGetError ();
-	if (e != GL_NO_ERROR) {
-		cout << "glTexImage2D failed " << e << " ";
-		if (e == GL_INVALID_VALUE) {
-			cout << "invalid value\n";
-		} else if (e == GL_INVALID_ENUM) {
-			cout << "invalid enum\n";
-		} else {
-			cout << "unknown\n";
-		}
-	}
+	check_gl_error ("glTexImage2D");
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glClear(GL_COLOR_BUFFER_BIT);
