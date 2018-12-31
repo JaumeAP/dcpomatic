@@ -13,6 +13,7 @@ public:
 
 private:
 	void paint (wxPaintEvent& event);
+	void sized ();
 
 	wxGLContext* _context;
 };
@@ -22,6 +23,7 @@ GLView::GLView(wxFrame *parent)
 {
 	_context = new wxGLContext (this);
 	Bind (wxEVT_PAINT, boost::bind(&GLView::paint, this, _1));
+	Bind (wxEVT_SIZE, boost::bind(&GLView::sized, this));
 }
 
 GLView::~GLView ()
@@ -46,7 +48,20 @@ check_gl_error (char const * last)
 	}
 }
 
-void GLView::paint (wxPaintEvent &)
+void
+GLView::sized ()
+{
+	glViewport (0, 0, GetSize().x, GetSize().y);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	glOrtho (0, GetSize().x, GetSize().y, 0, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
+
+void
+GLView::paint (wxPaintEvent &)
 {
 	SetCurrent (*_context);
 	wxPaintDC (this);
@@ -56,14 +71,6 @@ void GLView::paint (wxPaintEvent &)
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glViewport (0, 0, GetSize().x, GetSize().y);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	glOrtho (0, GetSize().x, GetSize().y, 0, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
 
 	int const width = 1998;
 	int const height = 1080;
