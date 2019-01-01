@@ -70,6 +70,7 @@ sources = """
           full_config_dialog.cc
           gain_calculator_dialog.cc
           gdc_certificate_panel.cc
+          gl_view.cc
           hints_dialog.cc
           html_dialog.cc
           initial_setup_dialog.cc
@@ -156,7 +157,7 @@ def configure(conf):
         conf.check_cfg(msg='Checking for wxWidgets using gtk2-unicode-3.0',
                        package='',
                        path=wx_config,
-                       args='--cppflags --cxxflags --libs %s' % wx_libs,
+                       args='--cppflags --cxxflags --libs %s --gl-libs' % wx_libs,
                        uselib_store='WXWIDGETS',
                        mandatory=True)
     except:
@@ -165,7 +166,7 @@ def configure(conf):
             conf.check_cfg(msg='Checking for wxWidgets using wx-config-3.0-gtk2',
                            package='',
                            path=wx_config,
-                           args='--cppflags --cxxflags --libs %s' % wx_libs,
+                           args='--cppflags --cxxflags --libs %s --gl-libs' % wx_libs,
                            uselib_store='WXWIDGETS',
                            mandatory=True)
         except:
@@ -173,7 +174,7 @@ def configure(conf):
             conf.check_cfg(msg='Checking for wxWidgets using wx-config',
                            package='',
                            path=wx_config,
-                           args='--cppflags --cxxflags --libs %s' % wx_libs,
+                           args='--cppflags --cxxflags --libs %s --gl-libs' % wx_libs,
                            uselib_store='WXWIDGETS',
                            mandatory=True)
 

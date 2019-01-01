@@ -341,7 +341,7 @@ public:
 		JobManagerView* job_manager_view = new JobManagerView (overall_panel, false);
 
 		wxBoxSizer* right_sizer = new wxBoxSizer (wxVERTICAL);
-		right_sizer->Add (_film_viewer->panel(), 2, wxEXPAND | wxALL, 6);
+		right_sizer->Add (_film_viewer->window(), 2, wxEXPAND | wxALL, 6);
 		right_sizer->Add (_controls, 0, wxEXPAND | wxALL, 6);
 		right_sizer->Add (job_manager_view, 1, wxEXPAND | wxALL, 6);
 

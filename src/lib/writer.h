@@ -36,10 +36,13 @@ namespace dcp {
 	class Data;
 }
 
+namespace dcpomatic {
+	class Font;
+}
+
 class Film;
 class AudioBuffers;
 class Job;
-class Font;
 class ReferencedReelAsset;
 class ReelWriter;
 
@@ -106,7 +109,7 @@ public:
 	void repeat (Frame, Eyes);
 	void write (boost::shared_ptr<const AudioBuffers>, dcpomatic::DCPTime time);
 	void write (PlayerText text, TextType type, boost::optional<DCPTextTrack>, dcpomatic::DCPTimePeriod period);
-	void write (std::list<boost::shared_ptr<Font> > fonts);
+	void write (std::list<boost::shared_ptr<dcpomatic::Font> > fonts);
 	void write (ReferencedReelAsset asset);
 	void finish ();
 
@@ -163,5 +166,5 @@ private:
 
 	std::list<ReferencedReelAsset> _reel_assets;
 
-	std::list<boost::shared_ptr<Font> > _fonts;
+	std::list<boost::shared_ptr<dcpomatic::Font> > _fonts;
 };

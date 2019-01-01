@@ -23,7 +23,10 @@
 #include <dcp/name_format.h>
 #include <boost/filesystem.hpp>
 
-class Screen;
+namespace dcpomatic {
+	class Screen;
+}
+
 class CinemaKDMs;
 class Log;
 

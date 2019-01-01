@@ -77,7 +77,7 @@ rtaudio_callback (void* out, void *, unsigned int frames, double, RtAudioStreamS
 }
 
 FilmViewer::FilmViewer (wxWindow* p)
-	: _panel (new wxPanel (p))
+	: _gl_view (new GLView (p))
 	, _coalesce_player_changes (false)
 	, _audio (DCPOMATIC_RTAUDIO_API)
 	, _audio_channels (0)
@@ -96,15 +96,6 @@ FilmViewer::FilmViewer (wxWindow* p)
 	, _state_timer ("viewer")
 	, _gets (0)
 {
-#ifndef __WXOSX__
-	_panel->SetDoubleBuffered (true);
-#endif
-
-	_panel->SetBackgroundStyle (wxBG_STYLE_PAINT);
-	_panel->SetBackgroundColour (*wxBLACK);
-
-	_panel->Bind (wxEVT_PAINT, boost::bind (&FilmViewer::paint_panel, this));
-	_panel->Bind (wxEVT_SIZE,  boost::bind (&FilmViewer::panel_sized, this, _1));
 	_timer.Bind  (wxEVT_TIMER, boost::bind (&FilmViewer::timer, this));
 
 	set_film (shared_ptr<Film> ());
@@ -147,8 +138,8 @@ FilmViewer::set_film (shared_ptr<Film> film)
 		if (_dcp_decode_reduction) {
 			_player->set_dcp_decode_reduction (_dcp_decode_reduction);
 		}
-	} catch (bad_alloc &) {
-		error_dialog (_panel, _("There is not enough free memory to do that."));
+	} catch (bad_alloc) {
+		error_dialog (_gl_view, _("There is not enough free memory to do that."));
 		_film.reset ();
 		return;
 	}
@@ -214,10 +205,7 @@ FilmViewer::recreate_butler ()
 void
 FilmViewer::refresh_panel ()
 {
-	_state_timer.set ("refresh-panel");
-	_panel->Refresh ();
-	_panel->Update ();
-	_state_timer.unset ();
+	/* XXX */
 }
 
 void
@@ -326,6 +314,8 @@ bool
 #ifdef DCPOMATIC_VARIANT_SWAROOP
 FilmViewer::maybe_draw_background_image (wxPaintDC& dc)
 {
+#ifdef DCPOMATIC_VARIANT_SWAROOP
+	XXX
 	optional<boost::filesystem::path> bg = Config::instance()->player_background_image();
 	if (bg) {
 		wxImage image (std_to_wx(bg->string()));
@@ -343,6 +333,8 @@ FilmViewer::maybe_draw_background_image (wxPaintDC &)
 }
 #endif
 
+#if 0
+XXX
 void
 FilmViewer::paint_panel ()
 {
@@ -417,6 +409,7 @@ FilmViewer::paint_panel ()
 
 	_state_timer.unset ();
 }
+#endif
 
 void
 FilmViewer::set_outline_content (bool o)
@@ -432,6 +425,8 @@ FilmViewer::set_eyes (Eyes e)
 	slow_refresh ();
 }
 
+#if 0
+XXX
 void
 FilmViewer::panel_sized (wxSizeEvent& ev)
 {
@@ -444,6 +439,7 @@ FilmViewer::panel_sized (wxSizeEvent& ev)
 	}
 	PositionChanged ();
 }
+#endif
 
 void
 FilmViewer::calculate_sizes ()
@@ -454,16 +450,16 @@ FilmViewer::calculate_sizes ()
 
 	Ratio const * container = _film->container ();
 
-	float const panel_ratio = _panel_size.ratio ();
+	float const view_ratio = float(_gl_view->GetSize().x) / _gl_view->GetSize().y;
 	float const film_ratio = container ? container->ratio () : 1.78;
 
-	if (panel_ratio < film_ratio) {
+	if (view_ratio < film_ratio) {
 		/* panel is less widscreen than the film; clamp width */
-		_out_size.width = _panel_size.width;
+		_out_size.width = _gl_view->GetSize().x;
 		_out_size.height = lrintf (_out_size.width / film_ratio);
 	} else {
 		/* panel is more widescreen than the film; clamp height */
-		_out_size.height = _panel_size.height;
+		_out_size.height = _gl_view->GetSize().y;
 		_out_size.width = lrintf (_out_size.height * film_ratio);
 	}
 
@@ -679,7 +675,7 @@ FilmViewer::config_changed (Config::Property p)
 		} catch (RtAudioError& e) {
 #endif
 			error_dialog (
-				_panel,
+				_gl_view,
 				_("Could not set up audio output.  There will be no audio during the preview."), std_to_wx(e.what())
 				);
 		}

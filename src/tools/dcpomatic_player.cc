@@ -251,7 +251,7 @@ public:
 	{
 		wxSizer* main_sizer = new wxBoxSizer (wxVERTICAL);
 		if (mode != Config::PLAYER_MODE_DUAL) {
-			main_sizer->Add (_viewer->panel(), 1, wxEXPAND | wxALIGN_CENTER_VERTICAL);
+			main_sizer->Add (_viewer->window(), 1, wxEXPAND | wxALIGN_CENTER_VERTICAL);
 		}
 		main_sizer->Add (_controls, mode == Config::PLAYER_MODE_DUAL ? 1 : 0, wxEXPAND | wxALL, 6);
 		main_sizer->Add (_info, 0, wxEXPAND | wxALL, 6);
@@ -715,7 +715,7 @@ private:
 			_dual_screen = new wxFrame (this, wxID_ANY, wxT(""));
 			_dual_screen->SetBackgroundColour (wxColour(0, 0, 0));
 			_dual_screen->ShowFullScreen (true);
-			_viewer->panel()->Reparent (_dual_screen);
+			_viewer->window()->Reparent (_dual_screen);
 			_dual_screen->Show ();
 			if (wxDisplay::GetCount() > 1) {
 				switch (Config::instance()->image_display()) {
@@ -732,7 +732,7 @@ private:
 			}
 		} else {
 			if (_dual_screen) {
-				_viewer->panel()->Reparent (_overall_panel);
+				_viewer->window()->Reparent (_overall_panel);
 				_dual_screen->Destroy ();
 				_dual_screen = 0;
 			}
