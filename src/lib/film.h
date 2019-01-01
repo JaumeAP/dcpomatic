@@ -71,10 +71,10 @@ public:
 	explicit Film (boost::optional<boost::filesystem::path> dir);
 	~Film ();
 
-	boost::filesystem::path info_file (DCPTimePeriod p) const;
+	boost::filesystem::path info_file (dcpomatic::DCPTimePeriod p) const;
 	boost::filesystem::path j2c_path (int, Frame, Eyes, bool) const;
 	boost::filesystem::path internal_video_asset_dir () const;
-	boost::filesystem::path internal_video_asset_filename (DCPTimePeriod p) const;
+	boost::filesystem::path internal_video_asset_filename (dcpomatic::DCPTimePeriod p) const;
 
 	boost::filesystem::path audio_analysis_path (boost::shared_ptr<const Playlist>) const;
 
@@ -123,9 +123,9 @@ public:
 	/* Proxies for some Playlist methods */
 
 	ContentList content () const;
-	DCPTime length () const;
+	dcpomatic::DCPTime length () const;
 	int best_video_frame_rate () const;
-	FrameRateChange active_frame_rate_change (DCPTime) const;
+	FrameRateChange active_frame_rate_change (dcpomatic::DCPTime) const;
 	std::pair<double, double> speed_up_range (int dcp_frame_rate) const;
 
 	dcp::EncryptedKDM make_kdm (
@@ -163,10 +163,10 @@ public:
 		return _playlist;
 	}
 
-	std::list<DCPTimePeriod> reels () const;
+	std::list<dcpomatic::DCPTimePeriod> reels () const;
 	std::list<int> mapped_audio_channels () const;
 
-	std::string content_summary (DCPTimePeriod period) const;
+	std::string content_summary (dcpomatic::DCPTimePeriod period) const;
 
 	bool references_dcp_video () const;
 	bool references_dcp_audio () const;
