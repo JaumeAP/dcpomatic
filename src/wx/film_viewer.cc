@@ -469,6 +469,10 @@ FilmViewer::calculate_sizes ()
 	_out_size.width = max (64, _out_size.width);
 	_out_size.height = max (64, _out_size.height);
 
+	/* OpenGL can't cope with odd sizes */
+	_out_size.width &= ~1;
+	_out_size.height &= ~1;
+
 	_player->set_video_container_size (_out_size);
 }
 
