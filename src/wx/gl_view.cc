@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2018 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2018-2019 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -20,6 +20,7 @@
 
 #include "gl_view.h"
 #include "lib/image.h"
+#include "lib/dcpomatic_assert.h"
 #include <boost/bind.hpp>
 #include <iostream>
 
@@ -30,7 +31,6 @@ using boost::shared_ptr;
 
 GLView::GLView (wxWindow *parent)
 	: wxGLCanvas (parent, wxID_ANY, 0, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
-	, _have_texture (false)
 {
 	_context = new wxGLContext (this);
 	Bind (wxEVT_PAINT, boost::bind(&GLView::paint, this, _1));
@@ -88,17 +88,17 @@ GLView::paint (wxPaintEvent &)
 
 	glTranslatef (0, 0, 0);
 
-	if (_have_texture) {
+	if (_size) {
 		glBegin (GL_QUADS);
 
 		glTexCoord2f (0, 1);
-		glVertex2f (0, 0);
+		glVertex2f (0, _size->height);
 		glTexCoord2f (1, 1);
-		glVertex2f (1024, 0);
+		glVertex2f (_size->width, _size->height);
 		glTexCoord2f (1, 0);
-		glVertex2f (1024, 1024);
+		glVertex2f (_size->width, 0);
 		glTexCoord2f (0, 0);
-		glVertex2f (0, 1024);
+		glVertex2f (0, 0);
 
 		glEnd ();
 	}
@@ -108,34 +108,12 @@ GLView::paint (wxPaintEvent &)
 }
 
 void
-GLView::set_image ()
+GLView::set_image (shared_ptr<const Image> image)
 {
-	int const width = 1024;
-	int const height = 1024;
-	unsigned char foo[width * height * 3];
-	unsigned char* p = foo;
-	for (int y = 0; y < height; ++y) {
-		for (int x = 0; x < width; ++x) {
-			if (((y / 16) % 3) == 0) {
-				*p++ = char(x * 256 / width);
-			} else {
-				*p++ = 0;
-			}
-			if (((y / 16) % 3) == 1) {
-				*p++ = char(x * 256 / width);
-			} else {
-				*p++ = 0;
-			}
-			if (((y / 16) % 3) == 2) {
-				*p++ = char(x * 256 / width);
-			} else {
-				*p++ = 0;
-			}
-		}
-	}
+	DCPOMATIC_ASSERT (image->pixel_format() == AV_PIX_FMT_RGB24);
 
-	glTexImage2D (GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, foo);
-	_have_texture = true;
+	_size = image->size ();
+	glTexImage2D (GL_TEXTURE_2D, 0, 3, image->size().width, image->size().height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data()[0]);
 
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

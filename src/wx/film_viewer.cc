@@ -272,7 +272,7 @@ FilmViewer::display_player_video ()
 	_state_timer.set ("get image");
 	/* XXX: do we need to store _frame? */
 	_frame = _player_video.first->image (bind(&PlayerVideo::force, _1, AV_PIX_FMT_RGB24), false, true);
-	_gl_view->set_image ();//_frame);
+	_gl_view->set_image (_frame);
 
 	_state_timer.set ("ImageChanged");
 	ImageChanged (_player_video.first);

@@ -33,12 +33,12 @@ public:
 	GLView (wxWindow* parent);
 	virtual ~GLView ();
 
-	void set_image ();
+	void set_image (boost::shared_ptr<const Image> image);
 
 private:
 	void paint (wxPaintEvent& event);
 
 	wxGLContext* _context;
 	GLuint _id;
-	bool _have_texture;
+	boost::optional<dcp::Size> _size;
 };
