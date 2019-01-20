@@ -31,14 +31,14 @@ class GLView : public wxGLCanvas
 {
 public:
 	GLView (wxWindow* parent);
-	~GLView ();
+	virtual ~GLView ();
 
-	void set_image (boost::shared_ptr<const Image> image);
+	void set_image ();
 
 private:
 	void paint (wxPaintEvent& event);
-	void sized ();
 
 	wxGLContext* _context;
-	dcp::Size _texture_size;
+	GLuint _id;
+	bool _have_texture;
 };

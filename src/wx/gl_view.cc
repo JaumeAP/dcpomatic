@@ -23,19 +23,26 @@
 #include <boost/bind.hpp>
 #include <iostream>
 
+#include <GL/glu.h>
+
 using std::cout;
 using boost::shared_ptr;
 
 GLView::GLView (wxWindow *parent)
-	: wxGLCanvas (parent, wxID_ANY, 0)
+	: wxGLCanvas (parent, wxID_ANY, 0, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
+	, _have_texture (false)
 {
 	_context = new wxGLContext (this);
 	Bind (wxEVT_PAINT, boost::bind(&GLView::paint, this, _1));
-	Bind (wxEVT_SIZE, boost::bind(&GLView::sized, this));
+
+	glGenTextures (1, &_id);
+	glBindTexture (GL_TEXTURE_2D, _id);
+	glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
 }
 
 GLView::~GLView ()
 {
+	glDeleteTextures (1, &_id);
 	delete _context;
 }
 
@@ -57,75 +64,54 @@ check_gl_error (char const * last)
 }
 
 void
-GLView::sized ()
-{
-	glViewport (0, 0, GetSize().x, GetSize().y);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	glOrtho (0, GetSize().x, GetSize().y, 0, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-}
-
-void
 GLView::paint (wxPaintEvent &)
 {
 	SetCurrent (*_context);
 	wxPaintDC (this);
-	glClear (GL_COLOR_BUFFER_BIT);
+	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	check_gl_error ("glClear");
 
 	glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable (GL_TEXTURE_2D);
+	glEnable (GL_COLOR_MATERIAL);
+	glEnable (GL_BLEND);
 	glDisable (GL_DEPTH_TEST);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	int const width = GetSize().x;
-	int const height = GetSize().y;
+	glViewport (0, 0, GetSize().x, GetSize().y);
+	glMatrixMode (GL_PROJECTION);
+	glLoadIdentity ();
 
-	glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+	gluOrtho2D (0, GetSize().x, GetSize().y, 0);
+	glMatrixMode (GL_MODELVIEW);
+	glLoadIdentity ();
 
-	GLuint tex;
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	check_gl_error ("glTexParameteri");
+	glTranslatef (0, 0, 0);
 
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(1, 1, 1);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glEnable(GL_TEXTURE_2D);
-	glBegin(GL_QUADS);
-	glTexCoord2i(0, 0);
-	glVertex2i(0, 0);
-	glTexCoord2i(0, 1);
-	glVertex2i(0, height);
-	glTexCoord2i(1, 1);
-	glVertex2i(width, height);
-	glTexCoord2i(1, 0);
-	glVertex2i(width, 0);
-	glEnd();
-	glDisable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	if (_have_texture) {
+		glBegin (GL_QUADS);
+
+		glTexCoord2f (0, 1);
+		glVertex2f (0, 0);
+		glTexCoord2f (1, 1);
+		glVertex2f (1024, 0);
+		glTexCoord2f (1, 0);
+		glVertex2f (1024, 1024);
+		glTexCoord2f (0, 0);
+		glVertex2f (0, 1024);
+
+		glEnd ();
+	}
 
 	glFlush();
 	SwapBuffers();
 }
 
 void
-GLView::set_image (shared_ptr<const Image> image)
+GLView::set_image ()
 {
-	if (image->size() != _texture_size) {
-		glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, image->size().width, image->size().height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-		check_gl_error ("glTexImage2D");
-		glBindTexture(GL_TEXTURE_2D, 0);
-		check_gl_error ("glBindTexture #1");
-		_texture_size = image->size();
-	}
-
-	int const width = image->size().width;
-	int const height = image->size().height;
+	int const width = 1024;
+	int const height = 1024;
 	unsigned char foo[width * height * 3];
 	unsigned char* p = foo;
 	for (int y = 0; y < height; ++y) {
@@ -148,13 +134,14 @@ GLView::set_image (shared_ptr<const Image> image)
 		}
 	}
 
-	glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, _texture_size.width, _texture_size.height, GL_RGB, GL_UNSIGNED_BYTE, foo);//image->data()[0]);
-	check_gl_error ("glTexSubImage2D");
-	glBindTexture(GL_TEXTURE_2D, 0);
-	check_gl_error ("glBindTexture2D #2");
+	glTexImage2D (GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, foo);
+	_have_texture = true;
 
-	glFlush();
-	if (GetXWindow()) {
-		SwapBuffers();
-	}
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	Refresh ();
 }

@@ -178,6 +178,8 @@ def configure(conf):
                            uselib_store='WXWIDGETS',
                            mandatory=True)
 
+    conf.env.LIB_WXWIDGETS.append('GLU')
+
     if conf.options.static_wxwidgets:
 	# wx-config returns its static libraries as full paths, without -l prefixes, which confuses
         # check_cfg().  It puts the static libraries into LINKFLAGS_WXWIDGETS, so fish them out.
