@@ -140,6 +140,21 @@ Image::crop_scale_window (
 	DCPOMATIC_ASSERT (out_size.width >= inter_size.width);
 	DCPOMATIC_ASSERT (out_size.height >= inter_size.height);
 
+	if (pixel_format() == AV_PIX_FMT_GBRP10LE) {
+		cout << "oh shit!\n";
+		for (int c = 0; c < 3; ++c) {
+			uint16_t* p = (uint16_t *) data()[c];
+			for (int y = 0; y < size().height; ++y) {
+				uint16_t* q = p;
+				for (int x = 0; x < size().width; ++x) {
+					*q = int16_t((*q - 64) * (1024.0 / (940 - 64)));
+					q++;
+				}
+				p += stride()[c] / 2;
+			}
+		}
+	}
+
 	/* Here's an image of out_size.  Below we may write to it starting at an offset so we get some padding.
 	   Hence we want to write in the following pattern:
 
