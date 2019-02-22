@@ -56,6 +56,7 @@ sources = """
           content.cc
           content_factory.cc
           copy_dcp_details_to_film.cc
+          cpu_j2k_encode_worker.cc
           create_cli.cc
           cross_common.cc
           crypto.cc
@@ -144,6 +145,7 @@ sources = """
           ratio.cc
           raw_image_proxy.cc
           reel_writer.cc
+          remote_j2k_encode_worker.cc
           render_text.cc
           resampler.cc
           rgba.cc

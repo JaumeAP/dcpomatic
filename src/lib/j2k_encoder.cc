@@ -23,6 +23,8 @@
  */
 
 #include "j2k_encoder.h"
+#include "cpu_j2k_encode_worker.h"
+#include "remote_j2k_encode_worker.h"
 #include "util.h"
 #include "film.h"
 #include "log.h"
@@ -258,14 +260,15 @@ J2KEncoder::terminate_threads ()
 }
 
 void
-J2KEncoder::encoder_thread (optional<EncodeServerDescription> server)
+J2KEncoder::encoder_thread (weak_ptr<J2KEncodeWorker> weak_worker)
 try
 {
-	if (server) {
-		LOG_TIMING ("start-encoder-thread thread=%1 server=%2", thread_id (), server->host_name ());
-	} else {
-		LOG_TIMING ("start-encoder-thread thread=%1 server=localhost", thread_id ());
+	shared_ptr<J2KEncodeWorker> worker = weak_worker.lock ();
+	if (!worker) {
+		return;
 	}
+
+	worker->log_thread_start ();
 
 	/* Number of seconds that we currently wait between attempts
 	   to connect to the server; not relevant for localhost
@@ -296,42 +299,7 @@ try
 
 			lock.unlock ();
 
-			optional<Data> encoded;
-
-			/* We need to encode this input */
-			if (server) {
-				try {
-					encoded = vf->encode_remotely (server.get ());
-
-					if (remote_backoff > 0) {
-						LOG_GENERAL ("%1 was lost, but now she is found; removing backoff", server->host_name ());
-					}
-
-					/* This job succeeded, so remove any backoff */
-					remote_backoff = 0;
-
-				} catch (std::exception& e) {
-					if (remote_backoff < 60) {
-						/* back off more */
-						remote_backoff += 10;
-					}
-					LOG_ERROR (
-						N_("Remote encode of %1 on %2 failed (%3); thread sleeping for %4s"),
-						vf->index(), server->host_name(), e.what(), remote_backoff
-						);
-				}
-
-			} else {
-				try {
-					LOG_TIMING ("start-local-encode thread=%1 frame=%2", thread_id(), vf->index());
-					encoded = vf->encode_locally ();
-					LOG_TIMING ("finish-local-encode thread=%1 frame=%2", thread_id(), vf->index());
-				} catch (std::exception& e) {
-					/* This is very bad, so don't cope with it, just pass it on */
-					LOG_ERROR (N_("Local encode failed (%1)"), e.what ());
-					throw;
-				}
-			}
+			optional<Data> encoded = worker->encode (vf);
 
 			if (encoded) {
 				_writer->write (encoded.get(), vf->index (), vf->eyes ());
@@ -382,17 +350,21 @@ J2KEncoder::servers_list_changed ()
 	}
 #endif
 
+	_workers.clear ();
+
 	if (!Config::instance()->only_servers_encode ()) {
 		for (int i = 0; i < Config::instance()->master_encoding_threads (); ++i) {
+			shared_ptr<CPUJ2KEncodeWorker> w (new CPUJ2KEncodeWorker());
+			_workers.push_back (w);
 #ifdef DCPOMATIC_LINUX
-			boost::thread* t = _threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, optional<EncodeServerDescription>()));
+			boost::thread* t = _threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, w));
 			pthread_setname_np (t->native_handle(), "encode-worker");
 #endif
 #ifdef DCPOMATIC_OSX
-			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, optional<EncodeServerDescription>()));
+			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, w));
 #endif
 #ifdef DCPOMATIC_WINDOWS
-			boost::thread* t = _threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, optional<EncodeServerDescription>()));
+			boost::thread* t = _threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, w));
 			if (windows_xp) {
 				SetThreadAffinityMask (t->native_handle(), 1 << i);
 			}
@@ -407,7 +379,10 @@ J2KEncoder::servers_list_changed ()
 
 		LOG_GENERAL (N_("Adding %1 worker threads for remote %2"), i.threads(), i.host_name ());
 		for (int j = 0; j < i.threads(); ++j) {
-			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, i));
+			shared_ptr<RemoteJ2KEncodeWorker> w (new RemoteJ2KEncodeWorker(i));
+			_workers.push_back (w);
+			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, w));
+			_threads.push_back (new boost::thread(boost::bind(&J2KEncoder::encoder_thread, this, w)));
 		}
 	}
 

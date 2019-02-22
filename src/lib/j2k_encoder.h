@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2016 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2019 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -45,6 +45,7 @@ class DCPVideo;
 class Writer;
 class Job;
 class PlayerVideo;
+class J2KEncodeWorker;
 
 /** @class J2KEncoder
  *  @brief Class to manage encoding to J2K.
@@ -79,7 +80,7 @@ private:
 
 	void frame_done ();
 
-	void encoder_thread (boost::optional<EncodeServerDescription>);
+	void encoder_thread (boost::weak_ptr<J2KEncodeWorker>);
 	void terminate_threads ();
 
 	/** Film that we are encoding */
@@ -91,6 +92,7 @@ private:
 
 	mutable boost::mutex _queue_mutex;
 	std::list<boost::shared_ptr<DCPVideo> > _queue;
+	std::list<boost::shared_ptr<J2KEncodeWorker> > _workers;
 	/** condition to manage thread wakeups when we have nothing to do */
 	boost::condition _empty_condition;
 	/** condition to manage thread wakeups when we have too much to do */
