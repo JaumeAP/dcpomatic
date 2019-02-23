@@ -24,6 +24,7 @@
 
 #include "j2k_encoder.h"
 #include "cpu_j2k_encode_worker.h"
+#include "gpu_j2k_encode_worker.h"
 #include "remote_j2k_encode_worker.h"
 #include "util.h"
 #include "film.h"
@@ -337,6 +338,7 @@ J2KEncoder::servers_list_changed ()
 {
 	terminate_threads ();
 	_threads.reset (new boost::thread_group());
+	_workers.clear ();
 
 	/* XXX: could re-use threads */
 
@@ -349,8 +351,6 @@ J2KEncoder::servers_list_changed ()
 		LOG_GENERAL_NC (N_("Setting thread affinity for Windows XP"));
 	}
 #endif
-
-	_workers.clear ();
 
 	if (!Config::instance()->only_servers_encode ()) {
 		for (int i = 0; i < Config::instance()->master_encoding_threads (); ++i) {
@@ -386,5 +386,9 @@ J2KEncoder::servers_list_changed ()
 		}
 	}
 
-	_writer->set_encoder_threads (_threads->size());
+	shared_ptr<GPUJ2KEncodeWorker> w (new GPUJ2KEncodeWorker());
+	_workers.push_back (w);
+	_threads.push_back (new boost::thread(boost::bind(&J2KEncoder::encoder_thread, this, w)));
+
+	_writer->set_encoder_threads (_threads.size());
 }
