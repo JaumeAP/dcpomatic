@@ -565,6 +565,9 @@ def configure(conf):
     if v >= 0x022D1F:
         conf.env.append_value('CXXFLAGS', '-std=c++11')
 
+    # poznan
+    conf.check_cfg(package="libpoznanj2k", args='--cflags --libs', uselib_store='POZNANJ2K', mandatory=True)
+
     # Other stuff
 
     conf.find_program('msgfmt', var='MSGFMT')

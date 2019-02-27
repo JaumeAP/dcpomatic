@@ -45,8 +45,21 @@ public:
 	DCPVideo (boost::shared_ptr<const PlayerVideo>, int, int, int, Resolution);
 	DCPVideo (boost::shared_ptr<const PlayerVideo>, cxml::ConstNodePtr);
 
+	/* XXX: these two should be done in cpu_j2k_encode_worker and remote_j2k_encode_worker */
 	dcp::Data encode_locally ();
 	dcp::Data encode_remotely (EncodeServerDescription, int timeout = 30);
+
+	boost::shared_ptr<const PlayerVideo> frame () const {
+		return _frame;
+	}
+
+	int j2k_bandwidth () const {
+		return _j2k_bandwidth;
+	}
+
+	int frames_per_second () const {
+		return _frames_per_second;
+	}
 
 	int index () const {
 		return _index;
