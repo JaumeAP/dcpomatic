@@ -26,6 +26,12 @@ elif [ "$1" == "--drd" ]; then
 elif [ "$1" == "--helgrind" ]; then
     shift;
     valgrind --tool="helgrind" build/test/unit-tests $*
+elif [ "$1" == "--nvprof" ]; then
+    shift
+    nvprof --profile-child-processes --print-gpu-summary build/test/unit-tests --catch_system_errors=no $*
+elif [ "$1" == "--cuda-memcheck" ]; then
+    shift
+    cuda-memcheck build/test/unit-tests --catch-system-errors=no $*
 else
     ulimit -c unlimited
     build/test/unit-tests --catch_system_errors=no --log_level=test_suite $*
