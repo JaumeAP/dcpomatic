@@ -250,7 +250,7 @@ def configure(conf):
         conf.check_cfg(package='glu', args='--cflags --libs', uselib_store='GLU', mandatory=True)
     else:
         conf.env.STLIB_GL = 'gl'
-        conf.env.STLIB_GLU = 'glu
+        conf.env.STLIB_GLU = 'glu'
 
 
 def build(bld):
