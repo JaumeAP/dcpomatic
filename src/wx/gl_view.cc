@@ -24,8 +24,13 @@
 #include <boost/bind.hpp>
 #include <iostream>
 
+#ifdef DCPOMATIC_OSX
+#include <OpenGL/glu.h>
+#include <OpenGL/glext.h>
+#else
 #include <GL/glu.h>
 #include <GL/glext.h>
+#endif
 
 using std::cout;
 using boost::shared_ptr;

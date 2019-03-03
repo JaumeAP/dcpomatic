@@ -261,11 +261,11 @@ def build(bld):
 
     obj.name   = 'libdcpomatic2-wx'
     obj.export_includes = ['..']
-    obj.uselib = 'BOOST_FILESYSTEM BOOST_THREAD BOOST_REGEX WXWIDGETS DCP SUB ZIP CXML RTAUDIO GL GLU '
+    obj.uselib = 'BOOST_FILESYSTEM BOOST_THREAD BOOST_REGEX WXWIDGETS DCP SUB ZIP CXML RTAUDIO '
     if bld.env.TARGET_LINUX:
-        obj.uselib += 'GTK '
+        obj.uselib += 'GTK GL GLU '
     if bld.env.TARGET_WINDOWS:
-        obj.uselib += 'WINSOCK2 OLE32 DSOUND WINMM KSUSER '
+        obj.uselib += 'WINSOCK2 OLE32 DSOUND WINMM KSUSER GL GLU '
     if bld.env.TARGET_OSX:
         obj.framework = ['CoreAudio', 'OpenGL']
     obj.use = 'libdcpomatic2'
