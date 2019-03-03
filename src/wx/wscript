@@ -245,8 +245,12 @@ def configure(conf):
                    define_name='DCPOMATIC_USE_RTERROR',
                    mandatory=False)
 
-    conf.check_cfg(package='gl', args='--cflags --libs', uselib_store='GL', mandatory=True)
-    conf.check_cfg(package='glu', args='--cflags --libs', uselib_store='GLU', mandatory=True)
+    if conf.env.TARGET_WINDOWS or conf.env.TARGET_LINUX:
+        conf.check_cfg(package='gl', args='--cflags --libs', uselib_store='GL', mandatory=True)
+        conf.check_cfg(package='glu', args='--cflags --libs', uselib_store='GLU', mandatory=True)
+    else:
+        conf.env.STLIB_GL = 'gl'
+        conf.env.STLIB_GLU = 'glu
 
 
 def build(bld):
@@ -263,7 +267,7 @@ def build(bld):
     if bld.env.TARGET_WINDOWS:
         obj.uselib += 'WINSOCK2 OLE32 DSOUND WINMM KSUSER '
     if bld.env.TARGET_OSX:
-        obj.framework = ['CoreAudio']
+        obj.framework = ['CoreAudio', 'OpenGL']
     obj.use = 'libdcpomatic2'
     if bld.env.VARIANT == 'swaroop':
         obj.source = sources + " swaroop_controls.cc"
