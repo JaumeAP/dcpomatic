@@ -78,10 +78,15 @@ GLView::paint (wxPaintEvent &)
 	check_gl_error ("glClear");
 
 	glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
+	check_gl_error ("glClearColor");
 	glEnable (GL_TEXTURE_2D);
+	check_gl_error ("glEnable GL_TEXTURE_2D");
 	glEnable (GL_COLOR_MATERIAL);
+	check_gl_error ("glEnable GL_COLOR_MATERIAL");
 	glEnable (GL_BLEND);
+	check_gl_error ("glEnable GL_BLEND");
 	glDisable (GL_DEPTH_TEST);
+	check_gl_error ("glDisable GL_DEPTH_TEST");
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glViewport (0, 0, GetSize().x, GetSize().y);
@@ -121,12 +126,15 @@ GLView::set_image (shared_ptr<const Image> image)
 
 	_size = image->size ();
 	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB8, image->size().width, image->size().height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data()[0]);
+	check_gl_error ("glTexImage2D");
 
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	check_gl_error ("glTexParameteri");
 
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	check_gl_error ("glTexParameterf");
 
 	Refresh ();
 }
