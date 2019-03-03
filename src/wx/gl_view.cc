@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include <GL/glu.h>
+#include <GL/glext.h>
 
 using std::cout;
 using boost::shared_ptr;
