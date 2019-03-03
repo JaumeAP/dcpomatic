@@ -111,9 +111,10 @@ void
 GLView::set_image (shared_ptr<const Image> image)
 {
 	DCPOMATIC_ASSERT (image->pixel_format() == AV_PIX_FMT_RGB24);
+	DCPOMATIC_ASSERT (!image->aligned());
 
 	_size = image->size ();
-	glTexImage2D (GL_TEXTURE_2D, 0, 3, image->size().width, image->size().height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data()[0]);
+	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB8, image->size().width, image->size().height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data()[0]);
 
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

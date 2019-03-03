@@ -100,6 +100,8 @@ FilmViewer::FilmViewer (wxWindow* p)
 
 	set_film (shared_ptr<Film> ());
 
+	_gl_view->Bind (wxEVT_SIZE, boost::bind(&FilmViewer::panel_sized, this, _1));
+
 	_config_changed_connection = Config::instance()->Changed.connect (bind (&FilmViewer::config_changed, this, _1));
 	config_changed (Config::SOUND_OUTPUT);
 }
@@ -427,8 +429,6 @@ FilmViewer::set_eyes (Eyes e)
 	slow_refresh ();
 }
 
-#if 0
-XXX
 void
 FilmViewer::panel_sized (wxSizeEvent& ev)
 {
@@ -441,7 +441,6 @@ FilmViewer::panel_sized (wxSizeEvent& ev)
 	}
 	PositionChanged ();
 }
-#endif
 
 void
 FilmViewer::calculate_sizes ()
@@ -469,9 +468,9 @@ FilmViewer::calculate_sizes ()
 	_out_size.width = max (64, _out_size.width);
 	_out_size.height = max (64, _out_size.height);
 
-	/* OpenGL can't cope with odd sizes */
-	_out_size.width &= ~1;
-	_out_size.height &= ~1;
+	/* OpenGL can't cope with sizes which aren't rounded up to the nearest 4 */
+	_out_size.width &= ~3;
+	_out_size.height &= ~3;
 
 	_player->set_video_container_size (_out_size);
 }

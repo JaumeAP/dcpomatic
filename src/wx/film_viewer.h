@@ -116,7 +116,7 @@ public:
 
 private:
 //	void paint_panel ();
-//	void panel_sized (wxSizeEvent &);
+	void panel_sized (wxSizeEvent &);
 	void timer ();
 	void calculate_sizes ();
 	void player_change (ChangeType type, int, bool);
@@ -150,6 +150,7 @@ private:
 
 	/** Size of our output (including padding if we have any) */
 	dcp::Size _out_size;
+	dcp::Size _panel_size;
 
 	RtAudio _audio;
 	int _audio_channels;
