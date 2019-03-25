@@ -301,9 +301,8 @@ public:
 		return _reencode_j2k;
 	}
 
-	boost::optional<DCPTime> marker (dcp::Marker type) const;
-
-	std::map<dcp::Marker, DCPTime> markers () const {
+	boost::optional<dcpomatic::DCPTime> marker (dcp::Marker type) const;
+	std::map<dcp::Marker, dcpomatic::DCPTime> markers () const {
 		return _markers;
 	}
 
@@ -341,7 +340,7 @@ public:
 	void set_reel_length (int64_t);
 	void set_upload_after_make_dcp (bool);
 	void set_reencode_j2k (bool);
-	void set_marker (dcp::Marker type, DCPTime time);
+	void set_marker (dcp::Marker type, dcpomatic::DCPTime time);
 	void unset_marker (dcp::Marker type);
 	void set_ratings (std::vector<dcp::Rating> r);
 
@@ -423,7 +422,7 @@ private:
 	bool _reencode_j2k;
 	/** true if the user has ever explicitly set the video frame rate of this film */
 	bool _user_explicit_video_frame_rate;
-	std::map<dcp::Marker, DCPTime> _markers;
+	std::map<dcp::Marker, dcpomatic::DCPTime> _markers;
 	std::vector<dcp::Rating> _ratings;
 
 	int _state_version;

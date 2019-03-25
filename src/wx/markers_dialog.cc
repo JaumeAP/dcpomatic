@@ -47,7 +47,7 @@ public:
 	{
 		checkbox = new CheckBox(parent, name);
 		grid->Add (checkbox, wxGBPosition(row, 0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
-		timecode = new Timecode<DCPTime> (parent);
+		timecode = new Timecode<dcpomatic::DCPTime> (parent);
 		grid->Add (timecode, wxGBPosition(row, 1));
 		set_button = new Button (parent, _("Set from current position"));
 		grid->Add (set_button, wxGBPosition(row, 2));
@@ -55,7 +55,7 @@ public:
 		shared_ptr<Film> f = film.lock ();
 		DCPOMATIC_ASSERT (f);
 
-		optional<DCPTime> t = f->marker (type);
+		optional<dcpomatic::DCPTime> t = f->marker (type);
 		checkbox->SetValue (static_cast<bool>(t));
 		if (t) {
 			timecode->set (*t, f->video_frame_rate());
@@ -100,7 +100,7 @@ private:
 	weak_ptr<FilmViewer> viewer;
 	dcp::Marker type;
 	CheckBox* checkbox;
-	Timecode<DCPTime>* timecode;
+	Timecode<dcpomatic::DCPTime>* timecode;
 	Button* set_button;
 };
 
