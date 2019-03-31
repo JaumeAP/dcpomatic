@@ -516,6 +516,7 @@ CertificateChainEditor::remove_certificate ()
 	_set (chain);
 
 	update_sensitivity ();
+	update_certificate_list ();
 }
 
 void
