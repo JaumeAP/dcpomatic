@@ -1069,7 +1069,7 @@ public:
 	/** Emitted if read() failed on an existing Config file.  There is nothing
 	    a listener can do about it: this is just for information.
 	*/
-	static boost::signals2::signal<void ()> FailedToLoad;
+	static boost::signals2::signal<void (std::string)> FailedToLoad;
 	/** Emitted if read() issued a warning which the user might want to know about */
 	static boost::signals2::signal<void (std::string)> Warning;
 	/** Emitted if there is a something wrong the contents of our config.  Handler can call

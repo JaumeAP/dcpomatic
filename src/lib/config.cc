@@ -67,7 +67,7 @@ using dcp::raw_convert;
 
 Config* Config::_instance = 0;
 int const Config::_current_version = 3;
-boost::signals2::signal<void ()> Config::FailedToLoad;
+boost::signals2::signal<void (string)> Config::FailedToLoad;
 boost::signals2::signal<void (string)> Config::Warning;
 boost::signals2::signal<bool (Config::BadReason)> Config::Bad;
 
@@ -612,11 +612,24 @@ try
 		read_cinemas (f);
 	}
 }
+catch (exception& e) {
+	if (have_existing ("config.xml")) {
+		backup ();
+		/* We have a config file but it didn't load */
+		FailedToLoad (e.what());
+	}
+	set_defaults ();
+	/* Make a new set of signing certificates and key */
+	_signer_chain = create_certificate_chain ();
+	/* And similar for decryption of KDMs */
+	_decryption_chain = create_certificate_chain ();
+	write ();
+}
 catch (...) {
 	if (have_existing ("config.xml")) {
 		backup ();
 		/* We have a config file but it didn't load */
-		FailedToLoad ();
+		FailedToLoad ("unknown");
 	}
 	set_defaults ();
 	/* Make a new set of signing certificates and key */
