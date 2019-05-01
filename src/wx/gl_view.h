@@ -24,6 +24,7 @@
 #include <boost/shared_ptr.hpp>
 
 #undef None
+#undef Success
 
 class Image;
 

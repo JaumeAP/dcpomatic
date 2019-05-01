@@ -35,7 +35,7 @@ public:
 
 	void put (boost::shared_ptr<const AudioBuffers> data, dcpomatic::DCPTime time, int frame_rate);
 	boost::optional<dcpomatic::DCPTime> get (float* out, int channels, int frames);
-	boost::optional<dcpomatic:DCPTime> peek () const;
+	boost::optional<dcpomatic::DCPTime> peek () const;
 
 	void clear ();
 	Frame size () const;

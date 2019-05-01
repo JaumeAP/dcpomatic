@@ -318,7 +318,6 @@ bool
 #ifdef DCPOMATIC_VARIANT_SWAROOP
 FilmViewer::maybe_draw_background_image (wxPaintDC& dc)
 {
-#ifdef DCPOMATIC_VARIANT_SWAROOP
 	XXX
 	optional<boost::filesystem::path> bg = Config::instance()->player_background_image();
 	if (bg) {

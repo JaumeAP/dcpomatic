@@ -47,5 +47,5 @@ private:
 	std::vector<wxString> _lines;
 	std::vector<DCPTextTrack> _tracks;
 	boost::weak_ptr<Butler> _butler;
-	DCPTime _last_update;
+	dcpomatic::DCPTime _last_update;
 };
