@@ -1465,7 +1465,7 @@ private:
 		try {
 			wxInitAllImageHandlers ();
 
-			Config::FailedToLoad.connect (boost::bind (&App::config_failed_to_load, this, _1));
+			Config::FailedToLoad.connect (boost::bind (&App::config_failed_to_load, this));
 			Config::Warning.connect (boost::bind (&App::config_warning, this, _1));
 
 			_splash = maybe_show_splash ();
