@@ -125,9 +125,9 @@ GLView::set_image (shared_ptr<const Image> image)
 	DCPOMATIC_ASSERT (!image->aligned());
 
 	_size = image->size ();
-	cout << "Here we go with " << _size.width << "x" << _size.height << "\n";
+	cout << "Here we go with " << _size->width << "x" << _size->height << "\n";
 	glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB8, _size.width, _size.height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data()[0]);
+	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB8, _size->width, _size->height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data()[0]);
 	check_gl_error ("glTexImage2D");
 
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
