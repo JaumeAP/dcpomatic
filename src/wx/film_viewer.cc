@@ -471,9 +471,6 @@ FilmViewer::calculate_sizes ()
 	_out_size.width &= ~3;
 	_out_size.height &= ~3;
 
-	_out_size.width = 1024;
-	_out_size.height = 1024;
-
 	_player->set_video_container_size (_out_size);
 }
 
