@@ -35,15 +35,8 @@
 using std::cout;
 using boost::shared_ptr;
 
-int const attrib_list[] = {
-	WX_GL_RGBA,
-	WX_GL_DOUBLEBUFFER,
-	WX_GL_MAJOR_VERSION,
-	3
-};
-
 GLView::GLView (wxWindow *parent)
-	: wxGLCanvas (parent, wxID_ANY, attrib_list, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
+	: wxGLCanvas (parent, wxID_ANY, 0, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
 {
 	_context = new wxGLContext (this);
 	Bind (wxEVT_PAINT, boost::bind(&GLView::paint, this, _1));
