@@ -51,6 +51,8 @@ GLView::GLView (wxWindow *parent)
 	glGenTextures (1, &_id);
 	glBindTexture (GL_TEXTURE_2D, _id);
 	glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+
+	cout << glGetString (GL_VERSION) << "\n";
 }
 
 GLView::~GLView ()
