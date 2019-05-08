@@ -278,7 +278,7 @@ public:
 			setvbuf(hf_in, NULL, _IONBF, 128);
 			*stdin = *hf_in;
 
-			cout << "DCP-o-matic is starting." << "\n";
+			cout << "DCP-o-matic is starting (in GL land)." << "\n";
 		}
 #endif
 

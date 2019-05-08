@@ -44,8 +44,6 @@ GLView::GLView (wxWindow *parent)
 	glGenTextures (1, &_id);
 	glBindTexture (GL_TEXTURE_2D, _id);
 	glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-
-	cout << glGetString (GL_VERSION) << "\n";
 }
 
 GLView::~GLView ()
@@ -123,6 +121,8 @@ GLView::paint (wxPaintEvent &)
 void
 GLView::set_image (shared_ptr<const Image> image)
 {
+	cout << glGetString (GL_VERSION) << "\n";
+
 	DCPOMATIC_ASSERT (image->pixel_format() == AV_PIX_FMT_RGB24);
 	DCPOMATIC_ASSERT (!image->aligned());
 
