@@ -32,6 +32,9 @@ def build(bld):
     uselib += 'AVUTIL SWSCALE SWRESAMPLE POSTPROC CURL BOOST_FILESYSTEM SSH ZIP CAIROMM FONTCONFIG PANGOMM SUB '
     uselib += 'SNDFILE SAMPLERATE BOOST_REGEX ICU NETTLE RTAUDIO PNG '
 
+    if bld.env.TARGET_LINUX:
+        uselib += 'POLKIT LWEXT4 '
+
     if bld.env.TARGET_WINDOWS:
         uselib += 'WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE WINSOCK2 OLE32 DSOUND WINMM KSUSER '
 
@@ -42,6 +45,8 @@ def build(bld):
         cli_tools = ['dcpomatic_cli', 'dcpomatic_server_cli', 'server_test', 'dcpomatic_kdm_cli', 'dcpomatic_create', 'swaroop_dcpomatic_ecinema', 'swaroop_dcpomatic_uuid']
     else:
         cli_tools = ['dcpomatic_cli', 'dcpomatic_server_cli', 'server_test', 'dcpomatic_kdm_cli', 'dcpomatic_create']
+        if bld.env.ENABLE_DIST:
+            cli_tools.append('dcpomatic_dist_writer')
 
     for t in cli_tools:
         obj = bld(features='cxx cxxprogram')
@@ -61,6 +66,8 @@ def build(bld):
             gui_tools = ['dcpomatic', 'dcpomatic_batch', 'dcpomatic_server', 'dcpomatic_kdm', 'dcpomatic_player', 'swaroop_dcpomatic_playlist']
         else:
             gui_tools = ['dcpomatic', 'dcpomatic_batch', 'dcpomatic_server', 'dcpomatic_kdm', 'dcpomatic_player', 'dcpomatic_playlist']
+            if bld.env.ENABLE_DIST:
+                gui_tools.append('dcpomatic_dist')
 
     for t in gui_tools:
         obj = bld(features='cxx cxxprogram')

@@ -74,6 +74,7 @@ def options(opt):
     opt.add_option('--force-cpp11',       action='store_true', default=False, help='force use of C++11')
     opt.add_option('--variant',           help='build variant (swaroop-studio, swaroop-theater)', choices=['swaroop-studio', 'swaroop-theater'])
     opt.add_option('--use-lld',           action='store_true', default=False, help='use lld linker')
+    opt.add_option('--enable-dist',       action='store_true', default=False, help='build dcpomatic2_dist tool; requires Boost process and lwext4 libraries')
 
 def configure(conf):
     conf.load('compiler_cxx')
@@ -90,6 +91,7 @@ def configure(conf):
     conf.env.VERSION = VERSION
     conf.env.DEBUG = conf.options.enable_debug
     conf.env.STATIC_DCPOMATIC = conf.options.static_dcpomatic
+    conf.env.ENABLE_DIST = conf.options.enable_dist
     if conf.options.install_prefix is None:
         conf.env.INSTALL_PREFIX = conf.env.PREFIX
     else:
@@ -366,6 +368,20 @@ def configure(conf):
     # libpng
     conf.check_cfg(package='libpng', args='--cflags --libs', uselib_store='PNG', mandatory=True)
 
+    # lwext4
+    if conf.options.enable_dist:
+        conf.check_cxx(fragment="""
+                                #include <lwext4/ext4.h>\n
+                                int main() { ext4_mount("ext4_fs", "/mp/", false); }\n
+                                """,
+                                msg='Checking for lwext4 library',
+                                libpath='/usr/local/lib',
+                                lib=['lwext4', 'blockdev'],
+                                uselib_store='LWEXT4')
+
+    if conf.env.TARGET_LINUX and conf.options.enable_dist:
+        conf.check_cfg(package='polkit-gobject-1', args='--cflags --libs', uselib_store='POLKIT', mandatory=True)
+
     # FFmpeg
     if conf.options.static_ffmpeg:
         names = ['avformat', 'avfilter', 'avcodec', 'avutil', 'swscale', 'postproc', 'swresample']
@@ -509,6 +525,17 @@ def configure(conf):
                        msg='Checking for boost regex library',
                        lib=['boost_regex%s' % boost_lib_suffix],
                        uselib_store='BOOST_REGEX')
+
+        # Really just checking for the header here (there's no associated library) but the test
+        # program has to link with boost_system so I'm doing it this way.
+        if conf.options.enable_dist:
+            conf.check_cxx(fragment="""
+                                #include <boost/process.hpp>\n
+                                int main() { boost::process::child* c = new boost::process::child("foo"); }\n
+                                """,
+                           msg='Checking for boost process library',
+                           lib=['boost_system%s' % boost_lib_suffix],
+                           uselib_store='BOOST_PROCESS')
 
     # libxml++ requires glibmm and versions of glibmm 2.45.31 and later
     # must be built with -std=c++11 as they use c++11
@@ -657,14 +684,16 @@ def create_version_cc(version, cxx_flags):
 def post(ctx):
     if ctx.cmd == 'install' and ctx.env.TARGET_LINUX:
         ctx.exec_command('/sbin/ldconfig')
-        # I can't find anything which tells me where things have been installed to,
-        # so here's some nasty hacks to guess.
-        debian = os.path.join(ctx.out_dir, '../debian/dcpomatic/usr/bin/dcpomatic2_uuid')
-        prefix = os.path.join(ctx.env['INSTALL_PREFIX'], 'bin/dcpomatic2_uuid')
-        if os.path.exists(debian):
-            os.chmod(debian, 0o4755)
-        if os.path.exists(prefix):
-            os.chmod(prefix, 0o4755)
+        # setuid root executables
+        for e in ['dcpomatic2_uuid', 'dcpomatic2_dist_writer']:
+            # I can't find anything which tells me where things have been installed to,
+            # so here's some nasty hacks to guess.
+            debian = os.path.join(ctx.out_dir, '../debian/dcpomatic/usr/bin/%s' % e)
+            prefix = os.path.join(ctx.env['INSTALL_PREFIX'], 'bin/%s' % e)
+            if os.path.exists(debian):
+                os.chmod(debian, 0o4755)
+            if os.path.exists(prefix):
+                os.chmod(prefix, 0o4755)
 
 def pot(bld):
     bld.recurse('src')

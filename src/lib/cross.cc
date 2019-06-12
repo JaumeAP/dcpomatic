@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2018 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2020 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -24,10 +24,13 @@
 #include "dcpomatic_log.h"
 #include "config.h"
 #include "exceptions.h"
+#include <dcp/raw_convert.h>
+#include <glib.h>
 extern "C" {
 #include <libavformat/avio.h>
 }
 #include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
 #ifdef DCPOMATIC_LINUX
 #include <unistd.h>
 #include <mntent.h>
@@ -60,8 +63,12 @@ using std::ifstream;
 using std::string;
 using std::wstring;
 using std::make_pair;
+using std::vector;
+using std::cerr;
+using std::cout;
 using std::runtime_error;
 using boost::shared_ptr;
+using boost::optional;
 
 /** @param s Number of seconds to sleep for */
 void
@@ -536,3 +543,124 @@ running_32_on_64 ()
 	/* XXX: assuming nobody does this on Linux / OS X */
 	return false;
 }
+
+vector<Drive>
+get_drives ()
+{
+	vector<Drive> drives;
+#ifdef DCPOMATIC_LINUX
+
+	using namespace boost::filesystem;
+	list<string> mounted_devices;
+	std::ifstream f("/proc/mounts");
+	string line;
+	while (f.good()) {
+		getline(f, line);
+		vector<string> bits;
+		boost::algorithm::split (bits, line, boost::is_any_of(" "));
+		if (bits.size() > 0 && boost::algorithm::starts_with(bits[0], "/dev/")) {
+			mounted_devices.push_back(bits[0]);
+			LOG_DIST("Mounted device %1", bits[0]);
+		}
+	}
+
+	for (directory_iterator i = directory_iterator("/sys/block"); i != directory_iterator(); ++i) {
+		string const name = i->path().filename().string();
+		path device_type_file("/sys/block/" + name + "/device/type");
+		optional<string> device_type;
+		if (exists(device_type_file)) {
+			device_type = dcp::file_to_string (device_type_file);
+			boost::trim(*device_type);
+		}
+		/* Device type 5 is "SCSI_TYPE_ROM" in blkdev.h; seems usually to be a CD/DVD drive */
+		if (!boost::algorithm::starts_with(name, "loop") && (!device_type || *device_type != "5")) {
+			uint64_t const size = dcp::raw_convert<uint64_t>(dcp::file_to_string(*i / "size")) * 512;
+			if (size == 0) {
+				continue;
+			}
+			bool mounted = false;
+			optional<string> vendor;
+			try {
+				vendor = dcp::file_to_string("/sys/block/" + name + "/device/vendor");
+				boost::trim(*vendor);
+			} catch (...) {}
+			optional<string> model;
+			try {
+				model = dcp::file_to_string("/sys/block/" + name + "/device/model");
+				boost::trim(*model);
+			} catch (...) {}
+			BOOST_FOREACH (string j, mounted_devices) {
+				if (boost::algorithm::starts_with(j, "/dev/" + name)) {
+					mounted = true;
+				}
+			}
+			drives.push_back(Drive(i->path().filename().string(), size, mounted, vendor, model));
+			LOG_DIST("Block device %1 size %2 %3 vendor %4 model %5", name, size, mounted ? "mounted" : "not mounted", vendor.get_value_or("[none]"), model.get_value_or("[none]"));
+		}
+	}
+#endif
+	return drives;
+}
+
+string
+Drive::description () const
+{
+	char gb[64];
+	snprintf(gb, 64, "%.1f", _size / 1000000000.0);
+
+	string name;
+	if (_vendor) {
+		name += *_vendor;
+	}
+	if (_model) {
+		if (name.size() > 0) {
+			name += " " + *_model;
+		}
+	}
+	if (name.size() == 0) {
+		name = _("Unknown");
+	}
+
+	return String::compose("%1 (%2 GB) [%3]", name, gb, _internal_name);
+}
+
+#ifdef DCPOMATIC_LINUX
+void
+unprivileged ()
+{
+	uid_t ruid, euid, suid;
+	if (getresuid(&ruid, &euid, &suid) == -1) {
+		cerr << "getresuid() failed.\n";
+		exit (EXIT_FAILURE);
+	}
+	seteuid (ruid);
+}
+
+PrivilegeEscalator::~PrivilegeEscalator ()
+{
+	unprivileged ();
+}
+
+PrivilegeEscalator::PrivilegeEscalator ()
+{
+	seteuid (0);
+}
+#endif
+
+boost::filesystem::path
+config_path ()
+{
+	boost::filesystem::path p;
+#ifdef DCPOMATIC_OSX
+		p /= g_get_home_dir ();
+		p /= "Library";
+		p /= "Preferences";
+		p /= "com.dcpomatic";
+		p /= "2";
+#else
+		p /= g_get_user_config_dir ();
+		p /= "dcpomatic2";
+#endif
+	return p;
+}
+

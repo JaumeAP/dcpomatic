@@ -196,6 +196,15 @@ deb_depends['unstable'].extend(['libboost-filesystem1.67.0',
                                 'libx264-155',
                                 'libcurl4'])
 
+def build_dist(target):
+    # We can build dcpomatic2_dist on platforms that have Boost process and can build the lwext4
+    # library.  For now, just whitelist good ones here.
+    #
+    # - Lots of Linux distros don't have a new enough boost (1.64 or above)
+    # - On Centos 6 we can't build lwext4 because it needs a new CMake which Centos 6's g++ is not new enough to build.
+    # - On Centos 7 there is a build error in lwext4 related to __unused
+    return target.platform == 'windows' or (target.platform == 'linux' and target.distro == 'ubuntu' and target.version in ['18.04', '18.10', '19.04'])
+
 def packages(name, packages, f):
     s = '%s: ' % name
     for p in packages:
@@ -245,6 +254,8 @@ def make_control(debian_version, bits, filename, debug, gui):
 
 def make_spec(filename, version, target, options, requires=None):
     """Make a .spec file for a RPM build"""
+    tools = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(filename))), "src/tools")
+    print("TOOLS=%s", tools)
     f = open(filename, 'w')
     print('Summary:A program that generates Digital Cinema Packages (DCPs) from video and audio files', file=f)
     print('Name:dcpomatic2', file=f)
@@ -275,6 +286,9 @@ def make_spec(filename, version, target, options, requires=None):
     if options['variant'] == 'swaroop-studio':
         print('%{_bindir}/dcpomatic2_ecinema', file=f)
         print('%{_bindir}/dcpomatic2_uuid', file=f)
+    if os.path.exists(os.path.join(tools, "dcpomatic2_dist")):
+        print('%{_bindir}/dcpomatic2_dist', file=f)
+        print('%{_bindir}/dcpomatic2_dist_writer', file=f)
     print('%{_datadir}/applications/dcpomatic2.desktop', file=f)
     print('%{_datadir}/applications/dcpomatic2_batch.desktop', file=f)
     print('%{_datadir}/applications/dcpomatic2_server.desktop', file=f)
@@ -356,6 +370,8 @@ def dependencies(target):
     # This dependency is to get that binary, which is added into
     # the appropriate place later
     deps.append(('openssl', 'carl'))
+    if build_dist(target):
+        deps.append(('lwext4', 'carl2'))
 
     return deps
 
@@ -395,6 +411,9 @@ def configure_options(target, options):
     # Build Windows debug versions with static linking as I think gdb works better then
     if target.debug and target.platform == 'windows':
         opt += ' --static-dcpomatic'
+
+    if build_dist(target):
+       opt += ' --enable-dist'
 
     return opt
 
