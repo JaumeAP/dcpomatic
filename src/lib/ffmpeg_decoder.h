@@ -45,7 +45,7 @@ struct ffmpeg_pts_offset_test;
 class FFmpegDecoder : public FFmpeg, public Decoder
 {
 public:
-	FFmpegDecoder (boost::shared_ptr<const Film> film, boost::shared_ptr<const FFmpegContent>, bool fast);
+	FFmpegDecoder (boost::shared_ptr<const Film> film, boost::shared_ptr<const FFmpegContent>);
 
 	bool pass ();
 	void seek (dcpomatic::ContentTime time, bool);

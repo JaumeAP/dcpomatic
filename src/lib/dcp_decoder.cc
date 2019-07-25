@@ -56,7 +56,7 @@ using boost::dynamic_pointer_cast;
 using boost::optional;
 using namespace dcpomatic;
 
-DCPDecoder::DCPDecoder (shared_ptr<const Film> film, shared_ptr<const DCPContent> c, bool fast, shared_ptr<DCPDecoder> old)
+DCPDecoder::DCPDecoder (shared_ptr<const Film> film, shared_ptr<const DCPContent> c, shared_ptr<DCPDecoder> old)
 	: DCP (c)
 	, Decoder (film)
 	, _decode_referenced (false)
@@ -66,7 +66,7 @@ DCPDecoder::DCPDecoder (shared_ptr<const Film> film, shared_ptr<const DCPContent
 			video.reset (new VideoDecoder (this, c));
 		}
 		if (c->audio) {
-			audio.reset (new AudioDecoder (this, c->audio, fast));
+			audio.reset (new AudioDecoder (this, c->audio));
 		}
 		BOOST_FOREACH (shared_ptr<TextContent> i, c->text) {
 			/* XXX: this time here should be the time of the first subtitle, not 0 */

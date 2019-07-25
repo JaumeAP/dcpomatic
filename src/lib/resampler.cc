@@ -43,6 +43,7 @@ Resampler::Resampler (int in, int out, int channels)
 	: _in_rate (in)
 	, _out_rate (out)
 	, _channels (channels)
+	, _fast (false)
 {
 	int error;
 	_src = src_new (SRC_SINC_BEST_QUALITY, _channels, &error);
@@ -59,13 +60,19 @@ Resampler::~Resampler ()
 }
 
 void
-Resampler::set_fast ()
+Resampler::set_fast (bool fast)
 {
+	if (fast == _fast) {
+		return;
+	}
+
+	_fast = fast;
+
 	src_delete (_src);
 	_src = 0;
 
 	int error;
-	_src = src_new (SRC_LINEAR, _channels, &error);
+	_src = src_new (_fast ? SRC_LINEAR : SRC_SINC_BEST_QUALITY, _channels, &error);
 	if (!_src) {
 		throw runtime_error (String::compose (N_("could not create sample-rate converter (%1)"), error));
 	}

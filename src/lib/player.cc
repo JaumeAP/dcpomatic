@@ -164,13 +164,15 @@ Player::setup_pieces_unlocked ()
 			}
 		}
 
-		shared_ptr<Decoder> decoder = decoder_factory (_film, i, _fast, old_decoder);
+		shared_ptr<Decoder> decoder = decoder_factory (_film, i, old_decoder);
 		FrameRateChange frc (_film, i);
 
 		if (!decoder) {
 			/* Not something that we can decode; e.g. Atmos content */
 			continue;
 		}
+
+		decoder->set_fast (_fast);
 
 		if (decoder->video && _ignore_video) {
 			decoder->video->set_ignore (true);
@@ -503,7 +505,7 @@ Player::get_reel_assets ()
 
 		scoped_ptr<DCPDecoder> decoder;
 		try {
-			decoder.reset (new DCPDecoder (_film, j, false));
+			decoder.reset (new DCPDecoder (_film, j));
 		} catch (...) {
 			return a;
 		}

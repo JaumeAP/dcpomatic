@@ -34,11 +34,12 @@ public:
 	boost::shared_ptr<const AudioBuffers> run (boost::shared_ptr<const AudioBuffers>);
 	boost::shared_ptr<const AudioBuffers> flush ();
 	void reset ();
-	void set_fast ();
+	void set_fast (bool fast);
 
 private:
 	SRC_STATE* _src;
 	int _in_rate;
 	int _out_rate;
 	int _channels;
+	bool _fast;
 };

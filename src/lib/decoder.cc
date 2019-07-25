@@ -101,3 +101,11 @@ Decoder::film () const
 	DCPOMATIC_ASSERT (f);
 	return f;
 }
+
+void
+Decoder::set_fast (bool fast)
+{
+	if (audio) {
+		audio->set_fast (fast);
+	}
+}

@@ -50,6 +50,7 @@ public:
 	std::list<boost::shared_ptr<TextDecoder> > text;
 
 	boost::shared_ptr<TextDecoder> only_text () const;
+	void set_fast (bool fast);
 
 	/** Do some decoding and perhaps emit video, audio or subtitle data.
 	 *  @return true if this decoder will emit no more data unless a seek() happens.

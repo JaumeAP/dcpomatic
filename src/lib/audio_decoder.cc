@@ -37,10 +37,10 @@ using boost::shared_ptr;
 using boost::optional;
 using namespace dcpomatic;
 
-AudioDecoder::AudioDecoder (Decoder* parent, shared_ptr<const AudioContent> content, bool fast)
+AudioDecoder::AudioDecoder (Decoder* parent, shared_ptr<const AudioContent> content)
 	: DecoderPart (parent)
 	, _content (content)
-	, _fast (fast)
+	, _fast (false)
 {
 	/* Set up _positions so that we have one for each stream */
 	BOOST_FOREACH (AudioStreamPtr i, content->streams ()) {
@@ -83,9 +83,7 @@ AudioDecoder::emit (shared_ptr<const Film> film, AudioStreamPtr stream, shared_p
 				);
 
 			resampler.reset (new Resampler (stream->frame_rate(), _content->resampled_frame_rate(film), stream->channels()));
-			if (_fast) {
-				resampler->set_fast ();
-			}
+			resampler->set_fast (_fast);
 			_resamplers[stream] = resampler;
 		}
 	}
@@ -163,5 +161,14 @@ AudioDecoder::silence (int milliseconds)
 		shared_ptr<AudioBuffers> silence (new AudioBuffers (i->channels(), samples));
 		silence->make_silent ();
 		Data (i, ContentAudio (silence, _positions[i]));
+	}
+}
+
+void
+AudioDecoder::set_fast (bool fast)
+{
+	_fast = fast;
+	for (ResamplerMap::iterator i = _resamplers.begin(); i != _resamplers.end(); ++i) {
+		i->second->set_fast (_fast);
 	}
 }

@@ -75,7 +75,7 @@ using boost::dynamic_pointer_cast;
 using dcp::Size;
 using namespace dcpomatic;
 
-FFmpegDecoder::FFmpegDecoder (shared_ptr<const Film> film, shared_ptr<const FFmpegContent> c, bool fast)
+FFmpegDecoder::FFmpegDecoder (shared_ptr<const Film> film, shared_ptr<const FFmpegContent> c)
 	: FFmpeg (c)
 	, Decoder (film)
 	, _have_current_subtitle (false)
@@ -91,7 +91,7 @@ FFmpegDecoder::FFmpegDecoder (shared_ptr<const Film> film, shared_ptr<const FFmp
 	}
 
 	if (c->audio) {
-		audio.reset (new AudioDecoder (this, c->audio, fast));
+		audio.reset (new AudioDecoder (this, c->audio));
 	}
 
 	if (c->only_text()) {

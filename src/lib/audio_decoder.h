@@ -45,12 +45,14 @@ class Resampler;
 class AudioDecoder : public boost::enable_shared_from_this<AudioDecoder>, public DecoderPart
 {
 public:
-	AudioDecoder (Decoder* parent, boost::shared_ptr<const AudioContent> content, bool fast);
+	AudioDecoder (Decoder* parent, boost::shared_ptr<const AudioContent> content);
 
 	dcpomatic::ContentTime position (boost::shared_ptr<const Film> film) const;
 	void emit (boost::shared_ptr<const Film> film, AudioStreamPtr stream, boost::shared_ptr<const AudioBuffers>, dcpomatic::ContentTime);
 	void seek ();
 	void flush ();
+
+	void set_fast (bool fast);
 
 	dcpomatic::ContentTime stream_position (boost::shared_ptr<const Film> film, AudioStreamPtr stream) const;
 
