@@ -47,18 +47,18 @@ using std::string;
 using std::cout;
 using std::cerr;
 using std::vector;
+using std::list;
 using boost::shared_ptr;
 using boost::optional;
 using dcp::raw_convert;
 using namespace dcpomatic;
 
 boost::mutex FFmpeg::_mutex;
+list<FFmpeg::Cache> FFmpeg::_cache;
 
 FFmpeg::FFmpeg (boost::shared_ptr<const FFmpegContent> c)
 	: _ffmpeg_content (c)
-	, _avio_buffer (0)
 	, _avio_buffer_size (4096)
-	, _avio_context (0)
 	, _format_context (0)
 	, _frame (0)
 {
@@ -75,7 +75,6 @@ FFmpeg::~FFmpeg ()
 	}
 
 	av_frame_free (&_frame);
-	avformat_close_input (&_format_context);
 }
 
 static int
@@ -114,33 +113,64 @@ FFmpeg::setup_general ()
 	av_log_set_callback (FFmpeg::ffmpeg_log_callback);
 
 	_file_group.set_paths (_ffmpeg_content->paths ());
-	_avio_buffer = static_cast<uint8_t*> (wrapped_av_malloc (_avio_buffer_size));
-	_avio_context = avio_alloc_context (_avio_buffer, _avio_buffer_size, 0, this, avio_read_wrapper, 0, avio_seek_wrapper);
-	_format_context = avformat_alloc_context ();
-	_format_context->pb = _avio_context;
 
-	AVDictionary* options = 0;
-	/* These durations are in microseconds, and represent how far into the content file
-	   we will look for streams.
-	*/
-	av_dict_set (&options, "analyzeduration", raw_convert<string> (5 * 60 * 1000000).c_str(), 0);
-	av_dict_set (&options, "probesize", raw_convert<string> (5 * 60 * 1000000).c_str(), 0);
+	optional<Cache> cache;
+	BOOST_FOREACH (Cache i, _cache) {
+		if (i.paths == _ffmpeg_content->paths()
 #ifdef DCPOMATIC_VARIANT_SWAROOP
-	if (_ffmpeg_content->kdm()) {
-		DecryptedECinemaKDM kdm (_ffmpeg_content->kdm().get(), Config::instance()->decryption_chain()->key().get());
-		av_dict_set (&options, "decryption_key", kdm.key().hex().c_str(), 0);
-	}
+		    && i.kdm == _ffmpeg_content->kdm()
 #endif
-
-	int e = avformat_open_input (&_format_context, 0, 0, &options);
-	if (e < 0) {
-		throw OpenFileError (_ffmpeg_content->path(0).string(), e, true);
+			) {
+			cache = i;
+			break;
+		}
 	}
 
-	if (avformat_find_stream_info (_format_context, 0) < 0) {
-		throw DecodeError (_("could not find stream information"));
-	}
+	if (cache) {
+		cout << "cache hit.\n";
+		_format_context = cache->format_context;
+	} else {
+		cout << "cache miss.\n";
+		/* XXX: avio_buffer and the AVIOContext are never freed */
+		uint8_t* avio_buffer = static_cast<uint8_t*> (wrapped_av_malloc(_avio_buffer_size));
+		_format_context = avformat_alloc_context ();
+		_format_context->pb = avio_alloc_context (avio_buffer, _avio_buffer_size, 0, this, avio_read_wrapper, 0, avio_seek_wrapper);
 
+		AVDictionary* options = 0;
+		/* These durations are in microseconds, and represent how far into the content file
+		   we will look for streams.
+		*/
+		av_dict_set (&options, "analyzeduration", raw_convert<string>(5 * 60 * 1000000).c_str(), 0);
+		av_dict_set (&options, "probesize", raw_convert<string>(5 * 60 * 1000000).c_str(), 0);
+#ifdef DCPOMATIC_VARIANT_SWAROOP
+		if (_ffmpeg_content->kdm()) {
+			DecryptedECinemaKDM kdm (_ffmpeg_content->kdm().get(), Config::instance()->decryption_chain()->key().get());
+			av_dict_set (&options, "decryption_key", kdm.key().hex().c_str(), 0);
+		}
+#endif
+		
+		int e = avformat_open_input (&_format_context, 0, 0, &options);
+		if (e < 0) {
+			throw OpenFileError (_ffmpeg_content->path(0), e, true);
+		}
+		
+		if (avformat_find_stream_info (_format_context, 0) < 0) {
+			throw DecodeError (_("could not find stream information"));
+		}
+
+		_cache.push_back (
+			Cache(
+				_ffmpeg_content->paths(),
+#ifdef DCPOMATIC_VARIANT_SWAROOP
+				_ffmpeg_content->kdm(),
+#else
+				optional<EncryptedECinemaKDM>()
+#endif
+				_format_context
+				)
+			);
+	}
+	
 	/* Find video stream */
 
 	optional<int> video_stream_undefined_frame_rate;

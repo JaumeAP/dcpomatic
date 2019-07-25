@@ -23,6 +23,7 @@
 
 #include "file_group.h"
 #include "ffmpeg_subtitle_period.h"
+#include "encrypted_ecinema_kdm.h"
 extern "C" {
 #include <libavcodec/avcodec.h>
 }
@@ -61,9 +62,7 @@ protected:
 
 	boost::shared_ptr<const FFmpegContent> _ffmpeg_content;
 
-	uint8_t* _avio_buffer;
 	int _avio_buffer_size;
-	AVIOContext* _avio_context;
 	FileGroup _file_group;
 
 	AVFormatContext* _format_context;
@@ -85,6 +84,21 @@ private:
 
 	static void ffmpeg_log_callback (void* ptr, int level, const char* fmt, va_list vl);
 	static boost::weak_ptr<Log> _ffmpeg_log;
+
+	struct Cache
+	{
+		Cache (std::vector<boost::filesystem::path> paths_, boost::optional<EncryptedECinemaKDM> kdm_, AVFormatContext* format_context_)
+			: paths(paths_)
+			, kdm(kdm_)
+			, format_context(format_context_)
+		{}
+		
+		std::vector<boost::filesystem::path> paths;
+		boost::optional<EncryptedECinemaKDM> kdm;
+		AVFormatContext* format_context;
+	};
+	
+	static std::list<Cache> _cache;
 };
 
 #endif

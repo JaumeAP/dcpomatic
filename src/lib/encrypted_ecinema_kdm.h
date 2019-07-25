@@ -62,6 +62,8 @@ private:
 	dcp::Data _data;
 };
 
+bool operator==(EncryptedECinemaKDM const & a, EncryptedECinemaKDM const & b);
+
 #endif
 
 #endif

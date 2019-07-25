@@ -110,4 +110,11 @@ EncryptedECinemaKDM::as_xml (boost::filesystem::path path) const
 	fclose (f);
 }
 
+bool
+operator== (EncryptedECinemaKDM const & a, EncryptedECinemaKDM const & b)
+{
+	return (a.id() == b.id() && a.name() == b.name() && a.data() == b.data());
+}
+
 #endif
+
