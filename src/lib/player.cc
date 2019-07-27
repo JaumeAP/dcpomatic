@@ -48,6 +48,7 @@
 #include "image_decoder.h"
 #include "compose.hpp"
 #include "shuffler.h"
+#include "dcpomatic_log.h"
 #include <dcp/reel.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/reel_subtitle_asset.h>
@@ -637,6 +638,7 @@ Player::pass ()
 			   or after this silence.  Bodge the start time of the silence to fix it.
 			*/
 //cgpost test...        DCPOMATIC_ASSERT (labs(period.from.get() - _last_audio_time->get()) < 2);
+			LOG_GENERAL("silence difference was %1", labs(period.from.get() - _last_audio_time->get()));
 			period.from = *_last_audio_time;
 		}
 		if (period.duration() > one_video_frame()) {
