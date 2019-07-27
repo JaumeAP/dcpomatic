@@ -636,7 +636,7 @@ Player::pass ()
 			/* Sometimes the thing that happened last finishes fractionally before
 			   or after this silence.  Bodge the start time of the silence to fix it.
 			*/
-			DCPOMATIC_ASSERT (labs(period.from.get() - _last_audio_time->get()) < 2);
+//cgpost test...        DCPOMATIC_ASSERT (labs(period.from.get() - _last_audio_time->get()) < 2);
 			period.from = *_last_audio_time;
 		}
 		if (period.duration() > one_video_frame()) {
