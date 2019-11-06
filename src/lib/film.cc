@@ -558,7 +558,9 @@ Film::dir (boost::filesystem::path d, bool create) const
 	p /= d;
 
 	if (create) {
+		LOG_GENERAL ("creating %1", p);
 		boost::filesystem::create_directories (p);
+		LOG_GENERAL ("%1 created", p);
 	}
 
 	return p;

@@ -506,12 +506,16 @@ Writer::finish ()
 
 	dcp::DCP dcp (_film->dir (_film->dcp_name()));
 
+	LOG_GENERAL_NC ("Creating CPL");
+
 	shared_ptr<dcp::CPL> cpl (
 		new dcp::CPL (
 			_film->dcp_name(),
 			_film->dcp_content_type()->libdcp_kind ()
 			)
 		);
+
+	LOG_GENERAL_NC ("Adding CPL to DCP");
 
 	dcp.add (cpl);
 
