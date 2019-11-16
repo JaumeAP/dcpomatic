@@ -51,11 +51,6 @@ private:
 
 	boost::weak_ptr<FilmViewer> _viewer;
 
-	wxStaticText* _h_label;
-	wxStaticText* _m_label;
-	wxStaticText* _s_label;
-	wxStaticText* _f_label;
-	wxStaticText* _colon[3];
 	wxStaticText* _tip;
 	wxStaticText* _position_label;
 	Timecode<dcpomatic::DCPTime>* _position;
@@ -75,4 +70,5 @@ private:
 	wxButton* _set_video_frame_rate;
 
 	Suspender _film_content_changed_suspender;
+	wxSizer* _hmsf_labels;
 };

@@ -19,6 +19,7 @@
 */
 
 #include "lib/config.h"
+#include "timecode.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
@@ -83,6 +84,8 @@ private:
 	void markers_clicked ();
 	void metadata_clicked ();
 	void reencode_j2k_changed ();
+	void head_changed ();
+	void tail_changed ();
 
 	void setup_frame_rate_widget ();
 	void setup_container ();
@@ -139,6 +142,11 @@ private:
 	wxChoice* _resolution;
 	wxStaticText* _standard_label;
 	wxChoice* _standard;
+	wxSizer* _hmsf;
+	wxStaticText* _head_label;
+	Timecode<dcpomatic::DCPTime>* _head;
+	wxStaticText* _tail_label;
+	Timecode<dcpomatic::DCPTime>* _tail;
 	wxCheckBox* _signed;
 	wxCheckBox* _encrypted;
 	wxStaticText* _key_label;

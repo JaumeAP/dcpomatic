@@ -530,3 +530,48 @@ display_progress (wxString title, wxString task)
 
 	return ok;
 }
+
+wxSizer*
+hmsf_labels (wxWindow* parent)
+{
+	wxClientDC dc (parent);
+	wxSize size = dc.GetTextExtent (wxT("9999"));
+	size.SetHeight (-1);
+
+	wxStaticText* colon[3];
+	for (int i = 0; i < 3; ++i) {
+		colon[i] = create_label (parent, wxT(":"), false);
+	}
+
+	wxStaticText* h_label = new StaticText (parent, _("h"), wxDefaultPosition, size, wxALIGN_CENTRE_HORIZONTAL);
+#ifdef DCPOMATIC_LINUX
+	/* Hack to work around failure to centre text on GTK */
+	gtk_label_set_line_wrap (GTK_LABEL(h_label->GetHandle()), FALSE);
+#endif
+	//// TRANSLATORS: this is an abbreviation for "minutes"
+	wxStaticText* m_label = new StaticText (parent, _("m"), wxDefaultPosition, size, wxALIGN_CENTRE_HORIZONTAL);
+#ifdef DCPOMATIC_LINUX
+	gtk_label_set_line_wrap (GTK_LABEL (m_label->GetHandle()), FALSE);
+#endif
+	//// TRANSLATORS: this is an abbreviation for "seconds"
+	wxStaticText* s_label = new StaticText (parent, _("s"), wxDefaultPosition, size, wxALIGN_CENTRE_HORIZONTAL);
+#ifdef DCPOMATIC_LINUX
+	gtk_label_set_line_wrap (GTK_LABEL(s_label->GetHandle()), FALSE);
+#endif
+	//// TRANSLATORS: this is an abbreviation for "frames"
+	wxStaticText* f_label = new StaticText (parent, _("f"), wxDefaultPosition, size, wxALIGN_CENTRE_HORIZONTAL);
+#ifdef DCPOMATIC_LINUX
+	gtk_label_set_line_wrap (GTK_LABEL(f_label->GetHandle()), FALSE);
+#endif
+	wxSizer* labels = new wxBoxSizer (wxHORIZONTAL);
+	labels->Add (h_label, 1, wxEXPAND);
+	add_label_to_sizer (labels, colon[0], false);
+	labels->Add (m_label, 1, wxEXPAND);
+	add_label_to_sizer (labels, colon[1], false);
+	labels->Add (s_label, 1, wxEXPAND);
+	add_label_to_sizer (labels, colon[2], false);
+	labels->Add (f_label, 1, wxEXPAND);
+
+	return labels;
+}
+

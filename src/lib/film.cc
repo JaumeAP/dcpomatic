@@ -429,6 +429,8 @@ Film::metadata (bool with_content_paths) const
 		i.as_xml (root->add_child("Rating"));
 	}
 	root->add_child("ContentVersion")->add_child_text(_content_version);
+	root->add_child("Head")->add_child_text(raw_convert<string>(_head.get()));
+	root->add_child("Tail")->add_child_text(raw_convert<string>(_tail.get()));
 	_playlist->as_xml (root->add_child ("Playlist"), with_content_paths);
 
 	return doc;
@@ -577,6 +579,20 @@ Film::read_metadata (optional<boost::filesystem::path> path)
 	}
 
 	_content_version = f.optional_string_child("ContentVersion").get_value_or("");
+
+	{
+		optional<DCPTime::Type> h = f.optional_number_child<int64_t>("Head");
+		if (h) {
+			_head = DCPTime(*h);
+		}
+	}
+
+	{
+		optional<DCPTime::Type> t = f.optional_number_child<int64_t>("Tail");
+		if (t) {
+			_tail = DCPTime(*t);
+		}
+	}
 
 	list<string> notes;
 	_playlist->set_from_xml (shared_from_this(), f.node_child ("Playlist"), _state_version, notes);
@@ -1163,6 +1179,20 @@ Film::set_key (dcp::Key key)
 {
 	ChangeSignaller<Film> ch (this, KEY);
 	_key = key;
+}
+
+void
+Film::set_head (DCPTime h)
+{
+	ChangeSignaller<Film> ch (this, HEAD);
+	_head = h;
+}
+
+void
+Film::set_tail (DCPTime t)
+{
+	ChangeSignaller<Film> ch (this, TAIL);
+	_tail = t;
 }
 
 ContentList

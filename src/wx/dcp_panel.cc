@@ -118,6 +118,16 @@ DCPPanel::DCPPanel (wxNotebook* n, shared_ptr<Film> film, weak_ptr<FilmViewer> v
 	_standard_label = create_label (_panel, _("Standard"), true);
 	_standard = new wxChoice (_panel, wxID_ANY);
 
+	_hmsf = hmsf_labels (_panel);
+
+	_head_label = create_label (_panel, _("Head"), true);
+	_head = new Timecode<dcpomatic::DCPTime> (_panel, true);
+	_head->SetToolTip (_("Amount of black, silent padding to add to the start of the DCP."));
+
+	_tail_label = create_label (_panel, _("Tail"), true);
+	_tail = new Timecode<dcpomatic::DCPTime> (_panel, true);
+	_tail->SetToolTip (_("Amount of black, silent padding to add to the end of the DCP."));
+
 	_upload_after_make_dcp = new CheckBox (_panel, _("Upload DCP to TMS after it is made"));
 
 	_markers = new Button (_panel, _("Markers..."));
@@ -140,6 +150,8 @@ DCPPanel::DCPPanel (wxNotebook* n, shared_ptr<Film> film, weak_ptr<FilmViewer> v
 	_reel_type->Bind             (wxEVT_CHOICE,   boost::bind (&DCPPanel::reel_type_changed, this));
 	_reel_length->Bind           (wxEVT_SPINCTRL, boost::bind (&DCPPanel::reel_length_changed, this));
 	_standard->Bind              (wxEVT_CHOICE,   boost::bind (&DCPPanel::standard_changed, this));
+	_head->Changed.connect       (boost::bind(&DCPPanel::head_changed, this));
+	_tail->Changed.connect       (boost::bind(&DCPPanel::tail_changed, this));
 	_upload_after_make_dcp->Bind (wxEVT_CHECKBOX, boost::bind (&DCPPanel::upload_after_make_dcp_changed, this));
 	_markers->Bind               (wxEVT_BUTTON,   boost::bind (&DCPPanel::markers_clicked, this));
 	_metadata->Bind              (wxEVT_BUTTON,   boost::bind (&DCPPanel::metadata_clicked, this));
@@ -223,6 +235,11 @@ DCPPanel::add_to_grid ()
 	_reel_length_gb_label->Show (full);
 	_standard_label->Show (full);
 	_standard->Show (full);
+	_hmsf->Show (full);
+	_head_label->Show (full);
+	_head->Show (full);
+	_tail_label->Show (full);
+	_tail->Show (full);
 	_upload_after_make_dcp->Show (full);
 	_markers->Show (full);
 	_metadata->Show (full);
@@ -254,6 +271,17 @@ DCPPanel::add_to_grid ()
 
 		add_label_to_sizer (_grid, _standard_label, true, wxGBPosition (r, 0));
 		_grid->Add (_standard, wxGBPosition (r, 1), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
+		++r;
+
+		_grid->Add (_hmsf, wxGBPosition(r,1));
+		++r;
+
+		add_label_to_sizer (_grid, _head_label, true, wxGBPosition(r, 0));
+		_grid->Add (_head, wxGBPosition(r, 1), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
+		++r;
+
+		add_label_to_sizer (_grid, _tail_label, true, wxGBPosition(r, 0));
+		_grid->Add (_tail, wxGBPosition(r, 1), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
 		++r;
 
 		_grid->Add (_upload_after_make_dcp, wxGBPosition (r, 0), wxGBSpan (1, 2));
@@ -535,6 +563,12 @@ DCPPanel::film_changed (int p)
 	case Film::CONTENT:
 		setup_dcp_name ();
 		break;
+	case Film::HEAD:
+		_head->set (_film->head(), _film->video_frame_rate());
+		break;
+	case Film::TAIL:
+		_tail->set (_film->tail(), _film->video_frame_rate());
+		break;
 	default:
 		break;
 	}
@@ -656,6 +690,8 @@ DCPPanel::set_film (shared_ptr<Film> film)
 	film_changed (Film::REEL_LENGTH);
 	film_changed (Film::UPLOAD_AFTER_MAKE_DCP);
 	film_changed (Film::REENCODE_J2K);
+	film_changed (Film::HEAD);
+	film_changed (Film::TAIL);
 
 	set_general_sensitivity(static_cast<bool>(_film));
 }
@@ -700,6 +736,8 @@ DCPPanel::setup_sensitivity ()
 	_resolution->Enable             (_generally_sensitive && _film && !_film->references_dcp_video());
 	_three_d->Enable                (_generally_sensitive && _film && !_film->references_dcp_video());
 	_standard->Enable               (_generally_sensitive && _film && !_film->references_dcp_video() && !_film->references_dcp_audio());
+	_head->Enable                   (_generally_sensitive);
+	_tail->Enable                   (_generally_sensitive);
 	_reencode_j2k->Enable           (_generally_sensitive && _film);
 	_show_audio->Enable             (_generally_sensitive && _film);
 }
@@ -1053,3 +1091,25 @@ DCPPanel::add_audio_processors ()
 	}
 	_audio_panel_sizer->Layout();
 }
+
+void
+DCPPanel::head_changed ()
+{
+	if (!_film) {
+		return;
+	}
+
+	_film->set_head (_head->get(_film->video_frame_rate()));
+}
+
+void
+DCPPanel::tail_changed ()
+{
+	if (!_film) {
+		return;
+	}
+
+	_film->set_tail (_tail->get(_film->video_frame_rate()));
+}
+
+

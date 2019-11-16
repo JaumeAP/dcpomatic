@@ -240,7 +240,9 @@ public:
 		REENCODE_J2K,
 		MARKERS,
 		RATINGS,
-		CONTENT_VERSION
+		CONTENT_VERSION,
+		HEAD,
+		TAIL
 	};
 
 
@@ -349,6 +351,15 @@ public:
 		return _content_version;
 	}
 
+	dcpomatic::DCPTime head () const {
+		return _head;
+	}
+
+	dcpomatic::DCPTime tail () const {
+		return _tail;
+	}
+
+
 	/* SET */
 
 	void set_directory (boost::filesystem::path);
@@ -383,6 +394,8 @@ public:
 	void unset_marker (dcp::Marker type);
 	void set_ratings (std::vector<dcp::Rating> r);
 	void set_content_version (std::string v);
+	void set_head (dcpomatic::DCPTime);
+	void set_tail (dcpomatic::DCPTime);
 
 	/** Emitted when some property has of the Film is about to change or has changed */
 	mutable boost::signals2::signal<void (ChangeType, Property)> Change;
@@ -474,6 +487,8 @@ private:
 	std::map<dcp::Marker, dcpomatic::DCPTime> _markers;
 	std::vector<dcp::Rating> _ratings;
 	std::string _content_version;
+	dcpomatic::DCPTime _head;
+	dcpomatic::DCPTime _tail;
 
 	int _state_version;
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2015 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2019 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -90,6 +90,7 @@ extern wxSplashScreen* maybe_show_splash ();
 extern double calculate_mark_interval (double start);
 extern bool display_progress (wxString title, wxString task);
 extern bool report_errors_from_last_job (wxWindow* parent);
+extern wxSizer* hmsf_labels (wxWindow* parent);
 
 extern void checked_set (FilePickerCtrl* widget, boost::filesystem::path value);
 extern void checked_set (wxDirPickerCtrl* widget, boost::filesystem::path value);

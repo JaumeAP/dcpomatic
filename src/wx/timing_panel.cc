@@ -57,34 +57,6 @@ TimingPanel::TimingPanel (ContentPanel* p, weak_ptr<FilmViewer> viewer)
 	, _viewer (viewer)
 	, _film_content_changed_suspender (boost::bind(&TimingPanel::film_content_changed, this, _1))
 {
-	wxSize size = TimecodeBase::size (this);
-
-	for (int i = 0; i < 3; ++i) {
-		_colon[i] = create_label (this, wxT(":"), false);
-	}
-
-	//// TRANSLATORS: this is an abbreviation for "hours"
-	_h_label = new StaticText (this, _("h"), wxDefaultPosition, size, wxALIGN_CENTRE_HORIZONTAL);
-#ifdef DCPOMATIC_LINUX
-	/* Hack to work around failure to centre text on GTK */
-	gtk_label_set_line_wrap (GTK_LABEL(_h_label->GetHandle()), FALSE);
-#endif
-	//// TRANSLATORS: this is an abbreviation for "minutes"
-	_m_label = new StaticText (this, _("m"), wxDefaultPosition, size, wxALIGN_CENTRE_HORIZONTAL);
-#ifdef DCPOMATIC_LINUX
-	gtk_label_set_line_wrap (GTK_LABEL (_m_label->GetHandle()), FALSE);
-#endif
-	//// TRANSLATORS: this is an abbreviation for "seconds"
-	_s_label = new StaticText (this, _("s"), wxDefaultPosition, size, wxALIGN_CENTRE_HORIZONTAL);
-#ifdef DCPOMATIC_LINUX
-	gtk_label_set_line_wrap (GTK_LABEL(_s_label->GetHandle()), FALSE);
-#endif
-	//// TRANSLATORS: this is an abbreviation for "frames"
-	_f_label = new StaticText (this, _("f"), wxDefaultPosition, size, wxALIGN_CENTRE_HORIZONTAL);
-#ifdef DCPOMATIC_LINUX
-	gtk_label_set_line_wrap (GTK_LABEL(_f_label->GetHandle()), FALSE);
-#endif
-
 	_position_label = create_label (this, _("Position"), true);
 	_position = new Timecode<DCPTime> (this);
 	_move_to_start_of_reel = new Button (this, _("Move to start of reel"));
@@ -98,6 +70,7 @@ TimingPanel::TimingPanel (ContentPanel* p, weak_ptr<FilmViewer> viewer)
 	_trim_end_to_playhead = new Button (this, _("Trim after current position"));
 	_play_length_label = create_label (this, _("Play length"), true);
 	_play_length = new Timecode<DCPTime> (this);
+	_hmsf_labels = hmsf_labels(this);
 
 	_video_frame_rate_label = create_label (this, _("Video frame rate"), true);
 	_video_frame_rate = new wxTextCtrl (this, wxID_ANY);
@@ -155,15 +128,7 @@ TimingPanel::add_to_grid ()
 
 	int r = 0;
 
-	wxSizer* labels = new wxBoxSizer (wxHORIZONTAL);
-	labels->Add (_h_label, 1, wxEXPAND);
-	add_label_to_sizer (labels, _colon[0], false);
-	labels->Add (_m_label, 1, wxEXPAND);
-	add_label_to_sizer (labels, _colon[1], false);
-	labels->Add (_s_label, 1, wxEXPAND);
-	add_label_to_sizer (labels, _colon[2], false);
-	labels->Add (_f_label, 1, wxEXPAND);
-	_grid->Add (labels, wxGBPosition(r, 1));
+	_grid->Add (_hmsf_labels, wxGBPosition(r, 1));
 	++r;
 
 	add_label_to_sizer (_grid, _position_label, true, wxGBPosition(r, 0));
