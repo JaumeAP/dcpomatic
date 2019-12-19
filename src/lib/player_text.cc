@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2014-2018 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2014-2019 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -20,6 +20,7 @@
 
 #include "player_text.h"
 #include "font.h"
+#include "util.h"
 #include <boost/foreach.hpp>
 
 using std::list;
@@ -40,4 +41,10 @@ PlayerText::add_fonts (list<shared_ptr<Font> > fonts_)
 			fonts.push_back (i);
 		}
 	}
+}
+
+bool
+operator== (PlayerText const & a, PlayerText const & b)
+{
+	return deep_equals(a.fonts, b.fonts) && deep_equals(a.bitmap, b.bitmap) && deep_equals(a.string, b.string);
 }

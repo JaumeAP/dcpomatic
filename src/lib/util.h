@@ -128,4 +128,49 @@ vector_to_list (std::vector<T> v)
 	return l;
 }
 
+template <class T>
+bool
+deep_equals (std::list<boost::shared_ptr<T> > a, std::list<boost::shared_ptr<T> > b)
+{
+	if (a.size() != b.size()) {
+		return false;
+	}
+
+	typename std::list<boost::shared_ptr<T> >::const_iterator i = a.begin();
+	typename std::list<boost::shared_ptr<T> >::const_iterator j = b.begin();
+
+	while (i != a.end()) {
+		if (**i != **j) {
+			return false;
+		}
+		++i;
+		++j;
+	}
+
+	return true;
+}
+
+template <class T>
+bool
+deep_equals (std::list<T> a, std::list<T> b)
+{
+	if (a.size() != b.size()) {
+		return false;
+	}
+
+	typename std::list<T>::const_iterator i = a.begin();
+	typename std::list<T>::const_iterator j = b.begin();
+
+	while (i != a.end()) {
+		if (*i != *j) {
+			return false;
+		}
+		++i;
+		++j;
+	}
+
+	return true;
+}
+
 #endif
+

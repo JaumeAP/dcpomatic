@@ -112,6 +112,14 @@ public:
 	{
 		return (p.x >= x && p.x <= (x + width) && p.y >= y && p.y <= (y + height));
 	}
+
+	bool equal (Rect<T> const & other, T threshold) const
+	{
+		return std::abs(x - other.x) < threshold &&
+			std::abs(y - other.y) < threshold &&
+			std::abs(width - other.width) < threshold &&
+			std::abs(height - other.height) < threshold;
+	}
 };
 
 }

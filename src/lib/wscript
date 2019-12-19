@@ -39,6 +39,7 @@ sources = """
           audio_processor.cc
           audio_ring_buffers.cc
           audio_stream.cc
+          bitmap_text.cc
           butler.cc
           text_content.cc
           text_decoder.cc
@@ -149,6 +150,7 @@ sources = """
           server.cc
           shuffler.cc
           state.cc
+          string_text.cc
           spl.cc
           spl_entry.cc
           string_log_entry.cc
