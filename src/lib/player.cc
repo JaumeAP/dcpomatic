@@ -344,8 +344,7 @@ Player::black_player_video_frame (Eyes eyes) const
 			PART_WHOLE,
 			PresetColourConversion::all().front().conversion,
 			VIDEO_RANGE_FULL,
-			boost::weak_ptr<Content>(),
-			boost::optional<Frame>()
+			boost::weak_ptr<Content>()
 		)
 	);
 }
@@ -847,8 +846,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 			video.part,
 			piece->content->video->colour_conversion(),
 			piece->content->video->range(),
-			piece->content,
-			video.frame
+			piece->content
 			)
 		);
 

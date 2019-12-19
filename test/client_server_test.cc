@@ -98,8 +98,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_rgb)
 			PART_WHOLE,
 			ColourConversion(),
 			VIDEO_RANGE_FULL,
-			weak_ptr<Content>(),
-			optional<Frame>()
+			weak_ptr<Content>()
 			)
 		);
 
@@ -183,8 +182,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_yuv)
 			PART_WHOLE,
 			ColourConversion(),
 			VIDEO_RANGE_FULL,
-			weak_ptr<Content>(),
-			optional<Frame>()
+			weak_ptr<Content>()
 			)
 		);
 
@@ -255,8 +253,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 			PART_WHOLE,
 			ColourConversion(),
 			VIDEO_RANGE_FULL,
-			weak_ptr<Content>(),
-			optional<Frame>()
+			weak_ptr<Content>()
 			)
 		);
 
@@ -283,8 +280,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 			PART_WHOLE,
 			PresetColourConversion::all().front().conversion,
 			VIDEO_RANGE_FULL,
-			weak_ptr<Content>(),
-			optional<Frame>()
+			weak_ptr<Content>()
 			)
 		);
 

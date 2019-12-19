@@ -53,7 +53,7 @@ public:
 	virtual bool display_next_frame (bool) = 0;
 
 	void clear ();
-	bool refresh_metadata (boost::shared_ptr<const Film> film, dcp::Size video_container_size, dcp::Size film_frame_size);
+	bool refresh_metadata (dcp::Size video_container_size);
 
 	/** Emitted from the GUI thread when our display changes in size */
 	boost::signals2::signal<void()> Sized;

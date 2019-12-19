@@ -53,8 +53,7 @@ PlayerVideo::PlayerVideo (
 	Part part,
 	optional<ColourConversion> colour_conversion,
 	VideoRange video_range,
-	weak_ptr<Content> content,
-	optional<Frame> video_frame
+	weak_ptr<Content> content
 	)
 	: _in (in)
 	, _crop (crop)
@@ -66,7 +65,6 @@ PlayerVideo::PlayerVideo (
 	, _colour_conversion (colour_conversion)
 	, _video_range (video_range)
 	, _content (content)
-	, _video_frame (video_frame)
 {
 
 }
@@ -314,8 +312,7 @@ PlayerVideo::shallow_copy () const
 			_part,
 			_colour_conversion,
 			_video_range,
-			_content,
-			_video_frame
+			_content
 			)
 		);
 }
@@ -324,10 +321,10 @@ PlayerVideo::shallow_copy () const
  *  @return true if this was possible, false if not.
  */
 bool
-PlayerVideo::reset_metadata (shared_ptr<const Film> film, dcp::Size video_container_size, dcp::Size film_frame_size)
+PlayerVideo::reset_metadata (dcp::Size video_container_size)
 {
 	shared_ptr<Content> content = _content.lock();
-	if (!content || !_video_frame) {
+	if (!content) {
 		return false;
 	}
 

@@ -55,8 +55,7 @@ public:
 		Part,
 		boost::optional<ColourConversion>,
 		VideoRange video_range,
-		boost::weak_ptr<Content>,
-		boost::optional<Frame>
+		boost::weak_ptr<Content>
 		);
 
 	PlayerVideo (boost::shared_ptr<cxml::Node>, boost::shared_ptr<Socket>);
@@ -74,7 +73,7 @@ public:
 	void add_metadata (xmlpp::Node* node) const;
 	void send_binary (boost::shared_ptr<Socket> socket) const;
 
-	bool reset_metadata (boost::shared_ptr<const Film> film, dcp::Size video_container_size, dcp::Size film_frame_size);
+	bool reset_metadata (dcp::Size video_container_size);
 
 	bool has_j2k () const;
 	dcp::Data j2k () const;
@@ -124,8 +123,6 @@ private:
 	 *  for variant:swaroop's non-skippable ads.
 	 */
 	boost::weak_ptr<Content> _content;
-	/** Video frame that we came from.  Again, this is for reset_metadata() */
-	boost::optional<Frame> _video_frame;
 
 	mutable boost::mutex _mutex;
 	mutable boost::shared_ptr<Image> _image;
