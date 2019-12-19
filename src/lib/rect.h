@@ -24,6 +24,7 @@
 #include "position.h"
 #include <boost/optional.hpp>
 #include <algorithm>
+#include <cmath>
 
 /* Put this inside a namespace as Apple put a Rect in the global namespace */
 
@@ -113,6 +114,8 @@ public:
 		return (p.x >= x && p.x <= (x + width) && p.y >= y && p.y <= (y + height));
 	}
 };
+
+extern bool operator== (Rect<double> const & a, Rect<double> const & b);
 
 }
 

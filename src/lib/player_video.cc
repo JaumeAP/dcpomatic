@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2013-2018 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2013-2019 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -25,6 +25,8 @@
 #include "image_proxy.h"
 #include "j2k_image_proxy.h"
 #include "film.h"
+#include "render_text.h"
+#include "text_content.h"
 #include <dcp/raw_convert.h>
 extern "C" {
 #include <libavutil/pixfmt.h>
@@ -35,6 +37,7 @@ extern "C" {
 using std::string;
 using std::cout;
 using std::pair;
+using std::list;
 using boost::shared_ptr;
 using boost::weak_ptr;
 using boost::dynamic_pointer_cast;
@@ -54,7 +57,8 @@ PlayerVideo::PlayerVideo (
 	optional<ColourConversion> colour_conversion,
 	VideoRange video_range,
 	weak_ptr<Content> content,
-	optional<Frame> video_frame
+	optional<dcpomatic::DCPTime> time,
+	int video_frame_rate
 	)
 	: _in (in)
 	, _crop (crop)
@@ -66,12 +70,15 @@ PlayerVideo::PlayerVideo (
 	, _colour_conversion (colour_conversion)
 	, _video_range (video_range)
 	, _content (content)
-	, _video_frame (video_frame)
+	, _time (time)
+	, _video_frame_rate (video_frame_rate)
+	, _image_dirty (false)
 {
 
 }
 
 PlayerVideo::PlayerVideo (shared_ptr<cxml::Node> node, shared_ptr<Socket> socket)
+	: _image_dirty (false)
 {
 	_crop = Crop (node);
 	_fade = node->optional_number_child<double> ("Fade");
@@ -95,14 +102,16 @@ PlayerVideo::PlayerVideo (shared_ptr<cxml::Node> node, shared_ptr<Socket> socket
 
 		image->read_from_socket (socket);
 
+		/* XXX_b
 		_text = PositionImage (image, Position<int> (node->number_child<int> ("SubtitleX"), node->number_child<int> ("SubtitleY")));
+		*/
 	}
 }
 
 void
-PlayerVideo::set_text (PositionImage image)
+PlayerVideo::set_text (list<PlayerText> text)
 {
-	_text = image;
+	_text = text;
 }
 
 shared_ptr<Image>
@@ -111,7 +120,7 @@ PlayerVideo::image (function<AVPixelFormat (AVPixelFormat)> pixel_format, bool a
 	/* XXX: this assumes that image() and prepare() are only ever called with the same parameters (except crop, inter size, out size, fade) */
 
 	boost::mutex::scoped_lock lm (_mutex);
-	if (!_image || _crop != _image_crop || _inter_size != _image_inter_size || _out_size != _image_out_size || _fade != _image_fade) {
+	if (!_image || _image_dirty) {
 		make_image (pixel_format, aligned, fast);
 	}
 	return _image;
@@ -172,13 +181,52 @@ PlayerVideo::make_image (function<AVPixelFormat (AVPixelFormat)> pixel_format, b
 		total_crop, _inter_size, _out_size, yuv_to_rgb, _video_range, pixel_format (im->pixel_format()), aligned, fast
 		);
 
-	if (_text) {
-		_image->alpha_blend (Image::ensure_aligned (_text->image), _text->position);
+	list<PositionImage> subtitles;
+
+	BOOST_FOREACH (PlayerText i, _text) {
+
+		/* Bitmap subtitles */
+		BOOST_FOREACH (BitmapText j, i.bitmap) {
+			if (!j.image) {
+				continue;
+			}
+
+			/* j.image will already have been scaled to fit _out_size */
+			dcp::Size scaled_size (j.rectangle.width * _out_size.width, j.rectangle.height * _out_size.height);
+
+			subtitles.push_back (
+				PositionImage (
+					j.image,
+					Position<int> (
+						lrint (_out_size.width * j.rectangle.x),
+						lrint (_out_size.height * j.rectangle.y)
+						)
+					)
+				);
+		}
+
+		/* String subtitles (rendered to an image) */
+		if (!i.string.empty ()) {
+			DCPOMATIC_ASSERT (_time);
+			shared_ptr<const TextContent> content = i.content.lock ();
+			DCPOMATIC_ASSERT (content);
+			list<PositionImage> s = render_text (
+				i.string, i.fonts, _out_size, *_time, _video_frame_rate, content->x_offset(), content->y_offset()
+				);
+			copy (s.begin(), s.end(), back_inserter (subtitles));
+		}
+	}
+
+	if (!subtitles.empty()) {
+		PositionImage pi = merge (subtitles);
+		_image->alpha_blend (Image::ensure_aligned(pi.image), pi.position);
 	}
 
 	if (_fade) {
 		_image->fade (_fade.get ());
 	}
+
+	_image_dirty = false;
 }
 
 void
@@ -199,21 +247,25 @@ PlayerVideo::add_metadata (xmlpp::Node* node) const
 	if (_colour_conversion) {
 		_colour_conversion.get().as_xml (node);
 	}
+	/* XXX_b
 	if (_text) {
 		node->add_child ("SubtitleWidth")->add_child_text (raw_convert<string> (_text->image->size().width));
 		node->add_child ("SubtitleHeight")->add_child_text (raw_convert<string> (_text->image->size().height));
 		node->add_child ("SubtitleX")->add_child_text (raw_convert<string> (_text->position.x));
 		node->add_child ("SubtitleY")->add_child_text (raw_convert<string> (_text->position.y));
 	}
+	*/
 }
 
 void
 PlayerVideo::send_binary (shared_ptr<Socket> socket) const
 {
 	_in->send_binary (socket);
+	/* XXX_b
 	if (_text) {
 		_text->image->write_to_socket (socket);
 	}
+	*/
 }
 
 bool
@@ -226,7 +278,7 @@ PlayerVideo::has_j2k () const
 		return false;
 	}
 
-	return _crop == Crop () && _out_size == j2k->size() && !_text && !_fade && !_colour_conversion;
+	return _crop == Crop() && _out_size == j2k->size() && _text.empty() && !_fade && !_colour_conversion;
 }
 
 Data
@@ -258,17 +310,21 @@ PlayerVideo::same (shared_ptr<const PlayerVideo> other) const
 		return false;
 	}
 
-	if ((!_text && other->_text) || (_text && !other->_text)) {
-		/* One has a text and the other doesn't */
+	if (_text.size() != other->_text.size()) {
+		/* Different text counts */
 		return false;
 	}
 
-	if (_text && other->_text && !_text->same (other->_text.get ())) {
-		/* They both have texts but they are different */
-		return false;
+	list<PlayerText>::const_iterator i = _text.begin();
+	list<PlayerText>::const_iterator j = other->_text.begin();
+	while (i != _text.end()) {
+		if (*i != *j) {
+			/* Same number of texts but one differs */
+			return false;
+		}
+		++i;
+		++j;
 	}
-
-	/* Now neither has subtitles */
 
 	return _in->same (other->_in);
 }
@@ -317,7 +373,8 @@ PlayerVideo::shallow_copy () const
 			_colour_conversion,
 			_video_range,
 			_content,
-			_video_frame
+			_time,
+			_video_frame_rate
 			)
 		);
 }
@@ -329,16 +386,23 @@ bool
 PlayerVideo::reset_metadata (shared_ptr<const Film> film, dcp::Size video_container_size, dcp::Size film_frame_size)
 {
 	shared_ptr<Content> content = _content.lock();
-	if (!content || !_video_frame) {
+	if (!content || !_time) {
 		return false;
 	}
 
 	_crop = content->video->crop();
-	_fade = content->video->fade(film, _video_frame.get());
+	_fade = content->video->fade(film, _time->frames_round(_video_frame_rate));
 	_inter_size = content->video->scale().size(content->video, video_container_size, film_frame_size);
 	_out_size = video_container_size;
 	_colour_conversion = content->video->colour_conversion();
 	_video_range = content->video->range();
+
+	/* XXX_b _text looks into content directly itself, as maybe the other parameters should; we could just
+	   have a pointer to the content and get stuff from there.
+	*/
+
+	/* XXX_b thread safety of _image_dirty? */
+	_image_dirty = true;
 
 	return true;
 }

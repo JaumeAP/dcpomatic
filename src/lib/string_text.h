@@ -38,4 +38,6 @@ public:
 	int outline_width;
 };
 
+extern bool operator== (StringText const & a, StringText const & b);
+
 #endif

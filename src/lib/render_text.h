@@ -29,5 +29,11 @@ namespace dcpomatic {
 
 std::string marked_up (std::list<StringText> subtitles, int target_height, float fade_factor);
 std::list<PositionImage> render_text (
-	std::list<StringText>, std::list<boost::shared_ptr<dcpomatic::Font> > fonts, dcp::Size, dcpomatic::DCPTime, int
+	std::list<StringText> subtitles,
+	std::list<boost::shared_ptr<dcpomatic::Font> > fonts,
+	dcp::Size target,
+	dcpomatic::DCPTime time,
+	int frame_rate,
+	double x_offset,
+	double y_offset
 	);

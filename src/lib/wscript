@@ -39,6 +39,7 @@ sources = """
           audio_processor.cc
           audio_ring_buffers.cc
           audio_stream.cc
+          bitmap_text.cc
           butler.cc
           text_content.cc
           text_decoder.cc
@@ -135,6 +136,7 @@ sources = """
           position_image.cc
           ratio.cc
           raw_image_proxy.cc
+          rect.cc
           reel_writer.cc
           render_text.cc
           resampler.cc
@@ -152,6 +154,7 @@ sources = """
           spl.cc
           spl_entry.cc
           string_log_entry.cc
+          string_text.cc
           string_text_file.cc
           string_text_file_content.cc
           string_text_file_decoder.cc

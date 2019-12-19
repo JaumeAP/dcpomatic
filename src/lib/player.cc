@@ -345,7 +345,8 @@ Player::black_player_video_frame (Eyes eyes) const
 			PresetColourConversion::all().front().conversion,
 			VIDEO_RANGE_FULL,
 			boost::weak_ptr<Content>(),
-			boost::optional<Frame>()
+			boost::optional<DCPTime>(),
+			_film->video_frame_rate()
 		)
 	);
 }
@@ -713,52 +714,6 @@ Player::pass ()
 	return done;
 }
 
-/** @return Open subtitles for the frame at the given time, converted to images */
-optional<PositionImage>
-Player::open_subtitles_for_frame (DCPTime time) const
-{
-	list<PositionImage> captions;
-	int const vfr = _film->video_frame_rate();
-
-	BOOST_FOREACH (
-		PlayerText j,
-		_active_texts[TEXT_OPEN_SUBTITLE].get_burnt(DCPTimePeriod(time, time + DCPTime::from_frames(1, vfr)), _always_burn_open_subtitles)
-		) {
-
-		/* Bitmap subtitles */
-		BOOST_FOREACH (BitmapText i, j.bitmap) {
-			if (!i.image) {
-				continue;
-			}
-
-			/* i.image will already have been scaled to fit _video_container_size */
-			dcp::Size scaled_size (i.rectangle.width * _video_container_size.width, i.rectangle.height * _video_container_size.height);
-
-			captions.push_back (
-				PositionImage (
-					i.image,
-					Position<int> (
-						lrint (_video_container_size.width * i.rectangle.x),
-						lrint (_video_container_size.height * i.rectangle.y)
-						)
-					)
-				);
-		}
-
-		/* String subtitles (rendered to an image) */
-		if (!j.string.empty ()) {
-			list<PositionImage> s = render_text (j.string, j.fonts, _video_container_size, time, vfr);
-			copy (s.begin(), s.end(), back_inserter (captions));
-		}
-	}
-
-	if (captions.empty ()) {
-		return optional<PositionImage> ();
-	}
-
-	return merge (captions);
-}
-
 void
 Player::video (weak_ptr<Piece> wp, ContentVideo video)
 {
@@ -847,7 +802,8 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 			piece->content->video->colour_conversion(),
 			piece->content->video->range(),
 			piece->content,
-			video.frame
+			time,
+			_film->video_frame_rate()
 			)
 		);
 
@@ -950,10 +906,11 @@ Player::bitmap_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, C
 	subtitle.sub.rectangle.width *= text->x_scale ();
 	subtitle.sub.rectangle.height *= text->y_scale ();
 
-	PlayerText ps;
 	shared_ptr<Image> image = subtitle.sub.image;
 	/* We will scale the subtitle up to fit _video_container_size */
 	dcp::Size scaled_size (subtitle.sub.rectangle.width * _video_container_size.width, subtitle.sub.rectangle.height * _video_container_size.height);
+	PlayerText ps;
+	ps.content = text;
 	ps.bitmap.push_back (BitmapText(image->scale(scaled_size, dcp::YUV_TO_RGB_REC601, image->pixel_format(), true, _fast), subtitle.sub.rectangle));
 	DCPTime from (content_time_to_dcp (piece, subtitle.from()));
 
@@ -970,6 +927,7 @@ Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Co
 	}
 
 	PlayerText ps;
+	ps.content = text;
 	DCPTime const from (content_time_to_dcp (piece, subtitle.from()));
 
 	if (from > piece->content->end(_film)) {
@@ -977,8 +935,8 @@ Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Co
 	}
 
 	BOOST_FOREACH (dcp::SubtitleString s, subtitle.subs) {
-		s.set_h_position (s.h_position() + text->x_offset ());
-		s.set_v_position (s.v_position() + text->y_offset ());
+//		s.set_h_position (s.h_position() + text->x_offset ());
+//		s.set_v_position (s.v_position() + text->y_offset ());
 		float const xs = text->x_scale();
 		float const ys = text->y_scale();
 		float size = s.size();
@@ -1126,10 +1084,9 @@ Player::do_emit_video (shared_ptr<PlayerVideo> pv, DCPTime time)
 		}
 	}
 
-	optional<PositionImage> subtitles = open_subtitles_for_frame (time);
-	if (subtitles) {
-		pv->set_text (subtitles.get ());
-	}
+	int const vfr = _film->video_frame_rate();
+	list<PlayerText> subtitles = _active_texts[TEXT_OPEN_SUBTITLE].get_burnt(DCPTimePeriod(time, time + DCPTime::from_frames(1, vfr)), _always_burn_open_subtitles);
+	pv->set_text (subtitles);
 
 	Video (pv, time);
 }

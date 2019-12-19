@@ -18,16 +18,19 @@
 
 */
 
-#ifndef DCPOMATIC_PLAYER_CAPTION_H
-#define DCPOMATIC_PLAYER_CAPTION_H
+#ifndef DCPOMATIC_PLAYER_TEXT_H
+#define DCPOMATIC_PLAYER_TEXT_H
 
 #include "bitmap_text.h"
 #include "dcpomatic_time.h"
 #include "string_text.h"
+#include <boost/weak_ptr.hpp>
 
 namespace dcpomatic {
 	class Font;
 }
+
+class TextContent;
 
 /** A set of text (subtitle/CCAP) which span the same time period */
 class PlayerText
@@ -36,9 +39,13 @@ public:
 	void add_fonts (std::list<boost::shared_ptr<dcpomatic::Font> > fonts_);
 	std::list<boost::shared_ptr<dcpomatic::Font> > fonts;
 
+	boost::weak_ptr<const TextContent> content;
 	/** BitmapTexts, with their rectangles transformed as specified by their content */
 	std::list<BitmapText> bitmap;
 	std::list<StringText> string;
 };
+
+extern bool operator== (PlayerText const & a, PlayerText const & b);
+extern bool operator!= (PlayerText const & a, PlayerText const & b);
 
 #endif

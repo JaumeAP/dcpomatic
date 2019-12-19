@@ -45,4 +45,6 @@ public:
 	dcpomatic::Rect<double> rectangle;
 };
 
+extern bool operator== (BitmapText const & a, BitmapText const & b);
+
 #endif

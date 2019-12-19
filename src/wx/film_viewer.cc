@@ -47,6 +47,7 @@
 #include "lib/config.h"
 #include "lib/compose.hpp"
 #include "lib/dcpomatic_log.h"
+#include "lib/text_content.h"
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
@@ -519,7 +520,9 @@ FilmViewer::player_change (ChangeType type, int property, bool frequent)
 		property == VideoContentProperty::FADE_OUT ||
 		property == VideoContentProperty::COLOUR_CONVERSION ||
 		property == PlayerProperty::VIDEO_CONTAINER_SIZE ||
-		property == PlayerProperty::FILM_CONTAINER
+		property == PlayerProperty::FILM_CONTAINER ||
+		property == TextContentProperty::X_OFFSET ||
+		property == TextContentProperty::Y_OFFSET
 		) {
 		refreshed = quick_refresh ();
 	}

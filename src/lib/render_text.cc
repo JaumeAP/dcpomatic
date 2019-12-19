@@ -92,7 +92,7 @@ set_source_rgba (Cairo::RefPtr<Cairo::Context> context, dcp::Colour colour, floa
  *  at the same time and with the same fade in/out.
  */
 static PositionImage
-render_line (list<StringText> subtitles, list<shared_ptr<Font> > fonts, dcp::Size target, DCPTime time, int frame_rate)
+render_line (list<StringText> subtitles, list<shared_ptr<Font> > fonts, dcp::Size target, DCPTime time, int frame_rate, double x_offset, double y_offset)
 {
 	/* XXX: this method can only handle italic / bold changes mid-line,
 	   nothing else yet.
@@ -263,14 +263,14 @@ render_line (list<StringText> subtitles, list<shared_ptr<Font> > fonts, dcp::Siz
 	/* Shuffle the subtitle over very slightly if it has a border so that the left-hand
 	   side of the first character's border is not cut off.
 	*/
-	int const x_offset = subtitles.front().effect() == dcp::BORDER ? (target.width / 600.0) : 0;
+	int const xoff = subtitles.front().effect() == dcp::BORDER ? (target.width / 600.0) : 0;
 	/* Move down a bit so that accents on capital letters can be seen */
-	int const y_offset = target.height / 100.0;
+	int const yoff = target.height / 100.0;
 
 	if (subtitles.front().effect() == dcp::SHADOW) {
 		/* Drop-shadow effect */
 		set_source_rgba (context, subtitles.front().effect_colour(), fade_factor);
-		context->move_to (x_offset + 4, y_offset + 4);
+		context->move_to (xoff + 4, yoff + 4);
 		layout->add_to_cairo_context (context);
 		context->fill ();
 	}
@@ -280,7 +280,7 @@ render_line (list<StringText> subtitles, list<shared_ptr<Font> > fonts, dcp::Siz
 		set_source_rgba (context, subtitles.front().effect_colour(), fade_factor);
 		context->set_line_width (subtitles.front().outline_width * target.width / 2048.0);
 		context->set_line_join (Cairo::LINE_JOIN_ROUND);
-		context->move_to (x_offset, y_offset);
+		context->move_to (xoff, yoff);
 		layout->add_to_cairo_context (context);
 		context->stroke ();
 	}
@@ -301,65 +301,68 @@ render_line (list<StringText> subtitles, list<shared_ptr<Font> > fonts, dcp::Siz
 	layout_width *= xscale;
 	layout_height *= yscale;
 
+	double const h_pos = subtitles.front().h_position() + x_offset;
+	double const v_pos = subtitles.front().v_position() + y_offset;
+
 	int x = 0;
-	switch (subtitles.front().h_align ()) {
+	switch (subtitles.front().h_align()) {
 	case dcp::HALIGN_LEFT:
-		/* h_position is distance between left of frame and left of subtitle */
-		x = subtitles.front().h_position() * target.width;
+		/* h_pos is distance between left of frame and left of subtitle */
+		x = h_pos * target.width;
 		break;
 	case dcp::HALIGN_CENTER:
-		/* h_position is distance between centre of frame and centre of subtitle */
-		x = (0.5 + subtitles.front().h_position()) * target.width - layout_width / 2;
+		/* h_pos is distance between centre of frame and centre of subtitle */
+		x = (0.5 + h_pos) * target.width - layout_width / 2;
 		break;
 	case dcp::HALIGN_RIGHT:
-		/* h_position is distance between right of frame and right of subtitle */
-		x = (1.0 - subtitles.front().h_position()) * target.width - layout_width;
+		/* h_pos is distance between right of frame and right of subtitle */
+		x = (1.0 - h_pos) * target.width - layout_width;
 		break;
 	}
 
 	int y = 0;
-	switch (subtitles.front().v_align ()) {
+	switch (subtitles.front().v_align()) {
 	case dcp::VALIGN_TOP:
-		/* SMPTE says that v_position is the distance between top
+		/* SMPTE says that v_pos is the distance between top
 		   of frame and top of subtitle, but this doesn't always seem to be
 		   the case in practice; Gunnar Ásgeirsson's Dolby server appears
 		   to put VALIGN_TOP subs with v_position as the distance between top
 		   of frame and bottom of subtitle.
 		*/
-		y = subtitles.front().v_position() * target.height - layout_height;
+		y = v_pos * target.height - layout_height;
 		break;
 	case dcp::VALIGN_CENTER:
 		/* v_position is distance between centre of frame and centre of subtitle */
-		y = (0.5 + subtitles.front().v_position()) * target.height - layout_height / 2;
+		y = (0.5 + v_pos) * target.height - layout_height / 2;
 		break;
 	case dcp::VALIGN_BOTTOM:
 		/* v_position is distance between bottom of frame and bottom of subtitle */
-		y = (1.0 - subtitles.front().v_position()) * target.height - layout_height;
+		y = (1.0 - v_pos) * target.height - layout_height;
 		break;
 	}
 
-	return PositionImage (image, Position<int> (max (0, x), max (0, y)));
+	return PositionImage (image, Position<int>(max (0, x), max(0, y)));
 }
 
 /** @param time Time of the frame that these subtitles are going on.
  *  @param frame_rate DCP frame rate.
  */
 list<PositionImage>
-render_text (list<StringText> subtitles, list<shared_ptr<Font> > fonts, dcp::Size target, DCPTime time, int frame_rate)
+render_text (list<StringText> subtitles, list<shared_ptr<Font> > fonts, dcp::Size target, DCPTime time, int frame_rate, double x_offset, double y_offset)
 {
 	list<StringText> pending;
 	list<PositionImage> images;
 
 	BOOST_FOREACH (StringText const & i, subtitles) {
 		if (!pending.empty() && (i.v_align() != pending.back().v_align() || fabs(i.v_position() - pending.back().v_position()) > 1e-4)) {
-			images.push_back (render_line (pending, fonts, target, time, frame_rate));
+			images.push_back (render_line(pending, fonts, target, time, frame_rate, x_offset, y_offset));
 			pending.clear ();
 		}
 		pending.push_back (i);
 	}
 
 	if (!pending.empty ()) {
-		images.push_back (render_line (pending, fonts, target, time, frame_rate));
+		images.push_back (render_line(pending, fonts, target, time, frame_rate, x_offset, y_offset));
 	}
 
 	return images;

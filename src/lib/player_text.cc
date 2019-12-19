@@ -41,3 +41,31 @@ PlayerText::add_fonts (list<shared_ptr<Font> > fonts_)
 		}
 	}
 }
+
+bool
+operator== (PlayerText const & a, PlayerText const & b)
+{
+	if (a.fonts.size() != b.fonts.size()) {
+		return false;
+	}
+
+	{
+		list<shared_ptr<Font> >::const_iterator i = a.fonts.begin();
+		list<shared_ptr<Font> >::const_iterator j = b.fonts.begin();
+		while (i != a.fonts.end()) {
+			if (**i != **j) {
+				return false;
+			}
+			++i;
+			++j;
+		}
+	}
+
+	return a.bitmap == b.bitmap && a.string == b.string;
+}
+
+bool
+operator!= (PlayerText const & a, PlayerText const & b)
+{
+	return !(a == b);
+}
