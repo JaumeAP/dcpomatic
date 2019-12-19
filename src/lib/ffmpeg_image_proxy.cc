@@ -209,7 +209,7 @@ FFmpegImageProxy::send_binary (shared_ptr<Socket> socket) const
 }
 
 bool
-FFmpegImageProxy::same (shared_ptr<const ImageProxy> other) const
+FFmpegImageProxy::definitely_equal (shared_ptr<const ImageProxy> other) const
 {
 	shared_ptr<const FFmpegImageProxy> mp = dynamic_pointer_cast<const FFmpegImageProxy> (other);
 	if (!mp) {

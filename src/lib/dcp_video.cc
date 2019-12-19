@@ -208,7 +208,7 @@ DCPVideo::eyes () const
  *  (apart from the frame index), false if it is probably not.
  */
 bool
-DCPVideo::same (shared_ptr<const DCPVideo> other) const
+DCPVideo::definitely_equal (shared_ptr<const DCPVideo> other) const
 {
 	if (_frames_per_second != other->_frames_per_second ||
 	    _j2k_bandwidth != other->_j2k_bandwidth ||
@@ -216,5 +216,5 @@ DCPVideo::same (shared_ptr<const DCPVideo> other) const
 		return false;
 	}
 
-	return _frame->same (other->_frame);
+	return _frame->definitely_equal (other->_frame);
 }

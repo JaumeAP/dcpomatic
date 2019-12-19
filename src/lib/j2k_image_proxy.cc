@@ -196,7 +196,7 @@ J2KImageProxy::send_binary (shared_ptr<Socket> socket) const
 }
 
 bool
-J2KImageProxy::same (shared_ptr<const ImageProxy> other) const
+J2KImageProxy::definitely_equal (shared_ptr<const ImageProxy> other) const
 {
 	shared_ptr<const J2KImageProxy> jp = dynamic_pointer_cast<const J2KImageProxy> (other);
 	if (!jp) {

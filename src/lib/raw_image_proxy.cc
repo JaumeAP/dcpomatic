@@ -76,7 +76,7 @@ RawImageProxy::send_binary (shared_ptr<Socket> socket) const
 }
 
 bool
-RawImageProxy::same (shared_ptr<const ImageProxy> other) const
+RawImageProxy::definitely_equal (shared_ptr<const ImageProxy> other) const
 {
 	shared_ptr<const RawImageProxy> rp = dynamic_pointer_cast<const RawImageProxy> (other);
 	if (!rp) {

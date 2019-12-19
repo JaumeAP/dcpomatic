@@ -39,7 +39,7 @@ public:
 	boost::shared_ptr<Image> image;
 	Position<int> position;
 
-	bool same (PositionImage const & other) const;
+	bool definitely_equal (PositionImage const & other) const;
 };
 
 #endif

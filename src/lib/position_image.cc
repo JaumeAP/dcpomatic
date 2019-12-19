@@ -25,7 +25,7 @@
 using std::cout;
 
 bool
-PositionImage::same (PositionImage const & other) const
+PositionImage::definitely_equal (PositionImage const & other) const
 {
 	if ((!image && other.image) || (image && !other.image) || position != other.position) {
 		return false;

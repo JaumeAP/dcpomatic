@@ -99,7 +99,7 @@ public:
 		return _inter_size;
 	}
 
-	bool same (boost::shared_ptr<const PlayerVideo> other) const;
+	bool definitely_equal (boost::shared_ptr<const PlayerVideo> other) const;
 
 	size_t memory_used () const;
 

@@ -35,7 +35,7 @@ public:
 
 	void add_metadata (xmlpp::Node *) const;
 	void send_binary (boost::shared_ptr<Socket>) const;
-	bool same (boost::shared_ptr<const ImageProxy>) const;
+	bool definitely_equal (boost::shared_ptr<const ImageProxy>) const;
 	size_t memory_used () const;
 
 private:

@@ -54,7 +54,7 @@ public:
 
 	Eyes eyes () const;
 
-	bool same (boost::shared_ptr<const DCPVideo> other) const;
+	bool definitely_equal (boost::shared_ptr<const DCPVideo> other) const;
 
 	static boost::shared_ptr<dcp::OpenJPEGImage> convert_to_xyz (boost::shared_ptr<const PlayerVideo> frame, dcp::NoteHandler note);
 

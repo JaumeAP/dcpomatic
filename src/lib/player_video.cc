@@ -245,7 +245,7 @@ PlayerVideo::inter_position () const
 
 /** @return true if this PlayerVideo is definitely the same as another, false if it is probably not */
 bool
-PlayerVideo::same (shared_ptr<const PlayerVideo> other) const
+PlayerVideo::definitely_equal (shared_ptr<const PlayerVideo> other) const
 {
 	if (_crop != other->_crop ||
 	    _fade != other->_fade ||
@@ -263,14 +263,14 @@ PlayerVideo::same (shared_ptr<const PlayerVideo> other) const
 		return false;
 	}
 
-	if (_text && other->_text && !_text->same (other->_text.get ())) {
+	if (_text && other->_text && !_text->definitely_equal(other->_text.get())) {
 		/* They both have texts but they are different */
 		return false;
 	}
 
 	/* Now neither has subtitles */
 
-	return _in->same (other->_in);
+	return _in->definitely_equal (other->_in);
 }
 
 AVPixelFormat
