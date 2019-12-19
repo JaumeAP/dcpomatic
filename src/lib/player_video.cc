@@ -72,6 +72,7 @@ PlayerVideo::PlayerVideo (
 }
 
 PlayerVideo::PlayerVideo (shared_ptr<cxml::Node> node, shared_ptr<Socket> socket)
+	: _image_dirty (false)
 {
 	_crop = Crop (node);
 	_fade = node->optional_number_child<double> ("Fade");
@@ -108,10 +109,10 @@ PlayerVideo::set_text (PositionImage image)
 shared_ptr<Image>
 PlayerVideo::image (function<AVPixelFormat (AVPixelFormat)> pixel_format, bool aligned, bool fast) const
 {
-	/* XXX: this assumes that image() and prepare() are only ever called with the same parameters (except crop, inter size, out size, fade) */
+	/* XXX: this assumes that image() and prepare() are only ever called with the same pixel_format, aligned and fast */
 
 	boost::mutex::scoped_lock lm (_mutex);
-	if (!_image || _crop != _image_crop || _inter_size != _image_inter_size || _out_size != _image_out_size || _fade != _image_fade) {
+	if (!_image || _image_dirty) {
 		make_image (pixel_format, aligned, fast);
 	}
 	return _image;
@@ -127,11 +128,6 @@ PlayerVideo::image (function<AVPixelFormat (AVPixelFormat)> pixel_format, bool a
 void
 PlayerVideo::make_image (function<AVPixelFormat (AVPixelFormat)> pixel_format, bool aligned, bool fast) const
 {
-	_image_crop = _crop;
-	_image_inter_size = _inter_size;
-	_image_out_size = _out_size;
-	_image_fade = _fade;
-
 	pair<shared_ptr<Image>, int> prox = _in->image (_inter_size);
 	shared_ptr<Image> im = prox.first;
 	int const reduce = prox.second;
@@ -179,6 +175,8 @@ PlayerVideo::make_image (function<AVPixelFormat (AVPixelFormat)> pixel_format, b
 	if (_fade) {
 		_image->fade (_fade.get ());
 	}
+
+	_image_dirty = false;
 }
 
 void
@@ -333,12 +331,9 @@ PlayerVideo::reset_metadata (shared_ptr<const Film> film, dcp::Size video_contai
 		return false;
 	}
 
-	_crop = content->video->crop();
-	_fade = content->video->fade(film, _video_frame.get());
-	_inter_size = content->video->scale().size(content->video, video_container_size, film_frame_size);
+	boost::mutex::scoped_lock lm (_mutex);
 	_out_size = video_container_size;
-	_colour_conversion = content->video->colour_conversion();
-	_video_range = content->video->range();
+	_image_dirty = true;
 
 	return true;
 }
