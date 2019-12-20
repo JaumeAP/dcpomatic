@@ -344,7 +344,9 @@ Player::black_player_video_frame (Eyes eyes) const
 			PART_WHOLE,
 			PresetColourConversion::all().front().conversion,
 			VIDEO_RANGE_FULL,
-			boost::weak_ptr<Content>()
+			boost::weak_ptr<Content>(),
+			optional<dcpomatic::DCPTime>(),
+			_film->video_frame_rate()
 		)
 	);
 }
@@ -713,52 +715,6 @@ Player::pass ()
 	return done;
 }
 
-/** @return Open subtitles for the frame at the given time, converted to images */
-optional<PositionImage>
-Player::open_subtitles_for_frame (DCPTime time) const
-{
-	list<PositionImage> captions;
-	int const vfr = _film->video_frame_rate();
-
-	BOOST_FOREACH (
-		PlayerText j,
-		_active_texts[TEXT_OPEN_SUBTITLE].get_burnt(DCPTimePeriod(time, time + DCPTime::from_frames(1, vfr)), _always_burn_open_subtitles)
-		) {
-
-		/* Bitmap subtitles */
-		BOOST_FOREACH (BitmapText i, j.bitmap) {
-			if (!i.image) {
-				continue;
-			}
-
-			/* i.image will already have been scaled to fit _video_container_size */
-			dcp::Size scaled_size (i.rectangle.width * _video_container_size.width, i.rectangle.height * _video_container_size.height);
-
-			captions.push_back (
-				PositionImage (
-					i.image,
-					Position<int> (
-						lrint (_video_container_size.width * i.rectangle.x),
-						lrint (_video_container_size.height * i.rectangle.y)
-						)
-					)
-				);
-		}
-
-		/* String subtitles (rendered to an image) */
-		if (!j.string.empty ()) {
-			list<PositionImage> s = render_text (j.string, j.fonts, _video_container_size, time, vfr);
-			copy (s.begin(), s.end(), back_inserter (captions));
-		}
-	}
-
-	if (captions.empty ()) {
-		return optional<PositionImage> ();
-	}
-
-	return merge (captions);
-}
-
 void
 Player::video (weak_ptr<Piece> wp, ContentVideo video)
 {
@@ -846,7 +802,9 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 			video.part,
 			piece->content->video->colour_conversion(),
 			piece->content->video->range(),
-			piece->content
+			piece->content,
+			time,
+			_film->video_frame_rate()
 			)
 		);
 
@@ -1125,10 +1083,7 @@ Player::do_emit_video (shared_ptr<PlayerVideo> pv, DCPTime time)
 		}
 	}
 
-	optional<PositionImage> subtitles = open_subtitles_for_frame (time);
-	if (subtitles) {
-		pv->set_text (subtitles.get ());
-	}
+	pv->set_text (_active_texts[TEXT_OPEN_SUBTITLE].get_burnt(DCPTimePeriod(time, time + DCPTime::from_frames(1, _film->video_frame_rate())), _always_burn_open_subtitles));
 
 	Video (pv, time);
 }

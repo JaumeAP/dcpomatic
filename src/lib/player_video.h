@@ -26,6 +26,7 @@
 #include "dcpomatic_time.h"
 #include "colour_conversion.h"
 #include "position_image.h"
+#include "player_text.h"
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
@@ -55,14 +56,16 @@ public:
 		Part,
 		boost::optional<ColourConversion>,
 		VideoRange video_range,
-		boost::weak_ptr<Content>
+		boost::weak_ptr<Content>,
+		boost::optional<dcpomatic::DCPTime>,
+		int video_frame_rate
 		);
 
 	PlayerVideo (boost::shared_ptr<cxml::Node>, boost::shared_ptr<Socket>);
 
 	boost::shared_ptr<PlayerVideo> shallow_copy () const;
 
-	void set_text (PositionImage);
+	void set_text (std::list<PlayerText>);
 
 	void prepare (boost::function<AVPixelFormat (AVPixelFormat)> pixel_format, bool aligned, bool fast);
 	boost::shared_ptr<Image> image (boost::function<AVPixelFormat (AVPixelFormat)> pixel_format, bool aligned, bool fast) const;
@@ -118,11 +121,13 @@ private:
 	Part _part;
 	boost::optional<ColourConversion> _colour_conversion;
 	VideoRange _video_range;
-	boost::optional<PositionImage> _text;
+	std::list<PlayerText> _text;
 	/** Content that we came from.  This is so that reset_metadata() can work, and also
 	 *  for variant:swaroop's non-skippable ads.
 	 */
 	boost::weak_ptr<Content> _content;
+	boost::optional<dcpomatic::DCPTime> _time;
+	int _video_frame_rate;
 
 	mutable boost::mutex _mutex;
 	mutable boost::shared_ptr<Image> _image;

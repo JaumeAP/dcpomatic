@@ -41,4 +41,7 @@ public:
 	std::list<StringText> string;
 };
 
+extern bool operator== (PlayerText const & a, PlayerText const & b);
+extern bool operator!= (PlayerText const & a, PlayerText const & b);
+
 #endif

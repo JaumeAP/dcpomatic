@@ -98,11 +98,17 @@ BOOST_AUTO_TEST_CASE (client_server_test_rgb)
 			PART_WHOLE,
 			ColourConversion(),
 			VIDEO_RANGE_FULL,
-			weak_ptr<Content>()
+			weak_ptr<Content>(),
+			optional<dcpomatic::DCPTime>(),
+			24
 			)
 		);
 
-	pvf->set_text (PositionImage (sub_image, Position<int> (50, 60)));
+	PlayerText pt;
+	pt.bitmap.push_back (BitmapText(sub_image, dcpomatic::Rect<double>(50, 60, 100, 200)));
+	list<PlayerText> ptl;
+	ptl.push_back (pt);
+	pvf->set_text (ptl);
 
 	shared_ptr<DCPVideo> frame (
 		new DCPVideo (
@@ -182,11 +188,17 @@ BOOST_AUTO_TEST_CASE (client_server_test_yuv)
 			PART_WHOLE,
 			ColourConversion(),
 			VIDEO_RANGE_FULL,
-			weak_ptr<Content>()
+			weak_ptr<Content>(),
+			boost::optional<dcpomatic::DCPTime>(),
+			24
 			)
 		);
 
-	pvf->set_text (PositionImage (sub_image, Position<int> (50, 60)));
+	PlayerText pt;
+	pt.bitmap.push_back (BitmapText(sub_image, dcpomatic::Rect<double>(50, 60, 100, 200)));
+	list<PlayerText> ptl;
+	ptl.push_back (pt);
+	pvf->set_text (ptl);
 
 	shared_ptr<DCPVideo> frame (
 		new DCPVideo (
@@ -253,7 +265,9 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 			PART_WHOLE,
 			ColourConversion(),
 			VIDEO_RANGE_FULL,
-			weak_ptr<Content>()
+			weak_ptr<Content>(),
+			boost::optional<dcpomatic::DCPTime>(),
+			24
 			)
 		);
 
@@ -280,7 +294,9 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 			PART_WHOLE,
 			PresetColourConversion::all().front().conversion,
 			VIDEO_RANGE_FULL,
-			weak_ptr<Content>()
+			weak_ptr<Content>(),
+			boost::optional<dcpomatic::DCPTime>(),
+			24
 			)
 		);
 

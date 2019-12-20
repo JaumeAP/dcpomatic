@@ -48,3 +48,9 @@ operator== (PlayerText const & a, PlayerText const & b)
 {
 	return deep_equals(a.fonts, b.fonts) && deep_equals(a.bitmap, b.bitmap) && deep_equals(a.string, b.string);
 }
+
+bool
+operator!= (PlayerText const & a, PlayerText const & b)
+{
+	return !(a == b);
+}

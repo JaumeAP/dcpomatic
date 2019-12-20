@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2013-2018 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2013-2019 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -25,6 +25,7 @@
 #include "image_proxy.h"
 #include "j2k_image_proxy.h"
 #include "film.h"
+#include "render_text.h"
 #include <dcp/raw_convert.h>
 extern "C" {
 #include <libavutil/pixfmt.h>
@@ -34,6 +35,7 @@ extern "C" {
 
 using std::string;
 using std::cout;
+using std::list;
 using std::pair;
 using boost::shared_ptr;
 using boost::weak_ptr;
@@ -53,7 +55,9 @@ PlayerVideo::PlayerVideo (
 	Part part,
 	optional<ColourConversion> colour_conversion,
 	VideoRange video_range,
-	weak_ptr<Content> content
+	weak_ptr<Content> content,
+	optional<dcpomatic::DCPTime> time,
+	int video_frame_rate
 	)
 	: _in (in)
 	, _crop (crop)
@@ -65,6 +69,8 @@ PlayerVideo::PlayerVideo (
 	, _colour_conversion (colour_conversion)
 	, _video_range (video_range)
 	, _content (content)
+	, _time (time)
+	, _video_frame_rate (video_frame_rate)
 {
 
 }
@@ -80,6 +86,7 @@ PlayerVideo::PlayerVideo (shared_ptr<cxml::Node> node, shared_ptr<Socket> socket
 	_eyes = (Eyes) node->number_child<int> ("Eyes");
 	_part = (Part) node->number_child<int> ("Part");
 	_video_range = (VideoRange) node->number_child<int>("VideoRange");
+	_video_frame_rate = node->number_child<int>("VideoFrameRate");
 
 	/* Assume that the ColourConversion uses the current state version */
 	_colour_conversion = ColourConversion::from_xml (node, Film::current_state_version);
@@ -94,14 +101,16 @@ PlayerVideo::PlayerVideo (shared_ptr<cxml::Node> node, shared_ptr<Socket> socket
 
 		image->read_from_socket (socket);
 
+		/* XXX_c
 		_text = PositionImage (image, Position<int> (node->number_child<int> ("SubtitleX"), node->number_child<int> ("SubtitleY")));
+		*/
 	}
 }
 
 void
-PlayerVideo::set_text (PositionImage image)
+PlayerVideo::set_text (list<PlayerText> text)
 {
-	_text = image;
+	_text = text;
 }
 
 shared_ptr<Image>
@@ -166,8 +175,41 @@ PlayerVideo::make_image (function<AVPixelFormat (AVPixelFormat)> pixel_format, b
 		total_crop, _inter_size, _out_size, yuv_to_rgb, _video_range, pixel_format (im->pixel_format()), aligned, fast
 		);
 
-	if (_text) {
-		_image->alpha_blend (Image::ensure_aligned (_text->image), _text->position);
+	list<PositionImage> subtitles;
+
+	BOOST_FOREACH (PlayerText i, _text) {
+
+		/* Bitmap subtitles */
+		BOOST_FOREACH (BitmapText j, i.bitmap) {
+			if (!j.image) {
+				continue;
+			}
+
+			/* i.image will already have been scaled to fit _out_size */
+			dcp::Size scaled_size (j.rectangle.width * _out_size.width, j.rectangle.height * _out_size.height);
+
+			subtitles.push_back (
+				PositionImage (
+					j.image,
+					Position<int> (
+						lrint(_out_size.width * j.rectangle.x),
+						lrint(_out_size.height * j.rectangle.y)
+						)
+					)
+				);
+		}
+
+		/* String subtitles (rendered to an image) */
+		if (!i.string.empty ()) {
+			DCPOMATIC_ASSERT (_time);
+			list<PositionImage> s = render_text (i.string, i.fonts, _out_size, *_time, _video_frame_rate);
+			copy (s.begin(), s.end(), back_inserter(subtitles));
+		}
+	}
+
+	if (!subtitles.empty()) {
+		PositionImage p = merge (subtitles);
+		_image->alpha_blend (Image::ensure_aligned(p.image), p.position);
 	}
 
 	if (_fade) {
@@ -192,24 +234,29 @@ PlayerVideo::add_metadata (xmlpp::Node* node) const
 	node->add_child("Eyes")->add_child_text (raw_convert<string> (static_cast<int> (_eyes)));
 	node->add_child("Part")->add_child_text (raw_convert<string> (static_cast<int> (_part)));
 	node->add_child("VideoRange")->add_child_text(raw_convert<string>(static_cast<int>(_video_range)));
+	node->add_child("VideoFrameRate")->add_child_text(raw_convert<string>(_video_frame_rate));
 	if (_colour_conversion) {
 		_colour_conversion.get().as_xml (node);
 	}
+	/* XXX_c
 	if (_text) {
 		node->add_child ("SubtitleWidth")->add_child_text (raw_convert<string> (_text->image->size().width));
 		node->add_child ("SubtitleHeight")->add_child_text (raw_convert<string> (_text->image->size().height));
 		node->add_child ("SubtitleX")->add_child_text (raw_convert<string> (_text->position.x));
 		node->add_child ("SubtitleY")->add_child_text (raw_convert<string> (_text->position.y));
 	}
+	*/
 }
 
 void
 PlayerVideo::send_binary (shared_ptr<Socket> socket) const
 {
 	_in->send_binary (socket);
+	/* XXX_c
 	if (_text) {
 		_text->image->write_to_socket (socket);
 	}
+	*/
 }
 
 bool
@@ -222,7 +269,7 @@ PlayerVideo::has_j2k () const
 		return false;
 	}
 
-	return _crop == Crop () && _out_size == j2k->size() && !_text && !_fade && !_colour_conversion;
+	return _crop == Crop () && _out_size == j2k->size() && _text.empty() && !_fade && !_colour_conversion;
 }
 
 Data
@@ -254,17 +301,9 @@ PlayerVideo::definitely_equal (shared_ptr<const PlayerVideo> other) const
 		return false;
 	}
 
-	if ((!_text && other->_text) || (_text && !other->_text)) {
-		/* One has a text and the other doesn't */
+	if (!deep_equals(_text, other->_text)) {
 		return false;
 	}
-
-	if (_text && other->_text && !_text->definitely_equal(other->_text.get())) {
-		/* They both have texts but they are different */
-		return false;
-	}
-
-	/* Now neither has subtitles */
 
 	return _in->definitely_equal (other->_in);
 }
@@ -312,7 +351,9 @@ PlayerVideo::shallow_copy () const
 			_part,
 			_colour_conversion,
 			_video_range,
-			_content
+			_content,
+			_time,
+			_video_frame_rate
 			)
 		);
 }
