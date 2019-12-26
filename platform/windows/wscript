@@ -79,7 +79,6 @@ File "%static_deps%/bin/libboost_thread_win32-mt.dll"
 File "%static_deps%/bin/libboost_date_time-mt.dll"
 File "%static_deps%/bin/libboost_locale-mt.dll"
 File "%static_deps%/bin/libboost_regex-mt.dll"
-File "%static_deps%/bin/libeay32.dll"
 """, file=f)
 
     if bits == 32:
@@ -129,15 +128,14 @@ File "%static_deps%/bin/libxslt-1.dll"
 File "%static_deps%/bin/libffi-6.dll"
 File "%static_deps%/bin/openssl.exe"
 File "%static_deps%/bin/libcurl-4.dll"
-File "%static_deps%/bin/ssleay32.dll"
-File "%static_deps%/bin/libzip-4.dll"
+File "%static_deps%/bin/libzip.dll"
 File "%static_deps%/bin/libcairomm-1.0-1.dll"
 File "%static_deps%/bin/libpangomm-1.4-1.dll"
 File "%static_deps%/bin/libsamplerate-0.dll"
-File "%static_deps%/bin/libnettle-6.dll"
-File "%static_deps%/bin/icuuc56.dll"
-File "%static_deps%/bin/icudt56.dll"
-File "%static_deps%/bin/icuin56.dll"
+File "%static_deps%/bin/libnettle-7.dll"
+File "%static_deps%/bin/icuuc65.dll"
+File "%static_deps%/bin/icudt65.dll"
+File "%static_deps%/bin/icuin65.dll"
 File "%static_deps%/bin/liblzma-5.dll"
 File "%static_deps%/bin/libpcre-1.dll"
 File "%static_deps%/bin/libharfbuzz-0.dll"
@@ -146,7 +144,7 @@ File "%static_deps%/bin/liblcms2-2.dll"
 File "%static_deps%/bin/libwinpthread-1.dll"
 File "%static_deps%/bin/libgnutls-30.dll"
 File "%static_deps%/bin/libgmp-10.dll"
-File "%static_deps%/bin/libhogweed-4.dll"
+File "%static_deps%/bin/libhogweed-5.dll"
 File "%static_deps%/bin/libidn2-0.dll"
 File "%static_deps%/bin/libunistring-2.dll"
 File "%static_deps%/bin/libssh2-1.dll"
@@ -156,11 +154,11 @@ File "%static_deps%/bin/libgcrypt-20.dll"
     if bits == 32:
         print('File "%static_deps%/bin/libgpg-error-0.dll"', file=f)
     else:
-        print('File "%static_deps%/bin/libgpg-error6-0.dll"', file=f)
+        print('File "%static_deps%/bin/libgpg-error-0.dll"', file=f)
 
     print("""
 File "%static_deps%/bin/libpangoft2-1.0-0.dll"
-File "%static_deps%/bin/libx264-152.dll"
+File "%static_deps%/bin/libx264-155.dll"
 
 File "%cdist_deps%/bin/asdcp-carl.dll"
 File "%cdist_deps%/bin/kumu-carl.dll"
