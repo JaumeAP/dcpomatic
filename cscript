@@ -349,7 +349,7 @@ def dependencies(target):
         deps = []
 
     deps.append(('libdcp', 'mxe2'))
-    deps.append(('libsub', None))
+    deps.append(('libsub', 'mxe2'))
     deps.append(('rtaudio', 'carl'))
     # We get our OpenSSL libraries from the environment, but we
     # also need a patched openssl binary to make certificates.
