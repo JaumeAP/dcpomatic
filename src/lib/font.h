@@ -27,6 +27,8 @@
 #include <boost/filesystem.hpp>
 #include <string>
 
+class Socket;
+
 namespace dcpomatic {
 
 class Font
@@ -37,7 +39,10 @@ public:
 
 	explicit Font (cxml::NodePtr node);
 
-	void as_xml (xmlpp::Node* node);
+	void as_xml (xmlpp::Node* node) const;
+
+	void transfer_xml (xmlpp::Node* node) const;
+	void transfer_binary (boost::shared_ptr<Socket> socket) const;
 
 	std::string id () const {
 		return _id;

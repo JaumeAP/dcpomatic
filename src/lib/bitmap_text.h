@@ -22,9 +22,11 @@
 #define DCPOMATIC_BITMAP_CAPTION_H
 
 #include "rect.h"
+#include <libxml++/libxml++.h>
 #include <boost/shared_ptr.hpp>
 
 class Image;
+class Socket;
 
 class BitmapText
 {
@@ -33,6 +35,9 @@ public:
 		: image (i)
 		, rectangle (r)
 	{}
+
+	void transfer_xml (xmlpp::Node* node) const;
+	void transfer_binary (boost::shared_ptr<Socket> socket) const;
 
 	boost::shared_ptr<Image> image;
 	/** Area that the subtitle covers on its corresponding video, expressed in

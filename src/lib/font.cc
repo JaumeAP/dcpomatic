@@ -20,10 +20,15 @@
 
 #include "font.h"
 #include "dcpomatic_assert.h"
+#include "dcpomatic_socket.h"
+#include <dcp/data.h>
+#include <dcp/raw_convert.h>
 #include <libxml++/libxml++.h>
 #include <boost/foreach.hpp>
 
 using std::string;
+using boost::shared_ptr;
+using dcp::raw_convert;
 using namespace dcpomatic;
 
 Font::Font (cxml::NodePtr node)
@@ -38,7 +43,7 @@ Font::Font (cxml::NodePtr node)
 }
 
 void
-Font::as_xml (xmlpp::Node* node)
+Font::as_xml (xmlpp::Node* node) const
 {
 	node->add_child("Id")->add_child_text (_id);
 	if (_file) {
@@ -46,6 +51,27 @@ Font::as_xml (xmlpp::Node* node)
 	}
 }
 
+/** Add things to an XML node to describe this font for transfer across
+ *  a network to another machine.  The companion method send_binary() will be called
+ *  to send binary parts.
+ */
+void
+Font::transfer_xml (xmlpp::Node* node) const
+{
+	node->add_child("Id")->add_child_text (_id);
+	if (_file) {
+		node->add_child("FileLength")->add_child_text(raw_convert<string>(boost::filesystem::file_size(*_file)));
+	}
+}
+
+void
+Font::transfer_binary (shared_ptr<Socket> socket) const
+{
+	if (_file) {
+		dcp::Data data (*_file);
+		socket->write (data.data().get(), data.size());
+	}
+}
 
 bool
 dcpomatic::operator== (Font const & a, Font const & b)

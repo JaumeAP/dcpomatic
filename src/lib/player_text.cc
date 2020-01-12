@@ -21,11 +21,47 @@
 #include "player_text.h"
 #include "font.h"
 #include "util.h"
+#include "dcpomatic_socket.h"
+#include "image.h"
+#include <dcp/raw_convert.h>
+#include <libxml++/libxml++.h>
 #include <boost/foreach.hpp>
 
 using std::list;
 using boost::shared_ptr;
+using dcp::raw_convert;
 using namespace dcpomatic;
+
+void
+PlayerText::add_metadata (xmlpp::Node* node) const
+{
+	BOOST_FOREACH (shared_ptr<Font> i, fonts) {
+		/* XXX: transferring a font file for every frame that needs it seems a bit wasteful,
+		   but probably not so bad in the great scheme of things.
+		*/
+		i->transfer_xml (node->add_child("Font"));
+	}
+
+	BOOST_FOREACH (BitmapText i, bitmap) {
+		i.transfer_xml (node->add_child("Bitmap"));
+	}
+
+	BOOST_FOREACH (StringText i, string) {
+		i.transfer_xml (node->add_child("String"));
+	}
+}
+
+void
+PlayerText::send_binary (shared_ptr<Socket> socket) const
+{
+	BOOST_FOREACH (shared_ptr<Font> i, fonts) {
+		i->transfer_binary (socket);
+	}
+
+	BOOST_FOREACH (BitmapText i, bitmap) {
+		i.transfer_binary (socket);
+	}
+}
 
 void
 PlayerText::add_fonts (list<shared_ptr<Font> > fonts_)

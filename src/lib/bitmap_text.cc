@@ -20,6 +20,11 @@
 
 #include "bitmap_text.h"
 #include "image.h"
+#include "dcpomatic_socket.h"
+#include <dcp/raw_convert.h>
+
+using boost::shared_ptr;
+using dcp::raw_convert;
 
 bool
 operator== (BitmapText const & a, BitmapText const & b)
@@ -37,4 +42,20 @@ operator!= (BitmapText const & a, BitmapText const & b)
 	return !(a == b);
 }
 
+void
+BitmapText::transfer_xml (xmlpp::Node* node) const
+{
+	node->add_child("Width")->add_child_text(raw_convert<std::string>(image->size().width));
+	node->add_child("Height")->add_child_text(raw_convert<std::string>(image->size().height));
+	node->add_child("RectX")->add_child_text(raw_convert<std::string>(rectangle.x));
+	node->add_child("RectY")->add_child_text(raw_convert<std::string>(rectangle.y));
+	node->add_child("RectWidth")->add_child_text(raw_convert<std::string>(rectangle.width));
+	node->add_child("RectHeight")->add_child_text(raw_convert<std::string>(rectangle.height));
+}
+
+void
+BitmapText::transfer_binary (shared_ptr<Socket> socket) const
+{
+	image->write_to_socket (socket);
+}
 

@@ -35,6 +35,8 @@ public:
 		, outline_width (outline_width_)
 	{}
 
+	void transfer_xml (xmlpp::Node* node) const;
+
 	int outline_width;
 };
 

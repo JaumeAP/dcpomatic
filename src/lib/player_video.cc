@@ -234,25 +234,18 @@ PlayerVideo::add_metadata (xmlpp::Node* node) const
 	if (_colour_conversion) {
 		_colour_conversion.get().as_xml (node);
 	}
-	/* XXX_c
-	if (_text) {
-		node->add_child ("SubtitleWidth")->add_child_text (raw_convert<string> (_text->image->size().width));
-		node->add_child ("SubtitleHeight")->add_child_text (raw_convert<string> (_text->image->size().height));
-		node->add_child ("SubtitleX")->add_child_text (raw_convert<string> (_text->position.x));
-		node->add_child ("SubtitleY")->add_child_text (raw_convert<string> (_text->position.y));
+	BOOST_FOREACH (PlayerText i, _text) {
+		i.add_metadata(node->add_child("Text"));
 	}
-	*/
 }
 
 void
 PlayerVideo::send_binary (shared_ptr<Socket> socket) const
 {
 	_in->send_binary (socket);
-	/* XXX_c
-	if (_text) {
-		_text->image->write_to_socket (socket);
+	BOOST_FOREACH (PlayerText i, _text) {
+		i.send_binary (socket);
 	}
-	*/
 }
 
 bool

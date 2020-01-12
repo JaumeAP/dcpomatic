@@ -29,10 +29,15 @@ namespace dcpomatic {
 	class Font;
 }
 
+class Socket;
+
 /** A set of text (subtitle/CCAP) which span the same time period */
 class PlayerText
 {
 public:
+	void add_metadata (xmlpp::Node* node) const;
+	void send_binary (boost::shared_ptr<Socket> socket) const;
+
 	void add_fonts (std::list<boost::shared_ptr<dcpomatic::Font> > fonts_);
 	std::list<boost::shared_ptr<dcpomatic::Font> > fonts;
 
