@@ -19,8 +19,6 @@
 */
 
 #include "player_video.h"
-#include "content.h"
-#include "video_content.h"
 #include "image.h"
 #include "image_proxy.h"
 #include "j2k_image_proxy.h"
@@ -55,7 +53,6 @@ PlayerVideo::PlayerVideo (
 	Part part,
 	optional<ColourConversion> colour_conversion,
 	VideoRange video_range,
-	weak_ptr<Content> content,
 	optional<dcpomatic::DCPTime> time,
 	int video_frame_rate
 	)
@@ -68,7 +65,6 @@ PlayerVideo::PlayerVideo (
 	, _part (part)
 	, _colour_conversion (colour_conversion)
 	, _video_range (video_range)
-	, _content (content)
 	, _time (time)
 	, _video_frame_rate (video_frame_rate)
 {
@@ -351,27 +347,17 @@ PlayerVideo::shallow_copy () const
 			_part,
 			_colour_conversion,
 			_video_range,
-			_content,
 			_time,
 			_video_frame_rate
 			)
 		);
 }
 
-/** Re-read crop, fade, inter/out size, colour conversion and video range from our content.
- *  @return true if this was possible, false if not.
- */
-bool
+/** Mark our image as dirty to say it needs to be re-made */
+void
 PlayerVideo::reset_metadata (dcp::Size video_container_size)
 {
-	shared_ptr<Content> content = _content.lock();
-	if (!content) {
-		return false;
-	}
-
 	boost::mutex::scoped_lock lm (_mutex);
 	_out_size = video_container_size;
 	_image_dirty = true;
-
-	return true;
 }

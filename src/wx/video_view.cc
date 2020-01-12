@@ -124,10 +124,7 @@ VideoView::refresh_metadata (dcp::Size video_container_size)
 		return false;
 	}
 
-	if (!pv.first->reset_metadata (video_container_size)) {
-		return false;
-	}
-
+	pv.first->reset_metadata (video_container_size);
 	update ();
 	return true;
 }

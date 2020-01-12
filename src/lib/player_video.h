@@ -56,7 +56,6 @@ public:
 		Part,
 		boost::optional<ColourConversion>,
 		VideoRange video_range,
-		boost::weak_ptr<Content>,
 		boost::optional<dcpomatic::DCPTime>,
 		int video_frame_rate
 		);
@@ -76,7 +75,7 @@ public:
 	void add_metadata (xmlpp::Node* node) const;
 	void send_binary (boost::shared_ptr<Socket> socket) const;
 
-	bool reset_metadata (dcp::Size video_container_size);
+	void reset_metadata (dcp::Size video_container_size);
 
 	bool has_j2k () const;
 	dcp::Data j2k () const;
@@ -105,10 +104,6 @@ public:
 
 	size_t memory_used () const;
 
-	boost::weak_ptr<Content> content () const {
-		return _content;
-	}
-
 private:
 	void make_image (boost::function<AVPixelFormat (AVPixelFormat)> pixel_format, bool aligned, bool fast) const;
 
@@ -122,10 +117,6 @@ private:
 	boost::optional<ColourConversion> _colour_conversion;
 	VideoRange _video_range;
 	std::list<PlayerText> _text;
-	/** Content that we came from.  This is so that reset_metadata() can work, and also
-	 *  for variant:swaroop's non-skippable ads.
-	 */
-	boost::weak_ptr<Content> _content;
 	boost::optional<dcpomatic::DCPTime> _time;
 	int _video_frame_rate;
 

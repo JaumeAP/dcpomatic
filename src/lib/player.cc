@@ -344,7 +344,6 @@ Player::black_player_video_frame (Eyes eyes) const
 			PART_WHOLE,
 			PresetColourConversion::all().front().conversion,
 			VIDEO_RANGE_FULL,
-			boost::weak_ptr<Content>(),
 			optional<dcpomatic::DCPTime>(),
 			_film->video_frame_rate()
 		)
@@ -802,7 +801,6 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 			video.part,
 			piece->content->video->colour_conversion(),
 			piece->content->video->range(),
-			piece->content,
 			time,
 			_film->video_frame_rate()
 			)
