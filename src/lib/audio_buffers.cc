@@ -20,6 +20,7 @@
 
 #include "audio_buffers.h"
 #include "dcpomatic_assert.h"
+#include "dcpomatic_log.h"
 #include <cassert>
 #include <cstring>
 #include <cmath>
@@ -43,12 +44,14 @@ AudioBuffers::AudioBuffers (int channels, int32_t frames)
 AudioBuffers::AudioBuffers (AudioBuffers const & other)
 {
 	allocate (other._channels, other._frames);
+	LOG_GENERAL_NC("copy_from #5");
 	copy_from (&other, other._frames, 0, 0);
 }
 
 AudioBuffers::AudioBuffers (boost::shared_ptr<const AudioBuffers> other)
 {
 	allocate (other->_channels, other->_frames);
+	LOG_GENERAL_NC("copy_from #6");
 	copy_from (other.get(), other->_frames, 0, 0);
 }
 
@@ -61,6 +64,7 @@ AudioBuffers::operator= (AudioBuffers const & other)
 
 	deallocate ();
 	allocate (other._channels, other._frames);
+	LOG_GENERAL_NC("copy_from #7");
 	copy_from (&other, other._frames, 0, 0);
 
 	return *this;
@@ -185,6 +189,8 @@ AudioBuffers::copy_from (AudioBuffers const * from, int32_t frames_to_copy, int3
 		/* Prevent the asserts from firing if there is nothing to do */
 		return;
 	}
+
+	LOG_GENERAL("AudioBuffers::copy_from %1 %2 %3 %4", from->_allocated_frames, frames_to_copy, read_offset, write_offset);
 
 	DCPOMATIC_ASSERT (from->channels() == channels());
 
@@ -340,6 +346,7 @@ shared_ptr<AudioBuffers>
 AudioBuffers::clone () const
 {
 	shared_ptr<AudioBuffers> b (new AudioBuffers (channels (), frames ()));
+	LOG_GENERAL_NC("copy_from #3");
 	b->copy_from (this, frames (), 0, 0);
 	return b;
 }
@@ -350,6 +357,7 @@ AudioBuffers::append (shared_ptr<const AudioBuffers> other)
 {
 	DCPOMATIC_ASSERT (channels() == other->channels());
 	ensure_size (_frames + other->frames());
+	LOG_GENERAL_NC("copy_from #4");
 	copy_from (other.get(), other->frames(), 0, _frames);
 	_frames += other->frames();
 }

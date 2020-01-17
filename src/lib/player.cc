@@ -48,6 +48,7 @@
 #include "image_decoder.h"
 #include "compose.hpp"
 #include "shuffler.h"
+#include "dcpomatic_log.h"
 #include <dcp/reel.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/reel_subtitle_asset.h>
@@ -883,6 +884,7 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 			return;
 		}
 		shared_ptr<AudioBuffers> cut (new AudioBuffers (content_audio.audio->channels(), remaining_frames));
+		LOG_GENERAL_NC("copy_from #8");
 		cut->copy_from (content_audio.audio.get(), remaining_frames, 0, 0);
 		content_audio.audio = cut;
 	}
@@ -1167,6 +1169,7 @@ Player::discard_audio (shared_ptr<const AudioBuffers> audio, DCPTime time, DCPTi
 		return make_pair(shared_ptr<AudioBuffers>(), DCPTime());
 	}
 	shared_ptr<AudioBuffers> cut (new AudioBuffers (audio->channels(), remaining_frames));
+	LOG_GENERAL_NC("copy_from #9");
 	cut->copy_from (audio.get(), remaining_frames, discard_frames, 0);
 	return make_pair(cut, time + discard_time);
 }

@@ -23,6 +23,7 @@
 
 #include "audio_merger.h"
 #include "dcpomatic_time.h"
+#include "dcpomatic_log.h"
 #include <iostream>
 
 using std::pair;
@@ -69,6 +70,7 @@ AudioMerger::pull (DCPTime time)
 			shared_ptr<AudioBuffers> audio (new AudioBuffers (i.audio->channels(), frames(DCPTime(time - i.time))));
 			/* Though time > i.time, audio->frames() could be 0 if the difference in time is less than one frame */
 			if (audio->frames() > 0) {
+				LOG_GENERAL("copy_from #1; pulling from %2", to_string(time));
 				audio->copy_from (i.audio.get(), audio->frames(), 0, 0);
 				out.push_back (make_pair (audio, i.time));
 				i.audio->trim_start (audio->frames ());
@@ -134,6 +136,7 @@ AudioMerger::push (boost::shared_ptr<const AudioBuffers> audio, DCPTime time)
 
 		/* Get the part of audio that we want to use */
 		shared_ptr<AudioBuffers> part (new AudioBuffers (audio->channels(), frames(i.to) - frames(i.from)));
+		LOG_GENERAL_NC("copy_from #2");
 		part->copy_from (audio.get(), part->frames(), frames(DCPTime(i.from - time)), 0);
 
 		if (before == _buffers.end() && after == _buffers.end()) {

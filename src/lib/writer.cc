@@ -285,12 +285,14 @@ Writer::write (shared_ptr<const AudioBuffers> audio, DCPTime const time)
 
 			if (part_frames[0]) {
 				shared_ptr<AudioBuffers> part (new AudioBuffers (audio->channels(), part_frames[0]));
+				LOG_GENERAL_NC("copy from #10");
 				part->copy_from (audio.get(), part_frames[0], 0, 0);
 				_audio_reel->write (part);
 			}
 
 			if (part_frames[1]) {
 				shared_ptr<AudioBuffers> part (new AudioBuffers (audio->channels(), part_frames[1]));
+				LOG_GENERAL_NC("copy from #11");
 				part->copy_from (audio.get(), part_frames[1], part_frames[0], 0);
 				audio = part;
 			} else {
