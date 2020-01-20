@@ -544,10 +544,39 @@ running_32_on_64 ()
 	return false;
 }
 
+#ifdef DCPOMATIC_OSX
+static void
+disk_appeared(DADiskRef disk, void* context)
+{
+	const char* name = DADiskGetBSDName (disk);
+	if (name) {
+		list<Drive>* drives = reinterpret_cast<list<Drive>*> (context);
+		drives->push_back (name, 0, false, optional<string>(), optional<string>());
+	}
+}
+#endif
+
 vector<Drive>
 get_drives ()
 {
 	vector<Drive> drives;
+
+#ifdef DCPOMATIC_OSX
+	DASessionRef session = DASessionCreate(kCFAllocatorDefault);
+	if (!session) {
+		return drives;
+	}
+
+	DARegisterDiskAppearedCallback (session, NULL, disk_appeared, &drives);
+	CFRunLoopRef run_loop = CFRunLoopGetCurrent ();
+	DASessionScheduleWithRunLoop (session, run_loop, kCFRunLoopDefaultMode);
+	CFRunLoopStop (run_loop);
+	CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.05, 0);
+	DAUnregisterCallback(session, (void *) disk_appeared, &drives);
+	CFRelease(session);
+}
+#endif
+
 #ifdef DCPOMATIC_LINUX
 
 	using namespace boost::filesystem;
