@@ -33,7 +33,10 @@ def build(bld):
     uselib += 'SNDFILE SAMPLERATE BOOST_REGEX ICU NETTLE RTAUDIO PNG '
 
     if bld.env.TARGET_LINUX:
-        uselib += 'POLKIT LWEXT4 '
+        uselib += 'POLKIT '
+
+    if bld.env.TARGET_LINUX or bld.env.TARGET_OSX:
+        uselib += 'LWEXT4 '
 
     if bld.env.TARGET_WINDOWS:
         uselib += 'WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE WINSOCK2 OLE32 DSOUND WINMM KSUSER '

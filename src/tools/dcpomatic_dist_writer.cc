@@ -32,14 +32,22 @@ extern "C" {
 #include <lwext4/ext4_debug.h>
 #include <lwext4/ext4.h>
 }
-#ifndef WIN32
+
+#ifdef DCPOMATIC_POSIX
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <linux/fs.h>
+#ifdef DCPOMATIC_OSX
+#undef nil
 #endif
-#include <polkit/polkit.h>
 #include <glibmm.h>
+#endif
+
+#ifdef DCPOMATIC_LINUX
+#include <linux/fs.h>
+#include <polkit/polkit.h>
+#endif
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <poll.h>
@@ -51,7 +59,9 @@ using std::cin;
 using std::min;
 using std::string;
 
+#ifdef DCPOMATIC_LINUX
 static PolkitAuthority* polkit_authority = 0;
+#endif
 static boost::filesystem::path dcp_path;
 static std::string device;
 static uint64_t const block_size = 4096;
@@ -205,6 +215,7 @@ copy (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_
 static
 void
 write ()
+try
 {
 //	ext4_dmask_set (DEBUG_ALL);
 
@@ -246,7 +257,7 @@ write ()
 		throw CopyError ("Failed to write MBR", r);
 	}
 
-#ifdef WIN32
+#ifdef DCPOMATIC_WINDOWS
 	struct ext4_mbr_bdevs bdevs;
 	r = ext4_mbr_scan (bd, &bdevs);
 	if (r != EOK) {
@@ -254,12 +265,16 @@ write ()
 	}
 
 	file_windows_partition_set (bdevs.partitions[0].part_offset, bdevs.partitions[0].part_size);
-#else
+#endif
+
+#ifdef DCPOMATIC_LINUX
 	/* Re-read the partition table */
 	int fd = open(device.c_str(), O_RDONLY);
 	ioctl(fd, BLKRRPART, NULL);
 	close(fd);
+#endif
 
+#ifdef DCPOMATIC_POSIX
 	string partition = device;
 	/* XXX: don't know if this logic is sensible */
 	if (partition.size() > 0 && isdigit(partition[partition.length() - 1])) {
@@ -302,28 +317,28 @@ write ()
 
 	cout << DIST_WRITER_OK "\n";
 	cout.flush ();
+} catch (CopyError& e) {
+	cout << DIST_WRITER_ERROR "\n" << e.message() << "\n" << e.number() << "\n";
+	cout.flush ();
+} catch (VerifyError& e) {
+	cout << DIST_WRITER_ERROR "\n" << e.message() << "\n" << e.number() << "\n";
+	cout.flush ();
 }
 
+#ifdef DCPOMATIC_LINUX
 static
 void
 polkit_callback (GObject *, GAsyncResult* res, gpointer)
 {
 	PolkitAuthorizationResult* result = polkit_authority_check_authorization_finish (polkit_authority, res, 0);
 	if (result && polkit_authorization_result_get_is_authorized(result)) {
-		try {
-			write ();
-		} catch (CopyError& e) {
-			cout << DIST_WRITER_ERROR "\n" << e.message() << "\n" << e.number() << "\n";
-			cout.flush ();
-		} catch (VerifyError& e) {
-			cout << DIST_WRITER_ERROR "\n" << e.message() << "\n" << e.number() << "\n";
-			cout.flush ();
-		}
+		write ();
 	}
 	if (result) {
 		g_object_unref (result);
 	}
 }
+#endif
 
 bool
 idle ()
@@ -340,11 +355,15 @@ idle ()
 		getline (cin, s);
 		device = "/dev/" + s;
 
+#ifdef DCPOMATIC_LINUX
 		polkit_authority = polkit_authority_get_sync (0, 0);
 		PolkitSubject* subject = polkit_unix_process_new (getppid());
 		polkit_authority_check_authorization (
 			polkit_authority, subject, "com.dcpomatic.write-drive", 0, POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION, 0, polkit_callback, 0
 			);
+#else
+		write ();
+#endif
 	}
 	return true;
 }

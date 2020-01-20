@@ -32,6 +32,9 @@
 #include "lib/job_manager.h"
 #include <wx/wx.h>
 #include <boost/process.hpp>
+#ifdef __WXOSX__
+#include <ApplicationServices/ApplicationServices.h>
+#endif
 
 using std::string;
 using std::exception;

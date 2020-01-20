@@ -47,6 +47,8 @@ extern "C" {
 #include <sys/sysctl.h>
 #include <mach-o/dyld.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
+#include <DiskArbitration/DADisk.h>
+#include <DiskArbitration/DiskArbitration.h>
 #endif
 #ifdef DCPOMATIC_POSIX
 #include <sys/types.h>
@@ -552,7 +554,7 @@ disk_appeared(DADiskRef disk, void* context)
 	const char* name = DADiskGetBSDName (disk);
 	if (name) {
 		list<Drive>* drives = reinterpret_cast<list<Drive>*> (context);
-		drives->push_back (name, 0, false, optional<string>(), optional<string>());
+		drives->push_back (Drive(name, 0, false, optional<string>(), optional<string>()));
 	}
 }
 #endif
@@ -683,7 +685,6 @@ get_drives ()
 	CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.05, 0);
 	DAUnregisterCallback(session, (void *) disk_appeared, &drives);
 	CFRelease(session);
-}
 #endif
 
 #ifdef DCPOMATIC_LINUX

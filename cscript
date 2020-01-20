@@ -203,7 +203,7 @@ def build_dist(target):
     # - Lots of Linux distros don't have a new enough boost (1.64 or above)
     # - On Centos 6 we can't build lwext4 because it needs a new CMake which Centos 6's g++ is not new enough to build.
     # - On Centos 7 there is a build error in lwext4 related to __unused
-    return target.platform == 'windows' or (target.platform == 'linux' and target.distro == 'ubuntu' and target.version in ['18.04', '18.10', '19.04'])
+    return target.platform == 'windows' or target.platform == 'osx' or (target.platform == 'linux' and target.distro == 'ubuntu' and target.version in ['18.04', '18.10', '19.04'])
 
 def packages(name, packages, f):
     s = '%s: ' % name
@@ -401,6 +401,8 @@ def configure_options(target, options):
                 # I worry that this will cause ABI problems but I don't have
                 # a better solution.
                 opt += ' --force-cpp11'
+    elif target.platform == 'osx' and target.bits == 64:
+        opt += ' --force-cpp11'
 
     if not options['gui']:
         opt += ' --disable-gui'

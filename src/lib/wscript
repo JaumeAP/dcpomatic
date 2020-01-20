@@ -197,7 +197,7 @@ def build(bld):
                  """
 
     if bld.env.TARGET_OSX:
-        obj.framework = ['IOKit', 'Foundation']
+        obj.framework = ['IOKit', 'Foundation', 'DiskArbitration']
 
     obj.source = sources + ' version.cc'
 
