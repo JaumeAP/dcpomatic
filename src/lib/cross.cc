@@ -37,6 +37,7 @@ extern "C" {
 #endif
 #ifdef DCPOMATIC_WINDOWS
 #include <windows.h>
+#include <setupapi.h>
 #undef DATADIR
 #include <shlwapi.h>
 #include <shellapi.h>
@@ -561,6 +562,114 @@ get_drives ()
 {
 	vector<Drive> drives;
 
+#ifdef DCPOMATIC_WINDOWS
+
+	const GUID GUID_DEVICE_INTERFACE_DISK = {
+		0x53F56307L, 0xB6BF, 0x11D0, { 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B }
+	};
+
+	HDEVINFO device_info = SetupDiGetClassDevsA (&GUID_DEVICE_INTERFACE_DISK, 0, 0, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+	if (device_info == INVALID_HANDLE_VALUE) {
+		LOG_DIST_NC("SetupDiClassDevsA failed");
+		return drives;
+	}
+
+	int i = 0;
+	while (true) {
+		SP_DEVINFO_DATA device_info_data;
+		device_info_data.cbSize = sizeof(SP_DEVINFO_DATA);
+		if (!SetupDiEnumDeviceInfo(device_info, i, &device_info_data)) {
+			LOG_DIST ("SetupDiEnumDeviceInfo failed (%1)", GetLastError());
+			return drives;
+		}
+		++i;
+
+		wchar_t friendly_name_buffer[MAX_PATH];
+		ZeroMemory (&friendly_name_buffer, sizeof(friendly_name_buffer));
+
+		bool r = SetupDiGetDeviceRegistryPropertyW (
+			device_info, &device_info_data, SPDRP_FRIENDLYNAME, 0, static_cast<PBYTE>(wbuffer), sizeof(wbuffer), 0
+			);
+
+		if (r) {
+			int const length = (wcslen(friendly_name_buffer) + 1) * 2;
+			char* utf8 = new char[length];
+			/* XXX: this is used in a few places in this file; should be abstracted out */
+			WideCharToMultiByte (CP_UTF8, 0, friendly_name_buffer, -1, utf8, length, 0, 0);
+			/* XXX: utf8 contains a user-readable name */
+			delete[] utf8;
+		}
+
+		int j = 0;
+		while (true) {
+			SP_DEVICE_INTERFACE_DATA device_interface_data;
+			device_interface_data.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
+
+			bool r = SetupDiEnumDeviceInterfaces (device_info, &device_info_data, &GUID_DEVICE_INTERFACE_DISK, j, &device_interface_data);
+			if (!r) {
+				DWORD e = GetLastError();
+				if (e == ERROR_NO_MORE_ITEMS) {
+					break;
+				} else {
+					LOG_DIST("SetupDiEnumDeviceInterfaces failed (%1)", e);
+					return drives;
+				}
+			}
+
+			DWORD size;
+			r = SetupDiGetDeviceInterfaceDetailW(device_info, &device_interface_data, 0, 0, &size, 0);
+			PSP_DEVICE_INTERFACE_DETAIL_DATA_W device_detail_data = static_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA_W> (malloc(size));
+			if (!device_detail_data) {
+				LOG_DIST_NC("malloc failed");
+				return drives;
+			}
+
+			device_detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
+
+			r = SetupDiGetDeviceInterfaceDetailW (device_info, &device_interface_data, device_detail_data, size, &size, 0);
+			if (!r) {
+				LOG_DIST_NC("SetupDiGetDeviceInterfaceDetailW failed");
+				return 1;
+			}
+
+			HANDLE device = CreateFileW (
+				device_detail_data->DevicePath, 0,
+				FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
+				OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0
+				);
+
+			if (device == INVALID_HANDLE_VALUE) {
+				LOG_DIST_NC("CreateFileW failed");
+				return drives;
+			}
+
+			VOLUME_DISK_EXTENTS disk_extents;
+			r = DeviceIoControl (
+				device, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, 0, 0,
+				&disk_extents, sizeof(VOLUME_DISK_EXTENTS), &size, 0
+				);
+
+			if (r && disk_extents.NumberOfDiskExtents > 0) {
+				LOG_DIST("GET_VOLUME_DISK_EXTENTS gives %1", disk_extents.Extents[0].DiskNumber);
+				/* Disk number for \\.\PHYSICALDRIVEx is disk disk_extents.Extents[0].DiskNumber */
+			}
+
+			STORAGE_DEVICE_NUMBER device_number;
+			r = DeviceIoControl (
+				device, IOCTL_STORAGE_GET_DEVICE_NUMBER, 0, 0,
+				&device_number, sizeof(device_number), &size, 0
+				);
+
+			if (r) {
+				LOG_DIST("GET_DEVICE_NUMBER gives %1", disk_number.DeviceNumber);
+				/* Disk number for \\.\PHYSICALDRIVEx is device_number.DeviceNumber */
+			}
+
+			++j;
+		}
+	}
+#endif
+
 #ifdef DCPOMATIC_OSX
 	DASessionRef session = DASessionCreate(kCFAllocatorDefault);
 	if (!session) {
@@ -692,4 +801,3 @@ config_path ()
 #endif
 	return p;
 }
-
