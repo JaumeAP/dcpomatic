@@ -187,7 +187,7 @@ def configure(conf):
         conf.env.append_value('CXXFLAGS', '-DDCPOMATIC_POSIX')
         boost_lib_suffix = ''
         boost_thread = 'boost_thread'
-        conf.env.append_value('LINKFLAGS', '-pthread')
+        conf.env.append_value('LINKFLAGS', ['-pthread'])
 
     # Linux
     if conf.env.TARGET_LINUX:
@@ -196,6 +196,7 @@ def configure(conf):
         conf.env.append_value('CXXFLAGS', '-DLINUX_SHARE_PREFIX="%s/share/dcpomatic2"' % conf.env['INSTALL_PREFIX'])
         conf.env.append_value('CXXFLAGS', '-DDCPOMATIC_LINUX')
         conf.env.append_value('CXXFLAGS', ['-Wlogical-op', '-Wcast-align'])
+        conf.check(lib='dl', uselib_store='DL', msg="Checking for library dl")
         if not conf.env.DISABLE_GUI:
             conf.check_cfg(package='gtk+-2.0', args='--cflags --libs', uselib_store='GTK', mandatory=True)
 

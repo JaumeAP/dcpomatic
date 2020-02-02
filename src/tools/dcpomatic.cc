@@ -450,6 +450,11 @@ public:
 	catch (std::exception& e) {
 		wxString p = std_to_wx (file.string ());
 		wxCharBuffer b = p.ToUTF8 ();
+		boost::stacktrace::stacktrace* st = boost::get_error_info<traced>(e);
+		std::cout << "Amiga!\n";
+		if (st) {
+			std::cout << "Awooga! " << *st << "\n";
+		}
 		error_dialog (this, wxString::Format (_("Could not open film at %s"), p.data()), std_to_wx (e.what()));
 	}
 
@@ -1683,6 +1688,11 @@ private:
 					)
 				);
 		} catch (exception& e) {
+			boost::stacktrace::stacktrace* st = boost::get_error_info<traced>(e);
+			std::cout << "Amiga!\n";
+			if (st) {
+				std::cout << "Awooga! " << *st << "\n";
+			}
 			error_dialog (
 				0,
 				wxString::Format (
