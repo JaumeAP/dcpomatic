@@ -25,6 +25,7 @@
 #include "dcpomatic_time.h"
 #include <boost/weak_ptr.hpp>
 #include <boost/signals2.hpp>
+#include <boost/atomic.hpp>
 #include <vector>
 #include <string>
 
