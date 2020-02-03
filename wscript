@@ -181,6 +181,9 @@ def configure(conf):
                                libpath='/usr/local/lib',
                                lib=['boost_locale%s' % boost_lib_suffix, 'boost_system%s' % boost_lib_suffix],
                                uselib_store='BOOST_LOCALE')
+        conf.env.append_value('CXXFLAGS', ['-DBOOST_STACKTRACE_LINK', '-DBOOST_STACKTRACE_USE_BACKTRACE'])
+        conf.check(lib='dl', uselib_store='DL', msg="Checking for library dl")
+        conf.check(lib='backtrace', uselib_store='BACKTRACE', msg="Checking for library backtrace")
 
     # POSIX
     if conf.env.TARGET_LINUX or conf.env.TARGET_OSX:
@@ -196,7 +199,9 @@ def configure(conf):
         conf.env.append_value('CXXFLAGS', '-DLINUX_SHARE_PREFIX="%s/share/dcpomatic2"' % conf.env['INSTALL_PREFIX'])
         conf.env.append_value('CXXFLAGS', '-DDCPOMATIC_LINUX')
         conf.env.append_value('CXXFLAGS', ['-Wlogical-op', '-Wcast-align'])
+        conf.env.append_value('CXXFLAGS', '-DBOOST_STACKTRACE_USE_BACKTRACE')
         conf.check(lib='dl', uselib_store='DL', msg="Checking for library dl")
+        conf.check(lib='backtrace', uselib_store='BACKTRACE', msg="Checking for library backtrace")
         if not conf.env.DISABLE_GUI:
             conf.check_cfg(package='gtk+-2.0', args='--cflags --libs', uselib_store='GTK', mandatory=True)
 

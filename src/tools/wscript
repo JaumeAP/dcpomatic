@@ -33,10 +33,10 @@ def build(bld):
     uselib += 'SNDFILE SAMPLERATE BOOST_REGEX ICU NETTLE RTAUDIO PNG '
 
     if bld.env.TARGET_WINDOWS:
-        uselib += 'WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE WINSOCK2 OLE32 DSOUND WINMM KSUSER '
+        uselib += 'WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE WINSOCK2 OLE32 DSOUND WINMM KSUSER BACKTRACE DL '
 
     if bld.env.TARGET_LINUX:
-        uselib += 'DL'
+        uselib += 'BACKTRACE DL '
 
     cli_tools = []
     if bld.env.VARIANT == 'swaroop-theater':
