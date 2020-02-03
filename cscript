@@ -356,6 +356,8 @@ def dependencies(target):
     # This dependency is to get that binary, which is added into
     # the appropriate place later
     deps.append(('openssl', 'carl'))
+    if target.platform == 'windows':
+        deps.append(('libbacktrace', 'carl'))
 
     return deps
 
