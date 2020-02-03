@@ -551,6 +551,8 @@ private:
 			wxDEFAULT_DIALOG_STYLE | wxDD_DIR_MUST_EXIST
 			);
 
+		DCPOMATIC_ASSERT(false);
+
 		int r;
 		while (true) {
 			r = c->ShowModal ();
