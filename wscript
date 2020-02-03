@@ -172,7 +172,7 @@ def configure(conf):
         conf.check(lib='winmm', uselib_store='WINMM', msg="Checking for library winmm")
         conf.check(lib='ksuser', uselib_store='KSUSER', msg="Checking for library ksuser")
         boost_lib_suffix = '-mt'
-        boost_thread = 'boost_thread_win32-mt'
+        boost_thread = 'boost_thread-mt'
         conf.check_cxx(fragment="""
                                #include <boost/locale.hpp>\n
                                int main() { std::locale::global (boost::locale::generator().generate ("")); }\n
