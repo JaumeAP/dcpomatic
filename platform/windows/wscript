@@ -79,7 +79,6 @@ File "%static_deps%/bin/libboost_thread-mt.dll"
 File "%static_deps%/bin/libboost_date_time-mt.dll"
 File "%static_deps%/bin/libboost_locale-mt.dll"
 File "%static_deps%/bin/libboost_regex-mt.dll"
-File "%static_deps%/bin/libeay32.dll"
 """, file=f)
 
     if bits == 32:
