@@ -349,7 +349,7 @@ def dependencies(target):
         deps = []
 
     deps.append(('libdcp', None, {'force-cpp11': True}))
-    deps.append(('libsub', None))
+    deps.append(('libsub', None, {'force-cpp11': True}))
     deps.append(('rtaudio', 'carl'))
     # We get our OpenSSL libraries from the environment, but we
     # also need a patched openssl binary to make certificates.
