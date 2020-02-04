@@ -1,5 +1,5 @@
 #
-#    Copyright (C) 2012-2015 Carl Hetherington <cth@carlh.net>
+#    Copyright (C) 2012-2020 Carl Hetherington <cth@carlh.net>
 #
 #    This file is part of DCP-o-matic.
 #
@@ -190,7 +190,7 @@ def build(bld):
     obj.export_includes = ['..']
     obj.uselib = """
                  AVCODEC AVUTIL AVFORMAT AVFILTER SWSCALE
-                 BOOST_FILESYSTEM BOOST_THREAD BOOST_DATETIME BOOST_SIGNALS2 BOOST_REGEX
+                 BOOST_FILESYSTEM BOOST_THREAD BOOST_DATETIME BOOST_SIGNALS2 BOOST_REGEX BOOST_STACKTRACE
                  SAMPLERATE POSTPROC TIFF SSH DCP CXML GLIB LZMA XML++
                  CURL ZIP FONTCONFIG PANGOMM CAIROMM XMLSEC SUB ICU NETTLE PNG
                  """
