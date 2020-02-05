@@ -187,7 +187,7 @@ def configure(conf):
                                """,
                                msg='Checking for boost stacktrace library',
                                libpath='/usr/local/lib',
-                               lib=['boost_stacktrace%s' % boost_lib_suffix,
+                               lib=['boost_stacktrace%s' % boost_lib_suffix],
                                uselib_store='BOOST_STACKTRACE')
         conf.env.append_value('CXXFLAGS', ['-DBOOST_STACKTRACE_LINK', '-DBOOST_STACKTRACE_USE_BACKTRACE'])
         conf.check(lib='dl', uselib_store='DL', msg="Checking for library dl")
