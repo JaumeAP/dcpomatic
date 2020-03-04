@@ -53,7 +53,6 @@ sources = """
           content.cc
           content_factory.cc
           create_cli.cc
-          cross.cc
           crypto.cc
           curl_uploader.cc
           datasat_ap2x.cc
@@ -209,6 +208,11 @@ def build(bld):
 
     if bld.env.TARGET_WINDOWS:
         obj.uselib += ' WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE'
+        obj.source += ' cross_windows.cc'
+    if bld.env.TARGET_OSX:
+        obj.source += ' cross_osx.cc'
+    if bld.env.TARGET_LINUX:
+        obj.source += ' cross_linux.cc'
     if bld.env.STATIC_DCPOMATIC:
         obj.uselib += ' XMLPP'
 
