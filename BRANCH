@@ -1,0 +1,5 @@
+On Windows this branch needs a newer boost (and maybe some other stuff) so it needs an update mxed environment which I don't
+want to use for master.  Hence mxe has carl-1 and carl-2 branches, docker-environment has windows and windows_2 and cdist
+has a new --environment-version which can be (for example) 2 to make the build use the windows_2 docker.
+
+There have been some recent (~5/2/20) changes to fix cah@ableton committers/authors in some of these repos.
