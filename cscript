@@ -1,6 +1,6 @@
 # -*- mode: python -*-
 #
-#    Copyright (C) 2012-2019 Carl Hetherington <cth@carlh.net>
+#    Copyright (C) 2012-2020 Carl Hetherington <cth@carlh.net>
 #
 #    This file is part of DCP-o-matic.
 #
@@ -362,8 +362,8 @@ def dependencies(target):
         # Use distro-provided FFmpeg on Arch
         deps = []
 
-    deps.append(('libdcp', None))
-    deps.append(('libsub', None))
+    deps.append(('libdcp', None, {'force-cpp11': True}))
+    deps.append(('libsub', None, {'force-cpp11': True}))
     deps.append(('rtaudio', 'carl'))
     # We get our OpenSSL libraries from the environment, but we
     # also need a patched openssl binary to make certificates.
