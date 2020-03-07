@@ -207,7 +207,7 @@ def build(bld):
         obj.source += ' copy_to_drive_job.cc'
 
     if bld.env.TARGET_WINDOWS:
-        obj.uselib += ' WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE'
+        obj.uselib += ' WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE SETUPAPI'
         obj.source += ' cross_windows.cc'
     if bld.env.TARGET_OSX:
         obj.source += ' cross_osx.cc'

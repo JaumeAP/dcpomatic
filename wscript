@@ -169,8 +169,9 @@ def configure(conf):
         conf.check(lib='dsound', uselib_store='DSOUND', msg="Checking for library dsound")
         conf.check(lib='winmm', uselib_store='WINMM', msg="Checking for library winmm")
         conf.check(lib='ksuser', uselib_store='KSUSER', msg="Checking for library ksuser")
+        conf.check(lib='setupapi', uselib_store='SETUPAPI', msg="Checking for library setupapi")
         boost_lib_suffix = '-mt'
-        boost_thread = 'boost_thread_win32-mt'
+        boost_thread = 'boost_thread-mt'
         conf.check_cxx(fragment="""
                                #include <boost/locale.hpp>\n
                                int main() { std::locale::global (boost::locale::generator().generate ("")); }\n
@@ -529,12 +530,16 @@ def configure(conf):
         # Really just checking for the header here (there's no associated library) but the test
         # program has to link with boost_system so I'm doing it this way.
         if conf.options.enable_dist:
+            deps = ['boost_system%s' % boost_lib_suffix]
+            if conf.env.TARGET_WINDOWS:
+                deps.append('ws2_32')
+                deps.append('boost_filesystem%s' % boost_lib_suffix)
             conf.check_cxx(fragment="""
                                 #include <boost/process.hpp>\n
                                 int main() { boost::process::child* c = new boost::process::child("foo"); }\n
                                 """,
                            msg='Checking for boost process library',
-                           lib=['boost_system%s' % boost_lib_suffix],
+                           lib=deps,
                            uselib_store='BOOST_PROCESS')
 
     # libxml++ requires glibmm and versions of glibmm 2.45.31 and later

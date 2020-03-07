@@ -32,6 +32,9 @@ extern "C" {
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <windows.h>
+#include <winternl.h>
+#include <winioctl.h>
+#include <ntdddisk.h>
 #include <setupapi.h>
 #undef DATADIR
 #include <shlwapi.h>
@@ -306,7 +309,7 @@ home_directory ()
 }
 
 string
-command_and_read (string cmd)
+command_and_read (string)
 {
 	return "";
 }
@@ -349,7 +352,7 @@ get_drives ()
 		ZeroMemory (&friendly_name_buffer, sizeof(friendly_name_buffer));
 
 		bool r = SetupDiGetDeviceRegistryPropertyW (
-			device_info, &device_info_data, SPDRP_FRIENDLYNAME, 0, static_cast<PBYTE>(wbuffer), sizeof(wbuffer), 0
+			device_info, &device_info_data, SPDRP_FRIENDLYNAME, 0, reinterpret_cast<PBYTE>(friendly_name_buffer), sizeof(friendly_name_buffer), 0
 			);
 
 		if (r) {
@@ -390,7 +393,7 @@ get_drives ()
 			r = SetupDiGetDeviceInterfaceDetailW (device_info, &device_interface_data, device_detail_data, size, &size, 0);
 			if (!r) {
 				LOG_DIST_NC("SetupDiGetDeviceInterfaceDetailW failed");
-				return 1;
+				return vector<Drive>();
 			}
 
 			HANDLE device = CreateFileW (
@@ -422,7 +425,7 @@ get_drives ()
 				);
 
 			if (r) {
-				LOG_DIST("GET_DEVICE_NUMBER gives %1", disk_number.DeviceNumber);
+				LOG_DIST("GET_DEVICE_NUMBER gives %1", device_number.DeviceNumber);
 				/* Disk number for \\.\PHYSICALDRIVEx is device_number.DeviceNumber */
 			}
 

@@ -24,7 +24,6 @@
 #include "lib/cross.h"
 #include "lib/digester.h"
 extern "C" {
-#include <lwext4/file_dev.h>
 #include <lwext4/ext4_mbr.h>
 #include <lwext4/ext4_fs.h>
 #include <lwext4/ext4_mkfs.h>
@@ -37,20 +36,30 @@ extern "C" {
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#endif
+
 #ifdef DCPOMATIC_OSX
 #undef nil
-#endif
-#include <glibmm.h>
 #endif
 
 #ifdef DCPOMATIC_LINUX
 #include <linux/fs.h>
 #include <polkit/polkit.h>
+extern "C" {
+#include <lwext4/file_dev.h>
+}
+#include <poll.h>
 #endif
 
+#ifdef DCPOMATIC_WINDOWS
+extern "C" {
+#include <lwext4/file_windows.h>
+}
+#endif
+
+#include <glibmm.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <poll.h>
 #include <boost/filesystem.hpp>
 #include <iostream>
 
@@ -229,7 +238,7 @@ try
 	info.journal = false;
 
 #ifdef WIN32
-	file_windows_name_set(WINDOWS_DRIVE);
+	file_windows_name_set(device.c_str());
 	struct ext4_blockdev* bd = file_windows_dev_get();
 #else
 	file_dev_name_set (device.c_str());
@@ -343,9 +352,15 @@ polkit_callback (GObject *, GAsyncResult* res, gpointer)
 bool
 idle ()
 {
+#ifdef DCPOMATIC_POSIX
 	struct pollfd input[1] = { { fd: 0, events: POLLIN, revents: 0 } };
 	int const r = poll (input, 1, 0);
 	if (r > 0 && (input[0].revents & POLLIN)) {
+#else
+	DWORD num;
+	GetNumberOfConsoleInputEvents(GetStdHandle(STD_INPUT_HANDLE), &num);
+	if (num) {
+#endif
 		string s;
 		getline (cin, s);
 		if (s.empty()) {

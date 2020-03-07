@@ -75,11 +75,10 @@ File "%static_deps%/bin/libintl-8.dll"
 File "%static_deps%/bin/libboost_chrono-mt.dll"
 File "%static_deps%/bin/libboost_filesystem-mt.dll"
 File "%static_deps%/bin/libboost_system-mt.dll"
-File "%static_deps%/bin/libboost_thread_win32-mt.dll"
+File "%static_deps%/bin/libboost_thread-mt.dll"
 File "%static_deps%/bin/libboost_date_time-mt.dll"
 File "%static_deps%/bin/libboost_locale-mt.dll"
 File "%static_deps%/bin/libboost_regex-mt.dll"
-File "%static_deps%/bin/libeay32.dll"
 """, file=f)
 
     if bits == 32:
@@ -129,15 +128,14 @@ File "%static_deps%/bin/libxslt-1.dll"
 File "%static_deps%/bin/libffi-6.dll"
 File "%static_deps%/bin/openssl.exe"
 File "%static_deps%/bin/libcurl-4.dll"
-File "%static_deps%/bin/ssleay32.dll"
-File "%static_deps%/bin/libzip-4.dll"
+File "%static_deps%/bin/libzip.dll"
 File "%static_deps%/bin/libcairomm-1.0-1.dll"
 File "%static_deps%/bin/libpangomm-1.4-1.dll"
 File "%static_deps%/bin/libsamplerate-0.dll"
-File "%static_deps%/bin/libnettle-6.dll"
-File "%static_deps%/bin/icuuc56.dll"
-File "%static_deps%/bin/icudt56.dll"
-File "%static_deps%/bin/icuin56.dll"
+File "%static_deps%/bin/libnettle-7.dll"
+File "%static_deps%/bin/icuuc65.dll"
+File "%static_deps%/bin/icudt65.dll"
+File "%static_deps%/bin/icuin65.dll"
 File "%static_deps%/bin/liblzma-5.dll"
 File "%static_deps%/bin/libpcre-1.dll"
 File "%static_deps%/bin/libharfbuzz-0.dll"
@@ -146,21 +144,18 @@ File "%static_deps%/bin/liblcms2-2.dll"
 File "%static_deps%/bin/libwinpthread-1.dll"
 File "%static_deps%/bin/libgnutls-30.dll"
 File "%static_deps%/bin/libgmp-10.dll"
-File "%static_deps%/bin/libhogweed-4.dll"
+File "%static_deps%/bin/libhogweed-5.dll"
 File "%static_deps%/bin/libidn2-0.dll"
 File "%static_deps%/bin/libunistring-2.dll"
 File "%static_deps%/bin/libssh2-1.dll"
 File "%static_deps%/bin/libgcrypt-20.dll"
-""", file=f)
-
-    if bits == 32:
-        print('File "%static_deps%/bin/libgpg-error-0.dll"', file=f)
-    else:
-        print('File "%static_deps%/bin/libgpg-error6-0.dll"', file=f)
-
-    print("""
+File "%static_deps%/bin/libgpg-error-0.dll"
 File "%static_deps%/bin/libpangoft2-1.0-0.dll"
-File "%static_deps%/bin/libx264-152.dll"
+File "%static_deps%/bin/libx264-155.dll"
+File "%static_deps%/bin/libwebp-7.dll"
+File "%static_deps%/bin/libcrypto-1_1-x64.dll"
+File "%static_deps%/bin/libltdl-7.dll"
+File "%static_deps%/bin/libdl.dll"
 
 File "%cdist_deps%/bin/asdcp-carl.dll"
 File "%cdist_deps%/bin/kumu-carl.dll"
@@ -208,6 +203,7 @@ File "%cdist_deps%/src/openssl/apps/openssl.exe"
         print('File "%resources%/dcpomatic2_batch_debug.bat"', file=f)
         print('File "%resources%/dcpomatic2_kdm_debug.bat"', file=f)
         print('File "%resources%/dcpomatic2_player_debug.bat"', file=f)
+        print('File "%resources%/dcpomatic2_dist_debug.bat"', file=f)
         print('File "%mingw%/bin/gdb.exe"', file=f)
     else:
         print('File "%binaries%/src/wx/dcpomatic2-wx.dll"', file=f)
@@ -336,6 +332,8 @@ File "%binaries%/src/tools/dcpomatic2_cli.exe"
 File "%binaries%/src/tools/dcpomatic2_create.exe"
 File "%binaries%/src/tools/dcpomatic2_kdm.exe"
 File "%binaries%/src/tools/dcpomatic2_kdm_cli.exe"
+File "%binaries%/src/tools/dcpomatic2_dist.exe"
+File "%binaries%/src/tools/dcpomatic2_dist_writer.exe"
     """, file=f)
 
     print("""
@@ -348,6 +346,7 @@ File "%binaries%/src/tools/dcpomatic2_playlist.exe"
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2 debug.lnk" "$INSTDIR\\bin\\dcpomatic2_debug.bat"', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2 Batch Converter debug.lnk" "$INSTDIR\\bin\\dcpomatic2_batch_debug.bat" ""', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2 KDM Creator debug.lnk" "$INSTDIR\\bin\\dcpomatic2_kdm_debug.bat" ""', file=f)
+            print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2 Disk Writer debug.lnk" "$INSTDIR\\bin\\dcpomatic2_dist_debug.bat" ""', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\Uninstall DCP-o-matic 2 debug.lnk" "$INSTDIR\\Uninstall.exe"', file=f)
         print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2 Player debug.lnk" "$INSTDIR\\bin\\dcpomatic2_player_debug.bat" ""', file=f)
         print('WriteRegStr HKLM "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\DCP-o-matic 2 debug" "DisplayName" "DCP-o-matic 2 debug (remove only)"', file=f)
@@ -357,6 +356,7 @@ File "%binaries%/src/tools/dcpomatic2_playlist.exe"
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2.lnk" "$INSTDIR\\bin\\dcpomatic2.exe"', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 Batch Converter.lnk" "$INSTDIR\\bin\\dcpomatic2_batch.exe"', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 KDM Creator.lnk" "$INSTDIR\\bin\\dcpomatic2_kdm.exe"', file=f)
+            print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 Disk Writer.lnk" "$INSTDIR\\bin\\dcpomatic2_dist.exe"', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\Uninstall DCP-o-matic 2.lnk" "$INSTDIR\\Uninstall.exe"', file=f)
         print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 Player.lnk" "$INSTDIR\\bin\\dcpomatic2_player.exe"', file=f)
         print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 Playlist Editor.lnk" "$INSTDIR\\bin\\dcpomatic2_playlist.exe"', file=f)
@@ -372,6 +372,7 @@ File "%binaries%/src/tools/dcpomatic2_playlist.exe"
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 debug.lnk" "$INSTDIR\\bin\\dcpomatic2_debug.bat" ""', file=f)
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Batch Converter debug.lnk" "$INSTDIR\\bin\\dcpomatic2_batch_debug.bat" ""', file=f)
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 KDM Creator debug.lnk" "$INSTDIR\\bin\\dcpomatic2_kdm_debug.bat" ""', file=f)
+            print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Disk Writer debug.lnk" "$INSTDIR\\bin\\dcpomatic2_dist_debug.bat" ""', file=f)
     else:
         print('Section "DCP-o-matic 2 desktop shortcuts" SEC_MASTER_DESKTOP', file=f)
         print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Player.lnk" "$INSTDIR\\bin\\dcpomatic2_player.exe"', file=f)
@@ -379,6 +380,7 @@ File "%binaries%/src/tools/dcpomatic2_playlist.exe"
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2.lnk" "$INSTDIR\\bin\\dcpomatic2.exe" ""', file=f)
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Batch Converter.lnk" "$INSTDIR\\bin\\dcpomatic2_batch.exe"', file=f)
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 KDM Creator.lnk" "$INSTDIR\\bin\\dcpomatic2_kdm.exe"', file=f)
+            print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Disk Writer.lnk" "$INSTDIR\\bin\\dcpomatic2_dist.exe"', file=f)
 
     print("SectionEnd", file=f)
 
@@ -436,6 +438,7 @@ RMDir "$INSTDIR"
 Delete "$DESKTOP\\DCP-o-matic 2 debug.lnk"
 Delete "$DESKTOP\\DCP-o-matic 2 Batch Converter debug.lnk"
 Delete "$DESKTOP\\DCP-o-matic 2 KDM Creator debug.lnk"
+Delete "$DESKTOP\\DCP-o-matic 2 Disk Writer debug.lnk"
 Delete "$SMPROGRAMS\\DCP-o-matic 2 debug\\*.*"
 RmDir  "$SMPROGRAMS\\DCP-o-matic 2 debug"
 DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\\DCP-o-matic 2 debug"
@@ -451,6 +454,7 @@ Delete "$DESKTOP\\DCP-o-matic 2.lnk"
 Delete "$DESKTOP\\DCP-o-matic 2 Batch Converter.lnk"
 Delete "$DESKTOP\\DCP-o-matic 2 Encode Server.lnk"
 Delete "$DESKTOP\\DCP-o-matic 2 KDM creator.lnk"
+Delete "$DESKTOP\\DCP-o-matic 2 Disk Writer.lnk"
 Delete "$SMPROGRAMS\\DCP-o-matic 2\\*.*"
 RmDir  "$SMPROGRAMS\\DCP-o-matic 2"
 DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\\DCP-o-matic 2"

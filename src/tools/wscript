@@ -35,7 +35,7 @@ def build(bld):
     if bld.env.TARGET_LINUX:
         uselib += 'POLKIT '
 
-    if bld.env.TARGET_LINUX or bld.env.TARGET_OSX:
+    if bld.env.ENABLE_DIST:
         uselib += 'LWEXT4 '
 
     if bld.env.TARGET_WINDOWS:
