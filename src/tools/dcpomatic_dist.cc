@@ -211,7 +211,7 @@ public:
 			Config::FailedToLoad.connect (boost::bind (&App::config_failed_to_load, this));
 			Config::Warning.connect (boost::bind (&App::config_warning, this, _1));
 
-			SetAppName (_("DCP-o-matic Distribution"));
+			SetAppName (_("DCP-o-matic Disk Writer"));
 
 			if (!wxApp::OnInit()) {
 				return false;
@@ -247,7 +247,7 @@ public:
 			*/
 			Config::drop ();
 
-			_frame = new DOMFrame (_("DCP-o-matic Distribution"));
+			_frame = new DOMFrame (_("DCP-o-matic Disk Writer"));
 			SetTopWindow (_frame);
 
 			_frame->Show ();
