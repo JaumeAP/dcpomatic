@@ -271,15 +271,21 @@ thread_id ()
 	return (uint64_t) GetCurrentThreadId ();
 }
 
+static string
+wchar_to_utf8 (wchar_t const * s)
+{
+	int const length = (wcslen(s) + 1) * 2;
+	char* utf8 = new char[length];
+	WideCharToMultiByte (CP_UTF8, 0, s, -1, utf8, length, 0, 0);
+	string u (utf8);
+	delete[] utf8;
+	return u;
+}
+
 int
 avio_open_boost (AVIOContext** s, boost::filesystem::path file, int flags)
 {
-	int const length = (file.string().length() + 1) * 2;
-	char* utf8 = new char[length];
-	WideCharToMultiByte (CP_UTF8, 0, file.c_str(), -1, utf8, length, 0, 0);
-	int const r = avio_open (s, utf8, flags);
-	delete[] utf8;
-	return r;
+	return avio_open (s, wchar_to_utf8(file.c_str()).c_str(), flags);
 }
 
 void
@@ -323,114 +329,148 @@ running_32_on_64 ()
 	return p;
 }
 
+static optional<string>
+get_friendly_name (HDEVINFO device_info, SP_DEVINFO_DATA* device_info_data)
+{
+	wchar_t buffer[MAX_PATH];
+	ZeroMemory (&buffer, sizeof(buffer));
+	bool r = SetupDiGetDeviceRegistryPropertyW (
+			device_info, device_info_data, SPDRP_FRIENDLYNAME, 0, reinterpret_cast<PBYTE>(buffer), sizeof(buffer), 0
+			);
+	if (!r) {
+		return optional<string>();
+	}
+	return wchar_to_utf8 (buffer);
+}
+
+static const GUID GUID_DEVICE_INTERFACE_DISK = {
+	0x53F56307L, 0xB6BF, 0x11D0, { 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B }
+};
+
+static optional<int>
+get_device_number (HDEVINFO device_info, SP_DEVINFO_DATA* device_info_data)
+{
+	/* Find the Windows path to the device */
+
+	SP_DEVICE_INTERFACE_DATA device_interface_data;
+	device_interface_data.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
+
+	BOOL r = SetupDiEnumDeviceInterfaces (device_info, device_info_data, &GUID_DEVICE_INTERFACE_DISK, 0, &device_interface_data);
+	if (!r) {
+		LOG_DIST("SetupDiEnumDeviceInterfaces failed (%1)", GetLastError());
+		return optional<int>();
+	}
+
+	/* Find out how much space we need for our SP_DEVICE_INTERFACE_DETAIL_DATA_W */
+	DWORD size;
+	r = SetupDiGetDeviceInterfaceDetailW(device_info, &device_interface_data, 0, 0, &size, 0);
+	PSP_DEVICE_INTERFACE_DETAIL_DATA_W device_detail_data = static_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA_W> (malloc(size));
+	if (!device_detail_data) {
+		LOG_DIST_NC("malloc failed");
+		return optional<int>();
+	}
+
+	device_detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
+
+	/* And get the path */
+	r = SetupDiGetDeviceInterfaceDetailW (device_info, &device_interface_data, device_detail_data, size, &size, 0);
+	if (!r) {
+		LOG_DIST_NC("SetupDiGetDeviceInterfaceDetailW failed");
+		free (device_detail_data);
+		return optional<int>();
+	}
+
+	/* Open it.  We would not be allowed GENERIC_READ access here but specifying 0 for
+	   dwDesiredAccess allows us to query some metadata.
+	*/
+	HANDLE device = CreateFileW (
+			device_detail_data->DevicePath, 0,
+			FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
+			OPEN_EXISTING, 0, 0
+			);
+
+	free (device_detail_data);
+
+	if (device == INVALID_HANDLE_VALUE) {
+		LOG_DIST("CreateFileW failed with %1", GetLastError());
+		return optional<int>();
+	}
+
+	/* Get the device number */
+	STORAGE_DEVICE_NUMBER device_number;
+	r = DeviceIoControl (
+			device, IOCTL_STORAGE_GET_DEVICE_NUMBER, 0, 0,
+			&device_number, sizeof(device_number), &size, 0
+			);
+
+	CloseHandle (device);
+
+	if (!r) {
+		return optional<int>();
+	}
+
+	return device_number.DeviceNumber;
+}
+
 vector<Drive>
 get_drives ()
 {
 	vector<Drive> drives;
 
-	const GUID GUID_DEVICE_INTERFACE_DISK = {
-		0x53F56307L, 0xB6BF, 0x11D0, { 0x94, 0xF2, 0x00, 0xA0, 0xC9, 0x1E, 0xFB, 0x8B }
-	};
-
+	/* Get a `device information set' containing information about all disks */
 	HDEVINFO device_info = SetupDiGetClassDevsA (&GUID_DEVICE_INTERFACE_DISK, 0, 0, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 	if (device_info == INVALID_HANDLE_VALUE) {
-		LOG_DIST_NC("SetupDiClassDevsA failed");
+		LOG_DIST_NC ("SetupDiClassDevsA failed");
 		return drives;
 	}
 
 	int i = 0;
 	while (true) {
+		/* Find out about the next disk */
 		SP_DEVINFO_DATA device_info_data;
 		device_info_data.cbSize = sizeof(SP_DEVINFO_DATA);
 		if (!SetupDiEnumDeviceInfo(device_info, i, &device_info_data)) {
-			LOG_DIST ("SetupDiEnumDeviceInfo failed (%1)", GetLastError());
-			return drives;
+			DWORD e = GetLastError();
+			if (e != ERROR_NO_MORE_ITEMS) {
+				LOG_DIST ("SetupDiEnumDeviceInfo failed (%1)", GetLastError());
+			}
+			break;
 		}
 		++i;
 
-		wchar_t friendly_name_buffer[MAX_PATH];
-		ZeroMemory (&friendly_name_buffer, sizeof(friendly_name_buffer));
+		optional<string> const friendly_name = get_friendly_name (device_info, &device_info_data);
+		optional<int> device_number = get_device_number (device_info, &device_info_data);
+		if (!device_number) {
+			continue;
+		}
 
-		bool r = SetupDiGetDeviceRegistryPropertyW (
-			device_info, &device_info_data, SPDRP_FRIENDLYNAME, 0, reinterpret_cast<PBYTE>(friendly_name_buffer), sizeof(friendly_name_buffer), 0
-			);
+		string const physical_drive = String::compose("\\\\.\\PHYSICALDRIVE%1", *device_number);
+
+		HANDLE device = CreateFileA (
+				physical_drive.c_str(), 0,
+				FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
+				OPEN_EXISTING, 0, 0
+				);
+
+		if (device == INVALID_HANDLE_VALUE) {
+			LOG_DIST_NC("Could not open PHYSICALDRIVE");
+		}
+
+		DISK_GEOMETRY geom;
+		DWORD returned;
+		BOOL r = DeviceIoControl (
+				device, IOCTL_DISK_GET_DRIVE_GEOMETRY, 0, 0,
+				&geom, sizeof(geom), &returned, 0
+				);
 
 		if (r) {
-			int const length = (wcslen(friendly_name_buffer) + 1) * 2;
-			char* utf8 = new char[length];
-			/* XXX: this is used in a few places in this file; should be abstracted out */
-			WideCharToMultiByte (CP_UTF8, 0, friendly_name_buffer, -1, utf8, length, 0, 0);
-			/* XXX: utf8 contains a user-readable name */
-			delete[] utf8;
+			uint64_t const disk_size = geom.Cylinders.QuadPart * geom.TracksPerCylinder * geom.SectorsPerTrack * geom.BytesPerSector;
+			drives.push_back (Drive(physical_drive, disk_size, false, friendly_name, optional<string>()));
+		} else {
+			LOG_DIST("Error %1", GetLastError());
 		}
 
-		int j = 0;
-		while (true) {
-			SP_DEVICE_INTERFACE_DATA device_interface_data;
-			device_interface_data.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
-
-			bool r = SetupDiEnumDeviceInterfaces (device_info, &device_info_data, &GUID_DEVICE_INTERFACE_DISK, j, &device_interface_data);
-			if (!r) {
-				DWORD e = GetLastError();
-				if (e == ERROR_NO_MORE_ITEMS) {
-					break;
-				} else {
-					LOG_DIST("SetupDiEnumDeviceInterfaces failed (%1)", e);
-					return drives;
-				}
-			}
-
-			DWORD size;
-			r = SetupDiGetDeviceInterfaceDetailW(device_info, &device_interface_data, 0, 0, &size, 0);
-			PSP_DEVICE_INTERFACE_DETAIL_DATA_W device_detail_data = static_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA_W> (malloc(size));
-			if (!device_detail_data) {
-				LOG_DIST_NC("malloc failed");
-				return drives;
-			}
-
-			device_detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
-
-			r = SetupDiGetDeviceInterfaceDetailW (device_info, &device_interface_data, device_detail_data, size, &size, 0);
-			if (!r) {
-				LOG_DIST_NC("SetupDiGetDeviceInterfaceDetailW failed");
-				return vector<Drive>();
-			}
-
-			HANDLE device = CreateFileW (
-				device_detail_data->DevicePath, 0,
-				FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
-				OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0
-				);
-
-			if (device == INVALID_HANDLE_VALUE) {
-				LOG_DIST_NC("CreateFileW failed");
-				return drives;
-			}
-
-			VOLUME_DISK_EXTENTS disk_extents;
-			r = DeviceIoControl (
-				device, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, 0, 0,
-				&disk_extents, sizeof(VOLUME_DISK_EXTENTS), &size, 0
-				);
-
-			if (r && disk_extents.NumberOfDiskExtents > 0) {
-				LOG_DIST("GET_VOLUME_DISK_EXTENTS gives %1", disk_extents.Extents[0].DiskNumber);
-				/* Disk number for \\.\PHYSICALDRIVEx is disk disk_extents.Extents[0].DiskNumber */
-			}
-
-			STORAGE_DEVICE_NUMBER device_number;
-			r = DeviceIoControl (
-				device, IOCTL_STORAGE_GET_DEVICE_NUMBER, 0, 0,
-				&device_number, sizeof(device_number), &size, 0
-				);
-
-			if (r) {
-				LOG_DIST("GET_DEVICE_NUMBER gives %1", device_number.DeviceNumber);
-				/* Disk number for \\.\PHYSICALDRIVEx is device_number.DeviceNumber */
-			}
-
-			++j;
-		}
+		CloseHandle (device);
 	}
 
 	return drives;
