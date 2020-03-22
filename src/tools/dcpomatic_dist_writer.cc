@@ -23,6 +23,8 @@
 #include "lib/exceptions.h"
 #include "lib/cross.h"
 #include "lib/digester.h"
+#include "lib/file_log.h"
+#include "lib/dcpomatic_log.h"
 extern "C" {
 #include <lwext4/ext4_mbr.h>
 #include <lwext4/ext4_fs.h>
@@ -358,7 +360,12 @@ idle ()
 	if (r > 0 && (input[0].revents & POLLIN)) {
 #else
 	DWORD num;
-	GetNumberOfConsoleInputEvents(GetStdHandle(STD_INPUT_HANDLE), &num);
+	LOG_DIST ("now handle in is %1", reinterpret_cast<uint64_t>(GetStdHandle(STD_INPUT_HANDLE)));
+	if (!GetNumberOfConsoleInputEvents(GetStdHandle(STD_INPUT_HANDLE), &num)) {
+		LOG_DIST ("Could not check console: %1", GetLastError());
+	}
+
+	LOG_DIST ("%1 console events", num);
 	if (num) {
 #endif
 		string s;
@@ -369,6 +376,8 @@ idle ()
 		dcp_path = s;
 		getline (cin, s);
 		device = "/dev/" + s;
+
+		LOG_DIST ("Here we go writing %1 to %2", dcp_path, device);
 
 #ifdef DCPOMATIC_LINUX
 		polkit_authority = polkit_authority_get_sync (0, 0);
@@ -386,6 +395,31 @@ idle ()
 int
 main ()
 {
+	/* XXX: this is a hack, but I expect we'll need logs and I'm not sure if there's
+	 * a better place to put them.
+	 */
+	dcpomatic_log.reset(new FileLog(config_path() / "dist_writer.log"));
+	dcpomatic_log->set_types (dcpomatic_log->types() | LogEntry::TYPE_DIST);
+	LOG_DIST_NC("dcpomatic_dist_writer started");
+
+#ifdef DCPOMATIC_WINDOWS
+	FreeConsole ();
+	AllocConsole ();
+
+	HANDLE handle_out = GetStdHandle(STD_OUTPUT_HANDLE);
+	int hCrt = _open_osfhandle((intptr_t) handle_out, _O_TEXT);
+	FILE* hf_out = _fdopen(hCrt, "w");
+	setvbuf(hf_out, NULL, _IONBF, 1);
+	*stdout = *hf_out;
+
+	HANDLE handle_in = GetStdHandle(STD_INPUT_HANDLE);
+	LOG_DIST ("handle_in is %1", reinterpret_cast<uint64_t>(handle_in));
+	hCrt = _open_osfhandle((intptr_t) handle_in, _O_TEXT);
+	FILE* hf_in = _fdopen(hCrt, "r");
+	setvbuf(hf_in, NULL, _IONBF, 128);
+	*stdin = *hf_in;
+#endif
+
 	Glib::RefPtr<Glib::MainLoop> ml = Glib::MainLoop::create ();
 	Glib::signal_timeout().connect(sigc::ptr_fun(&idle), 500);
 	ml->run ();

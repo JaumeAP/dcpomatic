@@ -24,6 +24,7 @@
 #include "dcpomatic_log.h"
 #include "config.h"
 #include "exceptions.h"
+#include "dcpomatic_assert.h"
 #include <dcp/raw_convert.h>
 #include <glib.h>
 extern "C" {
@@ -412,10 +413,68 @@ get_device_number (HDEVINFO device_info, SP_DEVINFO_DATA* device_info_data)
 	return device_number.DeviceNumber;
 }
 
+/** Take a volume path (with a trailing \) and add any disk numbers related to that volume
+ *  to @ref disks.
+ */
+static void
+add_volume_disk_number (wchar_t* volume, vector<int>& disks)
+{
+	/* Strip trailing \ */
+	size_t const len = wcslen (volume);
+	DCPOMATIC_ASSERT (len > 0);
+	volume[len - 1] = L'\0';
+
+	HANDLE handle = CreateFileW (
+			volume, 0,
+			FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
+			OPEN_EXISTING, 0, 0
+			);
+
+	DCPOMATIC_ASSERT (handle != INVALID_HANDLE_VALUE);
+
+	VOLUME_DISK_EXTENTS extents;
+	DWORD size;
+	BOOL r = DeviceIoControl (handle, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, 0, 0, &extents, sizeof(extents), &size, 0);
+	CloseHandle (handle);
+	if (!r) {
+		return;
+	}
+	DCPOMATIC_ASSERT (extents.NumberOfDiskExtents == 1);
+	return disks.push_back (extents.Extents[0].DiskNumber);
+}
+
+/* Return a list of disk numbers that contain volumes; i.e. a list of disk numbers that should
+ * not be offered as targets to write to as they are "mounted" (whatever that means on Windows).
+ */
+vector<int>
+disk_numbers_with_volumes ()
+{
+	vector<int> disks;
+
+	wchar_t volume_name[512];
+	HANDLE volume = FindFirstVolumeW (volume_name, sizeof(volume_name) / sizeof(wchar_t));
+	if (volume == INVALID_HANDLE_VALUE) {
+		return disks;
+	}
+
+	add_volume_disk_number (volume_name, disks);
+	while (true) {
+		if (!FindNextVolumeW(volume, volume_name, sizeof(volume_name) / sizeof(wchar_t))) {
+			break;
+		}
+		add_volume_disk_number (volume_name, disks);
+	}
+	FindVolumeClose (volume);
+
+	return disks;
+}
+
 vector<Drive>
 get_drives ()
 {
 	vector<Drive> drives;
+
+	vector<int> disks_to_ignore = disk_numbers_with_volumes ();
 
 	/* Get a `device information set' containing information about all disks */
 	HDEVINFO device_info = SetupDiGetClassDevsA (&GUID_DEVICE_INTERFACE_DISK, 0, 0, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
@@ -454,6 +513,7 @@ get_drives ()
 
 		if (device == INVALID_HANDLE_VALUE) {
 			LOG_DIST_NC("Could not open PHYSICALDRIVE");
+			continue;
 		}
 
 		DISK_GEOMETRY geom;
@@ -463,11 +523,9 @@ get_drives ()
 				&geom, sizeof(geom), &returned, 0
 				);
 
-		if (r) {
+		if (r && find(disks_to_ignore.begin(), disks_to_ignore.end(), *device_number) == disks_to_ignore.end()) {
 			uint64_t const disk_size = geom.Cylinders.QuadPart * geom.TracksPerCylinder * geom.SectorsPerTrack * geom.BytesPerSector;
 			drives.push_back (Drive(physical_drive, disk_size, false, friendly_name, optional<string>()));
-		} else {
-			LOG_DIST("Error %1", GetLastError());
 		}
 
 		CloseHandle (device);
