@@ -385,7 +385,8 @@ def configure(conf):
 
     # nanomsg
     if conf.options.enable_dist:
-        conf.check_cfg(package='libnanomsg', args='--cflags --libs', uselib_store='NANOMSG', mandatory=True)
+        if conf.check_cfg(package='nanomsg', args='--cflags --libs', uselib_store='NANOMSG', mandatory=False) is None:
+            conf.check_cfg(package='libnanomsg', args='--cflags --libs', uselib_store='NANOMSG', mandatory=True)
 
     # FFmpeg
     if conf.options.static_ffmpeg:
