@@ -53,4 +53,4 @@ cp $MXE/libfreetype*.dll $dir
 cp $MXE/libffi*.dll $dir
 cp $MXE/libharfbuzz*.dll $dir
 cp $MXE/libpixman*.dll $dir
-
+cp $MXE/libnanomsg*.dll $dir
