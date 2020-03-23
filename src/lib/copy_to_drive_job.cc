@@ -23,6 +23,7 @@
 #include "compose.hpp"
 #include "exceptions.h"
 #include <dcp/raw_convert.h>
+#include <nanomsg/nn.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -38,12 +39,11 @@ using std::min;
 using boost::shared_ptr;
 using dcp::raw_convert;
 
-CopyToDriveJob::CopyToDriveJob (boost::filesystem::path dcp, Drive drive, boost::process::opstream& to_writer, boost::process::ipstream& from_writer)
+CopyToDriveJob::CopyToDriveJob (boost::filesystem::path dcp, Drive drive, Nanomsg& nanomsg)
 	: Job (shared_ptr<Film>())
 	, _dcp (dcp)
 	, _drive (drive)
-	, _to_writer (to_writer)
-	, _from_writer (from_writer)
+	, _nanomsg (nanomsg)
 {
 
 }
@@ -63,25 +63,19 @@ CopyToDriveJob::json_name () const
 void
 CopyToDriveJob::run ()
 {
-	_to_writer << _dcp.string() << "\n";
-	_to_writer << _drive.internal_name() << "\n";
-	_to_writer.flush ();
+	_nanomsg.send(String::compose("%1\n%2\n", _dcp.string(), _drive.internal_name()));
 
 	while (true) {
-		string s;
-		getline (_from_writer, s);
+		string s = _nanomsg.blocking_get ();
 		if (s == DIST_WRITER_OK) {
 			set_state (FINISHED_OK);
 			return;
 		} else if (s == DIST_WRITER_ERROR) {
-			string m;
-			getline (_from_writer, m);
-			string n;
-			getline (_from_writer, n);
+			string const m = _nanomsg.blocking_get ();
+			string const n = _nanomsg.blocking_get ();
 			throw CopyError (m, raw_convert<int>(n));
 		} else if (s == DIST_WRITER_PROGRESS) {
-			string p;
-			getline (_from_writer, p);
+			string p = _nanomsg.blocking_get();
 			set_progress (raw_convert<float>(p));
 		}
 	}

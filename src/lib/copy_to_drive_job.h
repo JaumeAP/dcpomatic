@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2019-2020 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -20,12 +20,12 @@
 
 #include "cross.h"
 #include "job.h"
-#include <boost/process.hpp>
+#include "nanomsg.h"
 
 class CopyToDriveJob : public Job
 {
 public:
-	CopyToDriveJob (boost::filesystem::path dcp, Drive drive, boost::process::opstream& to_writer, boost::process::ipstream& from_writer);
+	CopyToDriveJob (boost::filesystem::path dcp, Drive drive, Nanomsg& nanomsg);
 
 	std::string name () const;
 	std::string json_name () const;
@@ -36,6 +36,5 @@ private:
 	void copy (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_remaining, uint64_t total);
 	boost::filesystem::path _dcp;
 	Drive _drive;
-	boost::process::opstream& _to_writer;
-	boost::process::ipstream& _from_writer;
+	Nanomsg& _nanomsg;
 };

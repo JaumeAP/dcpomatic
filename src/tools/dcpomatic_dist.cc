@@ -30,6 +30,8 @@
 #include "lib/cross.h"
 #include "lib/copy_to_drive_job.h"
 #include "lib/job_manager.h"
+#include <nanomsg/nn.h>
+#include <nanomsg/pair.h>
 #include <wx/wx.h>
 #include <boost/process.hpp>
 #ifdef __WXOSX__
@@ -40,6 +42,7 @@ using std::string;
 using std::exception;
 using std::cout;
 using std::cerr;
+using std::runtime_error;
 using boost::shared_ptr;
 
 class DOMFrame : public wxFrame
@@ -47,6 +50,7 @@ class DOMFrame : public wxFrame
 public:
 	explicit DOMFrame (wxString const & title)
 		: wxFrame (0, -1, title)
+		, _nanomsg (true)
 		, _sizer (new wxBoxSizer(wxVERTICAL))
 	{
 		/* Use a panel as the only child of the Frame so that we avoid
@@ -96,7 +100,7 @@ public:
 		_sizer->Add (grid, 1, wxALL | wxEXPAND, DCPOMATIC_DIALOG_BORDER);
 		overall_panel->SetSizer (_sizer);
 		Fit ();
-		SetSize (512, GetSize().GetHeight() + 32);
+		SetSize (768, GetSize().GetHeight() + 32);
 
 		/* XXX: this is a hack, but I expect we'll need logs and I'm not sure if there's
 		 * a better place to put them.
@@ -109,7 +113,7 @@ public:
 
 		Bind (wxEVT_SIZE, boost::bind (&DOMFrame::sized, this, _1));
 
-		_writer = new boost::process::child ("dcpomatic2_dist_writer", boost::process::std_in < _to_writer, boost::process::std_out > _from_writer);
+		_writer = new boost::process::child ("dcpomatic2_dist_writer");
 	}
 
 private:
@@ -148,7 +152,7 @@ private:
 			return;
 		}
 
-		JobManager::instance()->add(shared_ptr<Job>(new CopyToDriveJob(*_dcp_path, _drives[_drive->GetSelection()], _to_writer, _from_writer)));
+		JobManager::instance()->add(shared_ptr<Job>(new CopyToDriveJob(*_dcp_path, _drives[_drive->GetSelection()], _nanomsg)));
 	}
 
 	void drive_refresh ()
@@ -193,8 +197,7 @@ private:
 	boost::optional<boost::filesystem::path> _dcp_path;
 	std::vector<Drive> _drives;
 	boost::process::child* _writer;
-	boost::process::opstream _to_writer;
-	boost::process::ipstream _from_writer;
+	Nanomsg _nanomsg;
 	wxSizer* _sizer;
 };
 

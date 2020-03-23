@@ -383,6 +383,10 @@ def configure(conf):
     if conf.env.TARGET_LINUX and conf.options.enable_dist:
         conf.check_cfg(package='polkit-gobject-1', args='--cflags --libs', uselib_store='POLKIT', mandatory=True)
 
+    # nanomsg
+    if conf.options.enable_dist:
+        conf.check_cfg(package='libnanomsg', args='--cflags --libs', uselib_store='NANOMSG', mandatory=True)
+
     # FFmpeg
     if conf.options.static_ffmpeg:
         names = ['avformat', 'avfilter', 'avcodec', 'avutil', 'swscale', 'postproc', 'swresample']

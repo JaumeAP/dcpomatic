@@ -127,6 +127,7 @@ sources = """
           log_entry.cc
           mid_side_decoder.cc
           monitor_checker.cc
+          nanomsg.cc
           overlaps.cc
           player.cc
           player_text.cc
@@ -192,7 +193,7 @@ def build(bld):
                  AVCODEC AVUTIL AVFORMAT AVFILTER SWSCALE
                  BOOST_FILESYSTEM BOOST_THREAD BOOST_DATETIME BOOST_SIGNALS2 BOOST_REGEX
                  SAMPLERATE POSTPROC TIFF SSH DCP CXML GLIB LZMA XML++
-                 CURL ZIP FONTCONFIG PANGOMM CAIROMM XMLSEC SUB ICU NETTLE PNG LWEXT4 POLKIT
+                 CURL ZIP FONTCONFIG PANGOMM CAIROMM XMLSEC SUB ICU NETTLE PNG
                  """
 
     if bld.env.TARGET_OSX:
@@ -205,6 +206,9 @@ def build(bld):
 
     if bld.env.ENABLE_DIST:
         obj.source += ' copy_to_drive_job.cc'
+        obj.uselib += ' LWEXT4 NANOMSG'
+        if bld.env.TARGET_LINUX:
+            obj.uselib += ' POLKIT'
 
     if bld.env.TARGET_WINDOWS:
         obj.uselib += ' WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE SETUPAPI'
