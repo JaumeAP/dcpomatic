@@ -335,6 +335,7 @@ File "%binaries%/src/tools/dcpomatic2_kdm.exe"
 File "%binaries%/src/tools/dcpomatic2_kdm_cli.exe"
 File "%binaries%/src/tools/dcpomatic2_dist.exe"
 File "%binaries%/src/tools/dcpomatic2_dist_writer.exe"
+File "%resources%/dcpomatic2_dist_writer.exe.manifest"
     """, file=f)
 
     print("""
