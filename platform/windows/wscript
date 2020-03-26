@@ -163,8 +163,8 @@ File "%cdist_deps%/bin/kumu-carl.dll"
     if dist:
         print("""
 File "%static_deps%/bin/libnanomsg.dll"
-File "%cdist_deps%/bin/libblockdev.dll"
-File "%cdist_deps%/bin/liblwext4.dll"
+File "%cdist_deps%/lib/libblockdev.dll"
+File "%cdist_deps%/lib/liblwext4.dll"
         """, file=f)
 
     if windows_version == 'xp':
