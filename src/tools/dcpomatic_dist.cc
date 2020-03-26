@@ -113,7 +113,7 @@ public:
 
 		Bind (wxEVT_SIZE, boost::bind (&DOMFrame::sized, this, _1));
 
-		_writer = new boost::process::child ("dcpomatic2_dist_writer");
+		_writer = new boost::process::child (dist_writer_path());
 	}
 
 private:

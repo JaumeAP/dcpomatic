@@ -105,16 +105,6 @@ cpu_info ()
 	return info;
 }
 
-boost::filesystem::path
-shared_path ()
-{
-	wchar_t dir[512];
-	GetModuleFileName (GetModuleHandle (0), dir, sizeof (dir));
-	PathRemoveFileSpec (dir);
-	boost::filesystem::path path = dir;
-	return path.parent_path();
-}
-
 void
 run_ffprobe (boost::filesystem::path content, boost::filesystem::path out)
 {
@@ -189,17 +179,31 @@ mount_info ()
 	return m;
 }
 
+static boost::filesystem::path
+executable_path ()
+{
+	wchar_t dir[512];
+	GetModuleFileName (GetModuleHandle(0), dir, sizeof(dir));
+	PathRemoveFileSpec (dir);
+	return dir;
+}
+
+boost::filesystem::path
+shared_path ()
+{
+	return executable_path().parent_path();
+}
+
 boost::filesystem::path
 openssl_path ()
 {
-	wchar_t dir[512];
-	GetModuleFileName (GetModuleHandle (0), dir, sizeof (dir));
-	PathRemoveFileSpec (dir);
+	return executable_path() / "openssl.exe";
+}
 
-	boost::filesystem::path path = dir;
-	path /= "openssl.exe";
-	return path;
-
+boost::filesystem::path
+dist_writer_path ()
+{
+	return executable_path() / "dcpomatic2_dist_writer.exe";
 }
 
 /* Apparently there is no way to create an ofstream using a UTF-8

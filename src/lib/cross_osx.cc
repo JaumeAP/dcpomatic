@@ -136,6 +136,15 @@ openssl_path ()
 	return path;
 }
 
+boost::filesystem::path
+dist_writer_path ()
+{
+	boost::filesystem::path path = app_contents();
+	path /= "MacOS";
+	path /= "dcpomatic2_dist_writer";
+	return path;
+}
+
 /* Apparently there is no way to create an ofstream using a UTF-8
    filename under Windows.  We are hence reduced to using fopen
    with this wrapper.
