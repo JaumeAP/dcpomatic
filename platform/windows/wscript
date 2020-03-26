@@ -400,7 +400,7 @@ SectionEnd
 
         print("""
 Section "Encode server desktop shortcuts" SEC_SERVER_DESKTOP
-CreateShortCut "$DESKTOP\\DCP-o-matic 2 encode server.lnk" "$INSTDIR\\bin\\dcpomatic2_server.exe" ""
+CreateShortCut "$DESKTOP\\DCP-o-matic 2 Encode Server.lnk" "$INSTDIR\\bin\\dcpomatic2_server.exe" ""
 SectionEnd
     """, file=f)
 
@@ -411,8 +411,8 @@ SectionEnd
         else:
             print('LangString DESC_SEC_MASTER ${LANG_ENGLISH} "DCP-o-matic 2"', file=f)
             print('LangString DESC_SEC_MASTER_DESKTOP ${LANG_ENGLISH} "DCP-o-matic 2 desktop shortcuts"', file=f)
-            print('LangString DESC_SEC_SERVER ${LANG_ENGLISH} "DCP-o-matic 2 encode server"', file=f)
-            print('LangString DESC_SEC_SERVER_DESKTOP ${LANG_ENGLISH} "DCP-o-matic 2 encode server desktop shortcuts"', file=f)
+            print('LangString DESC_SEC_SERVER ${LANG_ENGLISH} "DCP-o-matic 2 Encode Server"', file=f)
+            print('LangString DESC_SEC_SERVER_DESKTOP ${LANG_ENGLISH} "DCP-o-matic 2 Encode Server desktop shortcuts"', file=f)
 
     print("""
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
