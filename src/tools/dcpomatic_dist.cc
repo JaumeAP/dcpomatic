@@ -126,8 +126,7 @@ public:
 
 	~DOMFrame ()
 	{
-		_writer->terminate ();
-		delete _writer;
+		_nanomsg.send("Q\n");
 	}
 
 private:
@@ -279,12 +278,6 @@ public:
 		}
 
 		return true;
-	}
-
-	int OnExit ()
-	{
-		_frame->Destroy ();
-		return 0;
 	}
 
 	void config_failed_to_load ()

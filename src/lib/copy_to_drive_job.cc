@@ -63,7 +63,7 @@ CopyToDriveJob::json_name () const
 void
 CopyToDriveJob::run ()
 {
-	_nanomsg.send(String::compose("%1\n%2\n", _dcp.string(), _drive.internal_name()));
+	_nanomsg.send(String::compose("W\n%1\n%2\n", _dcp.string(), _drive.internal_name()));
 
 	while (true) {
 		string s = _nanomsg.blocking_get ();

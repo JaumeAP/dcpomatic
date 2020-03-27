@@ -365,20 +365,25 @@ idle ()
 		return true;
 	}
 
-	dcp_path = *s;
-	device = nanomsg->blocking_get();
+	if (*s == "Q") {
+		exit (EXIT_SUCCESS);
+	} else if (*s == "W") {
+		dcp_path = nanomsg->blocking_get();
+		device = nanomsg->blocking_get();
 
-	LOG_DIST ("Here we go writing %1 to %2", dcp_path, device);
+		LOG_DIST ("Here we go writing %1 to %2", dcp_path, device);
 
 #ifdef DCPOMATIC_LINUX
-	polkit_authority = polkit_authority_get_sync (0, 0);
-	PolkitSubject* subject = polkit_unix_process_new (getppid());
-	polkit_authority_check_authorization (
-			polkit_authority, subject, "com.dcpomatic.write-drive", 0, POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION, 0, polkit_callback, 0
-			);
+		polkit_authority = polkit_authority_get_sync (0, 0);
+		PolkitSubject* subject = polkit_unix_process_new (getppid());
+		polkit_authority_check_authorization (
+				polkit_authority, subject, "com.dcpomatic.write-drive", 0, POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION, 0, polkit_callback, 0
+				);
 #else
-	write ();
+		write ();
 #endif
+	}
+
 	return true;
 }
 
