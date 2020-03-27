@@ -99,9 +99,9 @@ string
 write (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_remaining, uint64_t total)
 {
 	ext4_file out;
-	int r = ext4_fopen(&out, to.string().c_str(), "wb");
+	int r = ext4_fopen(&out, to.generic_string().c_str(), "wb");
 	if (r != EOK) {
-		throw CopyError (String::compose("Failed to open file %1", to.string()), r);
+		throw CopyError (String::compose("Failed to open file %1", to.generic_string()), r);
 	}
 
 	FILE* in = fopen_boost (from, "rb");
@@ -157,9 +157,9 @@ string
 read (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_remaining, uint64_t total)
 {
 	ext4_file in;
-	int r = ext4_fopen(&in, to.string().c_str(), "rb");
+	int r = ext4_fopen(&in, to.generic_string().c_str(), "rb");
 	if (r != EOK) {
-		throw VerifyError (String::compose("Failed to open file %1", to.string()), r);
+		throw VerifyError (String::compose("Failed to open file %1", to.generic_string()), r);
 	}
 
 	uint8_t* buffer = new uint8_t[block_size];
@@ -196,16 +196,16 @@ static
 void
 copy (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_remaining, uint64_t total)
 {
-	LOG_DIST ("Copy %1 -> %2", from.string(), to.string());
+	LOG_DIST ("Copy %1 -> %2", from.string(), to.generic_string());
 
 	using namespace boost::filesystem;
 
 	path const cr = to / from.filename();
 
 	if (is_directory(from)) {
-		int r = ext4_dir_mk (cr.string().c_str());
+		int r = ext4_dir_mk (cr.generic_string().c_str());
 		if (r != EOK) {
-			throw CopyError (String::compose("Failed to create directory %1", cr.string()), r);
+			throw CopyError (String::compose("Failed to create directory %1", cr.generic_string()), r);
 		}
 
 		for (directory_iterator i = directory_iterator(from); i != directory_iterator(); ++i) {
@@ -213,9 +213,9 @@ copy (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_
 		}
 	} else {
 		string const write_digest = write (from, cr, total_remaining, total);
-		LOG_DIST ("Wrote %1 %2 with %3", from.string(), cr.string(), write_digest);
+		LOG_DIST ("Wrote %1 %2 with %3", from.string(), cr.generic_string(), write_digest);
 		string const read_digest = read (from, cr, total_remaining, total);
-		LOG_DIST ("Read %1 %2 with %3", from.string(), cr.string(), write_digest);
+		LOG_DIST ("Read %1 %2 with %3", from.string(), cr.generic_string(), write_digest);
 		if (write_digest != read_digest) {
 			throw VerifyError ("Hash of written data is incorrect", 0);
 		}
