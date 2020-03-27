@@ -300,7 +300,7 @@ get_drives ()
 					mounted = true;
 				}
 			}
-			drives.push_back(Drive(i->path().filename().string(), size, mounted, vendor, model));
+			drives.push_back(Drive("/dev/" + i->path().filename().string(), size, mounted, vendor, model));
 			LOG_DIST("Block device %1 size %2 %3 vendor %4 model %5", name, size, mounted ? "mounted" : "not mounted", vendor.get_value_or("[none]"), model.get_value_or("[none]"));
 		}
 	}

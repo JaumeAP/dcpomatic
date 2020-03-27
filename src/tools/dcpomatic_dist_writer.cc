@@ -366,7 +366,7 @@ idle ()
 	}
 
 	dcp_path = *s;
-	device = "/dev/" + nanomsg->blocking_get ();
+	device = nanomsg->blocking_get();
 
 	LOG_DIST ("Here we go writing %1 to %2", dcp_path, device);
 
