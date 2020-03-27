@@ -116,6 +116,8 @@ public:
 
 		Bind (wxEVT_SIZE, boost::bind (&DOMFrame::sized, this, _1));
 
+		JobManager::instance()->ActiveJobsChanged.connect(boost::bind(&DOMFrame::setup_sensitivity, this));
+
 #ifdef DCPOMATIC_WINDOWS
 		/* We must use ::shell here, it seems, to avoid error code 740 (related to privilege escalation) */
 		_writer = new boost::process::child (dist_writer_path(), boost::process::shell, boost::process::windows::hide);
@@ -161,6 +163,7 @@ private:
 		}
 
 		JobManager::instance()->add(shared_ptr<Job>(new CopyToDriveJob(*_dcp_path, _drives[_drive->GetSelection()], _nanomsg)));
+		setup_sensitivity ();
 	}
 
 	void drive_refresh ()
@@ -193,7 +196,7 @@ private:
 
 	void setup_sensitivity ()
 	{
-		_copy->Enable (static_cast<bool>(_dcp_path) && _drive->GetSelection() != wxNOT_FOUND);
+		_copy->Enable (static_cast<bool>(_dcp_path) && _drive->GetSelection() != wxNOT_FOUND && !JobManager::instance()->work_to_do());
 	}
 
 	wxStaticText* _dcp_name;
