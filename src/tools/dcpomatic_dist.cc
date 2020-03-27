@@ -30,8 +30,6 @@
 #include "lib/cross.h"
 #include "lib/copy_to_drive_job.h"
 #include "lib/job_manager.h"
-#include <nanomsg/nn.h>
-#include <nanomsg/pair.h>
 #include <wx/wx.h>
 #include <boost/process.hpp>
 #ifdef DCPOMATIC_WINDOWS
