@@ -117,6 +117,7 @@ public:
 		Bind (wxEVT_SIZE, boost::bind (&DOMFrame::sized, this, _1));
 
 #ifdef DCPOMATIC_WINDOWS
+		/* We must use ::shell here, it seems, to avoid error code 740 (related to privilege escalation) */
 		_writer = new boost::process::child (dist_writer_path(), boost::process::shell, boost::process::windows::hide);
 #else
 		_writer = new boost::process::child (dist_writer_path());
