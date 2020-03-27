@@ -34,7 +34,10 @@
 #include <nanomsg/pair.h>
 #include <wx/wx.h>
 #include <boost/process.hpp>
-#ifdef __WXOSX__
+#ifdef DCPOMATIC_WINDOWS
+#include <boost/process/windows.hpp>
+#endif
+#ifdef DCPOMATIC_OSX
 #include <ApplicationServices/ApplicationServices.h>
 #endif
 
@@ -113,7 +116,11 @@ public:
 
 		Bind (wxEVT_SIZE, boost::bind (&DOMFrame::sized, this, _1));
 
-		_writer = new boost::process::child (dist_writer_path(), boost::process::shell);
+#ifdef DCPOMATIC_WINDOWS
+		_writer = new boost::process::child (dist_writer_path(), boost::process::shell, boost::process::windows::hide);
+#else
+		_writer = new boost::process::child (dist_writer_path());
+#endif
 	}
 
 private:
