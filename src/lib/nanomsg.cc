@@ -51,7 +51,7 @@ Nanomsg::Nanomsg (bool server)
 void
 Nanomsg::send (string s)
 {
-	int const r = nn_send (_socket, s.c_str(), s.length(), 0);
+	int const r = nn_send (_socket, s.c_str(), s.length(), NN_DONTWAIT);
 	if (r < 0) {
 		throw runtime_error(String::compose("Could not send to nanomsg socket (%1)", errno));
 	} else if (r != int(s.length())) {
