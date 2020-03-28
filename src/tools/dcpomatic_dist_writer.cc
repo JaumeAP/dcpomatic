@@ -70,6 +70,7 @@ using std::cin;
 using std::min;
 using std::string;
 using std::runtime_error;
+using std::exception;
 using boost::optional;
 
 #ifdef DCPOMATIC_LINUX
@@ -157,10 +158,12 @@ string
 read (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_remaining, uint64_t total)
 {
 	ext4_file in;
+	LOG_DIST("Opening %1 for read", to.generic_string());
 	int r = ext4_fopen(&in, to.generic_string().c_str(), "rb");
 	if (r != EOK) {
 		throw VerifyError (String::compose("Failed to open file %1", to.generic_string()), r);
 	}
+	LOG_DIST("Opened %1 for read", to.generic_string());
 
 	uint8_t* buffer = new uint8_t[block_size];
 	Digester digester;
@@ -337,9 +340,14 @@ try
 
 	nanomsg->send(DIST_WRITER_OK "\n");
 } catch (CopyError& e) {
+	LOG_DIST("CopyError: %1 %2", e.message(), e.number());
 	nanomsg->send(String::compose(DIST_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()));
 } catch (VerifyError& e) {
+	LOG_DIST("VerifyError: %1 %2", e.message(), e.number());
 	nanomsg->send(String::compose(DIST_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()));
+} catch (exception& e) {
+	LOG_DIST("Exception: %1", e.what());
+	nanomsg->send(String::compose(DIST_WRITER_ERROR "\n%1\n0\n", e.what()));
 }
 
 #ifdef DCPOMATIC_LINUX
