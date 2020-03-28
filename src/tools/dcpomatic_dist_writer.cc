@@ -143,7 +143,7 @@ write (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total
 		}
 		remaining -= this_time;
 		total_remaining -= this_time;
-		nanomsg->send(String::compose(DIST_WRITER_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)));
+		nanomsg->blocking_send(String::compose(DIST_WRITER_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)));
 	}
 
 	fclose (in);
@@ -182,7 +182,7 @@ read (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_
 		digester.add (buffer, this_time);
 		remaining -= this_time;
 		total_remaining -= this_time;
-		nanomsg->send(String::compose(DIST_WRITER_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)));
+		nanomsg->blocking_send(String::compose(DIST_WRITER_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)));
 	}
 
 	ext4_fclose (&in);
@@ -231,8 +231,6 @@ write ()
 try
 {
 //	ext4_dmask_set (DEBUG_ALL);
-
-	nanomsg->send("U\n");
 
 	/* We rely on static initialization for these */
 	static struct ext4_fs fs;
@@ -338,16 +336,16 @@ try
 		throw CopyError ("Failed to unmount device", r);
 	}
 
-	nanomsg->send(DIST_WRITER_OK "\n");
+	nanomsg->blocking_send(DIST_WRITER_OK "\n");
 } catch (CopyError& e) {
 	LOG_DIST("CopyError: %1 %2", e.message(), e.number());
-	nanomsg->send(String::compose(DIST_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()));
+	nanomsg->blocking_send(String::compose(DIST_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()));
 } catch (VerifyError& e) {
 	LOG_DIST("VerifyError: %1 %2", e.message(), e.number());
-	nanomsg->send(String::compose(DIST_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()));
+	nanomsg->blocking_send(String::compose(DIST_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()));
 } catch (exception& e) {
 	LOG_DIST("Exception: %1", e.what());
-	nanomsg->send(String::compose(DIST_WRITER_ERROR "\n%1\n0\n", e.what()));
+	nanomsg->blocking_send(String::compose(DIST_WRITER_ERROR "\n%1\n0\n", e.what()));
 }
 
 #ifdef DCPOMATIC_LINUX

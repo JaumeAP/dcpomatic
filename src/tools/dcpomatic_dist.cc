@@ -30,6 +30,7 @@
 #include "lib/cross.h"
 #include "lib/copy_to_drive_job.h"
 #include "lib/job_manager.h"
+#include "lib/dist_writer_messages.h"
 #include <wx/wx.h>
 #include <boost/process.hpp>
 #ifdef DCPOMATIC_WINDOWS
@@ -126,7 +127,7 @@ public:
 
 	~DOMFrame ()
 	{
-		_nanomsg.send("Q\n");
+		_nanomsg.blocking_send(DIST_WRITER_QUIT "\n");
 	}
 
 private:

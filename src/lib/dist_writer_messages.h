@@ -58,3 +58,12 @@ P\n
 
 */
 #define DIST_WRITER_PROGRESS "P"
+
+/** dcpomatic_dist_writer may also receive
+
+Q\n
+
+as a request to quit.
+*/
+#define DIST_WRITER_QUIT "Q"
+

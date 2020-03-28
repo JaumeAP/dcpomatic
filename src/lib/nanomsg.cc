@@ -49,14 +49,30 @@ Nanomsg::Nanomsg (bool server)
 }
 
 void
-Nanomsg::send (string s)
+Nanomsg::blocking_send (string s)
 {
-	int const r = nn_send (_socket, s.c_str(), s.length(), NN_DONTWAIT);
+	int const r = nn_send (_socket, s.c_str(), s.length(), 0);
 	if (r < 0) {
 		throw runtime_error(String::compose("Could not send to nanomsg socket (%1)", errno));
 	} else if (r != int(s.length())) {
 		throw runtime_error("Could not send to nanomsg socket (message too big)");
 	}
+}
+
+bool
+Nanomsg::nonblocking_send (string s)
+{
+	int const r = nn_send (_socket, s.c_str(), s.length(), NN_DONTWAIT);
+	if (r < 0) {
+		if (errno == EAGAIN) {
+			return false;
+		}
+		throw runtime_error(String::compose("Could not send to nanomsg socket (%1)", errno));
+	} else if (r != int(s.length())) {
+		throw runtime_error("Could not send to nanomsg socket (message too big)");
+	}
+
+	return true;
 }
 
 optional<string>

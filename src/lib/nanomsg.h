@@ -28,7 +28,12 @@ class Nanomsg : public boost::noncopyable
 public:
 	explicit Nanomsg (bool server);
 
-	void send (std::string s);
+	void blocking_send (std::string s);
+	/** Try to send a message, returning true if successful, false
+	 *  if we should try again (EAGAIN) or throwing an exception on any other
+	 *  error.
+	 */
+	bool nonblocking_send (std::string s);
 	std::string blocking_get ();
 	boost::optional<std::string> nonblocking_get ();
 
