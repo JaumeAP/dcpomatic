@@ -43,6 +43,9 @@ extern "C" {
 
 #ifdef DCPOMATIC_OSX
 #undef nil
+extern "C" {
+#include <lwext4/file_dev.h>
+}
 #endif
 
 #ifdef DCPOMATIC_LINUX
