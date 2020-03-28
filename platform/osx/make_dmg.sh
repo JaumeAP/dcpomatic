@@ -444,3 +444,14 @@ cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2_playlist.Info.plist "$app
 rl=("$approot/MacOS/dcpomatic2_playlist" "$approot/Frameworks/"*.dylib)
 relink "${rl[@]}"
 make_dmg "$appdir" "DCP-o-matic Playlist Editor" com.dcpomatic.playlist
+
+# DCP-o-matic Disk Writer
+setup "DCP-o-matic 2 Disk Writer.app"
+copy $ROOT src/dcpomatic/build/src/tools/dcpomatic2_dist "$approot/MacOS"
+copy $ROOT src/dcpomatic/build/src/tools/dcpomatic2_dist_writer "$approot/MacOS"
+cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2_dist.Info.plist "$approot/Info.plist"
+rl=("$approot/MacOS/dcpomatic2_dist" "$approot/Frameworks/"*.dylib)
+relink "${rl[@]}"
+rl=("$approot/MacOS/dcpomatic2_dist_writer" "$approot/Frameworks/"*.dylib)
+relink "${rl[@]}"
+make_dmg "$appdir" "DCP-o-matic Disk Writer" com.dcpomatic.dist
