@@ -196,8 +196,8 @@ deb_depends['unstable'].extend(['libboost-filesystem1.67.0',
                                 'libx264-155',
                                 'libcurl4'])
 
-def build_dist(target):
-    # We can build dcpomatic2_dist on platforms that have Boost process and can build the lwext4
+def build_disk(target):
+    # We can build dcpomatic2_disk on platforms that have Boost process and can build the lwext4
     # library.  For now, just whitelist good ones here.
     #
     # - Lots of Linux distros don't have a new enough boost (1.64 or above)
@@ -286,9 +286,9 @@ def make_spec(filename, version, target, options, requires=None):
     if options['variant'] == 'swaroop-studio':
         print('%{_bindir}/dcpomatic2_ecinema', file=f)
         print('%{_bindir}/dcpomatic2_uuid', file=f)
-    if os.path.exists(os.path.join(tools, "dcpomatic2_dist")):
-        print('%{_bindir}/dcpomatic2_dist', file=f)
-        print('%{_bindir}/dcpomatic2_dist_writer', file=f)
+    if os.path.exists(os.path.join(tools, "dcpomatic2_disk")):
+        print('%{_bindir}/dcpomatic2_disk', file=f)
+        print('%{_bindir}/dcpomatic2_disk_writer', file=f)
     print('%{_datadir}/applications/dcpomatic2.desktop', file=f)
     print('%{_datadir}/applications/dcpomatic2_batch.desktop', file=f)
     print('%{_datadir}/applications/dcpomatic2_server.desktop', file=f)
@@ -414,8 +414,8 @@ def configure_options(target, options):
     if target.debug and target.platform == 'windows':
         opt += ' --static-dcpomatic'
 
-    if build_dist(target):
-       opt += ' --enable-dist'
+    if build_disk(target):
+       opt += ' --enable-disk'
 
     return opt
 

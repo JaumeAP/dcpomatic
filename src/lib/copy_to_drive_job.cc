@@ -18,7 +18,7 @@
 
 */
 
-#include "dist_writer_messages.h"
+#include "disk_writer_messages.h"
 #include "copy_to_drive_job.h"
 #include "compose.hpp"
 #include "exceptions.h"
@@ -70,18 +70,18 @@ CopyToDriveJob::run ()
 	while (true) {
 		bool formatting = false;
 		string s = _nanomsg.blocking_get ();
-		if (s == DIST_WRITER_OK) {
+		if (s == DISK_WRITER_OK) {
 			set_state (FINISHED_OK);
 			return;
-		} else if (s == DIST_WRITER_ERROR) {
+		} else if (s == DISK_WRITER_ERROR) {
 			string const m = _nanomsg.blocking_get ();
 			string const n = _nanomsg.blocking_get ();
 			throw CopyError (m, raw_convert<int>(n));
-		} else if (s == DIST_WRITER_FORMATTING) {
+		} else if (s == DISK_WRITER_FORMATTING) {
 			sub ("Formatting drive");
 			set_progress_unknown ();
 			formatting = true;
-		} else if (s == DIST_WRITER_PROGRESS) {
+		} else if (s == DISK_WRITER_PROGRESS) {
 			if (formatting) {
 				sub ("Copying DCP");
 				formatting = false;

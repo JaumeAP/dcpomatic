@@ -199,9 +199,9 @@ openssl_path ()
 }
 
 boost::filesystem::path
-dist_writer_path ()
+disk_writer_path ()
 {
-	return executable_path() / "dcpomatic2_dist_writer.exe";
+	return executable_path() / "dcpomatic2_disk_writer.exe";
 }
 
 /* Apparently there is no way to create an ofstream using a UTF-8
@@ -360,7 +360,7 @@ get_device_number (HDEVINFO device_info, SP_DEVINFO_DATA* device_info_data)
 
 	BOOL r = SetupDiEnumDeviceInterfaces (device_info, device_info_data, &GUID_DEVICE_INTERFACE_DISK, 0, &device_interface_data);
 	if (!r) {
-		LOG_DIST("SetupDiEnumDeviceInterfaces failed (%1)", GetLastError());
+		LOG_DISK("SetupDiEnumDeviceInterfaces failed (%1)", GetLastError());
 		return optional<int>();
 	}
 
@@ -369,7 +369,7 @@ get_device_number (HDEVINFO device_info, SP_DEVINFO_DATA* device_info_data)
 	r = SetupDiGetDeviceInterfaceDetailW(device_info, &device_interface_data, 0, 0, &size, 0);
 	PSP_DEVICE_INTERFACE_DETAIL_DATA_W device_detail_data = static_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA_W> (malloc(size));
 	if (!device_detail_data) {
-		LOG_DIST_NC("malloc failed");
+		LOG_DISK_NC("malloc failed");
 		return optional<int>();
 	}
 
@@ -378,7 +378,7 @@ get_device_number (HDEVINFO device_info, SP_DEVINFO_DATA* device_info_data)
 	/* And get the path */
 	r = SetupDiGetDeviceInterfaceDetailW (device_info, &device_interface_data, device_detail_data, size, &size, 0);
 	if (!r) {
-		LOG_DIST_NC("SetupDiGetDeviceInterfaceDetailW failed");
+		LOG_DISK_NC("SetupDiGetDeviceInterfaceDetailW failed");
 		free (device_detail_data);
 		return optional<int>();
 	}
@@ -395,7 +395,7 @@ get_device_number (HDEVINFO device_info, SP_DEVINFO_DATA* device_info_data)
 	free (device_detail_data);
 
 	if (device == INVALID_HANDLE_VALUE) {
-		LOG_DIST("CreateFileW failed with %1", GetLastError());
+		LOG_DISK("CreateFileW failed with %1", GetLastError());
 		return optional<int>();
 	}
 
@@ -481,7 +481,7 @@ get_drives ()
 	/* Get a `device information set' containing information about all disks */
 	HDEVINFO device_info = SetupDiGetClassDevsA (&GUID_DEVICE_INTERFACE_DISK, 0, 0, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 	if (device_info == INVALID_HANDLE_VALUE) {
-		LOG_DIST_NC ("SetupDiClassDevsA failed");
+		LOG_DISK_NC ("SetupDiClassDevsA failed");
 		return drives;
 	}
 
@@ -493,7 +493,7 @@ get_drives ()
 		if (!SetupDiEnumDeviceInfo(device_info, i, &device_info_data)) {
 			DWORD e = GetLastError();
 			if (e != ERROR_NO_MORE_ITEMS) {
-				LOG_DIST ("SetupDiEnumDeviceInfo failed (%1)", GetLastError());
+				LOG_DISK ("SetupDiEnumDeviceInfo failed (%1)", GetLastError());
 			}
 			break;
 		}
@@ -514,7 +514,7 @@ get_drives ()
 				);
 
 		if (device == INVALID_HANDLE_VALUE) {
-			LOG_DIST_NC("Could not open PHYSICALDRIVE");
+			LOG_DISK_NC("Could not open PHYSICALDRIVE");
 			continue;
 		}
 

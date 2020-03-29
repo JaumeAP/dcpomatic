@@ -128,11 +128,11 @@ openssl_path ()
 }
 
 boost::filesystem::path
-dist_writer_path ()
+disk_writer_path ()
 {
 	boost::filesystem::path path = app_contents();
 	path /= "MacOS";
-	path /= "dcpomatic2_dist_writer";
+	path /= "dcpomatic2_disk_writer";
 	return path;
 }
 

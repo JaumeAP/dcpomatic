@@ -5,13 +5,13 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>dcpomatic2_dist</string>
+	<string>dcpomatic2_disk</string>
 	<key>CFBundleGetInfoString</key>
 	<string>DCP-o-matic 2 Disk Writer</string>
 	<key>CFBundleIconFile</key>
-	<string>dcpomatic2_dist.icns</string>
+	<string>dcpomatic2_disk.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.dcpomatic.dist</string>
+	<string>com.dcpomatic.disk</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

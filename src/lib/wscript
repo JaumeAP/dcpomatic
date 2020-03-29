@@ -204,7 +204,7 @@ def build(bld):
     if bld.env.VARIANT == 'swaroop-theater' or bld.env.VARIANT == 'swaroop-studio':
         obj.source += ' swaroop_spl.cc swaroop_spl_entry.cc'
 
-    if bld.env.ENABLE_DIST:
+    if bld.env.ENABLE_DISK:
         obj.source += ' copy_to_drive_job.cc'
         obj.uselib += ' LWEXT4 NANOMSG'
         if bld.env.TARGET_LINUX:

@@ -190,7 +190,7 @@ function copy_resources {
     cp $prefix/src/dcpomatic/graphics/osx/dcpomatic2_player.icns "$dest"
     cp $prefix/src/dcpomatic/graphics/osx/dcpomatic2_batch.icns "$dest"
     cp $prefix/src/dcpomatic/graphics/osx/dcpomatic2_playlist.icns "$dest"
-    cp $prefix/src/dcpomatic/graphics/osx/dcpomatic2_dist.icns "$dest"
+    cp $prefix/src/dcpomatic/graphics/osx/dcpomatic2_disk.icns "$dest"
     cp $prefix/src/dcpomatic/graphics/osx/preferences/colour_conversions.png "$dest"
     cp $prefix/src/dcpomatic/graphics/osx/preferences/defaults.png "$dest"
     cp $prefix/src/dcpomatic/graphics/osx/preferences/kdm_email.png "$dest"
@@ -451,11 +451,11 @@ make_dmg "$appdir" "DCP-o-matic Playlist Editor" com.dcpomatic.playlist
 
 # DCP-o-matic Disk Writer
 setup "DCP-o-matic 2 Disk Writer.app"
-copy $ROOT src/dcpomatic/build/src/tools/dcpomatic2_dist "$approot/MacOS"
-copy $ROOT src/dcpomatic/build/src/tools/dcpomatic2_dist_writer "$approot/MacOS"
-cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2_dist.Info.plist "$approot/Info.plist"
-rl=("$approot/MacOS/dcpomatic2_dist" "$approot/Frameworks/"*.dylib)
+copy $ROOT src/dcpomatic/build/src/tools/dcpomatic2_disk "$approot/MacOS"
+copy $ROOT src/dcpomatic/build/src/tools/dcpomatic2_disk_writer "$approot/MacOS"
+cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2_disk.Info.plist "$approot/Info.plist"
+rl=("$approot/MacOS/dcpomatic2_disk" "$approot/Frameworks/"*.dylib)
 relink "${rl[@]}"
-rl=("$approot/MacOS/dcpomatic2_dist_writer" "$approot/Frameworks/"*.dylib)
+rl=("$approot/MacOS/dcpomatic2_disk_writer" "$approot/Frameworks/"*.dylib)
 relink "${rl[@]}"
-make_dmg "$appdir" "DCP-o-matic Disk Writer" com.dcpomatic.dist
+make_dmg "$appdir" "DCP-o-matic Disk Writer" com.dcpomatic.disk

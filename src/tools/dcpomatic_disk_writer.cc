@@ -18,7 +18,7 @@
 
 */
 
-#include "lib/dist_writer_messages.h"
+#include "lib/disk_writer_messages.h"
 #include "lib/compose.hpp"
 #include "lib/exceptions.h"
 #include "lib/cross.h"
@@ -146,7 +146,7 @@ write (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total
 		}
 		remaining -= this_time;
 		total_remaining -= this_time;
-		nanomsg->blocking_send(String::compose(DIST_WRITER_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)));
+		nanomsg->blocking_send(String::compose(DISK_WRITER_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)));
 	}
 
 	fclose (in);
@@ -161,12 +161,12 @@ string
 read (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_remaining, uint64_t total)
 {
 	ext4_file in;
-	LOG_DIST("Opening %1 for read", to.generic_string());
+	LOG_DISK("Opening %1 for read", to.generic_string());
 	int r = ext4_fopen(&in, to.generic_string().c_str(), "rb");
 	if (r != EOK) {
 		throw VerifyError (String::compose("Failed to open file %1", to.generic_string()), r);
 	}
-	LOG_DIST("Opened %1 for read", to.generic_string());
+	LOG_DISK("Opened %1 for read", to.generic_string());
 
 	uint8_t* buffer = new uint8_t[block_size];
 	Digester digester;
@@ -185,7 +185,7 @@ read (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_
 		digester.add (buffer, this_time);
 		remaining -= this_time;
 		total_remaining -= this_time;
-		nanomsg->blocking_send(String::compose(DIST_WRITER_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)));
+		nanomsg->blocking_send(String::compose(DISK_WRITER_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)));
 	}
 
 	ext4_fclose (&in);
@@ -202,7 +202,7 @@ static
 void
 copy (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_remaining, uint64_t total)
 {
-	LOG_DIST ("Copy %1 -> %2", from.string(), to.generic_string());
+	LOG_DISK ("Copy %1 -> %2", from.string(), to.generic_string());
 
 	using namespace boost::filesystem;
 
@@ -219,9 +219,9 @@ copy (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_
 		}
 	} else {
 		string const write_digest = write (from, cr, total_remaining, total);
-		LOG_DIST ("Wrote %1 %2 with %3", from.string(), cr.generic_string(), write_digest);
+		LOG_DISK ("Wrote %1 %2 with %3", from.string(), cr.generic_string(), write_digest);
 		string const read_digest = read (from, cr, total_remaining, total);
-		LOG_DIST ("Read %1 %2 with %3", from.string(), cr.generic_string(), write_digest);
+		LOG_DISK ("Read %1 %2 with %3", from.string(), cr.generic_string(), write_digest);
 		if (write_digest != read_digest) {
 			throw VerifyError ("Hash of written data is incorrect", 0);
 		}
@@ -253,7 +253,7 @@ try
 	if (!bd) {
 		throw CopyError ("Failed to open drive", 0);
 	}
-	LOG_DIST_NC ("Opened drive");
+	LOG_DISK_NC ("Opened drive");
 
 	struct ext4_mbr_parts parts;
 	parts.division[0] = 100;
@@ -271,7 +271,7 @@ try
 	if (r) {
 		throw CopyError ("Failed to write MBR", r);
 	}
-	LOG_DIST_NC ("Wrote MBR");
+	LOG_DISK_NC ("Wrote MBR");
 
 #ifdef DCPOMATIC_WINDOWS
 	struct ext4_mbr_bdevs bdevs;
@@ -305,27 +305,27 @@ try
 	if (!bd) {
 		throw CopyError ("Failed to open partition", 0);
 	}
-	LOG_DIST_NC ("Opened partition");
+	LOG_DISK_NC ("Opened partition");
 
-	nanomsg->blocking_send(DIST_WRITER_FORMATTING "\n");
+	nanomsg->blocking_send(DISK_WRITER_FORMATTING "\n");
 
 	r = ext4_mkfs(&fs, bd, &info, F_SET_EXT4);
 	if (r != EOK) {
 		throw CopyError ("Failed to make filesystem", r);
 	}
-	LOG_DIST_NC ("Made filesystem");
+	LOG_DISK_NC ("Made filesystem");
 
 	r = ext4_device_register(bd, "ext4_fs");
 	if (r != EOK) {
 		throw CopyError ("Failed to register device", r);
 	}
-	LOG_DIST_NC ("Registered device");
+	LOG_DISK_NC ("Registered device");
 
 	r = ext4_mount("ext4_fs", "/mp/", false);
 	if (r != EOK) {
 		throw CopyError ("Failed to mount device", r);
 	}
-	LOG_DIST_NC ("Mounted device");
+	LOG_DISK_NC ("Mounted device");
 
 	uint64_t total_bytes = 0;
 	count (dcp_path, total_bytes);
@@ -341,16 +341,16 @@ try
 		throw CopyError ("Failed to unmount device", r);
 	}
 
-	nanomsg->blocking_send(DIST_WRITER_OK "\n");
+	nanomsg->blocking_send(DISK_WRITER_OK "\n");
 } catch (CopyError& e) {
-	LOG_DIST("CopyError: %1 %2", e.message(), e.number());
-	nanomsg->blocking_send(String::compose(DIST_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()));
+	LOG_DISK("CopyError: %1 %2", e.message(), e.number());
+	nanomsg->blocking_send(String::compose(DISK_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()));
 } catch (VerifyError& e) {
-	LOG_DIST("VerifyError: %1 %2", e.message(), e.number());
-	nanomsg->blocking_send(String::compose(DIST_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()));
+	LOG_DISK("VerifyError: %1 %2", e.message(), e.number());
+	nanomsg->blocking_send(String::compose(DISK_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()));
 } catch (exception& e) {
-	LOG_DIST("Exception: %1", e.what());
-	nanomsg->blocking_send(String::compose(DIST_WRITER_ERROR "\n%1\n0\n", e.what()));
+	LOG_DISK("Exception: %1", e.what());
+	nanomsg->blocking_send(String::compose(DISK_WRITER_ERROR "\n%1\n0\n", e.what()));
 }
 
 #ifdef DCPOMATIC_LINUX
@@ -382,7 +382,7 @@ idle ()
 		dcp_path = nanomsg->blocking_get();
 		device = nanomsg->blocking_get();
 
-		LOG_DIST ("Here we go writing %1 to %2", dcp_path, device);
+		LOG_DISK ("Here we go writing %1 to %2", dcp_path, device);
 
 #ifdef DCPOMATIC_LINUX
 		polkit_authority = polkit_authority_get_sync (0, 0);
@@ -404,14 +404,14 @@ main ()
 	/* XXX: this is a hack, but I expect we'll need logs and I'm not sure if there's
 	 * a better place to put them.
 	 */
-	dcpomatic_log.reset(new FileLog(config_path() / "dist_writer.log"));
-	dcpomatic_log->set_types (dcpomatic_log->types() | LogEntry::TYPE_DIST);
-	LOG_DIST_NC("dcpomatic_dist_writer started");
+	dcpomatic_log.reset(new FileLog(config_path() / "disk_writer.log"));
+	dcpomatic_log->set_types (dcpomatic_log->types() | LogEntry::TYPE_DISK);
+	LOG_DISK_NC("dcpomatic_disk_writer started");
 
 	try {
 		nanomsg = new Nanomsg (false);
 	} catch (runtime_error& e) {
-		LOG_DIST_NC("Could not set up nanomsg socket");
+		LOG_DISK_NC("Could not set up nanomsg socket");
 		exit (EXIT_FAILURE);
 	}
 

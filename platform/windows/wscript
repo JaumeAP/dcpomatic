@@ -1,7 +1,7 @@
 from __future__ import print_function
 import os
 
-def write_installer(bits, windows_version, dcpomatic_version, debug, variant, dist):
+def write_installer(bits, windows_version, dcpomatic_version, debug, variant, disk):
     try:
         os.makedirs('build/platform/windows')
     except:
@@ -160,7 +160,7 @@ File "%cdist_deps%/bin/asdcp-carl.dll"
 File "%cdist_deps%/bin/kumu-carl.dll"
     """, file=f)
 
-    if dist:
+    if disk:
         print("""
 File "%static_deps%/bin/libnanomsg.dll"
 File "%cdist_deps%/lib/libblockdev.dll"
@@ -209,8 +209,8 @@ File "%cdist_deps%/src/openssl/apps/openssl.exe"
         print('File "%resources%/dcpomatic2_batch_debug.bat"', file=f)
         print('File "%resources%/dcpomatic2_kdm_debug.bat"', file=f)
         print('File "%resources%/dcpomatic2_player_debug.bat"', file=f)
-        if dist:
-            print('File "%resources%/dcpomatic2_dist_debug.bat"', file=f)
+        if disk:
+            print('File "%resources%/dcpomatic2_disk_debug.bat"', file=f)
         print('File "%mingw%/bin/gdb.exe"', file=f)
     else:
         print('File "%binaries%/src/wx/dcpomatic2-wx.dll"', file=f)
@@ -341,11 +341,11 @@ File "%binaries%/src/tools/dcpomatic2_kdm.exe"
 File "%binaries%/src/tools/dcpomatic2_kdm_cli.exe"
     """, file=f)
 
-    if dist:
+    if disk:
         print("""
-File "%binaries%/src/tools/dcpomatic2_dist.exe"
-File "%binaries%/src/tools/dcpomatic2_dist_writer.exe"
-File "%resources%/dcpomatic2_dist_writer.exe.manifest"
+File "%binaries%/src/tools/dcpomatic2_disk.exe"
+File "%binaries%/src/tools/dcpomatic2_disk_writer.exe"
+File "%resources%/dcpomatic2_disk_writer.exe.manifest"
     """, file=f)
 
     print("""
@@ -358,8 +358,8 @@ File "%binaries%/src/tools/dcpomatic2_playlist.exe"
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2 debug.lnk" "$INSTDIR\\bin\\dcpomatic2_debug.bat"', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2 Batch Converter debug.lnk" "$INSTDIR\\bin\\dcpomatic2_batch_debug.bat" ""', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2 KDM Creator debug.lnk" "$INSTDIR\\bin\\dcpomatic2_kdm_debug.bat" ""', file=f)
-            if dist:
-                print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2 Disk Writer debug.lnk" "$INSTDIR\\bin\\dcpomatic2_dist_debug.bat" ""', file=f)
+            if disk:
+                print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2 Disk Writer debug.lnk" "$INSTDIR\\bin\\dcpomatic2_disk_debug.bat" ""', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\Uninstall DCP-o-matic 2 debug.lnk" "$INSTDIR\\Uninstall.exe"', file=f)
         print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2 Player debug.lnk" "$INSTDIR\\bin\\dcpomatic2_player_debug.bat" ""', file=f)
         print('WriteRegStr HKLM "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\DCP-o-matic 2 debug" "DisplayName" "DCP-o-matic 2 debug (remove only)"', file=f)
@@ -369,8 +369,8 @@ File "%binaries%/src/tools/dcpomatic2_playlist.exe"
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2.lnk" "$INSTDIR\\bin\\dcpomatic2.exe"', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 Batch Converter.lnk" "$INSTDIR\\bin\\dcpomatic2_batch.exe"', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 KDM Creator.lnk" "$INSTDIR\\bin\\dcpomatic2_kdm.exe"', file=f)
-            if dist:
-                print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 Disk Writer.lnk" "$INSTDIR\\bin\\dcpomatic2_dist.exe"', file=f)
+            if disk:
+                print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 Disk Writer.lnk" "$INSTDIR\\bin\\dcpomatic2_disk.exe"', file=f)
             print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\Uninstall DCP-o-matic 2.lnk" "$INSTDIR\\Uninstall.exe"', file=f)
         print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 Player.lnk" "$INSTDIR\\bin\\dcpomatic2_player.exe"', file=f)
         print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 Playlist Editor.lnk" "$INSTDIR\\bin\\dcpomatic2_playlist.exe"', file=f)
@@ -386,8 +386,8 @@ File "%binaries%/src/tools/dcpomatic2_playlist.exe"
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 debug.lnk" "$INSTDIR\\bin\\dcpomatic2_debug.bat" ""', file=f)
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Batch Converter debug.lnk" "$INSTDIR\\bin\\dcpomatic2_batch_debug.bat" ""', file=f)
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 KDM Creator debug.lnk" "$INSTDIR\\bin\\dcpomatic2_kdm_debug.bat" ""', file=f)
-            if dist:
-                print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Disk Writer debug.lnk" "$INSTDIR\\bin\\dcpomatic2_dist_debug.bat" ""', file=f)
+            if disk:
+                print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Disk Writer debug.lnk" "$INSTDIR\\bin\\dcpomatic2_disk_debug.bat" ""', file=f)
     else:
         print('Section "DCP-o-matic 2 desktop shortcuts" SEC_MASTER_DESKTOP', file=f)
         print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Player.lnk" "$INSTDIR\\bin\\dcpomatic2_player.exe"', file=f)
@@ -395,8 +395,8 @@ File "%binaries%/src/tools/dcpomatic2_playlist.exe"
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2.lnk" "$INSTDIR\\bin\\dcpomatic2.exe" ""', file=f)
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Batch Converter.lnk" "$INSTDIR\\bin\\dcpomatic2_batch.exe"', file=f)
             print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 KDM Creator.lnk" "$INSTDIR\\bin\\dcpomatic2_kdm.exe"', file=f)
-            if dist:
-                print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Disk Writer.lnk" "$INSTDIR\\bin\\dcpomatic2_dist.exe"', file=f)
+            if disk:
+                print('CreateShortCut "$DESKTOP\\DCP-o-matic 2 Disk Writer.lnk" "$INSTDIR\\bin\\dcpomatic2_disk.exe"', file=f)
 
     print("SectionEnd", file=f)
 
@@ -480,7 +480,7 @@ DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\U
 
 
 def build(bld):
-    write_installer(32, None, bld.env.VERSION, bld.env.DEBUG, bld.env.VARIANT, bld.env.ENABLE_DIST)
-    write_installer(64, None, bld.env.VERSION, bld.env.DEBUG, bld.env.VARIANT, bld.env.ENABLE_DIST)
-    write_installer(32, 'xp', bld.env.VERSION, bld.env.DEBUG, bld.env.VARIANT, bld.env.ENABLE_DIST)
-    write_installer(64, 'xp', bld.env.VERSION, bld.env.DEBUG, bld.env.VARIANT, bld.env.ENABLE_DIST)
+    write_installer(32, None, bld.env.VERSION, bld.env.DEBUG, bld.env.VARIANT, bld.env.ENABLE_DISK)
+    write_installer(64, None, bld.env.VERSION, bld.env.DEBUG, bld.env.VARIANT, bld.env.ENABLE_DISK)
+    write_installer(32, 'xp', bld.env.VERSION, bld.env.DEBUG, bld.env.VARIANT, bld.env.ENABLE_DISK)
+    write_installer(64, 'xp', bld.env.VERSION, bld.env.DEBUG, bld.env.VARIANT, bld.env.ENABLE_DISK)
