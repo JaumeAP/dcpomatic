@@ -122,6 +122,7 @@ function copy_libs {
     copy_lib_root libswscale "$dest"
     copy_lib_root libpostproc "$dest"
     copy_lib_root libswresample "$dest"
+    copy_lib_root liblwext4 "$dest"
     copy $ROOT src/dcpomatic/build/src/lib/libdcpomatic2.dylib "$dest"
     copy $ROOT src/dcpomatic/build/src/wx/libdcpomatic2-wx.dylib "$dest"
     copy_lib_env libboost_system "$dest"
@@ -167,6 +168,7 @@ function copy_libs {
     copy_lib_env libvorbis "$dest"
     copy_lib_env libogg "$dest"
     copy_lib_env libxerces-c "$dest"
+    copy_liv_env libnanomsg "$dest"
 }
 
 # @param #1 directory to copy to
@@ -187,6 +189,7 @@ function copy_resources {
     cp $prefix/src/dcpomatic/graphics/osx/dcpomatic2_player.icns "$dest"
     cp $prefix/src/dcpomatic/graphics/osx/dcpomatic2_batch.icns "$dest"
     cp $prefix/src/dcpomatic/graphics/osx/dcpomatic2_playlist.icns "$dest"
+    cp $prefix/src/dcpomatic/graphics/osx/dcpomatic2_dist.icns "$dest"
     cp $prefix/src/dcpomatic/graphics/osx/preferences/colour_conversions.png "$dest"
     cp $prefix/src/dcpomatic/graphics/osx/preferences/defaults.png "$dest"
     cp $prefix/src/dcpomatic/graphics/osx/preferences/kdm_email.png "$dest"
