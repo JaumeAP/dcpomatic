@@ -169,7 +169,7 @@ function copy_libs {
     copy_lib_env libvorbis "$dest"
     copy_lib_env libogg "$dest"
     copy_lib_env libxerces-c "$dest"
-    copy_liv_env libnanomsg "$dest"
+    copy_lib_env libnanomsg "$dest"
 }
 
 # @param #1 directory to copy to
