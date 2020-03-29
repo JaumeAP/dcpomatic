@@ -76,9 +76,12 @@ CopyToDriveJob::run ()
 			string const m = _nanomsg.blocking_get ();
 			string const n = _nanomsg.blocking_get ();
 			throw CopyError (m, raw_convert<int>(n));
+		} else if (s == DIST_WRITER_FORMATTING) {
+			sub ("Formatting drive");
+			set_progress_unknown ();
 		} else if (s == DIST_WRITER_PROGRESS) {
-			string p = _nanomsg.blocking_get();
-			set_progress (raw_convert<float>(p));
+			sub ("Copying DCP");
+			set_progress (raw_convert<float>(_nanomsg.blocking_get()));
 		}
 	}
 }

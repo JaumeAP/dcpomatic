@@ -307,6 +307,8 @@ try
 	}
 	LOG_DIST_NC ("Opened partition");
 
+	nanomsg->blocking_send(DIST_WRITER_FORMATTING "\n");
+
 	r = ext4_mkfs(&fs, bd, &info, F_SET_EXT4);
 	if (r != EOK) {
 		throw CopyError ("Failed to make filesystem", r);

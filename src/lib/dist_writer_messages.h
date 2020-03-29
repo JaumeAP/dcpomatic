@@ -47,7 +47,15 @@ Disc full\n
 */
 #define DIST_WRITER_ERROR "E"
 
-/** Some progress has been made.  Following this will come
+/** The disk writer is formatting the drive.  It is not possible
+ *  to give progress reports on this so the writer just tells us
+ *  it's happening.  This is finished when DIST_WRITER_PROGRESS
+ *  messages start arriving
+ */
+#define DIST_WRITER_FORMATTING "F"
+
+/** Some progress has been made in the main "copy" part of the task.
+ *  Following this will come
 
 progress as a float from 0 to 1\n
 
