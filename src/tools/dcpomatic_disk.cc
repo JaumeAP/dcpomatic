@@ -30,7 +30,7 @@
 #include "lib/cross.h"
 #include "lib/copy_to_drive_job.h"
 #include "lib/job_manager.h"
-#include "lib/dist_writer_messages.h"
+#include "lib/disk_writer_messages.h"
 #include <wx/wx.h>
 #include <boost/process.hpp>
 #ifdef DCPOMATIC_WINDOWS
@@ -107,9 +107,9 @@ public:
 		/* XXX: this is a hack, but I expect we'll need logs and I'm not sure if there's
 		 * a better place to put them.
 		 */
-		dcpomatic_log.reset(new FileLog(config_path() / "dist.log"));
-		dcpomatic_log->set_types (dcpomatic_log->types() | LogEntry::TYPE_DIST);
-		LOG_DIST_NC("dcpomatic_dist started");
+		dcpomatic_log.reset(new FileLog(config_path() / "disk.log"));
+		dcpomatic_log->set_types (dcpomatic_log->types() | LogEntry::TYPE_DISK);
+		LOG_DISK_NC("dcpomatic_disk started");
 
 		drive_refresh ();
 
@@ -119,16 +119,16 @@ public:
 
 #ifdef DCPOMATIC_WINDOWS
 		/* We must use ::shell here, it seems, to avoid error code 740 (related to privilege escalation) */
-		_writer = new boost::process::child (dist_writer_path(), boost::process::shell, boost::process::windows::hide);
+		_writer = new boost::process::child (disk_writer_path(), boost::process::shell, boost::process::windows::hide);
 #else
-		LOG_DIST("Starting writer process %1", dist_writer_path().string());
-		_writer = new boost::process::child (dist_writer_path());
+		LOG_DISK("Starting writer process %1", disk_writer_path().string());
+		_writer = new boost::process::child (disk_writer_path());
 #endif
 	}
 
 	~DOMFrame ()
 	{
-		_nanomsg.blocking_send(DIST_WRITER_QUIT "\n");
+		_nanomsg.blocking_send(DISK_WRITER_QUIT "\n");
 	}
 
 private:

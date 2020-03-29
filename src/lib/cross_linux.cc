@@ -141,9 +141,9 @@ openssl_path ()
 }
 
 boost::filesystem::path
-dist_writer_path ()
+disk_writer_path ()
 {
-	return boost::dll::program_location().parent_path() / "dcpomatic2_dist_writer";
+	return boost::dll::program_location().parent_path() / "dcpomatic2_disk_writer";
 }
 
 /* Apparently there is no way to create an ofstream using a UTF-8
@@ -267,7 +267,7 @@ get_drives ()
 		boost::algorithm::split (bits, line, boost::is_any_of(" "));
 		if (bits.size() > 0 && boost::algorithm::starts_with(bits[0], "/dev/")) {
 			mounted_devices.push_back(bits[0]);
-			LOG_DIST("Mounted device %1", bits[0]);
+			LOG_DISK("Mounted device %1", bits[0]);
 		}
 	}
 
@@ -302,7 +302,7 @@ get_drives ()
 				}
 			}
 			drives.push_back(Drive("/dev/" + i->path().filename().string(), size, mounted, vendor, model));
-			LOG_DIST("Block device %1 size %2 %3 vendor %4 model %5", name, size, mounted ? "mounted" : "not mounted", vendor.get_value_or("[none]"), model.get_value_or("[none]"));
+			LOG_DISK("Block device %1 size %2 %3 vendor %4 model %5", name, size, mounted ? "mounted" : "not mounted", vendor.get_value_or("[none]"), model.get_value_or("[none]"));
 		}
 	}
 

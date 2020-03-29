@@ -36,7 +36,7 @@ public:
 	static const int TYPE_TIMING;
 	static const int TYPE_DEBUG_EMAIL;
 	static const int TYPE_DEBUG_PLAYER;
-	static const int TYPE_DIST;
+	static const int TYPE_DISK;
 
 	explicit LogEntry (int type);
 	virtual ~LogEntry () {}

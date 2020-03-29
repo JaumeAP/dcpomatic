@@ -18,7 +18,7 @@
 
 */
 
-/* dcpomatic_dist_writer receives
+/* dcpomatic_disk_writer receives
 
 DCP pathname\n
 Internal name of drive to write to\n
@@ -31,7 +31,7 @@ Internal name of drive to write to\n
 D\n
 
 */
-#define DIST_WRITER_OK "D"
+#define DISK_WRITER_OK "D"
 
 /** There was an error.  Following this will come
 
@@ -45,14 +45,14 @@ Disc full\n
 42\n
 
 */
-#define DIST_WRITER_ERROR "E"
+#define DISK_WRITER_ERROR "E"
 
 /** The disk writer is formatting the drive.  It is not possible
  *  to give progress reports on this so the writer just tells us
- *  it's happening.  This is finished when DIST_WRITER_PROGRESS
+ *  it's happening.  This is finished when DISK_WRITER_PROGRESS
  *  messages start arriving
  */
-#define DIST_WRITER_FORMATTING "F"
+#define DISK_WRITER_FORMATTING "F"
 
 /** Some progress has been made in the main "copy" part of the task.
  *  Following this will come
@@ -65,13 +65,13 @@ P\n
 0.3\n
 
 */
-#define DIST_WRITER_PROGRESS "P"
+#define DISK_WRITER_PROGRESS "P"
 
-/** dcpomatic_dist_writer may also receive
+/** dcpomatic_disk_writer may also receive
 
 Q\n
 
 as a request to quit.
 */
-#define DIST_WRITER_QUIT "Q"
+#define DISK_WRITER_QUIT "Q"
 

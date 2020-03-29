@@ -12,7 +12,7 @@ if [ `basename $pwd` != "graphics" ]; then
     exit 1
 fi
 
-svg_apps="dcpomatic2_kdm dcpomatic2_server dcpomatic2_batch dcpomatic2_player dcpomatic2_playlist dcpomatic2_dist"
+svg_apps="dcpomatic2_kdm dcpomatic2_server dcpomatic2_batch dcpomatic2_player dcpomatic2_playlist dcpomatic2_disk"
 
 if [ `uname -s` == "Darwin" ]; then
     # Convert OS X icons using OS X-only iconutil
