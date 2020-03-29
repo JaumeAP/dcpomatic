@@ -31,6 +31,7 @@ extern "C" {
 }
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
+#include <boost/dll/runtime_symbol_info.hpp>
 #include <sys/sysctl.h>
 #include <mach-o/dyld.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
@@ -89,17 +90,7 @@ cpu_info ()
 boost::filesystem::path
 app_contents ()
 {
-	uint32_t size = 1024;
-	char buffer[size];
-	if (_NSGetExecutablePath (buffer, &size)) {
-		throw runtime_error ("_NSGetExecutablePath failed");
-	}
-
-	boost::filesystem::path path (buffer);
-	path = boost::filesystem::canonical (path);
-	path = path.parent_path ();
-	path = path.parent_path ();
-	return path;
+	return boost::dll::program_location().parent_path().parent_path();
 }
 
 boost::filesystem::path

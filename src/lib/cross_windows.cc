@@ -32,6 +32,7 @@ extern "C" {
 }
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
+#include <boost/dll/runtime_symbol_info.hpp>
 #include <windows.h>
 #include <winternl.h>
 #include <winioctl.h>
@@ -182,10 +183,7 @@ mount_info ()
 static boost::filesystem::path
 executable_path ()
 {
-	wchar_t dir[512];
-	GetModuleFileName (GetModuleHandle(0), dir, sizeof(dir));
-	PathRemoveFileSpec (dir);
-	return dir;
+	return boost::dll::program_location().parent_path();
 }
 
 boost::filesystem::path

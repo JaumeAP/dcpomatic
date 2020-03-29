@@ -31,6 +31,7 @@ extern "C" {
 }
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
+#include <boost/dll/runtime_symbol_info.hpp>
 #include <unistd.h>
 #include <mntent.h>
 #include <sys/types.h>
@@ -142,7 +143,7 @@ openssl_path ()
 boost::filesystem::path
 dist_writer_path ()
 {
-	return "dcpomatic2_dist_writer";
+	return boost::dll::program_location().parent_path() / "dcpomatic2_dist_writer";
 }
 
 /* Apparently there is no way to create an ofstream using a UTF-8
