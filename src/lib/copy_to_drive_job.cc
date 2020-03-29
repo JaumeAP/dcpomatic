@@ -68,6 +68,7 @@ CopyToDriveJob::run ()
 	}
 
 	while (true) {
+		bool formatting = false;
 		string s = _nanomsg.blocking_get ();
 		if (s == DIST_WRITER_OK) {
 			set_state (FINISHED_OK);
@@ -79,8 +80,12 @@ CopyToDriveJob::run ()
 		} else if (s == DIST_WRITER_FORMATTING) {
 			sub ("Formatting drive");
 			set_progress_unknown ();
+			formatting = true;
 		} else if (s == DIST_WRITER_PROGRESS) {
-			sub ("Copying DCP");
+			if (formatting) {
+				sub ("Copying DCP");
+				formatting = false;
+			}
 			set_progress (raw_convert<float>(_nanomsg.blocking_get()));
 		}
 	}
