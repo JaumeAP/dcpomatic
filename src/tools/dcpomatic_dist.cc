@@ -121,6 +121,7 @@ public:
 		/* We must use ::shell here, it seems, to avoid error code 740 (related to privilege escalation) */
 		_writer = new boost::process::child (dist_writer_path(), boost::process::shell, boost::process::windows::hide);
 #else
+		LOG_DIST("Starting writer process %1", dist_writer_path().string());
 		_writer = new boost::process::child (dist_writer_path());
 #endif
 	}
