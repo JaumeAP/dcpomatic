@@ -414,6 +414,8 @@ def configure_options(target, options):
     if target.debug and target.platform == 'windows':
         opt += ' --static-dcpomatic'
 
+    print("options=%s" % options)
+    print("can_build_disk=%s" % can_build_disk(target))
     if can_build_disk(target) and options['disk']:
        opt += ' --enable-disk'
 
