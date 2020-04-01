@@ -90,6 +90,7 @@ cpu_info ()
 boost::filesystem::path
 app_contents ()
 {
+	std::cout << "program_location=" << boost::dll::program_location() << "\n";
 	return boost::dll::program_location().parent_path().parent_path();
 }
 
