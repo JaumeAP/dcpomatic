@@ -127,7 +127,6 @@ sources = """
           log_entry.cc
           mid_side_decoder.cc
           monitor_checker.cc
-          nanomsg.cc
           overlaps.cc
           player.cc
           player_text.cc
@@ -205,7 +204,7 @@ def build(bld):
         obj.source += ' swaroop_spl.cc swaroop_spl_entry.cc'
 
     if bld.env.ENABLE_DISK:
-        obj.source += ' copy_to_drive_job.cc'
+        obj.source += ' copy_to_drive_job.cc nanomsg.cc'
         obj.uselib += ' LWEXT4 NANOMSG'
         if bld.env.TARGET_LINUX:
             obj.uselib += ' POLKIT'
