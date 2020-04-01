@@ -452,6 +452,8 @@ make_dmg "$appdir" "DCP-o-matic Playlist Editor" com.dcpomatic.playlist
 setup "DCP-o-matic 2 Disk Writer.app"
 copy $ROOT src/dcpomatic/build/src/tools/dcpomatic2_disk "$approot/MacOS"
 copy $ROOT src/dcpomatic/build/src/tools/dcpomatic2_disk_writer "$approot/MacOS"
+# XXX: this shouldn't really be necessary
+copy $ROOT src/openssl/apps/openssl "$approot/MacOS"
 cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2_disk.Info.plist "$approot/Info.plist"
 rl=("$approot/MacOS/dcpomatic2_disk" "$approot/Frameworks/"*.dylib)
 relink "${rl[@]}"
