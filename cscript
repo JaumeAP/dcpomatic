@@ -347,7 +347,7 @@ def make_spec(filename, version, target, options, requires=None):
     print('%posttrans', file=f)
     print('/usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :', file=f)
 
-def dependencies(target):
+def dependencies(target, options):
 
     if target.platform == 'linux':
         ffmpeg_options = { 'shared': False }
