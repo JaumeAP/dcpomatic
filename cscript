@@ -362,10 +362,8 @@ def dependencies(target, options):
         # Use distro-provided FFmpeg on Arch
         deps = []
 
-    cpp_lib_options = {}
-    if target.platform == 'osx' and target.bits == 64:
-        # We can use C++11 mode, so let's do it.
-        options['force-cpp11'] = True
+    # Let's use C++11 mode if we can
+    cpp_lib_options = {'force-cpp11': True} if target.platform == 'osx' and target.bits == 64 else {}
 
     deps.append(('libdcp', None, cpp_lib_options))
     deps.append(('libsub', None, cpp_lib_options))
