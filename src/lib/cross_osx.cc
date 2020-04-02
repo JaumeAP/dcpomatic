@@ -243,7 +243,7 @@ disk_appeared(DADiskRef disk, void* context)
 {
 	const char* name = DADiskGetBSDName (disk);
 	if (name) {
-		list<Drive>* drives = reinterpret_cast<list<Drive>*> (context);
+		vector<Drive>* drives = reinterpret_cast<vector<Drive>*> (context);
 		drives->push_back (Drive(name, 0, false, optional<string>(), optional<string>()));
 	}
 }
