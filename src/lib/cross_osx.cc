@@ -36,6 +36,7 @@ extern "C" {
 #include <sys/sysctl.h>
 #include <mach-o/dyld.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
+#include <IOKit/storage/IOMedia.h>
 #include <DiskArbitration/DADisk.h>
 #include <DiskArbitration/DiskArbitration.h>
 #include <sys/types.h>
@@ -43,6 +44,7 @@ extern "C" {
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fstream>
+#include <cstring>
 
 #include "i18n.h"
 
@@ -91,7 +93,6 @@ cpu_info ()
 boost::filesystem::path
 app_contents ()
 {
-	std::cout << "program_location=" << boost::dll::program_location() << "\n";
 	return boost::dll::program_location().parent_path().parent_path();
 }
 
@@ -266,7 +267,8 @@ disk_appeared (DADiskRef disk, void* context)
 
 	str = CFDictionaryGetValue (description, kDADiskDescriptionMediaPathKey);
 	if (str) {
-		if (strncmp(str, "IoDeviceTree:", 13) != 0) {
+		char const* path = CFStringGetCStringPtr((CFStringRef) str, kCFStringEncodingUTF8);
+		if (strncmp(path, "IODeviceTree:", 13) != 0) {
 			return;
 		}
 	}
@@ -275,7 +277,7 @@ disk_appeared (DADiskRef disk, void* context)
         CFTypeRef whole_media_ref = IORegistryEntryCreateCFProperty (service, CFSTR(kIOMediaWholeKey), kCFAllocatorDefault, 0);
 	bool whole_media = false;
         if (whole_media_ref) {
-		whole_media = CFBooleanGetValue((CFBooleanRef) whole_media);
+		whole_media = CFBooleanGetValue((CFBooleanRef) whole_media_ref);
                 CFRelease (whole_media_ref);
         }
 	IOObjectRelease (service);
@@ -294,7 +296,6 @@ disk_appeared (DADiskRef disk, void* context)
 vector<Drive>
 get_drives ()
 {
-std::cout << "get_drives!\n";
 	vector<Drive> drives;
 
 	DASessionRef session = DASessionCreate(kCFAllocatorDefault);
