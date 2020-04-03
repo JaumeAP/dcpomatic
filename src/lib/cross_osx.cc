@@ -256,15 +256,17 @@ disk_appeared (DADiskRef disk, void* context)
 	optional<string> vendor;
 	void const* str = CFDictionaryGetValue (description, kDADiskDescriptionDeviceVendorKey);
 	if (str) {
-		vendor = CFStringGetCStringPtr ((CFStringRef) str, kCFStringEncodingUTF8);
-		vendor = boost::algorithm::trim (*vendor);
+		string s = CFStringGetCStringPtr ((CFStringRef) str, kCFStringEncodingUTF8);
+		boost::algorithm::trim (s);
+		vendor = s;
 	}
 
 	optional<string> model;
 	str = CFDictionaryGetValue (description, kDADiskDescriptionDeviceModelKey);
 	if (str) {
-		model = CFStringGetCStringPtr ((CFStringRef) str, kCFStringEncodingUTF8);
-		model = boost::algorithm::trim (*model);
+		string s = CFStringGetCStringPtr ((CFStringRef) str, kCFStringEncodingUTF8);
+		boost::algorithm::trim (s);
+		model = s;
 	}
 
 	str = CFDictionaryGetValue (description, kDADiskDescriptionMediaPathKey);
