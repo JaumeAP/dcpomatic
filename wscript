@@ -695,6 +695,7 @@ def create_version_cc(version, cxx_flags):
 def post(ctx):
     if ctx.cmd == 'install' and ctx.env.TARGET_LINUX:
         ctx.exec_command('/sbin/ldconfig')
+    if ctx.cmd == 'install' and (ctx.env.TARGET_LINUX or ctx.env.TARGET_OSX):
         # setuid root executables
         for e in ['dcpomatic2_uuid', 'dcpomatic2_disk_writer']:
             # I can't find anything which tells me where things have been installed to,
