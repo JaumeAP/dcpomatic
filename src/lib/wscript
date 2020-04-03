@@ -53,6 +53,7 @@ sources = """
           content.cc
           content_factory.cc
           create_cli.cc
+          cross_common.cc
           crypto.cc
           curl_uploader.cc
           datasat_ap2x.cc
