@@ -32,6 +32,7 @@ extern "C" {
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
+#include <boost/regex.hpp>
 #include <sys/sysctl.h>
 #include <mach-o/dyld.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
@@ -131,6 +132,7 @@ openssl_path ()
 boost::filesystem::path
 disk_writer_path ()
 {
+	return "/Users/carl/dcpomatic/src/dcpomatic/build/src/tools/dcpomatic2_disk_writer";
 	boost::filesystem::path path = app_contents();
 	path /= "MacOS";
 	path /= "dcpomatic2_disk_writer";
@@ -239,18 +241,60 @@ running_32_on_64 ()
 }
 
 static void
-disk_appeared(DADiskRef disk, void* context)
+disk_appeared (DADiskRef disk, void* context)
 {
 	const char* name = DADiskGetBSDName (disk);
-	if (name) {
-		vector<Drive>* drives = reinterpret_cast<vector<Drive>*> (context);
-		drives->push_back (Drive(name, 0, false, optional<string>(), optional<string>()));
+	if (!name) {
+		return;
 	}
+
+	vector<Drive>* drives = reinterpret_cast<vector<Drive>*> (context);
+
+	CFDictionaryRef description = DADiskCopyDescription (disk);
+
+	optional<string> vendor;
+	void const* str = CFDictionaryGetValue (description, kDADiskDescriptionDeviceVendorKey);
+	if (str) {
+		vendor = CFStringGetCStringPtr ((CFStringRef) str, kCFStringEncodingUTF8);
+	}
+
+	optional<string> model;
+	str = CFDictionaryGetValue (description, kDADiskDescriptionDeviceModelKey);
+	if (str) {
+		model = CFStringGetCStringPtr ((CFStringRef) str, kCFStringEncodingUTF8);
+	}
+
+	str = CFDictionaryGetValue (description, kDADiskDescriptionMediaPathKey);
+	if (str) {
+		if (strncmp(str, "IoDeviceTree:", 13) != 0) {
+			return;
+		}
+	}
+
+	io_service_t service = DADiskCopyIOMedia (disk);
+        CFTypeRef whole_media_ref = IORegistryEntryCreateCFProperty (service, CFSTR(kIOMediaWholeKey), kCFAllocatorDefault, 0);
+	bool whole_media = false;
+        if (whole_media_ref) {
+		whole_media = CFBooleanGetValue((CFBooleanRef) whole_media);
+                CFRelease (whole_media_ref);
+        }
+	IOObjectRelease (service);
+	if (!whole_media) {
+		return;
+	}
+
+	unsigned long size;
+	CFNumberGetValue ((CFNumberRef) CFDictionaryGetValue (description, kDADiskDescriptionMediaSizeKey), kCFNumberLongType, &size);
+
+	CFRelease (description);
+
+	drives->push_back (Drive(name, size, false, vendor, model));
 }
 
 vector<Drive>
 get_drives ()
 {
+std::cout << "get_drives!\n";
 	vector<Drive> drives;
 
 	DASessionRef session = DASessionCreate(kCFAllocatorDefault);
