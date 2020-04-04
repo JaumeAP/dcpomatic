@@ -290,7 +290,7 @@ try
 	close(fd);
 #endif
 
-#ifdef DCPOMATIC_POSIX
+#ifdef DCPOMATIC_LINUX
 	string partition = device;
 	/* XXX: don't know if this logic is sensible */
 	if (partition.size() > 0 && isdigit(partition[partition.length() - 1])) {
@@ -298,6 +298,12 @@ try
 	} else {
 		partition += "1";
 	}
+	file_dev_name_set (partition.c_str());
+	bd = file_dev_get ();
+#endif
+
+#ifdef DCPOMATIC_OSX
+	string partition = device + "s1";
 	file_dev_name_set (partition.c_str());
 	bd = file_dev_get ();
 #endif

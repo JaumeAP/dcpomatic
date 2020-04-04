@@ -39,6 +39,7 @@ extern "C" {
 #include <IOKit/storage/IOMedia.h>
 #include <DiskArbitration/DADisk.h>
 #include <DiskArbitration/DiskArbitration.h>
+#include <CoreFoundation/CFURL.h>
 #include <sys/types.h>
 #include <ifaddrs.h>
 #include <netinet/in.h>
@@ -133,7 +134,6 @@ openssl_path ()
 boost::filesystem::path
 disk_writer_path ()
 {
-	return "/Users/carl/dcpomatic/src/dcpomatic/build/src/tools/dcpomatic2_disk_writer";
 	boost::filesystem::path path = app_contents();
 	path /= "MacOS";
 	path /= "dcpomatic2_disk_writer";
@@ -241,42 +241,72 @@ running_32_on_64 ()
 	return false;
 }
 
-static void
-disk_appeared (DADiskRef disk, void* context)
+static optional<string>
+get_vendor (CFDictionaryRef& description)
 {
-	const char* name = DADiskGetBSDName (disk);
-	if (!name) {
-		return;
-	}
-
-	vector<Drive>* drives = reinterpret_cast<vector<Drive>*> (context);
-
-	CFDictionaryRef description = DADiskCopyDescription (disk);
-
-	optional<string> vendor;
 	void const* str = CFDictionaryGetValue (description, kDADiskDescriptionDeviceVendorKey);
-	if (str) {
-		string s = CFStringGetCStringPtr ((CFStringRef) str, kCFStringEncodingUTF8);
-		boost::algorithm::trim (s);
-		vendor = s;
+	if (!str) {
+		return optional<string>();
 	}
 
-	optional<string> model;
-	str = CFDictionaryGetValue (description, kDADiskDescriptionDeviceModelKey);
-	if (str) {
-		string s = CFStringGetCStringPtr ((CFStringRef) str, kCFStringEncodingUTF8);
-		boost::algorithm::trim (s);
-		model = s;
+	string s = CFStringGetCStringPtr ((CFStringRef) str, kCFStringEncodingUTF8);
+	boost::algorithm::trim (s);
+	return s;
+}
+
+static optional<string>
+get_model (CFDictionaryRef& description)
+{
+	void const* str = CFDictionaryGetValue (description, kDADiskDescriptionDeviceModelKey);
+	if (!str) {
+		return optional<string>();
 	}
 
-	str = CFDictionaryGetValue (description, kDADiskDescriptionMediaPathKey);
-	if (str) {
-		char const* path = CFStringGetCStringPtr((CFStringRef) str, kCFStringEncodingUTF8);
-		if (strncmp(path, "IODeviceTree:", 13) != 0) {
-			return;
+	string s = CFStringGetCStringPtr ((CFStringRef) str, kCFStringEncodingUTF8);
+	boost::algorithm::trim (s);
+	return s;
+}
+
+struct MediaPath
+{
+	bool real;       ///< true for a "real" disk, false for a synthesized APFS one
+	std::string prt; ///< "PRT" entry from the media path
+};
+
+static optional<MediaPath>
+analyse_media_path (CFDictionaryRef& description)
+{
+	using namespace boost::algorithm;
+
+	void const* str = CFDictionaryGetValue (description, kDADiskDescriptionMediaPathKey);
+	if (!str) {
+		return optional<MediaPath>();
+	}
+
+	string path(CFStringGetCStringPtr((CFStringRef) str, kCFStringEncodingUTF8));
+	MediaPath mp;
+	if (starts_with(path, "IODeviceTree:")) {
+		mp.real = true;
+	} else if (starts_with(path, "IOService:")) {
+		mp.real = false;
+	} else {
+		return optional<MediaPath>();
+	}
+
+	vector<string> bits;
+	split(bits, path, boost::is_any_of("/"));
+	BOOST_FOREACH (string i, bits) {
+		if (starts_with(i, "PRT")) {
+			mp.prt = i;
 		}
 	}
 
+	return mp;
+}
+
+static bool
+is_whole_drive (DADiskRef& disk)
+{
 	io_service_t service = DADiskCopyIOMedia (disk);
         CFTypeRef whole_media_ref = IORegistryEntryCreateCFProperty (service, CFSTR(kIOMediaWholeKey), kCFAllocatorDefault, 0);
 	bool whole_media = false;
@@ -285,36 +315,123 @@ disk_appeared (DADiskRef disk, void* context)
                 CFRelease (whole_media_ref);
         }
 	IOObjectRelease (service);
-	if (!whole_media) {
+	return whole_media;
+}
+
+static bool
+is_mounted (CFDictionaryRef& description)
+{
+	CFURLRef volume_path_key = (CFURLRef) CFDictionaryGetValue (description, kDADiskDescriptionVolumePathKey);
+	char mount_path_buffer[1024];
+	return CFURLGetFileSystemRepresentation(volume_path_key, false, (UInt8 *) mount_path_buffer, sizeof(mount_path_buffer));
+}
+
+struct Disk
+{
+	string device;
+	optional<string> vendor;
+	optional<string> model;
+	bool real;
+	string prt;
+	bool whole;
+	bool mounted;
+	unsigned long size;
+};
+
+static void
+disk_appeared (DADiskRef disk, void* context)
+{
+	const char* bsd_name = DADiskGetBSDName (disk);
+	if (!bsd_name) {
+		return;
+	}
+	LOG_DISK("%1 appeared", bsd_name);
+
+	Disk this_disk;
+
+	this_disk.device = string("/dev/") + bsd_name;
+
+	CFDictionaryRef description = DADiskCopyDescription (disk);
+
+	this_disk.vendor = get_vendor (description);
+	this_disk.model = get_model (description);
+	LOG_DISK("Vendor/model: %1 %2", this_disk.vendor.get_value_or("[none]"), this_disk.model.get_value_or("[none]"));
+
+	optional<MediaPath> media_path = analyse_media_path (description);
+	if (!media_path) {
+		LOG_DISK("Finding media path for %1 failed", bsd_name);
 		return;
 	}
 
-	unsigned long size;
-	CFNumberGetValue ((CFNumberRef) CFDictionaryGetValue (description, kDADiskDescriptionMediaSizeKey), kCFNumberLongType, &size);
+	this_disk.real = media_path->real;
+	this_disk.prt = media_path->prt;
+	this_disk.whole = is_whole_drive (disk);
+	this_disk.mounted = is_mounted (description);
+	LOG_DISK("%1 prt %2 whole %3 mounted %4", this_disk.real ? "Real" : "Synth", this_disk.prt, this_disk.whole ? "whole" : "part", this_disk.mounted ? "mounted" : "unmounted");
 
+	CFNumberGetValue ((CFNumberRef) CFDictionaryGetValue (description, kDADiskDescriptionMediaSizeKey), kCFNumberLongType, &this_disk.size);
 	CFRelease (description);
 
-	drives->push_back (Drive(name, size, false, vendor, model));
+	reinterpret_cast<vector<Disk>*>(context)->push_back(this_disk);
 }
 
 vector<Drive>
 get_drives ()
-{
-	vector<Drive> drives;
+{	
+	using namespace boost::algorithm;
+	vector<Disk> disks;
 
 	DASessionRef session = DASessionCreate(kCFAllocatorDefault);
 	if (!session) {
-		return drives;
+		return vector<Drive>();
 	}
 
-	DARegisterDiskAppearedCallback (session, NULL, disk_appeared, &drives);
+	DARegisterDiskAppearedCallback (session, NULL, disk_appeared, &disks);
 	CFRunLoopRef run_loop = CFRunLoopGetCurrent ();
 	DASessionScheduleWithRunLoop (session, run_loop, kCFRunLoopDefaultMode);
 	CFRunLoopStop (run_loop);
 	CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.05, 0);
-	DAUnregisterCallback(session, (void *) disk_appeared, &drives);
+	DAUnregisterCallback(session, (void *) disk_appeared, &disks);
 	CFRelease(session);
 
+	/* Mark disks containing mounted partitions as themselves mounted */
+	BOOST_FOREACH (Disk& i, disks) {
+		if (!i.whole) {
+			continue;
+		}
+		BOOST_FOREACH (Disk& j, disks) {
+			if (j.mounted && starts_with(j.device, i.device)) {
+				LOG_DISK("Marking %1 as mounted because %2 is", i.device, j.device);
+				i.mounted = true;
+			}
+		}
+	}
+
+	/* Make a list of the PRT codes of mounted, synthesized disks */
+	vector<string> mounted_synths;
+	BOOST_FOREACH (Disk& i, disks) {
+		if (!i.real && i.mounted) {
+			LOG_DISK("Found a mounted synth %1 with %2", i.device, i.prt);
+			mounted_synths.push_back (i.prt);
+		}
+	}
+
+	/* Mark containers of those mounted synths as themselves mounted */
+	BOOST_FOREACH (Disk& i, disks) {
+		if (i.real && find(mounted_synths.begin(), mounted_synths.end(), i.prt) != mounted_synths.end()) {
+			LOG_DISK("Marking %1 (%2) as mounted because it contains a mounted synth", i.device, i.prt);
+			i.mounted = true;
+		}
+	}
+
+	vector<Drive> drives;
+	BOOST_FOREACH (Disk& i, disks) {
+		if (i.whole) {
+			/* A whole disk that is not a container for a mounted synth */
+			LOG_DISK("Adding drive: %1 %2 %3 %4 %5", i.device, i.size, i.mounted ? "mounted" : "unmounted", i.vendor.get_value_or("[none]"), i.model.get_value_or("[none]"));
+			drives.push_back(Drive(i.device, i.size, i.mounted, i.vendor, i.model));
+		}
+	}
 	return drives;
 }
 
