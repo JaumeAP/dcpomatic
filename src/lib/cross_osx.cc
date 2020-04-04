@@ -326,6 +326,30 @@ is_mounted (CFDictionaryRef& description)
 	return CFURLGetFileSystemRepresentation(volume_path_key, false, (UInt8 *) mount_path_buffer, sizeof(mount_path_buffer));
 }
 
+/* Here follows some rather intricate and (probably) fragile code to find the list of available
+ * "real" drives on macOS that we might want to write a DCP to.
+ *
+ * We use the Disk Arbitration framework to give us a series of devices (/dev/disk0, /dev/disk1,
+ * /dev/disk1s1 and so on) and we use the API to gather useful information about these devices into
+ * a vector of Disk structs.
+ *
+ * Then we read the Disks that we found and try to derive a list of drives that we should offer to the
+ * user, with details of whether those drives are currently mounted or not.
+ *
+ * At the basic level we find the "disk"-level devices, looking at whether any of their partitions are mounted.
+ *
+ * This is complicated enormously by recent-ish macOS versions' habit of making `synthesized' volumes which
+ * reflect data in `real' partitions.  So, for example, we might have a real (physical) drive /dev/disk2 with
+ * a partition /dev/disk2s2 whose content is made into a synthesized /dev/disk3, itself containing some partitions
+ * which are mounted.  /dev/disk2s2 is not considered to be mounted, in this case.  So we need to know that
+ * disk2s2 is related to disk3 so we can consider disk2s2 as mounted if any parts of disk3 are.  In order to do
+ * this I am picking out what looks like a suitable identifier prefixed with PRT from the MediaContentKey.
+ * If disk2s2 and disk3 have the same PRT code I am assuming they are linked.
+ *
+ * Lots of this is guesswork and may be broken.  In my defence the documentation that I have been able to
+ * unearth is, to put it impolitely, crap.
+ */
+
 struct Disk
 {
 	string device;
@@ -377,7 +401,7 @@ disk_appeared (DADiskRef disk, void* context)
 
 vector<Drive>
 get_drives ()
-{	
+{
 	using namespace boost::algorithm;
 	vector<Disk> disks;
 
