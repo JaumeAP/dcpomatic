@@ -272,6 +272,14 @@ function make_dmg {
 	exit 1
     fi
 
+    if [ "$pkg" != "" ]; then
+	codesign --deep --force --verify --verbose --options runtime --sign "Developer ID Application: Carl Hetherington (R82DXSR997)" "$pkg"
+	if [ "$?" != "0" ]; then
+	    echo "Failed to sign .pkg"
+	    exit 1
+	fi
+    fi
+
     mkdir -p $vol_name
     cp -a "$appdir" $vol_name
     if [ "$pkg" != "" ]; then
@@ -530,4 +538,4 @@ chmod gou+x $pkgbase/scripts/postinstall
 
 pkgbuild --root $pkgroot --identifier com.dcpomatic.disk.writer --scripts $pkgbase/scripts "DCP-o-matic Disk Writer.pkg"
 
-make_dmg "$appdir" "DCP-o-matic Disk Writer.pkg" "DCP-o-matic Disk Writer" com.dcpomatic.disk
+mAke_dmg "$appdir" "DCP-o-matic Disk Writer.pkg" "DCP-o-matic Disk Writer" com.dcpomatic.disk
