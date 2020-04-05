@@ -119,11 +119,16 @@ public:
 
 #ifdef DCPOMATIC_WINDOWS
 		/* We must use ::shell here, it seems, to avoid error code 740 (related to privilege escalation) */
+		LOG_DISK("Starting writer process %1", disk_writer_path().string());
 		_writer = new boost::process::child (disk_writer_path(), boost::process::shell, boost::process::windows::hide);
-#else
+#endif
+
+#ifdef DCPOMATIC_LINUX
 		LOG_DISK("Starting writer process %1", disk_writer_path().string());
 		_writer = new boost::process::child (disk_writer_path());
 #endif
+
+		/* _writer is always running on macOS at the moment */
 	}
 
 	~DOMFrame ()
