@@ -230,7 +230,7 @@ function copy_resources {
 }
 
 # param $1 list of things that link to other things
-function relink {
+function relink_relative {
     to_relink=`echo $to_relink | sed -e "s/\+//g"`
     local linkers=("$@")
 
@@ -246,6 +246,27 @@ function relink {
 	    else
 		changes="$changes -change $dep @executable_path/../Frameworks/$base"
 	    fi
+	done
+	if test "x$changes" != "x"; then
+	    install_name_tool $changes -id `basename "$obj"` "$obj"
+	fi
+    done
+}
+
+# param $1 directory containg things
+#       $2 list of things that link to other things
+function relink_absolute {
+    to_relink=`echo $to_relink | sed -e "s/\+//g"`
+    target=$1
+    shift
+    local linkers=("$@")
+
+    for obj in "${linkers[@]}"; do
+	deps=`otool -L "$obj" | awk '{print $1}' | egrep "($to_relink)" | egrep "($ENV|$ROOT|boost|libicu)"`
+	changes=""
+	for dep in $deps; do
+	    base=`basename $dep`
+	    changes="$changes -change $dep $target/$base"
 	done
 	if test "x$changes" != "x"; then
 	    install_name_tool $changes -id `basename "$obj"` "$obj"
@@ -434,7 +455,7 @@ esac
 ##copy $ROOT src/openssl/apps/openssl "$approot/MacOS"
 ##cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2.Info.plist "$approot/Info.plist"
 ##rl=("$approot/MacOS/dcpomatic2" "$approot/MacOS/dcpomatic2_cli" "$approot/MacOS/dcpomatic2_create" "$approot/MacOS/ffprobe" "$approot/Frameworks/"*.dylib)
-##relink "${rl[@]}"
+##relink_relative "${rl[@]}"
 ##make_dmg "$appdir" "" "DCP-o-matic" com.dcpomatic
 
 # DCP-o-matic KDM Creator
@@ -444,7 +465,7 @@ esac
 ##copy $ROOT src/openssl/apps/openssl "$approot/MacOS"
 ##cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2_kdm.Info.plist "$approot/Info.plist"
 ##rl=("$approot/MacOS/dcpomatic2_kdm" "$approot/MacOS/dcpomatic2_kdm_cli" "$approot/Frameworks/"*.dylib)
-##relink "${rl[@]}"
+##relink_relative "${rl[@]}"
 ##make_dmg "$appdir" "" "DCP-o-matic KDM Creator" com.dcpomatic.kdm
 
 # DCP-o-matic Encode Server
@@ -454,7 +475,7 @@ esac
 ##copy $ROOT src/openssl/apps/openssl "$approot/MacOS"
 ##cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2_server.Info.plist "$approot/Info.plist"
 ##rl=("$approot/MacOS/dcpomatic2_server" "$approot/MacOS/dcpomatic2_server_cli" "$approot/Frameworks/"*.dylib)
-##relink "${rl[@]}"
+##relink_relative "${rl[@]}"
 ##make_dmg "$appdir" "" "DCP-o-matic Encode Server" com.dcpomatic.server
 
 # DCP-o-matic Batch Converter
@@ -463,7 +484,7 @@ esac
 ##copy $ROOT src/openssl/apps/openssl "$approot/MacOS"
 ##cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2_batch.Info.plist "$approot/Info.plist"
 ##rl=("$approot/MacOS/dcpomatic2_batch" "$approot/Frameworks/"*.dylib)
-##relink "${rl[@]}"
+##relink_relative "${rl[@]}"
 ##make_dmg "$appdir" "" "DCP-o-matic Batch Converter" com.dcpomatic.batch
 
 # DCP-o-matic Player
@@ -472,7 +493,7 @@ esac
 ##copy $ROOT src/openssl/apps/openssl "$approot/MacOS"
 ##cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2_player.Info.plist "$approot/Info.plist"
 ##rl=("$approot/MacOS/dcpomatic2_player" "$approot/Frameworks/"*.dylib)
-##relink "${rl[@]}"
+##relink_relative "${rl[@]}"
 ##make_dmg "$appdir" "" "DCP-o-matic Player" com.dcpomatic.player
 
 # DCP-o-matic Playlist Editor
@@ -481,7 +502,7 @@ esac
 ##copy $ROOT src/openssl/apps/openssl "$approot/MacOS"
 ##cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2_playlist.Info.plist "$approot/Info.plist"
 ##rl=("$approot/MacOS/dcpomatic2_playlist" "$approot/Frameworks/"*.dylib)
-##relink "${rl[@]}"
+##relink_relative "${rl[@]}"
 ##make_dmg "$appdir" "" "DCP-o-matic Playlist Editor" com.dcpomatic.playlist
 
 # DCP-o-matic Disk Writer .app
@@ -491,7 +512,7 @@ copy $ROOT src/dcpomatic/build/src/tools/dcpomatic2_disk "$approot/MacOS"
 copy $ROOT src/openssl/apps/openssl "$approot/MacOS"
 cp $prefix/src/dcpomatic/build/platform/osx/dcpomatic2_disk.Info.plist "$approot/Info.plist"
 rl=("$approot/MacOS/dcpomatic2_disk" "$approot/Frameworks/"*.dylib)
-relink "${rl[@]}"
+relink_relative "${rl[@]}"
 
 # DCP-o-matic Disk Writer daemon .pkg
 pkgbase=tmp-disk-writer
@@ -549,7 +570,7 @@ copy_lib_env libicutu "$target"
 copy_lib_env libicuuc "$target"
 
 rl=("$target/dcpomatic2_disk_writer" "$target/"*.dylib)
-relink "${rl[@]}"
+relink_absolute "${rl[@]}"
 
 mkdir $pkgbase/scripts
 cat > $pkgbase/scripts/postinstall <<EOF
