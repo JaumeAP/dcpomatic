@@ -396,7 +396,7 @@ idle ()
 #ifdef DCPOMATIC_OSX
 		if (!starts_with(device, "/dev/disk")) {
 			LOG_DISK ("Will not write to %1", device);
-			return;
+			return true;
 		}
 #endif
 #ifdef DCPOMATIC_LINUX
