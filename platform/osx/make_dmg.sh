@@ -307,6 +307,22 @@ DCP-o-matic Anwendungen ab, bei weiteren Programmstarts wird sie nicht
 mehr auftreten.
 EOF
 
+    if [ "$pkg" != "" ]; then
+        cat<<EOF > "$vol_name/READ ME.txt"
+
+To run this software successfully you must install $pkg before running
+the .app
+EOF
+    fi
+
+    if [ "$pkg" != "" ]; then
+        cat<<EOF > "$vol_name/READ ME_de.DE.txt"
+
+To run this software successfully you must install $pkg before running
+the .app
+EOF
+
+    fi
     rm -f $tmp_dmg "$dmg"
     hdiutil create -srcfolder $vol_name -volname $vol_name -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW -size $DMG_SIZE $tmp_dmg
     attach=$(hdiutil attach -readwrite -noverify -noautoopen $tmp_dmg)
@@ -328,6 +344,7 @@ EOF
            set position of item "Applications" of container window to {265, 80}
            set position of item "READ ME.txt" of container window to {430, 80}
            set position of item "READ ME.de_DE.txt" of container window to {595, 80}
+           set position of item "DCP-o-matic Disk Writer.pkg" of container window to {90, 255}
            close
            open
            update without registering applications
