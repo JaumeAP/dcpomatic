@@ -253,6 +253,15 @@ function relink {
     done
 }
 
+function sign {
+    codesign --deep --force --verify --verbose --options runtime --sign "Developer ID Application: Carl Hetherington (R82DXSR997)" "$1"
+    if [ "$?" != "0" ]; then
+	echo "Failed to sign $1"
+	exit 1
+    fi
+}
+
+
 # @param #1 .app directory
 # @param #2 .pkg or ""
 # @param #3 full name e.g. DCP-o-matic Batch Converter
@@ -266,18 +275,15 @@ function make_dmg {
     dmg="$full_name $version.dmg"
     vol_name=DCP-o-matic-$version
 
-    codesign --deep --force --verify --verbose --options runtime --sign "Developer ID Application: Carl Hetherington (R82DXSR997)" "$appdir"
-    if [ "$?" != "0" ]; then
-	echo "Failed to sign .app"
-	exit 1
-    fi
+    sign "$appdir"
 
     if [ "$pkg" != "" ]; then
-	codesign --deep --force --verify --verbose --options runtime --sign "Developer ID Application: Carl Hetherington (R82DXSR997)" "$pkg"
+	productsign --sign "Developer ID Installer: Carl Hetherington (R82DXSR997)" "$pkg" "signed_temp.pkg"
 	if [ "$?" != "0" ]; then
 	    echo "Failed to sign .pkg"
 	    exit 1
 	fi
+	mv signed_temp.pkg "$pkg"
     fi
 
     mkdir -p $vol_name
@@ -536,6 +542,11 @@ exit 0
 EOF
 chmod gou+x $pkgbase/scripts/postinstall
 
+find "$target" -iname "*.dylib" -print0 | while IFS= read -r -d '' f; do
+    sign "$f"
+done
+sign "$target/dcpomatic2_disk_writer"
+
 pkgbuild --root $pkgroot --identifier com.dcpomatic.disk.writer --scripts $pkgbase/scripts "DCP-o-matic Disk Writer.pkg"
 
-mAke_dmg "$appdir" "DCP-o-matic Disk Writer.pkg" "DCP-o-matic Disk Writer" com.dcpomatic.disk
+make_dmg "$appdir" "DCP-o-matic Disk Writer.pkg" "DCP-o-matic Disk Writer" com.dcpomatic.disk
