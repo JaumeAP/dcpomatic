@@ -348,6 +348,7 @@ try
 		throw CopyError ("Failed to unmount device", r);
 	}
 
+	ext4_device_unregister("ext4_fs");
 	nanomsg->blocking_send(DISK_WRITER_OK "\n");
 } catch (CopyError& e) {
 	LOG_DISK("CopyError: %1 %2", e.message(), e.number());
