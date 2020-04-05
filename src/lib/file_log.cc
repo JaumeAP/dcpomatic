@@ -37,6 +37,12 @@ FileLog::FileLog (boost::filesystem::path file)
 	set_types (Config::instance()->log_types());
 }
 
+FileLog::FileLog (boost::filesystem::path file, int types)
+	: _file (file)
+{
+	set_types (types);
+}
+
 void
 FileLog::do_log (shared_ptr<const LogEntry> entry)
 {

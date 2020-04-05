@@ -348,6 +348,7 @@ try
 		throw CopyError ("Failed to unmount device", r);
 	}
 
+	ext4_device_unregister("ext4_fs");
 	nanomsg->blocking_send(DISK_WRITER_OK "\n");
 } catch (CopyError& e) {
 	LOG_DISK("CopyError: %1 %2", e.message(), e.number());
@@ -433,8 +434,7 @@ main ()
 	/* XXX: this is a hack, but I expect we'll need logs and I'm not sure if there's
 	 * a better place to put them.
 	 */
-	dcpomatic_log.reset(new FileLog(config_path() / "disk_writer.log"));
-	dcpomatic_log->set_types (dcpomatic_log->types() | LogEntry::TYPE_DISK);
+	dcpomatic_log.reset(new FileLog(config_path() / "disk_writer.log", LogEntry::TYPE_DISK));
 	LOG_DISK_NC("dcpomatic_disk_writer started");
 
 	try {

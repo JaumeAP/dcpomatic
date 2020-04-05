@@ -67,8 +67,8 @@ CopyToDriveJob::run ()
 		throw CopyError ("Could not communicate with writer process", 0);
 	}
 
+	bool formatting = false;
 	while (true) {
-		bool formatting = false;
 		string s = _nanomsg.blocking_get ();
 		if (s == DISK_WRITER_OK) {
 			set_state (FINISHED_OK);
