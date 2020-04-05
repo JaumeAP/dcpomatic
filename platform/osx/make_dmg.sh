@@ -274,7 +274,7 @@ function make_dmg {
 
     mkdir -p $vol_name
     cp -a "$appdir" $vol_name
-    if [ "$pkg" != ""]; then
+    if [ "$pkg" != "" ]; then
         cp -a "$pkg" $vol_name
     fi
     ln -s /Applications "$vol_name/Applications"
