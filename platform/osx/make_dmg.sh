@@ -316,7 +316,7 @@ EOF
     fi
 
     if [ "$pkg" != "" ]; then
-        cat<<EOF > "$vol_name/READ ME_de.DE.txt"
+        cat<<EOF > "$vol_name/READ ME.de_DE.txt"
 
 To run this software successfully you must install $pkg before running
 the .app
@@ -336,7 +336,7 @@ EOF
            set current view of container window to icon view
            set toolbar visible of container window to false
            set statusbar visible of container window to false
-           set the bounds of container window to {400, 200, 940, 300}
+           set the bounds of container window to {400, 200, 940, 600}
            set theViewOptions to the icon view options of container window
            set arrangement of theViewOptions to not arranged
            set icon size of theViewOptions to 64
