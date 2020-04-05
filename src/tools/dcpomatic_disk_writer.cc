@@ -67,6 +67,7 @@ extern "C" {
 #include <unistd.h>
 #include <sys/types.h>
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 #include <iostream>
 
 using std::cin;
@@ -377,6 +378,8 @@ polkit_callback (GObject *, GAsyncResult* res, gpointer)
 bool
 idle ()
 {
+	using namespace boost::algorithm;
+
 	optional<string> s = nanomsg->nonblocking_get ();
 	if (!s) {
 		return true;
@@ -387,6 +390,26 @@ idle ()
 	} else if (*s == "W") {
 		dcp_path = nanomsg->blocking_get();
 		device = nanomsg->blocking_get();
+
+		/* Do some basic sanity checks */
+#ifdef DCPOMATIC_OSX
+		if (!starts_with(device, "/dev/disk")) {
+			LOG_DISK ("Will not write to %1", device);
+			return;
+		}
+#endif
+#ifdef DCPOMATIC_LINUX
+		if (!starts_with(device, "/dev/sd") && !starts_with(device, "/dev/hd")) {
+			LOG_DISK ("Will not write to %1", device);
+			return true;
+		}
+#endif
+#ifdef DCPOMATIC_WINDOWS
+		if (!starts_with(device, "\\\\.\\PHYSICALDRIVE")) {
+			LOG_DISK ("Will not write to %1", device);
+			return true;
+		}
+#endif
 
 		LOG_DISK ("Here we go writing %1 to %2", dcp_path, device);
 
