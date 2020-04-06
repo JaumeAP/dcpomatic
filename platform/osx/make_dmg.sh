@@ -253,7 +253,7 @@ function relink_relative {
     done
 }
 
-# param $1 directory containg things
+# param $1 directory things should be relinked into
 #       $2 list of things that link to other things
 function relink_absolute {
     to_relink=`echo $to_relink | sed -e "s/\+//g"`
@@ -263,14 +263,10 @@ function relink_absolute {
 
     for obj in "${linkers[@]}"; do
 	deps=`otool -L "$obj" | awk '{print $1}' | egrep "($to_relink)" | egrep "($ENV|$ROOT|boost|libicu)"`
-	changes=""
 	for dep in $deps; do
 	    base=`basename $dep`
-	    changes="$changes -change "$dep" \"$target/$base\""
+            install_name_tool -change "$dep" "$target"/$base -id `basename "$obj"` "$obj"
 	done
-	if test "x$changes" != "x"; then
-	    install_name_tool $changes -id "`basename "$obj"`" "$obj"
-	fi
     done
 }
 
@@ -357,7 +353,9 @@ EOF
            set current view of container window to icon view
            set toolbar visible of container window to false
            set statusbar visible of container window to false
-           set the bounds of container window to {400, 200, 940, 600}
+           set the bounds of container window to {400, 200, 1160, 600}
+           set the bounds of container window to {400, 200, 1160, 600}
+           set the bounds of container window to {400, 200, 1160, 600}
            set theViewOptions to the icon view options of container window
            set arrangement of theViewOptions to not arranged
            set icon size of theViewOptions to 64
@@ -515,10 +513,13 @@ rl=("$approot/MacOS/dcpomatic2_disk" "$approot/Frameworks/"*.dylib)
 relink_relative "${rl[@]}"
 
 # DCP-o-matic Disk Writer daemon .pkg
+
 pkgbase=tmp-disk-writer
 rm -rf $pkgbase
 mkdir $pkgbase
+pkgbin=$pkgbase/bin
 pkgroot=$pkgbase/root
+
 mkdir -p $pkgroot/Library/LaunchDaemons
 cat > $pkgroot/Library/LaunchDaemons/com.dcpomatic.disk.writer.plist <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -550,27 +551,15 @@ cat > $pkgroot/Library/LaunchDaemons/com.dcpomatic.disk.writer.plist <<EOF
 </plist>
 EOF
 
-mkdir -p "$pkgroot/Library/Application Support/com.dcpomatic"
-target="$pkgroot/Library/Application Support/com.dcpomatic"
-copy $ROOT src/dcpomatic/build/src/tools/dcpomatic2_disk_writer "$target"
-copy_lib_root libcxml "$target"
-copy_lib_env libboost_system "$target"
-copy_lib_env libboost_filesystem "$target"
-copy_lib_env libboost_thread "$target"
-copy_lib_env libboost_date_time "$target"
-copy_lib_env libboost_locale "$target"
-copy_lib_env libboost_regex "$target"
-copy_lib_env libicui18n "$target"
-copy_lib_env libicudata "$target"
-copy_lib_env libicuio "$target"
-copy_lib_env libicule "$target"
-copy_lib_env libiculx "$target"
-copy_lib_env libicutest "$target"
-copy_lib_env libicutu "$target"
-copy_lib_env libicuuc "$target"
+# Get the binaries together in $pkgbin then move them to the
+# place with spaces in the filename to avoid some of the pain of escaping
 
-rl=("$target/dcpomatic2_disk_writer" "$target/"*.dylib)
-relink_absolute "${rl[@]}"
+mkdir $pkgbin
+copy $ROOT src/dcpomatic/build/src/tools/dcpomatic2_disk_writer "$pkgbin"
+copy_libs "$pkgbin"
+
+rl=("$pkgbin/dcpomatic2_disk_writer" "$pkgbin/"*.dylib)
+relink_absolute "/Library/Application Support/com.dcpomatic" "${rl[@]}"
 
 mkdir $pkgbase/scripts
 cat > $pkgbase/scripts/postinstall <<EOF
@@ -580,11 +569,13 @@ exit 0
 EOF
 chmod gou+x $pkgbase/scripts/postinstall
 
-find "$target" -iname "*.dylib" -print0 | while IFS= read -r -d '' f; do
+find "$pkgbin" -iname "*.dylib" -print0 | while IFS= read -r -d '' f; do
     sign "$f"
 done
-sign "$target/dcpomatic2_disk_writer"
+sign "$pkgbin/dcpomatic2_disk_writer"
 
+mkdir -p "$pkgroot/Library/Application Support/com.dcpomatic"
+mv $pkgbin/* "$pkgroot/Library/Application Support/com.dcpomatic/"
 pkgbuild --root $pkgroot --identifier com.dcpomatic.disk.writer --scripts $pkgbase/scripts "DCP-o-matic Disk Writer.pkg"
 
 make_dmg "$appdir" "DCP-o-matic Disk Writer.pkg" "DCP-o-matic Disk Writer" com.dcpomatic.disk
