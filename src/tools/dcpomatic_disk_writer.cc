@@ -392,25 +392,49 @@ idle ()
 		dcp_path = nanomsg->blocking_get();
 		device = nanomsg->blocking_get();
 
-		/* Do some basic sanity checks */
+		/* Do some basic sanity checks; this is a bit belt-and-braces but it can't hurt... */
+
 #ifdef DCPOMATIC_OSX
 		if (!starts_with(device, "/dev/disk")) {
 			LOG_DISK ("Will not write to %1", device);
+			nanomsg->blocking_send(DISK_WRITER_ERROR "\nRefusing to write to this drive\n1\n");
 			return true;
 		}
 #endif
 #ifdef DCPOMATIC_LINUX
 		if (!starts_with(device, "/dev/sd") && !starts_with(device, "/dev/hd")) {
 			LOG_DISK ("Will not write to %1", device);
+			nanomsg->blocking_send(DISK_WRITER_ERROR "\nRefusing to write to this drive\n1\n");
 			return true;
 		}
 #endif
 #ifdef DCPOMATIC_WINDOWS
 		if (!starts_with(device, "\\\\.\\PHYSICALDRIVE")) {
 			LOG_DISK ("Will not write to %1", device);
+			nanomsg->blocking_send(DISK_WRITER_ERROR "\nRefusing to write to this drive\n1\n");
 			return true;
 		}
 #endif
+
+		bool on_drive_list = false;
+		bool mounted = false;
+		for (auto const& i: get_drives()) {
+			if (i.internal_name() == device) {
+				on_drive_list = true;
+				mounted = i.mounted();
+			}
+		}
+
+		if (!on_drive_list) {
+			LOG_DISK ("Will not write to %1 as it's not recognised as a drive", device);
+			nanomsg->blocking_send(DISK_WRITER_ERROR "\nRefusing to write to this drive\n1\n");
+			return true;
+		}
+		if (mounted) {
+			LOG_DISK ("Will not write to %1 as it's mounted", device);
+			nanomsg->blocking_send(DISK_WRITER_ERROR "\nRefusing to write to this drive\n1\n");
+			return true;
+		}
 
 		LOG_DISK ("Here we go writing %1 to %2", dcp_path, device);
 
