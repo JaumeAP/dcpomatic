@@ -266,7 +266,7 @@ function relink_absolute {
 	changes=""
 	for dep in $deps; do
 	    base=`basename $dep`
-	    changes="$changes -change $dep $target/$base"
+	    changes="$changes -change "$dep" \"$target/$base\""
 	done
 	if test "x$changes" != "x"; then
 	    install_name_tool $changes -id "`basename "$obj"`" "$obj"
