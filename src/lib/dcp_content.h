@@ -74,6 +74,8 @@ public:
 	void set_default_colour_conversion ();
 	std::list<dcpomatic::DCPTime> reel_split_points (boost::shared_ptr<const Film> film) const;
 
+	std::string video_processing_description (boost::shared_ptr<const Film> film) const;
+
 	std::vector<boost::filesystem::path> directories () const;
 
 	bool encrypted () const {

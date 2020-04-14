@@ -98,6 +98,9 @@ public:
 	 */
 	virtual std::list<dcpomatic::DCPTime> reel_split_points (boost::shared_ptr<const Film>) const;
 
+	virtual std::string video_processing_description (boost::shared_ptr<const Film> film) const;
+	virtual std::string audio_processing_description (boost::shared_ptr<const Film> film) const;
+
 	boost::shared_ptr<Content> clone () const;
 
 	void set_paths (std::vector<boost::filesystem::path> paths);

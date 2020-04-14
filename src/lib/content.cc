@@ -511,3 +511,18 @@ Content::add_path (boost::filesystem::path p)
 	_paths.push_back (p);
 	_last_write_times.push_back (boost::filesystem::last_write_time(p));
 }
+
+
+string
+Content::video_processing_description (boost::shared_ptr<const Film> film) const
+{
+	return video ? video->processing_description(film) : "";
+}
+
+
+string
+Content::audio_processing_description (boost::shared_ptr<const Film> film) const
+{
+	return audio ? audio->processing_description(film) : "";
+}
+

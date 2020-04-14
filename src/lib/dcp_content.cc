@@ -760,3 +760,31 @@ DCPContent::resolution () const
 	return RESOLUTION_2K;
 }
 
+string
+DCPContent::video_processing_description (shared_ptr<const Film> film) const
+{
+	/* This and PlayerVideo::has_j2k() need to be kept in sync */
+
+	if (!video) {
+		return "";
+	}
+
+	string s = video->processing_description (film);
+
+	/* XXX: overlapping burnt subs... */
+
+	if (video->crop() != Crop()) {
+		s += _("JPEG2000 video will be re-compressed because the image is cropped.");
+	} else if (film->frame_size() != video->size()) {
+		s += _("JPEG2000 video will be re-compressed because the project's container is different to the DCP's.");
+	} else if (video->fade_in() || video->fade_out()) {
+		s += _("JPEG2000 video will be re-compressed because fades have been set up.");
+	} else if (video->colour_conversion()) {
+		s += _("JPEG2000 video will be re-compressed because the colour conversion is not set to 'None'");
+	} else {
+		s += _("JPEG2000 video will be passed through without any change.");
+	}
+
+	return s;
+}
+

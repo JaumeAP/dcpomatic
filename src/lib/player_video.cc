@@ -224,6 +224,8 @@ PlayerVideo::has_j2k () const
 {
 	/* XXX: maybe other things */
 
+	/* This and DCPContent::processing_description() need to be kept in sync */
+
 	shared_ptr<const J2KImageProxy> j2k = dynamic_pointer_cast<const J2KImageProxy> (_in);
 	if (!j2k) {
 		return false;

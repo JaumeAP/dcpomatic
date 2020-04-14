@@ -398,6 +398,7 @@ VideoPanel::film_content_changed (int property)
 			} else {
 				checked_set (_colour_conversion, 0);
 			}
+			setup_description ();
 		} else if (check.size() > 1) {
 			/* Add a "many" entry and select it as an indication that multiple different
 			 * colour conversions are present in the selection.
@@ -436,6 +437,7 @@ VideoPanel::film_content_changed (int property)
 		} else {
 			_fade_in->clear ();
 		}
+		setup_description ();
 	} else if (property == VideoContentProperty::FADE_OUT) {
 		set<Frame> check;
 		BOOST_FOREACH (shared_ptr<const Content> i, vc) {
@@ -450,6 +452,7 @@ VideoPanel::film_content_changed (int property)
 		} else {
 			_fade_out->clear ();
 		}
+		setup_description ();
 	} else if (property == DCPContentProperty::REFERENCE_VIDEO) {
 		if (vc.size() == 1) {
 			shared_ptr<DCPContent> dcp = dynamic_pointer_cast<DCPContent> (vc.front ());
@@ -511,7 +514,7 @@ VideoPanel::setup_description ()
 		return;
 	}
 
-	string d = vc.front()->video->processing_description (_parent->film());
+	string d = vc.front()->video_processing_description (_parent->film());
 	size_t lines = count (d.begin(), d.end(), '\n');
 
 	for (int i = lines; i < 6; ++i) {
