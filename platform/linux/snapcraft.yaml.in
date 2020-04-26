@@ -1,0 +1,31 @@
+name: dcpomatic
+
+version: @VERSION@
+
+summary: Digital Cinema Package (DCP) toolkit
+
+description: |
+        DCP-o-matic is a set of tools that can be used to make, play and
+        manipulate Digital Cinema Packages (DCPs).
+
+confinement: devmode
+
+base: core18
+
+parts:
+        dcpomatic:
+                plugin: waf
+                configflags: --enable-disk
+                source-type: tar
+                source: https://dcpomatic.com/dl.php?id=source&version=@VERSION@
+                build-packages:
+                        - g++
+                stage-packages:
+                        - libnanomsg5
+
+apps:
+        dcpomatic:
+                command: dcpomatic2
+                environment:
+                        LD_LIBRARY_PATH: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio
+

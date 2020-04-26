@@ -58,4 +58,9 @@ def build(bld):
     obj.VERSION = bld.env.VERSION
     desktops.append(obj.target)
 
+    obj = bld(features='subst')
+    obj.source = 'snapcraft.yaml.in'
+    obj.target = 'snapcraft.yaml'
+    obj.VERSION = bld.env.VERSION
+
     bld.install_files('${PREFIX}/share/applications', desktops)
