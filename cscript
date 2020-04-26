@@ -25,6 +25,11 @@ import os
 import copy
 import json
 
+summary = 'Digital Cinema Package (DCP) toolkit')
+description = """
+              DCP-o-matic is a set of tools that can make, play and manipulate Digital Cinema Packages (DCPs).
+              """
+
 deb_build_depends = dict()
 
 deb_build_depends_base = ['debhelper', 'python', 'g++', 'pkg-config', 'libsndfile1-dev', 'libgtk2.0-dev', 'libx264-dev']

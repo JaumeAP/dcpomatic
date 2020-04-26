@@ -13,7 +13,42 @@ confinement: devmode
 base: core18
 
 parts:
+        libleqm_nrt:
+                plugin: waf
+                source-type: git
+                source: git://git.carlh.net/git/leqm_nrt.git
+                source-branch: carl
+        libcxml:
+                plugin: waf
+                source-type: git
+                source: git://git.carlh.net/git/libcxml.git
+                source-branch: master 
+        libdcp:
+                after: [libcxml]
+                plugin: waf
+                source-type: git
+                source: git://git.carlh.net/git/libdcp.git
+                source-branch: master 
+        libsub:
+                after: [libdcp]
+                plugin: waf
+                source-type: git
+                source: git://git.carlh.net/git/libsub.git
+                source-branch: master
+        rtaudio-cdist:
+                plugin: waf
+                source-type: git
+                source: git://git.carlh.net/git/rtaudio.git
+                source-branch: carl
+        ffmpeg:
+                plugin: autotools
+                configflags: --disable-indev=jack --enable-gpl --enable-libx264
+                install-via: prefix
+                source-type: git
+                source: git://git.carlh.net/git/ffmpeg-cdist.git
+                source-branch: carl-dcpomatic-10
         dcpomatic:
+                after: [libleqm_nrt, libcxml, libdcp, libsub, rtaudio-cdist, ffmpeg]
                 plugin: waf
                 configflags: ['--enable-disk']
                 source-type: tar
@@ -31,7 +66,7 @@ parts:
                         - libboost-regex-dev
                         - libboost-date-time-dev
                         - libboost-thread-dev
-                        - libssl-dev
+                         libssl-dev
                         - xmlsec1
                         - libxmlsec1-dev
                         - cmake
