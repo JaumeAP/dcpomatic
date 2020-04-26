@@ -25,7 +25,7 @@ import os
 import copy
 import json
 
-summary = 'Digital Cinema Package (DCP) toolkit')
+summary = 'Digital Cinema Package (DCP) toolkit'
 description = """
               DCP-o-matic is a set of tools that can make, play and manipulate Digital Cinema Packages (DCPs).
               """
