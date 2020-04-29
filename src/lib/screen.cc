@@ -71,34 +71,3 @@ Screen::trusted_device_thumbprints () const
 	return t;
 }
 
-TrustedDevice::TrustedDevice (string thumbprint)
-	: _thumbprint (thumbprint)
-{
-
-}
-
-TrustedDevice::TrustedDevice (dcp::Certificate certificate)
-	: _certificate (certificate)
-{
-
-}
-
-string
-TrustedDevice::as_string () const
-{
-	if (_certificate) {
-		return _certificate->certificate(true);
-	}
-
-	return *_thumbprint;
-}
-
-string
-TrustedDevice::thumbprint () const
-{
-	if (_certificate) {
-		return _certificate->thumbprint ();
-	}
-
-	return *_thumbprint;
-}
