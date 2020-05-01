@@ -18,7 +18,7 @@
 
 */
 
-#include "lib/screen_kdm.h"
+#include "lib/screen_with_kdm.h"
 #include "wx_util.h"
 #include "name_format_editor.h"
 #include <dcp/types.h>
@@ -52,7 +52,7 @@ public:
 	}
 
 	std::pair<boost::shared_ptr<Job>, int> make (
-		std::list<boost::shared_ptr<ScreenKDM> > screen_kdms,
+		std::list<boost::shared_ptr<ScreenWithKDM> > screen_kdms,
 		std::string name,
 		KDMTimingPanel* timing,
 		boost::function<bool (boost::filesystem::path)> confirm_overwrite

@@ -38,7 +38,7 @@
 #include "lib/util.h"
 #include "lib/screen.h"
 #include "lib/job_manager.h"
-#include "lib/screen_kdm.h"
+#include "lib/screen_with_kdm.h"
 #include "lib/exceptions.h"
 #include "lib/cinema_kdms.h"
 #include "lib/send_kdm_email_job.h"
@@ -303,7 +303,7 @@ private:
 				return;
 			}
 
-			list<shared_ptr<ScreenKDM> > screen_kdms;
+			list<shared_ptr<ScreenWithKDM> > screen_kdms;
 			string title;
 
 #ifdef DCPOMATIC_VARIANT_SWAROOP
@@ -328,8 +328,8 @@ private:
 
 					/* Encrypt */
 					screen_kdms.push_back (
-						shared_ptr<ScreenKDM>(
-							new ECinemaScreenKDM(i, kdm.encrypt(i->recipient.get()))
+						shared_ptr<ScreenWithKDM>(
+							new ECinemaScreenWithKDM(i, kdm.encrypt(i->recipient.get()))
 							)
 						);
 				}
@@ -371,8 +371,8 @@ private:
 
 					/* Encrypt */
 					screen_kdms.push_back (
-						shared_ptr<ScreenKDM>(
-							new DCPScreenKDM(
+						shared_ptr<ScreenWithKDM>(
+							new DCPScreenWithKDM(
 								i,
 								kdm.encrypt(
 									signer, i->recipient.get(), i->trusted_device_thumbprints(), _output->formulation(),
