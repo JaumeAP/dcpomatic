@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2019 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2020 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -26,6 +26,7 @@
 #include "dcp_content_type.h"
 #include "colour_conversion.h"
 #include "cinema.h"
+#include "dkdm_recipient.h"
 #include "util.h"
 #include "cross.h"
 #include "film.h"
@@ -127,10 +128,12 @@ Config::set_defaults ()
 	_win32_console = false;
 #endif
 	_cinemas_file = path ("cinemas.xml");
+	_dkdm_recipients_file = path ("dkdm_recipients.xml");
 	_show_hints_before_make_dcp = true;
 	_confirm_kdm_email = true;
 	_kdm_container_name_format = dcp::NameFormat ("KDM %f %c");
 	_kdm_filename_format = dcp::NameFormat ("KDM %f %c %s");
+	_dkdm_filename_format = dcp::NameFormat ("DKDM %f");
 	_dcp_metadata_filename_format = dcp::NameFormat ("%t");
 	_dcp_asset_filename_format = dcp::NameFormat ("%t");
 	_jump_to_selected = true;
@@ -232,6 +235,7 @@ Config::backup ()
 
 		boost::filesystem::copy_file(path("config.xml", false), path(String::compose("config.xml.%1", n), false));
 		boost::filesystem::copy_file(path("cinemas.xml", false), path(String::compose("cinemas.xml.%1", n), false));
+		boost::filesystem::copy_file(path("dkdm_recipients.xml", false), path(String::compose("dkdm_recipients.xml.%1", n), false));
 	} catch (...) {}
 }
 
@@ -333,6 +337,7 @@ try
 	_default_audio_delay = f.optional_number_child<int>("DefaultAudioDelay").get_value_or (0);
 	_default_interop = f.optional_bool_child("DefaultInterop").get_value_or (false);
 	_default_kdm_directory = f.optional_string_child("DefaultKDMDirectory");
+	_default_dkdm_directory = f.optional_string_child("DefaultDKDMDirectory");
 
 	/* Load any cinemas from config.xml */
 	read_cinemas (f);
@@ -513,10 +518,12 @@ try
 		}
 	}
 	_cinemas_file = f.optional_string_child("CinemasFile").get_value_or (path ("cinemas.xml").string ());
+	_dkdm_recipients_file = f.optional_string_child("DKDMRecipientsFile").get_value_or(path("dkdm_recipients.xml").string());
 	_show_hints_before_make_dcp = f.optional_bool_child("ShowHintsBeforeMakeDCP").get_value_or (true);
 	_confirm_kdm_email = f.optional_bool_child("ConfirmKDMEmail").get_value_or (true);
 	_kdm_container_name_format = dcp::NameFormat (f.optional_string_child("KDMContainerNameFormat").get_value_or ("KDM %f %c"));
 	_kdm_filename_format = dcp::NameFormat (f.optional_string_child("KDMFilenameFormat").get_value_or ("KDM %f %c %s"));
+	_dkdm_filename_format = dcp::NameFormat (f.optional_string_child("DKDMFilenameFormat").get_value_or("DKDM %f"));
 	_dcp_metadata_filename_format = dcp::NameFormat (f.optional_string_child("DCPMetadataFilenameFormat").get_value_or ("%t"));
 	_dcp_asset_filename_format = dcp::NameFormat (f.optional_string_child("DCPAssetFilenameFormat").get_value_or ("%t"));
 	_jump_to_selected = f.optional_bool_child("JumpToSelected").get_value_or (true);
@@ -608,11 +615,16 @@ try
 	_player_lock_file = f.optional_string_child("PlayerLockFile");
 #endif
 
-	/* Replace any cinemas from config.xml with those from the configured file */
 	if (boost::filesystem::exists (_cinemas_file)) {
 		cxml::Document f ("Cinemas");
 		f.read_file (_cinemas_file);
 		read_cinemas (f);
+	}
+
+	if (boost::filesystem::exists (_dkdm_recipients_file)) {
+		cxml::Document f ("DKDMRecipients");
+		f.read_file (_dkdm_recipients_file);
+		read_dkdm_recipients (f);
 	}
 }
 catch (...) {
@@ -647,6 +659,7 @@ Config::write () const
 {
 	write_config ();
 	write_cinemas ();
+	write_dkdm_recipients ();
 }
 
 void
@@ -745,6 +758,10 @@ Config::write_config () const
 	if (_default_kdm_directory) {
 		/* [XML:opt] DefaultKDMDirectory Default directory to write KDMs to. */
 		root->add_child("DefaultKDMDirectory")->add_child_text (_default_kdm_directory->string ());
+	}
+	if (_default_dkdm_directory) {
+		/* [XML:opt] DefaultDKDMDirectory Default directory to write DKDMs to. */
+		root->add_child("DefaultDKDMDirectory")->add_child_text (_default_dkdm_directory->string());
 	}
 	/* [XML] MailServer Hostname of SMTP server to use. */
 	root->add_child("MailServer")->add_child_text (_mail_server);
@@ -883,12 +900,16 @@ Config::write_config () const
 
 	/* [XML] CinemasFile Filename of cinemas list file. */
 	root->add_child("CinemasFile")->add_child_text (_cinemas_file.string());
+	/* [XML] DKDMRecipientsFile Filename of DKDM recipients list file. */
+	root->add_child("DKDMRecipientsFile")->add_child_text (_dkdm_recipients_file.string());
 	/* [XML] ShowHintsBeforeMakeDCP 1 to show hints in the GUI before making a DCP, otherwise 0. */
 	root->add_child("ShowHintsBeforeMakeDCP")->add_child_text (_show_hints_before_make_dcp ? "1" : "0");
 	/* [XML] ConfirmKDMEmail 1 to confirm before sending KDM emails in the GUI, otherwise 0. */
 	root->add_child("ConfirmKDMEmail")->add_child_text (_confirm_kdm_email ? "1" : "0");
 	/* [XML] KDMFilenameFormat Format for KDM filenames. */
 	root->add_child("KDMFilenameFormat")->add_child_text (_kdm_filename_format.specification ());
+	/* [XML] DKDMFilenameFormat Format for DKDM filenames. */
+	root->add_child("DKDMFilenameFormat")->add_child_text (_dkdm_filename_format.specification());
 	/* [XML] KDMContainerNameFormat Format for KDM containers (directories or ZIP files). */
 	root->add_child("KDMContainerNameFormat")->add_child_text (_kdm_container_name_format.specification ());
 	/* [XML] DCPMetadataFilenameFormat Format for DCP metadata filenames. */
@@ -1080,27 +1101,44 @@ Config::write_config () const
 	}
 }
 
+
+template <class T>
 void
-Config::write_cinemas () const
+write_list (string root_node, string version, string child_node, list<shared_ptr<T> > const& children, boost::filesystem::path file)
 {
 	xmlpp::Document doc;
-	xmlpp::Element* root = doc.create_root_node ("Cinemas");
-	root->add_child("Version")->add_child_text ("1");
+	xmlpp::Element* root = doc.create_root_node(root_node);
+	root->add_child("Version")->add_child_text(version);
 
-	BOOST_FOREACH (shared_ptr<Cinema> i, _cinemas) {
-		i->as_xml (root->add_child ("Cinema"));
+	BOOST_FOREACH (shared_ptr<T> i, children) {
+		i->as_xml (root->add_child(child_node));
 	}
 
 	try {
-		doc.write_to_file_formatted (_cinemas_file.string() + ".tmp");
-		boost::filesystem::remove (_cinemas_file);
-		boost::filesystem::rename (_cinemas_file.string() + ".tmp", _cinemas_file);
+		doc.write_to_file_formatted (file.string() + ".tmp");
+		boost::filesystem::remove (file);
+		boost::filesystem::rename (file.string() + ".tmp", file);
 	} catch (xmlpp::exception& e) {
 		string s = e.what ();
 		trim (s);
-		throw FileError (s, _cinemas_file);
+		throw FileError (s, file);
 	}
 }
+
+
+void
+Config::write_cinemas () const
+{
+	write_list<Cinema>("Cinemas", "1", "Cinema", _cinemas, _cinemas_file);
+}
+
+
+void
+Config::write_dkdm_recipients () const
+{
+	write_list<DKDMRecipient>("DKDMRecipients", "1", "DKDMRecipient", _dkdm_recipients, _dkdm_recipients_file);
+}
+
 
 boost::filesystem::path
 Config::default_directory_or (boost::filesystem::path a) const
@@ -1113,6 +1151,14 @@ Config::default_kdm_directory_or (boost::filesystem::path a) const
 {
 	return directory_or (_default_kdm_directory, a);
 }
+
+
+boost::filesystem::path
+Config::default_dkdm_directory_or (boost::filesystem::path a) const
+{
+	return directory_or (_default_dkdm_directory, a);
+}
+
 
 boost::filesystem::path
 Config::directory_or (optional<boost::filesystem::path> dir, boost::filesystem::path a) const
@@ -1259,11 +1305,11 @@ Config::have_existing (string file)
 	return boost::filesystem::exists (path (file, false));
 }
 
+
 void
 Config::read_cinemas (cxml::Document const & f)
 {
 	_cinemas.clear ();
-	list<cxml::NodePtr> cin = f.node_children ("Cinema");
 	BOOST_FOREACH (cxml::ConstNodePtr i, f.node_children("Cinema")) {
 		/* Slightly grotty two-part construction of Cinema here so that we can use
 		   shared_from_this.
@@ -1273,6 +1319,17 @@ Config::read_cinemas (cxml::Document const & f)
 		_cinemas.push_back (cinema);
 	}
 }
+
+
+void
+Config::read_dkdm_recipients (cxml::Document const & f)
+{
+	_dkdm_recipients.clear ();
+	BOOST_FOREACH (cxml::ConstNodePtr i, f.node_children("DKDMRecipient")) {
+		_dkdm_recipients.push_back (shared_ptr<DKDMRecipient>(new DKDMRecipient(i)));
+	}
+}
+
 
 void
 Config::set_cinemas_file (boost::filesystem::path file)
@@ -1292,6 +1349,27 @@ Config::set_cinemas_file (boost::filesystem::path file)
 
 	changed (OTHER);
 }
+
+
+void
+Config::set_dkdm_recipients_file (boost::filesystem::path file)
+{
+	if (file == _dkdm_recipients_file) {
+		return;
+	}
+
+	_dkdm_recipients_file = file;
+
+	if (boost::filesystem::exists (_dkdm_recipients_file)) {
+		/* Existing file; read it in */
+		cxml::Document f ("DKDMRecipients");
+		f.read_file (_dkdm_recipients_file);
+		read_dkdm_recipients (f);
+	}
+
+	changed (OTHER);
+}
+
 
 void
 Config::save_template (shared_ptr<const Film> film, string name) const

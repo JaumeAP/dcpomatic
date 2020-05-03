@@ -78,6 +78,7 @@ sources = """
           decoder_part.cc
           decrypted_ecinema_kdm.cc
           digester.cc
+          dkdm_recipient.cc
           dkdm_wrapper.cc
           dolby_cp750.cc
           edid.cc
@@ -139,6 +140,7 @@ sources = """
           position_image.cc
           ratio.cc
           raw_image_proxy.cc
+          recipient_with_dkdm.cc
           reel_writer.cc
           render_text.cc
           resampler.cc
@@ -166,6 +168,7 @@ sources = """
           transcode_job.cc
           trusted_device.cc
           types.cc
+          send_dkdm_email_job.cc
           signal_manager.cc
           stdout_log.cc
           update_checker.cc
