@@ -225,10 +225,8 @@ CinemaKDMs::email (
 
 		email.add_attachment (zip_file, container_name_format.get(name_values, ".zip"), "application/zip");
 
-		Config* c = Config::instance ();
-
 		try {
-			email.send (c->mail_server(), c->mail_port(), c->mail_protocol(), c->mail_user(), c->mail_password());
+			email.send (config->mail_server(), config->mail_port(), config->mail_protocol(), config->mail_user(), config->mail_password());
 		} catch (...) {
 			boost::filesystem::remove (zip_file);
 			dcpomatic_log->log ("Email content follows", LogEntry::TYPE_DEBUG_EMAIL);
