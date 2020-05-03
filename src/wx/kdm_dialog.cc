@@ -31,9 +31,7 @@
 #include "lib/screen.h"
 #include "lib/screen_with_kdm.h"
 #include "lib/job_manager.h"
-#include "lib/cinema_kdms.h"
 #include "lib/config.h"
-#include "lib/cinema.h"
 #include <libcxml/cxml.h>
 #include <dcp/exceptions.h>
 #include <wx/treectrl.h>
@@ -168,8 +166,8 @@ KDMDialog::make_clicked ()
 						i->recipient.get(),
 						i->trusted_device_thumbprints(),
 						_cpl->cpl(),
-						dcp::LocalTime(_timing->from(),  i->cinema ? i->cinema->utc_offset_hour() : 0, i->cinema ? i->cinema->utc_offset_minute() : 0),
-						dcp::LocalTime(_timing->until(), i->cinema ? i->cinema->utc_offset_hour() : 0, i->cinema ? i->cinema->utc_offset_minute() : 0),
+						dcp::LocalTime(_timing->from(),  i->utc_offset_hour(), i->utc_offset_minute()),
+						dcp::LocalTime(_timing->until(), i->utc_offset_hour(), i->utc_offset_minute()),
 						_output->formulation(),
 						!_output->forensic_mark_video(),
 						for_audio

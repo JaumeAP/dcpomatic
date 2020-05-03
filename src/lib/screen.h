@@ -50,6 +50,9 @@ public:
 	explicit Screen (cxml::ConstNodePtr);
 
 	void as_xml (xmlpp::Element *) const;
+	int utc_offset_hour () const;
+	int utc_offset_minute () const;
+
 	std::vector<std::string> trusted_device_thumbprints () const;
 
 	boost::shared_ptr<Cinema> cinema;

@@ -39,6 +39,8 @@ public:
 	explicit KDMRecipient (cxml::ConstNodePtr);
 
 	virtual void as_xml (xmlpp::Element *) const;
+	virtual int utc_offset_hour () const = 0;
+	virtual int utc_offset_minute () const = 0;
 
 	std::string name;
 	std::string notes;

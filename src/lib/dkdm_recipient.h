@@ -45,9 +45,6 @@ public:
 
 	void as_xml (xmlpp::Element *) const;
 
-	void set_utc_offset_hour (int h);
-	void set_utc_offset_minute (int m);
-
 	int utc_offset_hour () const {
 		return _utc_offset_hour;
 	}
@@ -55,6 +52,9 @@ public:
 	int utc_offset_minute () const {
 		return _utc_offset_minute;
 	}
+
+	void set_utc_offset_hour (int h);
+	void set_utc_offset_minute (int m);
 
 	std::list<std::string> emails;
 

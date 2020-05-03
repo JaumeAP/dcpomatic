@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2013-2016 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2013-2020 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -19,6 +19,7 @@
 */
 
 #include "screen.h"
+#include "cinema.h"
 #include <libxml++/libxml++.h>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
@@ -56,5 +57,19 @@ Screen::trusted_device_thumbprints () const
 		t.push_back (i.thumbprint());
 	}
 	return t;
+}
+
+
+int
+Screen::utc_offset_hour () const
+{
+	return cinema ? cinema->utc_offset_hour() : 0;
+}
+
+
+int
+Screen::utc_offset_minute () const
+{
+	return cinema ? cinema->utc_offset_minute() : 0;
 }
 

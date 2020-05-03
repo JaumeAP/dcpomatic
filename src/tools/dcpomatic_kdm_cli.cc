@@ -23,18 +23,19 @@
  */
 
 #include "lib/film.h"
-#include "lib/cinema.h"
 #include "lib/screen_with_kdm.h"
-#include "lib/cinema_kdms.h"
 #include "lib/config.h"
 #include "lib/exceptions.h"
 #include "lib/emailer.h"
 #include "lib/dkdm_wrapper.h"
 #include "lib/screen.h"
+#include "lib/cinema.h"
+#include "lib/cinema_kdms.h"
 #include <dcp/certificate.h>
 #include <dcp/decrypted_kdm.h>
 #include <dcp/encrypted_kdm.h>
 #include <getopt.h>
+#include <boost/foreach.hpp>
 #include <iostream>
 
 using std::string;
@@ -237,8 +238,8 @@ from_film (
 						i->recipient.get(),
 						i->trusted_device_thumbprints(),
 						cpl,
-						dcp::LocalTime(valid_from, i->cinema ? i->cinema->utc_offset_hour() : 0, i->cinema ? i->cinema->utc_offset_minute() : 0),
-						dcp::LocalTime(valid_to,   i->cinema ? i->cinema->utc_offset_hour() : 0, i->cinema ? i->cinema->utc_offset_minute() : 0),
+						dcp::LocalTime(valid_from, i->utc_offset_hour(), i->utc_offset_minute()),
+						dcp::LocalTime(valid_to,   i->utc_offset_hour(), i->utc_offset_minute()),
 						formulation,
 						disable_forensic_marking_picture,
 						disable_forensic_marking_audio
@@ -359,8 +360,8 @@ from_dkdm (
 							dkdm,
 							i->recipient.get(),
 							i->trusted_device_thumbprints(),
-							dcp::LocalTime(valid_from, i->cinema->utc_offset_hour(), i->cinema->utc_offset_minute()),
-							dcp::LocalTime(valid_to, i->cinema->utc_offset_hour(), i->cinema->utc_offset_minute()),
+							dcp::LocalTime(valid_from, i->utc_offset_hour(), i->utc_offset_minute()),
+							dcp::LocalTime(valid_to, i->utc_offset_hour(), i->utc_offset_minute()),
 							formulation,
 							disable_forensic_marking_picture,
 							disable_forensic_marking_audio
@@ -546,9 +547,8 @@ int main (int argc, char* argv[])
 	}
 
 	if (list_cinemas) {
-		list<boost::shared_ptr<Cinema> > cinemas = Config::instance()->cinemas ();
-		for (list<boost::shared_ptr<Cinema> >::const_iterator i = cinemas.begin(); i != cinemas.end(); ++i) {
-			cout << (*i)->name << " (" << Emailer::address_list ((*i)->emails) << ")\n";
+		BOOST_FOREACH(shared_ptr<Cinema> i, Config::instance()->cinemas()) {
+			cout << i->name << " (" << Emailer::address_list(i->emails) << ")\n";
 		}
 		exit (EXIT_SUCCESS);
 	}
