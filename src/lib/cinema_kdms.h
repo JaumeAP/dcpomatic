@@ -58,5 +58,5 @@ public:
 		);
 
 	boost::shared_ptr<Cinema> cinema;
-	std::list<boost::shared_ptr<ScreenWithKDM> > screen_kdms;
+	std::list<boost::shared_ptr<RecipientWithKDM> > kdms;
 };

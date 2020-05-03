@@ -120,30 +120,8 @@ RecipientWithDKDM::email (
 }
 
 
-int
-RecipientWithDKDM::write_files (
-	vector<RecipientWithDKDM> kdms,
-	boost::filesystem::path directory,
-	dcp::NameFormat name_format,
-	dcp::NameFormat::Map name_values,
-	boost::function<bool (boost::filesystem::path)> confirm_overwrite
-	)
+void
+RecipientWithDKDM::add_name_values (dcp::NameFormat::Map& values)
 {
-	int written = 0;
-
-	if (!boost::filesystem::exists (directory)) {
-		boost::filesystem::create_directories (directory);
-	}
-
-	/* Write KDMs to the specified directory */
-	BOOST_FOREACH (RecipientWithDKDM const& i, kdms) {
-		name_values['i'] = i.kdm.cpl_id ();
-		boost::filesystem::path out = directory / careful_string_filter(name_format.get(name_values, ".xml"));
-		if (!boost::filesystem::exists (out) || confirm_overwrite (out)) {
-			i.kdm.as_xml (out);
-			++written;
-		}
-	}
-
-	return written;
+	values['i'] = kdm.cpl_id ();
 }

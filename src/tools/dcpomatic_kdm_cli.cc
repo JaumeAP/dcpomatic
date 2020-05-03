@@ -31,6 +31,7 @@
 #include "lib/screen.h"
 #include "lib/cinema.h"
 #include "lib/cinema_kdms.h"
+#include "lib/kdm.h"
 #include <dcp/certificate.h>
 #include <dcp/decrypted_kdm.h>
 #include <dcp/encrypted_kdm.h>
@@ -131,7 +132,7 @@ always_overwrite ()
 
 void
 write_files (
-	list<shared_ptr<ScreenWithKDM> > screen_kdms,
+	list<shared_ptr<RecipientWithKDM> > kdms,
 	bool zip,
 	boost::filesystem::path output,
 	dcp::NameFormat container_name_format,
@@ -142,7 +143,7 @@ write_files (
 {
 	if (zip) {
 		int const N = CinemaKDMs::write_zip_files (
-			CinemaKDMs::collect (screen_kdms),
+			CinemaKDMs::collect (kdms),
 			output,
 			container_name_format,
 			filename_format,
@@ -154,8 +155,8 @@ write_files (
 			cout << "Wrote " << N << " ZIP files to " << output << "\n";
 		}
 	} else {
-		int const N = ScreenWithKDM::write_files (
-			screen_kdms, output, filename_format, values,
+		int const N = write_kdm_files (
+			kdms, output, filename_format, values,
 			bind (&always_overwrite)
 			);
 

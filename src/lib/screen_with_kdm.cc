@@ -29,42 +29,11 @@ using std::cout;
 using std::list;
 using boost::shared_ptr;
 
-int
-ScreenWithKDM::write_files (
-	list<shared_ptr<ScreenWithKDM> > screen_kdms,
-	boost::filesystem::path directory,
-	dcp::NameFormat name_format,
-	dcp::NameFormat::Map name_values,
-	boost::function<bool (boost::filesystem::path)> confirm_overwrite
-	)
+void
+ScreenWithKDM::add_name_values (dcp::NameFormat::Map& values)
 {
-	int written = 0;
-
-	if (directory == "-") {
-		/* Write KDMs to the stdout */
-		BOOST_FOREACH (shared_ptr<ScreenWithKDM> i, screen_kdms) {
-			cout << i->kdm_as_xml ();
-			++written;
-		}
-
-		return written;
-	}
-
-	if (!boost::filesystem::exists (directory)) {
-		boost::filesystem::create_directories (directory);
-	}
-
-	/* Write KDMs to the specified directory */
-	BOOST_FOREACH (shared_ptr<ScreenWithKDM> i, screen_kdms) {
-		name_values['c'] = i->screen->cinema ? i->screen->cinema->name : "";
-		name_values['s'] = i->screen->name;
-		name_values['i'] = i->kdm_id ();
-		boost::filesystem::path out = directory / careful_string_filter(name_format.get(name_values, ".xml"));
-		if (!boost::filesystem::exists (out) || confirm_overwrite (out)) {
-			i->kdm_as_xml (out);
-			++written;
-		}
-	}
-
-	return written;
+	values['c'] = screen->cinema ? screen->cinema->name : "";
+	values['s'] = screen->name;
+	values['i'] = kdm_id ();
 }
+

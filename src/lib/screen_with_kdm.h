@@ -24,6 +24,7 @@
 #ifdef DCPOMATIC_VARIANT_SWAROOP
 #include "encrypted_ecinema_kdm.h"
 #endif
+#include "recipient_with_kdm.h"
 #include <dcp/encrypted_kdm.h>
 #include <dcp/name_format.h>
 #include <boost/shared_ptr.hpp>
@@ -33,7 +34,7 @@ namespace dcpomatic {
 }
 
 /** Simple class to collect a screen and an encrypted KDM */
-class ScreenWithKDM
+class ScreenWithKDM : public RecipientWithKDM
 {
 public:
 	ScreenWithKDM (boost::shared_ptr<dcpomatic::Screen> s)
@@ -42,15 +43,9 @@ public:
 
 	virtual ~ScreenWithKDM () {}
 
-	virtual std::string kdm_as_xml () const = 0;
-	virtual void kdm_as_xml (boost::filesystem::path out) const = 0;
 	virtual std::string kdm_id () const = 0;
 
-	static int write_files (
-		std::list<boost::shared_ptr<ScreenWithKDM> > screen_kdms, boost::filesystem::path directory,
-		dcp::NameFormat name_format, dcp::NameFormat::Map name_values,
-		boost::function<bool (boost::filesystem::path)> confirm_overwrite
-		);
+	void add_name_values (dcp::NameFormat::Map& values);
 
 	boost::shared_ptr<dcpomatic::Screen> screen;
 };
@@ -67,7 +62,7 @@ public:
 		return kdm.as_xml ();
 	}
 
-	void kdm_as_xml (boost::filesystem::path out) const {
+	void kdm_as_xml_to_file (boost::filesystem::path out) const {
 		return kdm.as_xml (out);
 	}
 
@@ -91,7 +86,7 @@ public:
 		return kdm.as_xml ();
 	}
 
-	void kdm_as_xml (boost::filesystem::path out) const {
+	void kdm_as_xml_to_file (boost::filesystem::path out) const {
 		return kdm.as_xml (out);
 	}
 

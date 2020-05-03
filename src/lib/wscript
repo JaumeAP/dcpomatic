@@ -126,6 +126,7 @@ sources = """
           job_manager.cc
           j2k_encoder.cc
           json_server.cc
+          kdm.cc
           kdm_recipient.cc
           lock_file_checker.cc
           log.cc

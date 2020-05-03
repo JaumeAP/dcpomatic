@@ -22,10 +22,11 @@
 #define DCPOMATIC_RECIPIENT_WITH_DKDM_H
 
 #include "dkdm_recipient.h"
+#include "recipient_with_kdm.h"
 #include <dcp/encrypted_kdm.h>
 #include <dcp/name_format.h>
 
-class RecipientWithDKDM
+class RecipientWithDKDM : public RecipientWithKDM
 {
 public:
 	RecipientWithDKDM (boost::shared_ptr<DKDMRecipient> r, dcp::EncryptedKDM k)
@@ -33,13 +34,17 @@ public:
 		, kdm (k)
 	{}
 
-	void make_zip_file (boost::filesystem::path zip_file, dcp::NameFormat name_format, dcp::NameFormat::Map name_values) const;
+	void add_name_values (dcp::NameFormat::Map& values);
 
-	static int write_files (
-		std::vector<RecipientWithDKDM> kdms, boost::filesystem::path directory,
-		dcp::NameFormat name_format, dcp::NameFormat::Map name_values,
-		boost::function<bool (boost::filesystem::path)> confirm_overwrite
-		);
+	std::string kdm_as_xml () const {
+		return kdm.as_xml ();
+	}
+
+	void kdm_as_xml_to_file (boost::filesystem::path out) const {
+		return kdm.as_xml (out);
+	}
+
+	void make_zip_file (boost::filesystem::path zip_file, dcp::NameFormat name_format, dcp::NameFormat::Map name_values) const;
 
 	static void email (
 		std::vector<RecipientWithDKDM> kdms,

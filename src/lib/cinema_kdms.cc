@@ -28,7 +28,9 @@
 #include "compose.hpp"
 #include "log.h"
 #include "zipper.h"
+#include "kdm.h"
 #include "dcpomatic_log.h"
+#include "recipient_with_kdm.h"
 #include <boost/foreach.hpp>
 
 #include "i18n.h"
@@ -39,6 +41,7 @@ using std::string;
 using std::runtime_error;
 using boost::shared_ptr;
 using boost::function;
+using boost::dynamic_pointer_cast;
 
 void
 CinemaKDMs::make_zip_file (boost::filesystem::path zip_file, dcp::NameFormat name_format, dcp::NameFormat::Map name_values) const
@@ -47,9 +50,8 @@ CinemaKDMs::make_zip_file (boost::filesystem::path zip_file, dcp::NameFormat nam
 
 	name_values['c'] = cinema->name;
 
-	BOOST_FOREACH (shared_ptr<ScreenWithKDM> i, screen_kdms) {
-		name_values['s'] = i->screen->name;
-		name_values['i'] = i->kdm_id ();
+	BOOST_FOREACH (shared_ptr<RecipientWithKDM> i, screen_kdms) {
+		i->add_name_values (name_values);
 		string const name = careful_string_filter(name_format.get(name_values, ".xml"));
 		zipper.add (name, i->kdm_as_xml());
 	}
@@ -61,7 +63,7 @@ CinemaKDMs::make_zip_file (boost::filesystem::path zip_file, dcp::NameFormat nam
  *  CinemaKDM contains the KDMs for its cinema.
  */
 list<CinemaKDMs>
-CinemaKDMs::collect (list<shared_ptr<ScreenWithKDM> > screen_kdms)
+CinemaKDMs::collect (list<shared_ptr<RecipientWithKDM> > kdms)
 {
 	list<CinemaKDMs> cinema_kdms;
 
@@ -117,7 +119,7 @@ CinemaKDMs::write_directories (
 		path /= container_name_format.get(name_values, "");
 		if (!boost::filesystem::exists (path) || confirm_overwrite (path)) {
 			boost::filesystem::create_directories (path);
-			ScreenWithKDM::write_files (i.screen_kdms, path, filename_format, name_values, confirm_overwrite);
+			write_kdm_files (i.screen_kdms, path, filename_format, name_values, confirm_overwrite);
 		}
 		written += i.screen_kdms.size();
 	}
@@ -209,8 +211,12 @@ CinemaKDMs::email (
 		boost::algorithm::replace_all (body, "$CINEMA_NAME", i.cinema->name);
 
 		string screens;
-		BOOST_FOREACH (shared_ptr<ScreenWithKDM> j, i.screen_kdms) {
-			screens += j->screen->name + ", ";
+		BOOST_FOREACH (shared_ptr<RecipientWithKDM> j, i.screen_kdms) {
+			/* XXX */
+			shared_ptr<ScreenWithKDM> s = dynamic_pointer_cast<ScreenWithKDM>(j);
+			if (s) {
+				screens += s->screen->name + ", ";
+			}
 		}
 		boost::algorithm::replace_all (body, "$SCREENS", screens.substr (0, screens.length() - 2));
 
