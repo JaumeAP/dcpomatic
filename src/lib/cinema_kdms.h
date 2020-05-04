@@ -27,12 +27,11 @@ class Log;
 class CinemaKDMs
 {
 public:
-	void make_zip_file (boost::filesystem::path zip_file, dcp::NameFormat name_format, dcp::NameFormat::Map name_values) const;
-
 	boost::shared_ptr<Cinema> cinema;
 	std::list<KDMWithMetadataPtr > screen_kdms;
 };
 
+void make_zip_file (CinemaKDMs kdms, boost::filesystem::path zip_file, dcp::NameFormat name_format, dcp::NameFormat::Map name_values);
 
 std::list<CinemaKDMs> collect (std::list<KDMWithMetadataPtr > kdms);
 
