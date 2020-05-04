@@ -18,8 +18,8 @@
 
 */
 
-#ifndef DCPOMATIC_SCREEN_KDM_H
-#define DCPOMATIC_SCREEN_KDM_H
+#ifndef DCPOMATIC_KDM_WITH_METADATA_H
+#define DCPOMATIC_KDM_WITH_METADATA_H
 
 #ifdef DCPOMATIC_VARIANT_SWAROOP
 #include "encrypted_ecinema_kdm.h"
