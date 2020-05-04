@@ -62,7 +62,7 @@ CinemaKDMs::make_zip_file (boost::filesystem::path zip_file, dcp::NameFormat nam
  *  CinemaKDM contains the KDMs for its cinema.
  */
 list<CinemaKDMs>
-CinemaKDMs::collect (list<KDMWithMetadataPtr> screen_kdms)
+collect (list<KDMWithMetadataPtr> screen_kdms)
 {
 	list<CinemaKDMs> cinema_kdms;
 
@@ -98,7 +98,7 @@ CinemaKDMs::collect (list<KDMWithMetadataPtr> screen_kdms)
 
 /** Write one directory per cinema into another directory */
 int
-CinemaKDMs::write_directories (
+write_directories (
 	list<CinemaKDMs> cinema_kdms,
 	boost::filesystem::path directory,
 	dcp::NameFormat container_name_format,
@@ -128,7 +128,7 @@ CinemaKDMs::write_directories (
 
 /** Write one ZIP file per cinema into a directory */
 int
-CinemaKDMs::write_zip_files (
+write_zip_files (
 	list<CinemaKDMs> cinema_kdms,
 	boost::filesystem::path directory,
 	dcp::NameFormat container_name_format,
@@ -167,7 +167,7 @@ CinemaKDMs::write_zip_files (
  *  @param cpl_name Name of the CPL that the KDMs are for.
  */
 void
-CinemaKDMs::email (
+email (
 	list<CinemaKDMs> cinema_kdms,
 	dcp::NameFormat container_name_format,
 	dcp::NameFormat filename_format,
