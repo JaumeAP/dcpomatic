@@ -240,9 +240,6 @@ KDMOutputPanel::make (
 
 	try {
 		dcp::NameFormat::Map name_values;
-		name_values['f'] = name;
-		name_values['b'] = dcp::LocalTime(timing->from()).date() + " " + dcp::LocalTime(timing->from()).time_of_day(false, false);
-		name_values['e'] = dcp::LocalTime(timing->until()).date() + " " + dcp::LocalTime(timing->until()).time_of_day(false, false);
 
 		if (_write_to->GetValue()) {
 			if (_write_flat->GetValue()) {
