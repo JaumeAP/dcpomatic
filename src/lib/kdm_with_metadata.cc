@@ -41,7 +41,7 @@ using boost::function;
 
 int
 write_files (
-	list<KDMWithMetadataPtr> screen_kdms,
+	list<KDMWithMetadataPtr> kdms,
 	boost::filesystem::path directory,
 	dcp::NameFormat name_format,
 	dcp::NameFormat::Map name_values,
@@ -52,7 +52,7 @@ write_files (
 
 	if (directory == "-") {
 		/* Write KDMs to the stdout */
-		BOOST_FOREACH (KDMWithMetadataPtr i, screen_kdms) {
+		BOOST_FOREACH (KDMWithMetadataPtr i, kdms) {
 			cout << i->kdm_as_xml ();
 			++written;
 		}
@@ -65,7 +65,7 @@ write_files (
 	}
 
 	/* Write KDMs to the specified directory */
-	BOOST_FOREACH (KDMWithMetadataPtr i, screen_kdms) {
+	BOOST_FOREACH (KDMWithMetadataPtr i, kdms) {
 		name_values['i'] = i->kdm_id ();
 		boost::filesystem::path out = directory / careful_string_filter(name_format.get(name_values, ".xml"));
 		if (!boost::filesystem::exists (out) || confirm_overwrite (out)) {
