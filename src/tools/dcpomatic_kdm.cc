@@ -409,7 +409,7 @@ private:
 			}
 
 			pair<shared_ptr<Job>, int> result = _output->make (
-				kdms, title, _timing, bind (&DOMFrame::confirm_overwrite, this, _1)
+				kdms, title, bind (&DOMFrame::confirm_overwrite, this, _1)
 				);
 
 			if (result.first) {
