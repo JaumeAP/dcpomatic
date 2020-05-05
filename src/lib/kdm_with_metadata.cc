@@ -105,41 +105,32 @@ make_zip_file (list<KDMWithMetadataPtr> kdms, boost::filesystem::path zip_file, 
 }
 
 
-/** Collect a list of KDMWithMetadatas into a list of list<KDMWithMetadata> so that each
- *  CinemaKDM contains the KDMs for its cinema.
+/** Collect a list of KDMWithMetadatas into a list of lists so that
+ *  each list contains the KDMs for one cinema.
  */
 list<list<KDMWithMetadataPtr> >
-collect (list<KDMWithMetadataPtr> screen_kdms)
+collect (list<KDMWithMetadataPtr> kdms)
 {
-	list<list<KDMWithMetadataPtr> > cinema_kdms;
+	list<list<KDMWithMetadataPtr> > grouped;
 
-	while (!screen_kdms.empty ()) {
+	BOOST_FOREACH (KDMWithMetadataPtr i, kdms) {
 
-		/* Get all the screens from a single cinema */
+		list<list<KDMWithMetadataPtr> >::iterator j = grouped.begin ();
 
-		list<KDMWithMetadataPtr> ck;
-
-		list<KDMWithMetadataPtr>::iterator i = screen_kdms.begin ();
-		ck.push_back (*i);
-		list<KDMWithMetadataPtr>::iterator j = i;
-		++i;
-		screen_kdms.remove (*j);
-
-		while (i != screen_kdms.end ()) {
-			if ((*i)->cinema() == ck.front()->cinema()) {
-				ck.push_back (*i);
-				list<KDMWithMetadataPtr>::iterator j = i;
-				++i;
-				screen_kdms.remove (*j);
-			} else {
-				++i;
+		while (j != grouped.end()) {
+			if (j->front()->cinema() == i->cinema()) {
+				j->push_back (i);
+				break;
 			}
 		}
 
-		cinema_kdms.push_back (ck);
+		if (j == grouped.end()) {
+			grouped.push_back (list<KDMWithMetadataPtr>());
+			grouped.back().push_back (i);
+		}
 	}
 
-	return cinema_kdms;
+	return grouped;
 }
 
 
