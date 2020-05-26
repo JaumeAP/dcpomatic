@@ -24,6 +24,13 @@ import shutil
 import os
 import copy
 import json
+import textwrap
+
+headline = "DCP-o-matic is a suite of tools to allow the creation, manipulation and playback of Digital Cinema Packages (DCPs)."
+description = "DCP-o-matic can create DCPs from videos, images, sound and subtitle files.  You can use it to make content for playback on DCI-compliant cinema projectors, as used in most of the world's digital cinemas.  It also includes a DCP player and tools to verify DCPs and write them to distribution drives."
+maintainer_name = "Carl Hetherington"
+maintainer_email = "carl@dcpomatic.com"
+homepage = "https://dcpomatic.com"
 
 deb_build_depends = dict()
 
@@ -220,10 +227,10 @@ def make_control(debian_version, bits, filename, debug, gui):
     print('Source: dcpomatic', file=f)
     print('Section: video', file=f)
     print('Priority: extra', file=f)
-    print('Maintainer: Carl Hetherington <carl@dcpomatic.com>', file=f)
+    print('Maintainer: %s <%s>' % (maintainer_name, maintainer_email), file=f)
     packages('Build-Depends', deb_build_depends[debian_version], f)
     print('Standards-Version: 3.9.3', file=f)
-    print('Homepage: https://dcpomatic.com/', file=f)
+    print('Homepage: %s' % homepage, file=f)
     print('', file=f)
     print('Package: dcpomatic', file=f)
     if bits == 32:
@@ -237,10 +244,8 @@ def make_control(debian_version, bits, filename, debug, gui):
 
     packages('Depends', pkg, f)
 
-    print('Description: Generator of Digital Cinema Packages (DCPs)', file=f)
-    print('  DCP-o-matic generates Digital Cinema Packages (DCPs) from videos, images,', file=f)
-    print('  sound and subtitle files.  You can use it to make content for playback on DCI-compliant', file=f)
-    print('  cinema projectors.', file=f)
+    print('Description: %s' % headline, file=f)
+    print(' %s' % description, file=f)
 
     if debug:
         print('', file=f)
@@ -260,19 +265,19 @@ def make_spec(filename, version, target, options, requires=None):
     """Make a .spec file for a RPM build"""
     tools = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(filename))), "src/tools")
     f = open(filename, 'w')
-    print('Summary:A program that generates Digital Cinema Packages (DCPs) from video and audio files', file=f)
+    print('Summary:%s' % headline, file=f)
     print('Name:dcpomatic2', file=f)
     print('Version:%s' % version, file=f)
     print('Release:1%{?dist}', file=f)
     print('License:GPL', file=f)
     print('Group:Applications/Multimedia', file=f)
-    print('URL:https://dcpomatic.com/', file=f)
+    print('URL:%s' % homepage, file=f)
     if requires is not None:
         print('Requires:%s' % requires, file=f)
     print('', file=f)
     print('%description', file=f)
-    print('DCP-o-matic generates Digital Cinema Packages (DCPs) from video and audio ', file=f)
-    print('files for presentation on DCI-compliant digital projectors.', file=f)
+    for line in textwrap.wrap(description, 50):
+        print(line, file=f)
     print('', file=f)
     print('%files', file=f)
     print('%{_bindir}/dcpomatic2', file=f)
@@ -694,7 +699,7 @@ def package(target, version, options):
         shutil.copyfile(target.deb, 'build/platform/docker')
         f = open('build/platform/docker/Dockerfile', 'w')
         print('FROM debian:jessie', file=f)
-        print('MAINTAINER carl@dcpomatic.com', file=f)
+        print('MAINTAINER %s' % maintainer_email, file=f)
         print('ADD build/platform/docker/dcpomatic_%s-1_amd64.deb /tmp' % (version, version), file=f)
         print('RUN apt-get -o Acquire:http::Timeout="5" update; exit 0', file=f)
         print('RUN dpkg -i /tmp/dcpomatic_*.deb; exit 0', file=f)
