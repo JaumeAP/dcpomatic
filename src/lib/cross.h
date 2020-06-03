@@ -49,9 +49,6 @@ extern boost::filesystem::path openssl_path ();
 #ifdef DCPOMATIC_DISK
 extern boost::filesystem::path disk_writer_path ();
 #endif
-#ifdef DCPOMATIC_OSX
-extern boost::filesystem::path app_contents ();
-#endif
 #ifdef DCPOMATIC_WINDOWS
 extern void maybe_open_console ();
 #endif
