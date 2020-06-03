@@ -32,6 +32,9 @@ extern "C" {
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
+#if BOOST_VERSION >= 106100
+#include <boost/dll/runtime_symbol_info.hpp>
+#endif
 #include <sys/sysctl.h>
 #include <mach-o/dyld.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
