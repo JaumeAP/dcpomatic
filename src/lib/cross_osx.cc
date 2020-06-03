@@ -221,7 +221,7 @@ start_batch_converter ()
 
 
 void
-start_player (boost::filesystem::path dcpomatic)
+start_player ()
 {
 	start_tool ("dcpomatic2_player", "DCP-o-matic\\ 2\\ Player.app");
 }
