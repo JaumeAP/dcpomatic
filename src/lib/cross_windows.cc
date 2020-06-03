@@ -185,7 +185,7 @@ mount_info ()
 }
 
 
-static boost::filesystem::path
+boost::filesystem::path
 directory_containing_executable ()
 {
 	return boost::dll::program_location().parent_path();
