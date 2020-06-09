@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2018 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2018-2020 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -18,8 +18,9 @@
 
 */
 
-#include "standard_controls.h"
 #include "film_viewer.h"
+#include "standard_controls.h"
+#include "wx_help.h"
 #include <wx/wx.h>
 #include <wx/tglbtn.h>
 
@@ -31,6 +32,7 @@ StandardControls::StandardControls (wxWindow* parent, shared_ptr<FilmViewer> vie
 {
 	_button_sizer->Add (_play_button, 0, wxEXPAND);
 	_play_button->Bind (wxEVT_TOGGLEBUTTON, boost::bind(&StandardControls::play_clicked, this));
+	HelpGUI::instance()->landmark (_play_button, HelpGUI::PLAY_BUTTON);
 }
 
 void

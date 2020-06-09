@@ -95,4 +95,12 @@ else
     done
     convert web/favicon-16x16.png web/favicon-32x32.png web/favicon-64x64.png web/favicon-128x128.png web/favicon-256x256.png web/favicon.ico
     convert src/web.png -resize 123x123 -transparent white web/logo.png
+
+    # Help
+    mkdir -p help
+    for f in src/help/*.svg; do
+	base=$(basename $f | sed -e "s/.svg//")
+	$INKSCAPE help/$base.png $f
+    done
+
 fi

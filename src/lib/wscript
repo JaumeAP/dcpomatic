@@ -114,6 +114,7 @@ sources = """
           font.cc
           frame_interval_checker.cc
           frame_rate_change.cc
+          help.cc
           hints.cc
           internet.cc
           image.cc

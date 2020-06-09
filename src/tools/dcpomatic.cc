@@ -52,6 +52,8 @@
 #include "wx/initial_setup_dialog.h"
 #include "wx/send_i18n_dialog.h"
 #include "wx/i18n_hook.h"
+#include "wx/static_text.h"
+#include "wx/wx_help.h"
 #include "lib/film.h"
 #include "lib/analytics.h"
 #include "lib/emailer.h"
@@ -66,6 +68,7 @@
 #include "lib/job_manager.h"
 #include "lib/exceptions.h"
 #include "lib/cinema.h"
+#include "lib/help.h"
 #include "lib/kdm_with_metadata.h"
 #include "lib/send_kdm_email_job.h"
 #include "lib/encode_server_finder.h"
@@ -542,6 +545,7 @@ private:
 				error_dialog (this, _("Could not create folder to store film."), std_to_wx(e.what()));
 #endif
 			}
+			Help::instance()->event (Help::SUCCESSFUL_FILE_NEW);
 		}
 
 		d->Destroy ();
@@ -1631,6 +1635,8 @@ private:
 			if (Config::instance()->check_for_updates ()) {
 				UpdateChecker::instance()->run ();
 			}
+
+			signal_manager->when_idle (boost::bind(&HelpGUI::start, HelpGUI::instance()));
 		}
 		catch (exception& e)
 		{

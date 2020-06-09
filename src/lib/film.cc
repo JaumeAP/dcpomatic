@@ -57,6 +57,7 @@
 #include "check_content_change_job.h"
 #include "ffmpeg_subtitle_stream.h"
 #include "font.h"
+#include "help.h"
 #include <libcxml/cxml.h>
 #include <dcp/cpl.h>
 #include <dcp/certificate_chain.h>
@@ -1270,6 +1271,8 @@ Film::add_content (shared_ptr<Content> c)
 	_playlist->add (shared_from_this(), c);
 
 	maybe_set_container_and_resolution ();
+
+	Help::instance()->event (Help::SUCCESSFUL_ADD_CONTENT);
 }
 
 

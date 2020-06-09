@@ -28,6 +28,7 @@
 #include "image_sequence_dialog.h"
 #include "film_viewer.h"
 #include "dcpomatic_button.h"
+#include "wx_help.h"
 #include "lib/audio_content.h"
 #include "lib/text_content.h"
 #include "lib/video_content.h"
@@ -128,6 +129,7 @@ ContentPanel::ContentPanel (wxNotebook* n, shared_ptr<Film> film, weak_ptr<FilmV
 		_add_folder = new Button (top, _("Add folder..."));
 		_add_folder->SetToolTip (_("Add a folder of image files (which will be used as a moving image sequence) or a folder of sound files."));
 		b->Add (_add_folder, 1, wxEXPAND | wxALL, DCPOMATIC_BUTTON_STACK_GAP);
+		HelpGUI::instance()->landmark (_add_folder, HelpGUI::ADD_FOLDER_BUTTON);
 
 		_add_dcp = new Button (top, _("Add DCP..."));
 		_add_dcp->SetToolTip (_("Add a DCP."));

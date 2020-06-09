@@ -215,6 +215,7 @@ function copy_resources {
     cp $prefix/src/dcpomatic/graphics/sequence.png "$dest"
     cp $prefix/src/dcpomatic/graphics/me.jpg "$dest"
     cp $prefix/src/dcpomatic/graphics/link.png "$dest"
+    cp -r $prefix/src/dcpomatic/graphics/help "$dest"
     cp -r $prefix/share/libdcp/xsd "$dest"
 
     # i18n: DCP-o-matic .mo files

@@ -111,8 +111,8 @@ sources = """
           playlist_controls.cc
           playlist_editor_config_dialog.cc
           question_dialog.cc
-          rating_dialog.cc
           qube_certificate_panel.cc
+          rating_dialog.cc
           recipients_panel.cc
           recipient_dialog.cc
           recreate_chain_dialog.cc
@@ -160,8 +160,9 @@ sources = """
           video_view.cc
           video_waveform_dialog.cc
           video_waveform_plot.cc
-          wx_util.cc
+          wx_help.cc
           wx_signal_manager.cc
+          wx_util.cc
           """
 
 def configure(conf):
