@@ -61,7 +61,8 @@ HelpGUI::show (int index)
 	}
 
 	Message const& m = _messages[index];
-	wxBitmap bitmap (bitmap_path("help/" + m.id));
+	boost::filesystem::path path = bitmap_directory() / "help" / String::compose("%1.png", m.id);
+	wxBitmap bitmap (std_to_wx(path.string()));
 	wxPoint pos;
 	if (m.anchor_point) {
 		pos = *m.anchor_point;
