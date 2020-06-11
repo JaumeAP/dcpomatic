@@ -722,7 +722,7 @@ def make_manual(target):
 def test(target, test):
     if target.platform != 'windows':
         target.set('LC_ALL', 'C')
-        cmd = 'run/tests '
+        cmd = 'run/tests --xml '
         if target.debug:
             cmd += '--backtrace '
         if test is not None:
