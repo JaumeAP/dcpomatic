@@ -724,7 +724,7 @@ def test(target, options, test):
         target.set('LC_ALL', 'C')
         cmd = 'run/tests'
         if options['xml']:
-            target += '--xml '
+            cmd += '--xml '
         if target.debug:
             cmd += '--backtrace '
         if test is not None:
