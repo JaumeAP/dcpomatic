@@ -389,7 +389,7 @@ def dependencies(target, options):
 
     return deps
 
-option_defaults = { "gui": True, "variant": None }
+option_defaults = { "gui": True, "variant": None, "xml": False }
 
 def configure_options(target, options):
     opt = ''
@@ -719,10 +719,12 @@ def make_manual(target):
     target.command('pdflatex colour.tex')
     return [os.path.abspath('pdf'), os.path.abspath('html'), os.path.abspath('colour.pdf')]
 
-def test(target, test):
+def test(target, options, test):
     if target.platform != 'windows':
         target.set('LC_ALL', 'C')
-        cmd = 'run/tests --xml '
+        cmd = 'run/tests'
+        if options['xml']:
+            target += '--xml '
         if target.debug:
             cmd += '--backtrace '
         if test is not None:

@@ -27,6 +27,7 @@ elif [ "$1" == "--helgrind" ]; then
     shift;
     valgrind --tool="helgrind" build/test/unit-tests $*
 elif [ "$1" == "--xml" ]; then
+    shift;
     build/test/unit-tests --catch_system_errors=no --log_format=XML --log_sink=results.xml --log_level=all --report_level=no --result_code=no
 else
     ulimit -c unlimited
