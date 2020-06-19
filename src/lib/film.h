@@ -62,6 +62,7 @@ class Job;
 class Film;
 struct isdcf_name_test;
 struct recover_test_2d_encrypted;
+struct atmos_encrypted_passthrough_test;
 
 class InfoFileHandle
 {
@@ -381,6 +382,7 @@ private:
 
 	friend struct ::isdcf_name_test;
 	friend struct ::recover_test_2d_encrypted;
+	friend struct ::atmos_encrypted_passthrough_test;
 	template <typename> friend class ChangeSignaller;
 
 	boost::filesystem::path info_file (dcpomatic::DCPTimePeriod p) const;
