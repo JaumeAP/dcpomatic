@@ -73,6 +73,8 @@ public:
 
 	std::string digest () const;
 
+	std::pair<std::list<int>, std::list<int> > mapped_channels () const;
+	std::list<int> mapped_input_channels () const;
 	std::list<int> mapped_output_channels () const;
 	void unmap_all ();
 

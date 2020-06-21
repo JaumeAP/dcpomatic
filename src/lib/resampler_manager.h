@@ -1,0 +1,54 @@
+#include "audio_content.h"
+#include "dcpomatic_time.h"
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+#include <vector>
+
+
+class AudioContent;
+class AudioDecoder;
+class AudioStream;
+class Resampler;
+
+
+class ResamplerManager : public boost::noncopyable
+{
+public:
+	ResamplerManager (boost::weak_ptr<const Film> film)
+		: _film (film)
+	{}
+
+	void add (dcpomatic::DCPTime start, dcpomatic::DCPTime end, boost::shared_ptr<AudioContent> content, boost::shared_ptr<AudioDecoder> decoder);
+	boost::shared_ptr<Resampler> get (AudioDecoder* decoder, AudioStreamPtr stream, bool fast);
+
+private:
+	friend struct resampler_manager_setup_test;
+
+	class Group
+	{
+	public:
+		Group (dcpomatic::DCPTime start_, dcpomatic::DCPTime end_, boost::shared_ptr<AudioContent> content, boost::shared_ptr<AudioDecoder> decoder)
+			: start(start_)
+			, end(end_)
+		{
+			contents.push_back (content);
+			decoders.push_back (decoder);
+			resamplers.resize (content->streams().size());
+		}
+
+		dcpomatic::DCPTime start;
+		dcpomatic::DCPTime end;
+		std::vector<boost::shared_ptr<AudioContent> > contents;
+		std::vector<boost::shared_ptr<AudioDecoder> > decoders;
+		std::vector<boost::shared_ptr<Resampler> > resamplers;
+	};
+
+	bool can_share (Group const& a, Group const& b) const;
+	void coalesce ();
+	bool coalesce_pass ();
+
+	boost::weak_ptr<const Film> _film;
+	std::vector<Group> _groups;
+};
+

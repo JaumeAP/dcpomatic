@@ -25,6 +25,7 @@
 #include "dcpomatic_log.h"
 #include "log.h"
 #include "resampler.h"
+#include "resampler_manager.h"
 #include "compose.hpp"
 #include <iostream>
 
@@ -99,9 +100,9 @@ AudioDecoder::emit (shared_ptr<const Film> film, AudioStreamPtr stream, shared_p
 		_positions[stream] = time.frames_round (resampled_rate);
 	}
 
-	shared_ptr<Resampler> resampler;
+	auto resampler = _resampler_manager->get (this, stream, _fast);
 	auto i = _resamplers.find(stream);
-	if (i != _resamplers.end()) {
+	if (i != _resamplers.end ()) {
 		resampler = i->second;
 	} else {
 		if (stream->frame_rate() != resampled_rate) {
@@ -175,13 +176,7 @@ AudioDecoder::seek ()
 void
 AudioDecoder::flush ()
 {
-	for (auto const& i: _resamplers) {
-		auto ro = i.second->flush ();
-		if (ro->frames() > 0) {
-			Data (i.first, ContentAudio (ro, _positions[i.first]));
-			_positions[i.first] += ro->frames();
-		}
-	}
+	_resampler_manager->maybe_flush (this);
 
 	if (_content->delay() < 0) {
 		/* Finish off with the gap caused by the delay */

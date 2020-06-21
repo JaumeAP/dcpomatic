@@ -20,6 +20,7 @@
 
 
 #include "atmos_decoder.h"
+#include "resampler_manager.h"
 #include "player.h"
 #include "film.h"
 #include "audio_buffers.h"
@@ -284,6 +285,15 @@ Player::setup_pieces_unlocked ()
 
 	_black = Empty (_film, playlist(), bind(&have_video, _1), _playback_length);
 	_silent = Empty (_film, playlist(), bind(&have_audio, _1), _playback_length);
+
+	_resampler_manager = make_shared<ResamplerManager>(_film);
+
+	for (auto i: _pieces) {
+		if (i->content->audio) {
+			_resampler_manager->add (i->content->position(), i->content->end(_film), i->content->audio, i->decoder->audio);
+			i->decoder->audio->set_resampler_manager (_resampler_manager);
+		}
+	}
 
 	_last_video_time = boost::optional<dcpomatic::DCPTime>();
 	_last_video_eyes = Eyes::BOTH;

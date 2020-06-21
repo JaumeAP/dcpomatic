@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2018 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2020 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -41,6 +41,8 @@ class AudioDecoderStream;
 class Log;
 class Film;
 class Resampler;
+class ResamplerManager;
+struct resampler_manager_setup_test;
 
 
 /** @class AudioDecoder.
@@ -58,9 +60,21 @@ public:
 
 	dcpomatic::ContentTime stream_position (std::shared_ptr<const Film> film, AudioStreamPtr stream) const;
 
+	void set_resampler_manager (std::shared_ptr<ResamplerManager> r) {
+		_resampler_manager = r;
+	}
+
+	/** @return Number of frames of data that were accepted */
 	boost::signals2::signal<void (AudioStreamPtr, ContentAudio)> Data;
 
 private:
+	friend struct ::resampler_manager_setup_test;
+
+	/* Only for test use */
+	AudioDecoder ()
+		: DecoderPart(0)
+	{}
+
 	void silence (int milliseconds);
 
 	std::shared_ptr<const AudioContent> _content;
@@ -71,6 +85,8 @@ private:
 	PositionMap _positions;
 	typedef std::map<AudioStreamPtr, std::shared_ptr<Resampler>> ResamplerMap;
 	ResamplerMap _resamplers;
+
+	boost::shared_ptr<ResamplerManager> _resampler_manager;
 
 	bool _fast;
 };

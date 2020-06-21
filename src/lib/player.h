@@ -52,6 +52,9 @@ class Playlist;
 class AudioBuffers;
 class ReferencedReelAsset;
 class Shuffler;
+class ResamplerManager;
+struct resampler_manager_setup_test;
+
 
 class PlayerProperty
 {
@@ -123,6 +126,7 @@ private:
 	friend struct empty_test2;
 	friend struct check_reuse_old_data_test;
 	friend struct overlap_video_test1;
+	friend struct resampler_manager_setup_test;
 
 	void construct ();
 	void setup_pieces ();
@@ -227,6 +231,8 @@ private:
 	std::shared_ptr<AudioProcessor> _audio_processor;
 
 	dcpomatic::DCPTime _playback_length;
+
+	boost::shared_ptr<ResamplerManager> _resampler_manager;
 
 	boost::signals2::scoped_connection _film_changed_connection;
 	boost::signals2::scoped_connection _playlist_change_connection;

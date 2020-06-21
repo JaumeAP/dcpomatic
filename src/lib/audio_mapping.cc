@@ -254,25 +254,43 @@ AudioMapping::digest () const
 }
 
 
-list<int>
-AudioMapping::mapped_output_channels () const
+pair<list<int>, list<int>>
+AudioMapping::mapped_channels () const
 {
 	static float const minus_96_db = 0.000015849;
 
-	list<int> mapped;
+	pair<list<int>, list<int>> mapped;
 
 	for (auto const& i: _gain) {
 		for (auto j: dcp::used_audio_channels()) {
 			if (abs(i[static_cast<int>(j)]) > minus_96_db) {
-				mapped.push_back (static_cast<int>(j));
+				mapped.first.push_back (static_cast<int>(i));
+				mapped.second.push_back (static_cast<int>(j));
 			}
 		}
 	}
 
-	mapped.sort ();
-	mapped.unique ();
+	mapped.first.sort ();
+	mapped.first.unique ();
+
+	mapped.second.sort ();
+	mapped.second.unique ();
 
 	return mapped;
+}
+
+
+list<int>
+AudioMapping::mapped_input_channels () const
+{
+	return mapped_channels().first;
+}
+
+
+list<int>
+AudioMapping::mapped_output_channels () const
+{
+	return mapped_channels().second;
 }
 
 

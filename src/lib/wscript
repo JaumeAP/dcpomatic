@@ -143,6 +143,7 @@ sources = """
           reel_writer.cc
           render_text.cc
           resampler.cc
+          resampler_manager.cc
           rgba.cc
           rng.cc
           scoped_temporary.cc
