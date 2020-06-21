@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2013-2014 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2013-2020 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -21,8 +21,10 @@
 #ifndef DCPOMATIC_PIECE_H
 #define DCPOMATIC_PIECE_H
 
-#include "types.h"
+#include "content.h"
+#include "dcpomatic_time.h"
 #include "frame_rate_change.h"
+#include "types.h"
 
 class Content;
 class Decoder;
@@ -36,6 +38,10 @@ public:
 		, frc (f)
 		, done (false)
 	{}
+
+	dcpomatic::DCPTime position () const {
+		return content->position ();
+	}
 
 	boost::shared_ptr<Content> content;
 	boost::shared_ptr<Decoder> decoder;
