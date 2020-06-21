@@ -378,13 +378,10 @@ Player::black_player_video_frame (Eyes eyes) const
 	);
 }
 
-Frame
-Player::dcp_to_content_video (shared_ptr<const Piece> piece, DCPTime t) const
-{
-	DCPTime s = t - piece->content->position ();
-	s = min (piece->content->length_after_trim(_film), s);
-	s = max (DCPTime(), s + DCPTime (piece->content->trim_start(), piece->frc));
 
+DCPTime
+Player::content_video_to_dcp (shared_ptr<const Piece> piece, Frame f) const
+{
 	/* It might seem more logical here to convert s to a ContentTime (using the FrameRateChange)
 	   then convert that ContentTime to frames at the content's rate.  However this fails for
 	   situations like content at 29.9978733fps, DCP at 30fps.  The accuracy of the Time type is not
@@ -392,30 +389,15 @@ Player::dcp_to_content_video (shared_ptr<const Piece> piece, DCPTime t) const
 
 	   Instead we convert the DCPTime using the DCP video rate then account for any skip/repeat.
 	*/
-	return s.frames_floor (piece->frc.dcp) / piece->frc.factor ();
-}
-
-DCPTime
-Player::content_video_to_dcp (shared_ptr<const Piece> piece, Frame f) const
-{
-	/* See comment in dcp_to_content_video */
 	DCPTime const d = DCPTime::from_frames (f * piece->frc.factor(), piece->frc.dcp) - DCPTime(piece->content->trim_start(), piece->frc);
 	return d + piece->content->position();
 }
 
-Frame
-Player::dcp_to_resampled_audio (shared_ptr<const Piece> piece, DCPTime t) const
-{
-	DCPTime s = t - piece->content->position ();
-	s = min (piece->content->length_after_trim(_film), s);
-	/* See notes in dcp_to_content_video */
-	return max (DCPTime (), DCPTime (piece->content->trim_start (), piece->frc) + s).frames_floor (_film->audio_frame_rate ());
-}
 
 DCPTime
 Player::resampled_audio_to_dcp (shared_ptr<const Piece> piece, Frame f) const
 {
-	/* See comment in dcp_to_content_video */
+	/* See notes in content_video_to_dcp */
 	return DCPTime::from_frames (f, _film->audio_frame_rate())
 		- DCPTime (piece->content->trim_start(), piece->frc)
 		+ piece->content->position();
