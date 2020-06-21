@@ -43,6 +43,10 @@ public:
 		return content->position ();
 	}
 
+	dcpomatic::DCPTime end (boost::shared_ptr<const Film> film) const {
+		return content->end (film);
+	}
+
 	boost::shared_ptr<Content> content;
 	boost::shared_ptr<Decoder> decoder;
 	FrameRateChange frc;
