@@ -380,21 +380,6 @@ Player::black_player_video_frame (Eyes eyes) const
 
 
 DCPTime
-Player::content_video_to_dcp (shared_ptr<const Piece> piece, Frame f) const
-{
-	/* It might seem more logical here to convert s to a ContentTime (using the FrameRateChange)
-	   then convert that ContentTime to frames at the content's rate.  However this fails for
-	   situations like content at 29.9978733fps, DCP at 30fps.  The accuracy of the Time type is not
-	   enough to distinguish between the two with low values of time (e.g. 3200 in Time units).
-
-	   Instead we convert the DCPTime using the DCP video rate then account for any skip/repeat.
-	*/
-	DCPTime const d = DCPTime::from_frames (f * piece->frc.factor(), piece->frc.dcp) - DCPTime(piece->content->trim_start(), piece->frc);
-	return d + piece->position();
-}
-
-
-DCPTime
 Player::resampled_audio_to_dcp (shared_ptr<const Piece> piece, Frame f) const
 {
 	/* See notes in content_video_to_dcp */
@@ -409,12 +394,6 @@ Player::dcp_to_content_time (shared_ptr<const Piece> piece, DCPTime t) const
 	DCPTime s = t - piece->position ();
 	s = min (piece->content->length_after_trim(_film), s);
 	return max (ContentTime (), ContentTime (s, piece->frc) + piece->content->trim_start());
-}
-
-DCPTime
-Player::content_time_to_dcp (shared_ptr<const Piece> piece, ContentTime t) const
-{
-	return max (DCPTime (), DCPTime (t - piece->content->trim_start(), piece->frc) + piece->position());
 }
 
 list<shared_ptr<Font> >
@@ -596,7 +575,7 @@ Player::pass ()
 			continue;
 		}
 
-		DCPTime const t = content_time_to_dcp (i, max(i->decoder->position(), i->content->trim_start()));
+		DCPTime const t = i->content_time_to_dcp (max(i->decoder->position(), i->content->trim_start()));
 		if (t > i->end(_film)) {
 			i->done = true;
 		} else {
@@ -789,7 +768,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 	}
 
 	/* Time of the first frame we will emit */
-	DCPTime const time = content_video_to_dcp (piece, video.frame);
+	DCPTime const time = piece->content_video_to_dcp (video.frame);
 
 	/* Discard if it's before the content's period or the last accurate seek.  We can't discard
 	   if it's after the content's period here as in that case we still need to fill any gap between
@@ -977,7 +956,7 @@ Player::bitmap_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, C
 
 	dcp::Size scaled_size (width, height);
 	ps.bitmap.push_back (BitmapText(image->scale(scaled_size, dcp::YUV_TO_RGB_REC601, image->pixel_format(), true, _fast), subtitle.sub.rectangle));
-	DCPTime from (content_time_to_dcp (piece, subtitle.from()));
+	DCPTime from (piece->content_time_to_dcp(subtitle.from()));
 
 	_active_texts[text->type()].add_from (wc, ps, from);
 }
@@ -992,7 +971,7 @@ Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Co
 	}
 
 	PlayerText ps;
-	DCPTime const from (content_time_to_dcp (piece, subtitle.from()));
+	DCPTime const from (piece->content_time_to_dcp( subtitle.from()));
 
 	if (from > piece->end(_film)) {
 		return;
@@ -1043,7 +1022,7 @@ Player::subtitle_stop (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Conte
 		return;
 	}
 
-	DCPTime const dcp_to = content_time_to_dcp (piece, to);
+	DCPTime const dcp_to = piece->content_time_to_dcp(to);
 
 	if (dcp_to > piece->end(_film)) {
 		return;
@@ -1239,7 +1218,7 @@ Player::content_time_to_dcp (shared_ptr<Content> content, ContentTime t)
 
 	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
 		if (i->content == content) {
-			return content_time_to_dcp (i, t);
+			return i->content_time_to_dcp (t);
 		}
 	}
 
