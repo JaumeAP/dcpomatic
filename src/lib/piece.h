@@ -25,6 +25,7 @@
 #include "dcpomatic_time.h"
 #include "frame_rate_change.h"
 #include "types.h"
+#include "video_content.h"
 
 class Content;
 class Decoder;
@@ -63,6 +64,10 @@ public:
 	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const
 	{
 		return max (dcpomatic::DCPTime(), dcpomatic::DCPTime(t - content->trim_start(), frc) + position());
+	}
+
+	Crop video_crop () const {
+		return content->video->crop ();
 	}
 
 	boost::shared_ptr<Content> content;

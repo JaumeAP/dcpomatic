@@ -833,7 +833,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 	_last_video[wp].reset (
 		new PlayerVideo (
 			video.image,
-			piece->content->video->crop (),
+			piece->video_crop(),
 			piece->content->video->fade (_film, video.frame),
 			scale_for_display(piece->content->video->scaled_size(_film->frame_size()), _video_container_size, _film->frame_size()),
 			_video_container_size,
