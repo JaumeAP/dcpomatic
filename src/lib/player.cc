@@ -379,23 +379,6 @@ Player::black_player_video_frame (Eyes eyes) const
 }
 
 
-DCPTime
-Player::resampled_audio_to_dcp (shared_ptr<const Piece> piece, Frame f) const
-{
-	/* See notes in content_video_to_dcp */
-	return DCPTime::from_frames (f, _film->audio_frame_rate())
-		- DCPTime (piece->content->trim_start(), piece->frc)
-		+ piece->position();
-}
-
-ContentTime
-Player::dcp_to_content_time (shared_ptr<const Piece> piece, DCPTime t) const
-{
-	DCPTime s = t - piece->position ();
-	s = min (piece->content->length_after_trim(_film), s);
-	return max (ContentTime (), ContentTime (s, piece->frc) + piece->content->trim_start());
-}
-
 list<shared_ptr<Font> >
 Player::get_subtitle_fonts ()
 {
@@ -871,7 +854,7 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 	int const rfr = content->resampled_frame_rate (_film);
 
 	/* Compute time in the DCP */
-	DCPTime time = resampled_audio_to_dcp (piece, content_audio.frame);
+	DCPTime time = piece->resampled_audio_to_dcp (_film, content_audio.frame);
 	/* And the end of this block in the DCP */
 	DCPTime end = time + DCPTime::from_frames(content_audio.audio->frames(), rfr);
 
@@ -1067,11 +1050,11 @@ Player::seek (DCPTime time, bool accurate)
 			   content we may not start right at the beginning of the next, causing a gap (if the next content has
 			   been trimmed to a point between keyframes, or something).
 			*/
-			i->decoder->seek (dcp_to_content_time (i, i->content->position()), true);
+			i->decoder->seek (i->dcp_to_content_time(_film, i->content->position()), true);
 			i->done = false;
 		} else if (i->content->position() <= time && time < i->end(_film)) {
 			/* During; seek to position */
-			i->decoder->seek (dcp_to_content_time (i, time), accurate);
+			i->decoder->seek (i->dcp_to_content_time(_film, time), accurate);
 			i->done = false;
 		} else {
 			/* After; this piece is done */

@@ -18,6 +18,8 @@
 
 */
 
+
+#include "film.h"
 #include "piece.h"
 
 
@@ -65,5 +67,24 @@ Crop
 Piece::video_crop () const
 {
 	return content->video->crop ();
+}
+
+
+DCPTime
+Piece::resampled_audio_to_dcp (shared_ptr<const Film> film, Frame f) const
+{
+	/* See notes in content_video_to_dcp */
+	return DCPTime::from_frames(f, film->audio_frame_rate())
+		- DCPTime(content->trim_start(), frc)
+		+ position();
+}
+
+
+ContentTime
+Piece::dcp_to_content_time (shared_ptr<const Film> film, DCPTime t) const
+{
+	DCPTime s = t - position();
+	s = min(content->length_after_trim(film), s);
+	return max(ContentTime(), ContentTime(s, frc) + content->trim_start());
 }
 
