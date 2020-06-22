@@ -762,8 +762,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 		return;
 	}
 
-	FrameRateChange frc (_film, piece->content);
-	if (frc.skip && (video.frame % 2) == 1) {
+	if (piece->frc.skip && (video.frame % 2) == 1) {
 		return;
 	}
 
@@ -848,7 +847,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 		);
 
 	DCPTime t = time;
-	for (int i = 0; i < frc.repeat; ++i) {
+	for (int i = 0; i < piece->frc.repeat; ++i) {
 		if (t < piece->end(_film)) {
 			emit_video (_last_video[wp], t);
 		}
