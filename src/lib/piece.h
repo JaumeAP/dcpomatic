@@ -40,35 +40,11 @@ public:
 		, done (false)
 	{}
 
-	dcpomatic::DCPTime position () const {
-		return content->position ();
-	}
-
-	dcpomatic::DCPTime end (boost::shared_ptr<const Film> film) const {
-		return content->end (film);
-	}
-
-	dcpomatic::DCPTime content_video_to_dcp (Frame f) const
-	{
-		/* It might seem more logical here to convert s to a ContentTime (using the FrameRateChange)
-		   then convert that ContentTime to frames at the content's rate.  However this fails for
-		   situations like content at 29.9978733fps, DCP at 30fps.  The accuracy of the Time type is not
-		   enough to distinguish between the two with low values of time (e.g. 3200 in Time units).
-
-		   Instead we convert the DCPTime using the DCP video rate then account for any skip/repeat.
-		   */
-		dcpomatic::DCPTime const d = dcpomatic::DCPTime::from_frames(f * frc.factor(), frc.dcp) - dcpomatic::DCPTime(content->trim_start(), frc);
-		return d + position();
-	}
-
-	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const
-	{
-		return max (dcpomatic::DCPTime(), dcpomatic::DCPTime(t - content->trim_start(), frc) + position());
-	}
-
-	Crop video_crop () const {
-		return content->video->crop ();
-	}
+	dcpomatic::DCPTime position () const;
+	dcpomatic::DCPTime end (boost::shared_ptr<const Film> film) const;
+	dcpomatic::DCPTime content_video_to_dcp (Frame f) const;
+	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const;
+	Crop video_crop () const;
 
 	boost::shared_ptr<Content> content;
 	boost::shared_ptr<Decoder> decoder;

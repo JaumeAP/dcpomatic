@@ -136,6 +136,7 @@ sources = """
           mid_side_decoder.cc
           monitor_checker.cc
           overlaps.cc
+          piece.cc
           player.cc
           player_text.cc
           player_video.cc
