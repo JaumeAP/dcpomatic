@@ -38,6 +38,7 @@ class Image;
 class ImageProxy;
 class Film;
 class Socket;
+class Piece;
 
 /** Everything needed to describe a video frame coming out of the player, but with the
  *  bits still their raw form.  We may want to combine the bits on a remote machine,
@@ -56,7 +57,7 @@ public:
 		Part,
 		boost::optional<ColourConversion>,
 		VideoRange video_range,
-		boost::weak_ptr<Content>,
+		boost::weak_ptr<Piece>,
 		boost::optional<Frame>,
 		bool error
 		);
@@ -105,8 +106,8 @@ public:
 
 	size_t memory_used () const;
 
-	boost::weak_ptr<Content> content () const {
-		return _content;
+	boost::weak_ptr<Piece> piece () const {
+		return _piece;
 	}
 
 	bool error () const {
@@ -126,10 +127,10 @@ private:
 	boost::optional<ColourConversion> _colour_conversion;
 	VideoRange _video_range;
 	boost::optional<PositionImage> _text;
-	/** Content that we came from.  This is so that reset_metadata() can work, and also
+	/** Piece that we came from.  This is so that reset_metadata() can work, and also
 	 *  for variant:swaroop's non-skippable ads.
 	 */
-	boost::weak_ptr<Content> _content;
+	boost::weak_ptr<Piece> _piece;
 	/** Video frame that we came from.  Again, this is for reset_metadata() */
 	boost::optional<Frame> _video_frame;
 
