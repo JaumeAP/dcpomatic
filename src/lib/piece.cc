@@ -19,10 +19,12 @@
 */
 
 
+#include "audio_content.h"
 #include "film.h"
 #include "piece.h"
 
 
+using boost::optional;
 using boost::shared_ptr;
 using namespace dcpomatic;
 
@@ -86,5 +88,54 @@ Piece::dcp_to_content_time (shared_ptr<const Film> film, DCPTime t) const
 	DCPTime s = t - position();
 	s = min(content->length_after_trim(film), s);
 	return max(ContentTime(), ContentTime(s, frc) + content->trim_start());
+}
+
+
+bool
+Piece::video_use () const
+{
+	return content->video->use();
+}
+
+
+optional<double>
+Piece::video_fade (shared_ptr<const Film> film, Frame frame) const
+{
+	return content->video->fade (film, frame);
+}
+
+
+dcp::Size
+Piece::video_scaled_size (dcp::Size container_size)
+{
+	return content->video->scaled_size(container_size);
+}
+
+
+optional<ColourConversion>
+Piece::video_colour_conversion () const
+{
+	return content->video->colour_conversion();
+}
+
+
+VideoRange
+Piece::video_range () const
+{
+	return content->video->range();
+}
+
+
+int
+Piece::audio_resampled_frame_rate (boost::shared_ptr<const Film> film) const
+{
+	return content->audio->resampled_frame_rate (film);
+}
+
+
+double
+Piece::audio_gain () const
+{
+	return content->audio->gain();
 }
 

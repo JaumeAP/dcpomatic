@@ -741,7 +741,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 		return;
 	}
 
-	if (!piece->content->video->use()) {
+	if (!piece->video_use()) {
 		return;
 	}
 
@@ -816,13 +816,13 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 		new PlayerVideo (
 			video.image,
 			piece->video_crop(),
-			piece->content->video->fade (_film, video.frame),
-			scale_for_display(piece->content->video->scaled_size(_film->frame_size()), _video_container_size, _film->frame_size()),
+			piece->video_fade(_film, video.frame),
+			scale_for_display(piece->video_scaled_size(_film->frame_size()), _video_container_size, _film->frame_size()),
 			_video_container_size,
 			video.eyes,
 			video.part,
-			piece->content->video->colour_conversion(),
-			piece->content->video->range(),
+			piece->video_colour_conversion(),
+			piece->video_range(),
 			piece->content,
 			video.frame,
 			false
@@ -848,10 +848,7 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 		return;
 	}
 
-	shared_ptr<AudioContent> content = piece->content->audio;
-	DCPOMATIC_ASSERT (content);
-
-	int const rfr = content->resampled_frame_rate (_film);
+	int const rfr = piece->audio_resampled_frame_rate (_film);
 
 	/* Compute time in the DCP */
 	DCPTime time = piece->resampled_audio_to_dcp (_film, content_audio.frame);
@@ -882,9 +879,9 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 
 	/* Gain */
 
-	if (content->gain() != 0) {
+	if (piece->audio_gain() != 0) {
 		shared_ptr<AudioBuffers> gain (new AudioBuffers (content_audio.audio));
-		gain->apply_gain (content->gain ());
+		gain->apply_gain (piece->audio_gain());
 		content_audio.audio = gain;
 	}
 

@@ -48,6 +48,14 @@ public:
 	dcpomatic::ContentTime dcp_to_content_time (boost::shared_ptr<const Film> film, dcpomatic::DCPTime t) const;
 
 	Crop video_crop () const;
+	bool video_use () const;
+	boost::optional<double> video_fade (boost::shared_ptr<const Film> film, Frame frame) const;
+	dcp::Size video_scaled_size (dcp::Size container_size);
+	boost::optional<ColourConversion> video_colour_conversion () const;
+	VideoRange video_range () const;
+
+	int audio_resampled_frame_rate (boost::shared_ptr<const Film> film) const;
+	double audio_gain () const;
 
 	boost::shared_ptr<Content> content;
 	boost::shared_ptr<Decoder> decoder;
