@@ -35,7 +35,7 @@ public:
 	Piece (boost::shared_ptr<Content> c, boost::shared_ptr<Decoder> d, FrameRateChange f);
 
 	void update_pull_to (dcpomatic::DCPTime& pull_to) const;
-	void set_last_push_end (AudioStreamPtr stream, DCPTime last_push_end);
+	void set_last_push_end (AudioStreamPtr stream, dcpomatic::DCPTime last_push_end);
 
 private:
 	std::vector<boost::shared_ptr<Content> > _content;
