@@ -186,12 +186,14 @@ Player::setup_pieces_unlocked ()
 		}
 
 		shared_ptr<Decoder> old_decoder;
+		/* XXX
 		BOOST_FOREACH (shared_ptr<Piece> j, old_pieces) {
 			if (j->content == i) {
 				old_decoder = j->decoder;
 				break;
 			}
 		}
+		*/
 
 		shared_ptr<Decoder> decoder = decoder_factory (_film, i, _fast, _tolerant, old_decoder);
 		DCPOMATIC_ASSERT (decoder);
@@ -259,10 +261,8 @@ Player::setup_pieces_unlocked ()
 
 	_stream_states.clear ();
 	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
-		if (i->content->audio) {
-			BOOST_FOREACH (AudioStreamPtr j, i->content->audio->streams()) {
-				_stream_states[j] = StreamState (i, i->content->position ());
-			}
+		BOOST_FOREACH (AudioStreamPtr j, i->audio_streams()) {
+			_stream_states[j] = StreamState (i, i->content->position ());
 		}
 	}
 
@@ -386,13 +386,11 @@ Player::get_subtitle_fonts ()
 
 	list<shared_ptr<Font> > fonts;
 	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
-		BOOST_FOREACH (shared_ptr<TextContent> j, i->content->text) {
-			/* XXX: things may go wrong if there are duplicate font IDs
-			   with different font files.
-			*/
-			list<shared_ptr<Font> > f = j->fonts ();
-			copy (f.begin(), f.end(), back_inserter (fonts));
-		}
+		/* XXX: things may go wrong if there are duplicate font IDs
+		   with different font files.
+		   */
+		list<shared_ptr<Font> > f = i->fonts ();
+		copy (f.begin(), f.end(), back_inserter(fonts));
 	}
 
 	return fonts;
@@ -558,7 +556,7 @@ Player::pass ()
 			continue;
 		}
 
-		DCPTime const t = i->content_time_to_dcp (max(i->decoder->position(), i->content->trim_start()));
+		DCPTime const t = i->content_time_to_dcp (max(i->decoder->position(), i->trim_start()));
 		if (t > i->end(_film)) {
 			i->done = true;
 		} else {
@@ -600,13 +598,12 @@ Player::pass ()
 	case CONTENT:
 	{
 		earliest_content->done = earliest_content->decoder->pass ();
-		shared_ptr<DCPContent> dcp = dynamic_pointer_cast<DCPContent>(earliest_content->content);
-		if (dcp && !_play_referenced && dcp->reference_audio()) {
+		if (!_play_referenced && earliest_content->referenced_audio()) {
 			/* We are skipping some referenced DCP audio content, so we need to update _last_audio_time
 			   to `hide' the fact that no audio was emitted during the referenced DCP (though
 			   we need to behave as though it was).
 			*/
-			_last_audio_time = dcp->end (_film);
+			_last_audio_time = earliest_content->end (_film);
 		}
 		break;
 	}
@@ -1041,15 +1038,15 @@ Player::seek (DCPTime time, bool accurate)
 	}
 
 	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
-		if (time < i->content->position()) {
+		if (time < i->position()) {
 			/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
 			   we must seek this (following) content accurately, otherwise when we come to the end of the current
 			   content we may not start right at the beginning of the next, causing a gap (if the next content has
 			   been trimmed to a point between keyframes, or something).
 			*/
-			i->decoder->seek (i->dcp_to_content_time(_film, i->content->position()), true);
+			i->decoder->seek (i->dcp_to_content_time(_film, i->position()), true);
 			i->done = false;
-		} else if (i->content->position() <= time && time < i->end(_film)) {
+		} else if (i->position() <= time && time < i->end(_film)) {
 			/* During; seek to position */
 			i->decoder->seek (i->dcp_to_content_time(_film, time), accurate);
 			i->done = false;
@@ -1196,8 +1193,9 @@ Player::content_time_to_dcp (shared_ptr<Content> content, ContentTime t)
 	boost::mutex::scoped_lock lm (_mutex);
 
 	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
-		if (i->content == content) {
-			return i->content_time_to_dcp (t);
+		optional<DCPTime> d = i->content_time_to_dcp (t);
+		if (d) {
+			return d;
 		}
 	}
 

@@ -22,8 +22,11 @@
 #include "audio_content.h"
 #include "film.h"
 #include "piece.h"
+#include "text_content.h"
 
 
+using std::list;
+using std::vector;
 using boost::optional;
 using boost::shared_ptr;
 using namespace dcpomatic;
@@ -32,14 +35,14 @@ using namespace dcpomatic;
 DCPTime
 Piece::position () const
 {
-	return content->position ();
+	return _content->position ();
 }
 
 
 DCPTime
 Piece::end (shared_ptr<const Film> film) const
 {
-	return content->end (film);
+	return _content->end (film);
 }
 
 
@@ -53,7 +56,7 @@ Piece::content_video_to_dcp (Frame f) const
 
 	   Instead we convert the DCPTime using the DCP video rate then account for any skip/repeat.
 	   */
-	DCPTime const d = DCPTime::from_frames(f * frc.factor(), frc.dcp) - DCPTime(content->trim_start(), frc);
+	DCPTime const d = DCPTime::from_frames(f * frc.factor(), frc.dcp) - DCPTime(_content->trim_start(), frc);
 	return d + position();
 }
 
@@ -61,14 +64,50 @@ Piece::content_video_to_dcp (Frame f) const
 DCPTime
 Piece::content_time_to_dcp (ContentTime t) const
 {
-	return max (DCPTime(), DCPTime(t - content->trim_start(), frc) + position());
+	return max (DCPTime(), DCPTime(t - _content->trim_start(), frc) + position());
+}
+
+
+optional<DCPTime>
+Piece::content_time_to_dcp (shared_ptr<const Content> c, ContentTime t) const
+{
+	BOOST_FOREACH (shared_ptr<Content> i, _content) {
+		if (i == c) {
+			return i->content_time_to_dcp (t);
+		}
+	}
+
+	return optional<DCPTime>();
+}
+
+
+ContentTime
+Piece::trim_start () const
+{
+	return _content[0]->trim_start ();
+}
+
+
+list<shared_ptr<Font> >
+Piece::fonts () const
+{
+	list<shared_ptr<Font> > fonts;
+	BOOST_FOREACH (shared_ptr<Content> i, _content) {
+		BOOST_FOREACH (shared_ptr<TextContent> j, i->text) {
+			/* XXX: things may go wrong if there are duplicate font IDs
+			   with different font files.
+			*/
+			list<shared_ptr<Font> > f = j->fonts ();
+			copy (f.begin(), f.end(), back_inserter (fonts));
+		}
+	}
 }
 
 
 Crop
 Piece::video_crop () const
 {
-	return content->video->crop ();
+	return _content->video->crop ();
 }
 
 
@@ -77,7 +116,7 @@ Piece::resampled_audio_to_dcp (shared_ptr<const Film> film, Frame f) const
 {
 	/* See notes in content_video_to_dcp */
 	return DCPTime::from_frames(f, film->audio_frame_rate())
-		- DCPTime(content->trim_start(), frc)
+		- DCPTime(_content->trim_start(), frc)
 		+ position();
 }
 
@@ -86,56 +125,79 @@ ContentTime
 Piece::dcp_to_content_time (shared_ptr<const Film> film, DCPTime t) const
 {
 	DCPTime s = t - position();
-	s = min(content->length_after_trim(film), s);
-	return max(ContentTime(), ContentTime(s, frc) + content->trim_start());
+	s = min(_content->length_after_trim(film), s);
+	return max(ContentTime(), ContentTime(s, frc) + _content->trim_start());
 }
 
 
 bool
 Piece::video_use () const
 {
-	return content->video->use();
+	return _content->video->use();
 }
 
 
 optional<double>
 Piece::video_fade (shared_ptr<const Film> film, Frame frame) const
 {
-	return content->video->fade (film, frame);
+	return _content->video->fade (film, frame);
 }
 
 
 dcp::Size
 Piece::video_scaled_size (dcp::Size container_size)
 {
-	return content->video->scaled_size(container_size);
+	return _content->video->scaled_size(container_size);
 }
 
 
 optional<ColourConversion>
 Piece::video_colour_conversion () const
 {
-	return content->video->colour_conversion();
+	return _content->video->colour_conversion();
 }
 
 
 VideoRange
 Piece::video_range () const
 {
-	return content->video->range();
+	return _content->video->range();
 }
 
 
 int
 Piece::audio_resampled_frame_rate (boost::shared_ptr<const Film> film) const
 {
-	return content->audio->resampled_frame_rate (film);
+	return _content->audio->resampled_frame_rate (film);
 }
 
 
 double
 Piece::audio_gain () const
 {
-	return content->audio->gain();
+	return _content->audio->gain();
+}
+
+
+vector<AudioStreamPtr>
+Piece::audio_streams () const
+{
+	vector<AudioStreamPtr> streams;
+	BOOST_FOREACH (shared_ptr<Content> i, _content) {
+		if (i->audio) {
+			vector<AudioStreamPtr> s = i->audio->streams ();
+			copy (s.begin(), s.end(), back_inserter(streams));
+		}
+	}
+
+	return streams;
+}
+
+
+bool
+Piece::referenced_audio () const
+{
+	shared_ptr<DCPContent> dcp = dynamic_pointer_cast<DCPContent>(_content[0]);
+	return dcp && dcp->reference_audio();
 }
 

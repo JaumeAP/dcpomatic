@@ -21,6 +21,7 @@
 #ifndef DCPOMATIC_PIECE_H
 #define DCPOMATIC_PIECE_H
 
+#include "audio_stream.h"
 #include "content.h"
 #include "dcpomatic_time.h"
 #include "frame_rate_change.h"
@@ -29,23 +30,31 @@
 
 class Content;
 class Decoder;
+namespace dcpomatic {
+	class Font;
+}
 
 class Piece
 {
 public:
 	Piece (boost::shared_ptr<Content> c, boost::shared_ptr<Decoder> d, FrameRateChange f)
-		: content (c)
-		, decoder (d)
+		: decoder (d)
 		, frc (f)
 		, done (false)
+		, _content (c)
 	{}
 
 	dcpomatic::DCPTime position () const;
 	dcpomatic::DCPTime end (boost::shared_ptr<const Film> film) const;
 	dcpomatic::DCPTime content_video_to_dcp (Frame f) const;
 	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const;
+	boost::optional<dcpomatic::DCPTime> content_time_to_dcp (boost::shared_ptr<const Content> content, dcpomatic::ContentTime t);
 	dcpomatic::DCPTime resampled_audio_to_dcp (boost::shared_ptr<const Film> film, Frame f) const;
 	dcpomatic::ContentTime dcp_to_content_time (boost::shared_ptr<const Film> film, dcpomatic::DCPTime t) const;
+
+	dcpomatic::ContentTime trim_start () const;
+	std::list<boost::shared_ptr<dcpomatic::Font> > fonts () const;
+	bool referenced_audio () const;
 
 	Crop video_crop () const;
 	bool video_use () const;
@@ -56,11 +65,14 @@ public:
 
 	int audio_resampled_frame_rate (boost::shared_ptr<const Film> film) const;
 	double audio_gain () const;
+	std::vector<AudioStreamPtr> audio_streams () const;
 
-	boost::shared_ptr<Content> content;
 	boost::shared_ptr<Decoder> decoder;
 	FrameRateChange frc;
 	bool done;
+
+private:
+	boost::shared_ptr<Content> _content;
 };
 
 #endif
