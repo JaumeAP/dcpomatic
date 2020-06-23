@@ -22,6 +22,7 @@
 #define DCPOMATIC_PIECE_H
 
 #include "audio_stream.h"
+#include "dcpomatic_font.h"
 #include "dcpomatic_time.h"
 #include "frame_rate_change.h"
 #include "types.h"
@@ -36,6 +37,8 @@ public:
 
 	void update_pull_to (dcpomatic::DCPTime& pull_to) const;
 	void set_last_push_end (AudioStreamPtr stream, dcpomatic::DCPTime last_push_end);
+	boost::optional<dcpomatic::DCPTime> position (boost::shared_ptr<const Film> film);
+	bool has_text () const;
 
 	dcpomatic::DCPTime position () const;
 	dcpomatic::DCPTime end (boost::shared_ptr<const Film> film) const;

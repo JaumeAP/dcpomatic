@@ -557,21 +557,14 @@ Player::pass ()
 	optional<DCPTime> earliest_time;
 
 	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
-		if (i->done) {
-			continue;
-		}
-
-		DCPTime const t = content_time_to_dcp (i, max(i->decoder->position(), i->content->trim_start()));
-		if (t > i->end(_film)) {
-			i->done = true;
-		} else {
-
-			/* Given two choices at the same time, pick the one with texts so we see it before
-			   the video.
-			*/
-			if (!earliest_time || t < *earliest_time || (t == *earliest_time && !i->decoder->text.empty())) {
-				earliest_time = t;
+		optional<DCPTime> t = i->position ();
+		/* Given two choices at the same time, pick the one with texts so we see it before
+		   the video.
+		   */
+		if (t) {
+			if (!earliest_time || *t < *earliest_time || (*t == *earliest_time && i->has_text())) {
 				earliest_content = i;
+				earliest_time = *t;
 			}
 		}
 	}
