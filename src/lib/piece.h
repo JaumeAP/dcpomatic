@@ -45,6 +45,11 @@ public:
 
 	dcpomatic::DCPTime position () const;
 	dcpomatic::DCPTime end (boost::shared_ptr<const Film> film) const;
+	FrameRateChange frame_rate_change () const {
+		return _frc;
+	}
+
+	bool video_use () const;
 
 	dcpomatic::DCPTime content_video_to_dcp (Frame f) const;
 	dcpomatic::DCPTime resampled_audio_to_dcp (boost::shared_ptr<const Film> film, Frame f) const;

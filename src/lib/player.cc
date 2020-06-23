@@ -737,17 +737,17 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 		return;
 	}
 
-	if (!piece->content->video->use()) {
+	if (!piece->video_use()) {
 		return;
 	}
 
-	FrameRateChange frc (_film, piece->content);
+	FrameRateChange const frc = piece->frame_rate_change();
 	if (frc.skip && (video.frame % 2) == 1) {
 		return;
 	}
 
 	/* Time of the first frame we will emit */
-	DCPTime const time = content_video_to_dcp (piece, video.frame);
+	DCPTime const time = piece->content_video_to_dcp (video.frame);
 	LOG_DEBUG_PLAYER("Received video frame %1 at %2", video.frame, to_string(time));
 
 	/* Discard if it's before the content's period or the last accurate seek.  We can't discard

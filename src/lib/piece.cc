@@ -174,3 +174,10 @@ Piece::reference_audio () const
 	shared_ptr<DCPContent> dcp = dynamic_pointer_cast<DCPContent>(_content[0]);
 	return dcp && dcp->reference_audio();
 }
+
+
+bool
+Piece::video_use () const
+{
+	return _content[0]->video && _content[0]->video->use();
+}
