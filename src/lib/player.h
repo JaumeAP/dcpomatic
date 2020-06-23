@@ -126,9 +126,7 @@ private:
 	void film_change (ChangeType, Film::Property);
 	void playlist_change (ChangeType);
 	void playlist_content_change (ChangeType, int, bool);
-	Frame dcp_to_content_video (boost::shared_ptr<const Piece> piece, dcpomatic::DCPTime t) const;
 	dcpomatic::DCPTime content_video_to_dcp (boost::shared_ptr<const Piece> piece, Frame f) const;
-	Frame dcp_to_resampled_audio (boost::shared_ptr<const Piece> piece, dcpomatic::DCPTime t) const;
 	dcpomatic::DCPTime resampled_audio_to_dcp (boost::shared_ptr<const Piece> piece, Frame f) const;
 	dcpomatic::ContentTime dcp_to_content_time (boost::shared_ptr<const Piece> piece, dcpomatic::DCPTime t) const;
 	dcpomatic::DCPTime content_time_to_dcp (boost::shared_ptr<const Piece> piece, dcpomatic::ContentTime t) const;
