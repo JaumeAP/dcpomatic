@@ -167,3 +167,10 @@ Piece::pass () const
 	_done = _decoder[0]->pass();
 }
 
+
+bool
+Piece::reference_audio () const
+{
+	shared_ptr<DCPContent> dcp = dynamic_pointer_cast<DCPContent>(_content[0]);
+	return dcp && dcp->reference_audio();
+}

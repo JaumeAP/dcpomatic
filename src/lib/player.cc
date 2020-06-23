@@ -597,13 +597,12 @@ Player::pass ()
 	{
 		LOG_DEBUG_PLAYER ("Calling pass() on %1", earliest_content->content->path(0));
 		earliest_content->pass ();
-		shared_ptr<DCPContent> dcp = dynamic_pointer_cast<DCPContent>(earliest_content->content);
-		if (dcp && !_play_referenced && dcp->reference_audio()) {
+		if (!_play_referenced && earliest_content->reference_audio()) {
 			/* We are skipping some referenced DCP audio content, so we need to update _last_audio_time
 			   to `hide' the fact that no audio was emitted during the referenced DCP (though
 			   we need to behave as though it was).
 			*/
-			_last_audio_time = dcp->end (_film);
+			_last_audio_time = earliest_content->end (_film);
 		}
 		break;
 	}

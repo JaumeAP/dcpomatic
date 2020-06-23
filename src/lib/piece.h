@@ -39,6 +39,7 @@ public:
 	void set_last_push_end (AudioStreamPtr stream, dcpomatic::DCPTime last_push_end);
 	boost::optional<dcpomatic::DCPTime> position (boost::shared_ptr<const Film> film);
 	bool has_text () const;
+	bool reference_audio () const;
 
 	void pass ();
 
