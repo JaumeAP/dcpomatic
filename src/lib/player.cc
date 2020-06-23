@@ -189,12 +189,16 @@ Player::setup_pieces_unlocked ()
 		}
 
 		shared_ptr<Decoder> old_decoder;
+		/* XXX: needs to check vector of Content and use the old decoders, but
+		 * this will all be different as we have to coalesce content before
+		 * this happens.
 		BOOST_FOREACH (shared_ptr<Piece> j, old_pieces) {
 			if (j->content == i) {
 				old_decoder = j->decoder;
 				break;
 			}
 		}
+		*/
 
 		shared_ptr<Decoder> decoder = decoder_factory (_film, i, _fast, _tolerant, old_decoder);
 		DCPOMATIC_ASSERT (decoder);
