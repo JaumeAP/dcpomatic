@@ -394,13 +394,7 @@ Player::get_subtitle_fonts ()
 
 	list<shared_ptr<Font> > fonts;
 	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
-		BOOST_FOREACH (shared_ptr<TextContent> j, i->content->text) {
-			/* XXX: things may go wrong if there are duplicate font IDs
-			   with different font files.
-			*/
-			list<shared_ptr<Font> > f = j->fonts ();
-			copy (f.begin(), f.end(), back_inserter (fonts));
-		}
+		i->add_fonts (fonts);
 	}
 
 	return fonts;

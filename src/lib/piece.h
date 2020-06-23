@@ -45,6 +45,8 @@ public:
 	dcpomatic::ContentTime dcp_to_content_time (boost::shared_ptr<const Film> film, dcpomatic::DCPTime t) const;
 	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const;
 
+	void add_fonts (std::list<boost::shared_ptr<dcpomatic::Font> >& fonts) const;
+
 private:
 	std::vector<boost::shared_ptr<Content> > _content;
 	std::vector<boost::shared_ptr<Decoder> > _decoder;
