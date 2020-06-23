@@ -264,15 +264,6 @@ Player::setup_pieces_unlocked ()
 		}
 	}
 
-	_stream_states.clear ();
-	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
-		if (i->content->audio) {
-			BOOST_FOREACH (AudioStreamPtr j, i->content->audio->streams()) {
-				_stream_states[j] = StreamState (i, i->content->position ());
-			}
-		}
-	}
-
 	_black = Empty (_film, playlist(), bind(&have_video, _1), _playback_length);
 	_silent = Empty (_film, playlist(), bind(&have_audio, _1), _playback_length);
 
@@ -727,10 +718,8 @@ Player::pass ()
 	   of our streams, or the position of the _silent.
 	*/
 	DCPTime pull_to = _playback_length;
-	for (map<AudioStreamPtr, StreamState>::const_iterator i = _stream_states.begin(); i != _stream_states.end(); ++i) {
-		if (!i->second.piece->done && i->second.last_push_end < pull_to) {
-			pull_to = i->second.last_push_end;
-		}
+	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
+		i->update_pull_to (pull_to);
 	}
 	if (!_silent.done() && _silent.position() < pull_to) {
 		pull_to = _silent.position();
@@ -982,8 +971,12 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 	/* Push */
 
 	_audio_merger.push (content_audio.audio, time);
-	DCPOMATIC_ASSERT (_stream_states.find (stream) != _stream_states.end ());
-	_stream_states[stream].last_push_end = time + DCPTime::from_frames (content_audio.audio->frames(), _film->audio_frame_rate());
+	/* XXX: this almost certainly needs to be more efficient; perhaps pieces fill a map to find
+	 * the piece from the stream, then we can call the right piece with no loop.
+	 */
+	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
+		i->set_last_push_end (stream, time + DCPTime::from_frames(content_audio.audio->frames(), _film->audio_frame_rate()));
+	}
 }
 
 void
