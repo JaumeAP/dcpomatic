@@ -40,6 +40,11 @@ public:
 	dcpomatic::DCPTime position () const;
 	dcpomatic::DCPTime end (boost::shared_ptr<const Film> film) const;
 
+	dcpomatic::DCPTime content_video_to_dcp (Frame f) const;
+	dcpomatic::DCPTime resampled_audio_to_dcp (boost::shared_ptr<const Film> film, Frame f) const;
+	dcpomatic::ContentTime dcp_to_content_time (boost::shared_ptr<const Film> film, dcpomatic::DCPTime t) const;
+	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const;
+
 private:
 	std::vector<boost::shared_ptr<Content> > _content;
 	std::vector<boost::shared_ptr<Decoder> > _decoder;

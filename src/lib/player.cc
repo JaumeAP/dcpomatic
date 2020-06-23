@@ -387,44 +387,6 @@ Player::black_player_video_frame (Eyes eyes) const
 }
 
 
-DCPTime
-Player::content_video_to_dcp (shared_ptr<const Piece> piece, Frame f) const
-{
-	/* It might seem more logical here to convert s to a ContentTime (using the FrameRateChange)
-	   then convert that ContentTime to frames at the content's rate.  However this fails for
-	   situations like content at 29.9978733fps, DCP at 30fps.  The accuracy of the Time type is not
-	   enough to distinguish between the two with low values of time (e.g. 3200 in Time units).
-
-	   Instead we convert the DCPTime using the DCP video rate then account for any skip/repeat.
-	*/
-	DCPTime const d = DCPTime::from_frames (f * piece->frc.factor(), piece->frc.dcp) - DCPTime(piece->content->trim_start(), piece->frc);
-	return d + piece->position();
-}
-
-
-DCPTime
-Player::resampled_audio_to_dcp (shared_ptr<const Piece> piece, Frame f) const
-{
-	/* See comment in dcp_to_content_video */
-	return DCPTime::from_frames (f, _film->audio_frame_rate())
-		- DCPTime (piece->content->trim_start(), piece->frc)
-		+ piece->position();
-}
-
-ContentTime
-Player::dcp_to_content_time (shared_ptr<const Piece> piece, DCPTime t) const
-{
-	DCPTime s = t - piece->position ();
-	s = min (piece->content->length_after_trim(_film), s);
-	return max (ContentTime (), ContentTime (s, piece->frc) + piece->content->trim_start());
-}
-
-DCPTime
-Player::content_time_to_dcp (shared_ptr<const Piece> piece, ContentTime t) const
-{
-	return max (DCPTime (), DCPTime (t - piece->content->trim_start(), piece->frc) + piece->position());
-}
-
 list<shared_ptr<Font> >
 Player::get_subtitle_fonts ()
 {
