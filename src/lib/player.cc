@@ -389,7 +389,7 @@ Player::black_player_video_frame (Eyes eyes) const
 Frame
 Player::dcp_to_content_video (shared_ptr<const Piece> piece, DCPTime t) const
 {
-	DCPTime s = t - piece->content->position ();
+	DCPTime s = t - piece->position ();
 	s = min (piece->content->length_after_trim(_film), s);
 	s = max (DCPTime(), s + DCPTime (piece->content->trim_start(), piece->frc));
 
@@ -408,13 +408,13 @@ Player::content_video_to_dcp (shared_ptr<const Piece> piece, Frame f) const
 {
 	/* See comment in dcp_to_content_video */
 	DCPTime const d = DCPTime::from_frames (f * piece->frc.factor(), piece->frc.dcp) - DCPTime(piece->content->trim_start(), piece->frc);
-	return d + piece->content->position();
+	return d + piece->position();
 }
 
 Frame
 Player::dcp_to_resampled_audio (shared_ptr<const Piece> piece, DCPTime t) const
 {
-	DCPTime s = t - piece->content->position ();
+	DCPTime s = t - piece->position ();
 	s = min (piece->content->length_after_trim(_film), s);
 	/* See notes in dcp_to_content_video */
 	return max (DCPTime (), DCPTime (piece->content->trim_start (), piece->frc) + s).frames_floor (_film->audio_frame_rate ());
@@ -426,13 +426,13 @@ Player::resampled_audio_to_dcp (shared_ptr<const Piece> piece, Frame f) const
 	/* See comment in dcp_to_content_video */
 	return DCPTime::from_frames (f, _film->audio_frame_rate())
 		- DCPTime (piece->content->trim_start(), piece->frc)
-		+ piece->content->position();
+		+ piece->position();
 }
 
 ContentTime
 Player::dcp_to_content_time (shared_ptr<const Piece> piece, DCPTime t) const
 {
-	DCPTime s = t - piece->content->position ();
+	DCPTime s = t - piece->position ();
 	s = min (piece->content->length_after_trim(_film), s);
 	return max (ContentTime (), ContentTime (s, piece->frc) + piece->content->trim_start());
 }
@@ -440,7 +440,7 @@ Player::dcp_to_content_time (shared_ptr<const Piece> piece, DCPTime t) const
 DCPTime
 Player::content_time_to_dcp (shared_ptr<const Piece> piece, ContentTime t) const
 {
-	return max (DCPTime (), DCPTime (t - piece->content->trim_start(), piece->frc) + piece->content->position());
+	return max (DCPTime (), DCPTime (t - piece->content->trim_start(), piece->frc) + piece->position());
 }
 
 list<shared_ptr<Font> >
@@ -824,7 +824,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 	   if it's after the content's period here as in that case we still need to fill any gap between
 	   `now' and the end of the content's period.
 	*/
-	if (time < piece->content->position() || (_last_video_time && time < *_last_video_time)) {
+	if (time < piece->position() || (_last_video_time && time < *_last_video_time)) {
 		return;
 	}
 
@@ -834,7 +834,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 	DCPTime fill_to = min (time, piece->content->end(_film));
 
 	if (_last_video_time) {
-		DCPTime fill_from = max (*_last_video_time, piece->content->position());
+		DCPTime fill_from = max (*_last_video_time, piece->position());
 
 		/* Fill if we have more than half a frame to do */
 		if ((fill_to - fill_from) > one_video_frame() / 2) {
@@ -929,8 +929,8 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 	DCPTime end = time + DCPTime::from_frames(content_audio.audio->frames(), rfr);
 
 	/* Remove anything that comes before the start or after the end of the content */
-	if (time < piece->content->position()) {
-		pair<shared_ptr<AudioBuffers>, DCPTime> cut = discard_audio (content_audio.audio, time, piece->content->position());
+	if (time < piece->position()) {
+		pair<shared_ptr<AudioBuffers>, DCPTime> cut = discard_audio (content_audio.audio, time, piece->position());
 		if (!cut.first) {
 			/* This audio is entirely discarded */
 			return;
@@ -1119,15 +1119,15 @@ Player::seek (DCPTime time, bool accurate)
 	}
 
 	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
-		if (time < i->content->position()) {
+		if (time < i->position()) {
 			/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
 			   we must seek this (following) content accurately, otherwise when we come to the end of the current
 			   content we may not start right at the beginning of the next, causing a gap (if the next content has
 			   been trimmed to a point between keyframes, or something).
 			*/
-			i->decoder->seek (dcp_to_content_time (i, i->content->position()), true);
+			i->decoder->seek (dcp_to_content_time (i, i->position()), true);
 			i->done = false;
-		} else if (i->content->position() <= time && time < i->content->end(_film)) {
+		} else if (i->position() <= time && time < i->content->end(_film)) {
 			/* During; seek to position */
 			i->decoder->seek (dcp_to_content_time (i, time), accurate);
 			i->done = false;
