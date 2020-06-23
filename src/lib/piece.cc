@@ -19,15 +19,24 @@
 */
 
 
+#include "audio_content.h"
 #include "audio_stream.h"
 #include "content.h"
+#include "dcp_content.h"
+#include "decoder.h"
 #include "piece.h"
+#include "text_content.h"
+#include "video_content.h"
 #include <boost/foreach.hpp>
 
 
 using std::copy;
 using std::list;
+using std::map;
+using boost::dynamic_pointer_cast;
+using boost::optional;
 using boost::shared_ptr;
+using namespace dcpomatic;
 
 
 Piece::Piece (shared_ptr<Content> c, shared_ptr<Decoder> d, FrameRateChange f)
@@ -102,7 +111,7 @@ DCPTime
 Piece::resampled_audio_to_dcp (shared_ptr<const Film> film, Frame f) const
 {
 	/* See comment in dcp_to_content_video */
-	return DCPTime::from_frames(f, film->audio_frame_rate()) - DCPTime(_content[0]->trim_start(), frc) + position();
+	return DCPTime::from_frames(f, film->audio_frame_rate()) - DCPTime(_content[0]->trim_start(), _frc) + position();
 }
 
 
@@ -110,7 +119,7 @@ ContentTime
 Piece::dcp_to_content_time (shared_ptr<const Film> film, DCPTime t) const
 {
 	DCPTime s = t - position();
-	s = min (_content[0]->length_after_trim(_film), s);
+	s = min (_content[0]->length_after_trim(film), s);
 	return max (ContentTime(), ContentTime(s, _frc) + _content[0]->trim_start());
 }
 
@@ -157,12 +166,12 @@ Piece::position (shared_ptr<const Film> film)
 bool
 Piece::has_text () const
 {
-	return !_decoder[0].text.empty();
+	return !_decoder[0]->text.empty();
 }
 
 
 void
-Piece::pass () const
+Piece::pass ()
 {
 	_done = _decoder[0]->pass();
 }
@@ -181,3 +190,86 @@ Piece::video_use () const
 {
 	return _content[0]->video && _content[0]->video->use();
 }
+
+
+Crop
+Piece::video_crop () const
+{
+	return _content[0]->video->crop();
+}
+
+
+optional<double>
+Piece::video_fade (boost::shared_ptr<const Film> film, Frame frame) const
+{
+	return _content[0]->video->fade(film, frame);
+}
+
+
+optional<ColourConversion>
+Piece::video_colour_conversion () const
+{
+	return _content[0]->video->colour_conversion();
+}
+
+
+VideoRange
+Piece::video_range () const
+{
+	return _content[0]->video->range();
+}
+
+
+dcp::Size
+Piece::video_scaled_size (dcp::Size container_size) const
+{
+	return _content[0]->video->scaled_size(container_size);
+}
+
+
+int
+Piece::audio_resampled_frame_rate (shared_ptr<const Film> film) const
+{
+	return _content[0]->audio->resampled_frame_rate(film);
+}
+
+
+double
+Piece::audio_gain () const
+{
+	return _content[0]->audio->gain();
+}
+
+
+void
+Piece::seek (shared_ptr<const Film> film, DCPTime time, bool accurate)
+{
+	if (time < position()) {
+		/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
+		   we must seek this (following) content accurately, otherwise when we come to the end of the current
+		   content we may not start right at the beginning of the next, causing a gap (if the next content has
+		   been trimmed to a point between keyframes, or something).
+		   */
+		_decoder[0]->seek (dcp_to_content_time(film, position()), true);
+		_done = false;
+	} else if (position() <= time && time < end(film)) {
+		/* During; seek to position */
+		_decoder[0]->seek (dcp_to_content_time(film, time), accurate);
+		_done = false;
+	} else {
+		/* After; this piece is done */
+		_done = true;
+	}
+}
+
+
+optional<DCPTime>
+Piece::content_time_to_dcp (shared_ptr<Content> content, ContentTime t) const
+{
+	if (content != _content[0]) {
+		return optional<DCPTime>();
+	}
+
+	return content_time_to_dcp (t);
+}
+

@@ -18,6 +18,7 @@
 
 */
 
+#include "piece.h"
 #include "player_video.h"
 #include "content.h"
 #include "video_content.h"
@@ -54,7 +55,7 @@ PlayerVideo::PlayerVideo (
 	Part part,
 	optional<ColourConversion> colour_conversion,
 	VideoRange video_range,
-	weak_ptr<Content> content,
+	weak_ptr<Piece> piece,
 	optional<Frame> video_frame,
 	bool error
 	)
@@ -67,7 +68,7 @@ PlayerVideo::PlayerVideo (
 	, _part (part)
 	, _colour_conversion (colour_conversion)
 	, _video_range (video_range)
-	, _content (content)
+	, _piece (piece)
 	, _video_frame (video_frame)
 	, _error (error)
 {
@@ -320,7 +321,7 @@ PlayerVideo::shallow_copy () const
 			_part,
 			_colour_conversion,
 			_video_range,
-			_content,
+			_piece,
 			_video_frame,
 			_error
 			)
@@ -333,17 +334,17 @@ PlayerVideo::shallow_copy () const
 bool
 PlayerVideo::reset_metadata (shared_ptr<const Film> film, dcp::Size player_video_container_size)
 {
-	shared_ptr<Content> content = _content.lock();
-	if (!content || !_video_frame) {
+	shared_ptr<Piece> piece = _piece.lock();
+	if (!piece || !_video_frame) {
 		return false;
 	}
 
-	_crop = content->video->crop();
-	_fade = content->video->fade(film, _video_frame.get());
-	_inter_size = scale_for_display(content->video->scaled_size(film->frame_size()), player_video_container_size, film->frame_size());
-	_out_size = player_video_container_size;
-	_colour_conversion = content->video->colour_conversion();
-	_video_range = content->video->range();
+	_crop = piece->video_crop();
+	_fade = piece->video_fade(film, _video_frame.get());
+	_inter_size = scale_for_display(piece->video_scaled_size(film->frame_size()), player_video_container_size, film->frame_size());
+	_out_size = video_container_size;
+	_colour_conversion = piece->video_colour_conversion();
+	_video_range = piece->video_range();
 
 	return true;
 }

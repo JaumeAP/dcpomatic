@@ -379,7 +379,7 @@ Player::black_player_video_frame (Eyes eyes) const
 			PART_WHOLE,
 			PresetColourConversion::all().front().conversion,
 			VIDEO_RANGE_FULL,
-			boost::weak_ptr<Content>(),
+			boost::weak_ptr<Piece>(),
 			boost::optional<Frame>(),
 			false
 		)
@@ -813,15 +813,15 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 	_last_video[wp].reset (
 		new PlayerVideo (
 			video.image,
-			piece->content->video->crop (),
-			piece->content->video->fade (_film, video.frame),
-			scale_for_display(piece->content->video->scaled_size(_film->frame_size()), _video_container_size, _film->frame_size()),
+			piece->video_crop(),
+			piece->video_fade(_film, video.frame),
+			scale_for_display(piece->video_scaled_size(_film->frame_size()), _video_container_size, _film->frame_size()),
 			_video_container_size,
 			video.eyes,
 			video.part,
-			piece->content->video->colour_conversion(),
-			piece->content->video->range(),
-			piece->content,
+			piece->video_colour_conversion(),
+			piece->video_range(),
+			piece,
 			video.frame,
 			false
 			)
@@ -846,15 +846,11 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 		return;
 	}
 
-	shared_ptr<AudioContent> content = piece->content->audio;
-	DCPOMATIC_ASSERT (content);
-
-	int const rfr = content->resampled_frame_rate (_film);
+	int const rfr = piece->audio_resampled_frame_rate (_film);
 
 	/* Compute time in the DCP */
-	DCPTime time = resampled_audio_to_dcp (piece, content_audio.frame);
+	DCPTime time = piece->resampled_audio_to_dcp (_film, content_audio.frame);
 	LOG_DEBUG_PLAYER("Received audio frame %1 at %2", content_audio.frame, to_string(time));
-
 	/* And the end of this block in the DCP */
 	DCPTime end = time + DCPTime::from_frames(content_audio.audio->frames(), rfr);
 
@@ -882,9 +878,9 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 
 	/* Gain */
 
-	if (content->gain() != 0) {
+	if (piece->audio_gain() != 0) {
 		shared_ptr<AudioBuffers> gain (new AudioBuffers (content_audio.audio));
-		gain->apply_gain (content->gain ());
+		gain->apply_gain (piece->audio_gain());
 		content_audio.audio = gain;
 	}
 
@@ -1008,7 +1004,7 @@ Player::subtitle_stop (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Conte
 		return;
 	}
 
-	DCPTime const dcp_to = content_time_to_dcp (piece, to);
+	DCPTime const dcp_to = piece->content_time_to_dcp (to);
 
 	if (dcp_to > piece->end(_film)) {
 		return;
@@ -1049,22 +1045,7 @@ Player::seek (DCPTime time, bool accurate)
 	}
 
 	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
-		if (time < i->position()) {
-			/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
-			   we must seek this (following) content accurately, otherwise when we come to the end of the current
-			   content we may not start right at the beginning of the next, causing a gap (if the next content has
-			   been trimmed to a point between keyframes, or something).
-			*/
-			i->decoder->seek (dcp_to_content_time (i, i->position()), true);
-			i->done = false;
-		} else if (i->position() <= time && time < i->end(_film)) {
-			/* During; seek to position */
-			i->decoder->seek (dcp_to_content_time (i, time), accurate);
-			i->done = false;
-		} else {
-			/* After; this piece is done */
-			i->done = true;
-		}
+		i->seek (_film, time, accurate);
 	}
 
 	if (accurate) {
@@ -1204,8 +1185,9 @@ Player::content_time_to_dcp (shared_ptr<Content> content, ContentTime t)
 	boost::mutex::scoped_lock lm (_mutex);
 
 	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
-		if (i->content == content) {
-			return content_time_to_dcp (i, t);
+		optional<DCPTime> d = i->content_time_to_dcp (content, t);
+		if (d) {
+			return d;
 		}
 	}
 

@@ -21,14 +21,19 @@
 #ifndef DCPOMATIC_PIECE_H
 #define DCPOMATIC_PIECE_H
 
+
 #include "audio_stream.h"
-#include "dcpomatic_font.h"
+#include "colour_conversion.h"
+#include "font.h"
 #include "dcpomatic_time.h"
 #include "frame_rate_change.h"
 #include "types.h"
 
+
 class Content;
 class Decoder;
+struct check_reuse_old_data_test;
+
 
 class Piece
 {
@@ -42,6 +47,7 @@ public:
 	bool reference_audio () const;
 
 	void pass ();
+	void seek (boost::shared_ptr<const Film> film, dcpomatic::DCPTime time, bool accurate);
 
 	dcpomatic::DCPTime position () const;
 	dcpomatic::DCPTime end (boost::shared_ptr<const Film> film) const;
@@ -50,15 +56,26 @@ public:
 	}
 
 	bool video_use () const;
+	Crop video_crop () const;
+	boost::optional<double> video_fade (boost::shared_ptr<const Film> film, Frame) const;
+	boost::optional<ColourConversion> video_colour_conversion () const;
+	VideoRange video_range () const;
+	dcp::Size video_scaled_size (dcp::Size container_size) const;
+
+	int audio_resampled_frame_rate (boost::shared_ptr<const Film> film) const;
+	double audio_gain () const;
 
 	dcpomatic::DCPTime content_video_to_dcp (Frame f) const;
 	dcpomatic::DCPTime resampled_audio_to_dcp (boost::shared_ptr<const Film> film, Frame f) const;
 	dcpomatic::ContentTime dcp_to_content_time (boost::shared_ptr<const Film> film, dcpomatic::DCPTime t) const;
 	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const;
+	boost::optional<dcpomatic::DCPTime> content_time_to_dcp (boost::shared_ptr<Content> content, dcpomatic::ContentTime t) const;
 
 	void add_fonts (std::list<boost::shared_ptr<dcpomatic::Font> >& fonts) const;
 
 private:
+	friend struct ::check_reuse_old_data_test;
+
 	std::vector<boost::shared_ptr<Content> > _content;
 	std::vector<boost::shared_ptr<Decoder> > _decoder;
 	FrameRateChange _frc;

@@ -22,6 +22,7 @@
 #define DCPOMATIC_PLAYER_VIDEO_H
 
 #include "types.h"
+#include "piece.h"
 #include "position.h"
 #include "dcpomatic_time.h"
 #include "colour_conversion.h"
@@ -56,7 +57,7 @@ public:
 		Part,
 		boost::optional<ColourConversion>,
 		VideoRange video_range,
-		boost::weak_ptr<Content>,
+		boost::weak_ptr<Piece>,
 		boost::optional<Frame>,
 		bool error
 		);
@@ -105,8 +106,8 @@ public:
 
 	size_t memory_used () const;
 
-	boost::weak_ptr<Content> content () const {
-		return _content;
+	boost::weak_ptr<Piece> piece () const {
+		return _piece;
 	}
 
 	bool error () const {
@@ -126,8 +127,9 @@ private:
 	boost::optional<ColourConversion> _colour_conversion;
 	VideoRange _video_range;
 	boost::optional<PositionImage> _text;
-	/** Content that we came from.  This is so that reset_metadata() can work. */
-	boost::weak_ptr<Content> _content;
+	/** Piece that we came from.  This is so that reset_metadata() can work. */
+	 */
+	boost::weak_ptr<Piece> _piece;
 	/** Video frame that we came from.  Again, this is for reset_metadata() */
 	boost::optional<Frame> _video_frame;
 
