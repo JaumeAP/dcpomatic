@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2013-2014 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2013-2020 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -30,17 +30,13 @@ class Decoder;
 class Piece
 {
 public:
-	Piece (boost::shared_ptr<Content> c, boost::shared_ptr<Decoder> d, FrameRateChange f)
-		: content (c)
-		, decoder (d)
-		, frc (f)
-		, done (false)
-	{}
+	Piece (boost::shared_ptr<Content> c, boost::shared_ptr<Decoder> d, FrameRateChange f);
 
-	boost::shared_ptr<Content> content;
-	boost::shared_ptr<Decoder> decoder;
-	FrameRateChange frc;
-	bool done;
+private:
+	std::vector<boost::shared_ptr<Content> > _content;
+	std::vector<boost::shared_ptr<Decoder> > _decoder;
+	FrameRateChange _frc;
+	bool _done;
 };
 
 #endif

@@ -132,6 +132,7 @@ sources = """
           log_entry.cc
           mid_side_decoder.cc
           overlaps.cc
+          piece.cc
           player.cc
           player_text.cc
           player_video.cc
