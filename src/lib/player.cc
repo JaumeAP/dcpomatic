@@ -624,7 +624,7 @@ Player::pass ()
 		}
 
 		DCPTime const t = content_time_to_dcp (i, max(i->decoder->position(), i->content->trim_start()));
-		if (t > i->content->end(_film)) {
+		if (t > i->end(_film)) {
 			i->done = true;
 		} else {
 
@@ -831,7 +831,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 	/* Fill gaps that we discover now that we have some video which needs to be emitted.
 	   This is where we need to fill to.
 	*/
-	DCPTime fill_to = min (time, piece->content->end(_film));
+	DCPTime fill_to = min (time, piece->end(_film));
 
 	if (_last_video_time) {
 		DCPTime fill_from = max (*_last_video_time, piece->position());
@@ -844,7 +844,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 				if (fill_to_eyes == EYES_BOTH) {
 					fill_to_eyes = EYES_LEFT;
 				}
-				if (fill_to == piece->content->end(_film)) {
+				if (fill_to == piece->end(_film)) {
 					/* Don't fill after the end of the content */
 					fill_to_eyes = EYES_LEFT;
 				}
@@ -899,7 +899,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 
 	DCPTime t = time;
 	for (int i = 0; i < frc.repeat; ++i) {
-		if (t < piece->content->end(_film)) {
+		if (t < piece->end(_film)) {
 			emit_video (_last_video[wp], t);
 		}
 		t += one_video_frame ();
@@ -937,11 +937,11 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 		}
 		content_audio.audio = cut.first;
 		time = cut.second;
-	} else if (time > piece->content->end(_film)) {
+	} else if (time > piece->end(_film)) {
 		/* Discard it all */
 		return;
-	} else if (end > piece->content->end(_film)) {
-		Frame const remaining_frames = DCPTime(piece->content->end(_film) - time).frames_round(rfr);
+	} else if (end > piece->end(_film)) {
+		Frame const remaining_frames = DCPTime(piece->end(_film) - time).frames_round(rfr);
 		if (remaining_frames == 0) {
 			return;
 		}
@@ -1029,7 +1029,7 @@ Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Co
 	PlayerText ps;
 	DCPTime const from (content_time_to_dcp (piece, subtitle.from()));
 
-	if (from > piece->content->end(_film)) {
+	if (from > piece->end(_film)) {
 		return;
 	}
 
@@ -1080,7 +1080,7 @@ Player::subtitle_stop (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Conte
 
 	DCPTime const dcp_to = content_time_to_dcp (piece, to);
 
-	if (dcp_to > piece->content->end(_film)) {
+	if (dcp_to > piece->end(_film)) {
 		return;
 	}
 
@@ -1127,7 +1127,7 @@ Player::seek (DCPTime time, bool accurate)
 			*/
 			i->decoder->seek (dcp_to_content_time (i, i->position()), true);
 			i->done = false;
-		} else if (i->position() <= time && time < i->content->end(_film)) {
+		} else if (i->position() <= time && time < i->end(_film)) {
 			/* During; seek to position */
 			i->decoder->seek (dcp_to_content_time (i, time), accurate);
 			i->done = false;

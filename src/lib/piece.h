@@ -38,6 +38,7 @@ public:
 	void set_last_push_end (AudioStreamPtr stream, dcpomatic::DCPTime last_push_end);
 
 	dcpomatic::DCPTime position () const;
+	dcpomatic::DCPTime end (boost::shared_ptr<const Film> film) const;
 
 private:
 	std::vector<boost::shared_ptr<Content> > _content;
