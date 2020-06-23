@@ -942,7 +942,7 @@ Player::bitmap_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, C
 
 	dcp::Size scaled_size (width, height);
 	ps.bitmap.push_back (BitmapText(image->scale(scaled_size, dcp::YUV_TO_RGB_REC601, image->pixel_format(), true, _fast), subtitle.sub.rectangle));
-	DCPTime from (content_time_to_dcp (piece, subtitle.from()));
+	DCPTime from (piece->content_time_to_dcp(subtitle.from()));
 
 	_active_texts[text->type()].add_from (wc, ps, from);
 }
@@ -957,7 +957,7 @@ Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Co
 	}
 
 	PlayerText ps;
-	DCPTime const from (content_time_to_dcp (piece, subtitle.from()));
+	DCPTime const from (piece->content_time_to_dcp(subtitle.from()));
 
 	if (from > piece->end(_film)) {
 		return;
