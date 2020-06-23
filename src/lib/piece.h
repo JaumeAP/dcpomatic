@@ -40,6 +40,8 @@ public:
 	boost::optional<dcpomatic::DCPTime> position (boost::shared_ptr<const Film> film);
 	bool has_text () const;
 
+	void pass ();
+
 	dcpomatic::DCPTime position () const;
 	dcpomatic::DCPTime end (boost::shared_ptr<const Film> film) const;
 

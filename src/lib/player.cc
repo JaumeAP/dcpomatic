@@ -596,7 +596,7 @@ Player::pass ()
 	case CONTENT:
 	{
 		LOG_DEBUG_PLAYER ("Calling pass() on %1", earliest_content->content->path(0));
-		earliest_content->done = earliest_content->decoder->pass ();
+		earliest_content->pass ();
 		shared_ptr<DCPContent> dcp = dynamic_pointer_cast<DCPContent>(earliest_content->content);
 		if (dcp && !_play_referenced && dcp->reference_audio()) {
 			/* We are skipping some referenced DCP audio content, so we need to update _last_audio_time
