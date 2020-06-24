@@ -147,7 +147,7 @@ Piece::add_fonts (list<shared_ptr<Font> >& fonts) const
 
 
 optional<DCPTime>
-Piece::position (shared_ptr<const Film> film)
+Piece::decoder_position (shared_ptr<const Film> film)
 {
 	if (_done) {
 		return optional<DCPTime>();

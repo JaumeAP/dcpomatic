@@ -557,7 +557,7 @@ Player::pass ()
 	optional<DCPTime> earliest_time;
 
 	BOOST_FOREACH (shared_ptr<Piece> i, _pieces) {
-		optional<DCPTime> t = i->position ();
+		optional<DCPTime> t = i->decoder_position (_film);
 		/* Given two choices at the same time, pick the one with texts so we see it before
 		   the video.
 		   */
