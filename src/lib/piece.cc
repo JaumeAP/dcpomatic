@@ -19,15 +19,22 @@
 */
 
 
+#include "atmos_decoder.h"
 #include "audio_content.h"
+#include "audio_decoder.h"
 #include "audio_stream.h"
 #include "content.h"
 #include "dcp_content.h"
+#include "dcp_decoder.h"
 #include "decoder.h"
+#include "decoder_factory.h"
 #include "piece.h"
 #include "text_content.h"
+#include "text_decoder.h"
 #include "video_content.h"
+#include "video_decoder.h"
 #include <boost/foreach.hpp>
+#include <boost/ref.hpp>
 
 
 using std::copy;
@@ -36,7 +43,97 @@ using std::map;
 using boost::dynamic_pointer_cast;
 using boost::optional;
 using boost::shared_ptr;
+using boost::weak_ptr;
 using namespace dcpomatic;
+
+
+Piece::Piece (
+	shared_ptr<const Film> film,
+	ContentList content,
+	bool fast,
+	bool tolerant,
+	bool ignore_video,
+	bool ignore_audio,
+	bool ignore_text,
+	bool play_referenced,
+	optional<int> dcp_decode_reduction
+	)
+	: _content (content)
+	, _done (false)
+{
+	DCPOMATIC_ASSERT (!content.empty());
+
+	/* We assume here that the contents of the list have the required things the same:
+	 *  - video and audio frame rates
+	 *  - audio streams and channel counts
+	 */
+
+	_frc = FrameRateChange (film, _content.front());
+
+	BOOST_FOREACH (shared_ptr<Content> i, _content)
+	{
+		shared_ptr<Decoder> decoder = decoder_factory (film, i, fast, tolerant, shared_ptr<Decoder>());
+		DCPOMATIC_ASSERT (decoder);
+
+		if (decoder->video && ignore_video) {
+			decoder->video->set_ignore (true);
+		}
+
+		if (decoder->audio && ignore_audio) {
+			decoder->audio->set_ignore (true);
+		}
+
+		if (ignore_text) {
+			BOOST_FOREACH (shared_ptr<TextDecoder> k, decoder->text) {
+				k->set_ignore (true);
+			}
+		}
+
+		shared_ptr<DCPDecoder> dcp = dynamic_pointer_cast<DCPDecoder> (decoder);
+		if (dcp) {
+			dcp->set_decode_referenced (play_referenced);
+			if (play_referenced) {
+				dcp->set_forced_reduction (dcp_decode_reduction);
+			}
+		}
+
+		if (decoder->video) {
+			if (i->video->frame_type() == VIDEO_FRAME_TYPE_3D_LEFT || i->video->frame_type() == VIDEO_FRAME_TYPE_3D_RIGHT) {
+				/* We need a Shuffler to cope with 3D L/R video data arriving out of sequence */
+				/* XXX: move this */
+				//decoder->video->Data.connect (bind(&Shuffler::video, _shuffler, weak_ptr<Piece>(piece), _1));
+			} else {
+				decoder->video->Data.connect (bind(boost::ref(Video), _1));
+			}
+		}
+
+		if (decoder->audio) {
+			decoder->audio->Data.connect (bind(boost::ref(Audio), _1, _2));
+		}
+
+		list<shared_ptr<TextDecoder> >::const_iterator k = decoder->text.begin();
+
+		while (k != decoder->text.end()) {
+			(*k)->BitmapStart.connect (
+				bind(boost::ref(BitmapTextStart), weak_ptr<const TextContent>((*k)->content()), _1)
+				);
+			(*k)->PlainStart.connect (
+				bind(boost::ref(PlainTextStart), weak_ptr<const TextContent>((*k)->content()), _1)
+				);
+			(*k)->Stop.connect (
+				bind(boost::ref(TextStop), weak_ptr<const TextContent>((*k)->content()), _1)
+				);
+
+			++k;
+		}
+
+		if (decoder->atmos) {
+			decoder->atmos->Data.connect (bind(boost::ref(Atmos), _1));
+		}
+
+		_decoder.push_back (decoder);
+	}
+}
 
 
 Piece::Piece (shared_ptr<Content> c, shared_ptr<Decoder> d, FrameRateChange f)

@@ -122,6 +122,7 @@ private:
 	void construct ();
 	void setup_pieces ();
 	void setup_pieces_unlocked ();
+	std::vector<ContentList> coalesce (ContentList const& content) const;
 	void flush ();
 	void film_change (ChangeType, Film::Property);
 	void playlist_change (ChangeType);
@@ -132,7 +133,7 @@ private:
 	void audio (boost::weak_ptr<Piece>, AudioStreamPtr, ContentAudio);
 	void bitmap_text_start (boost::weak_ptr<Piece>, boost::weak_ptr<const TextContent>, ContentBitmapText);
 	void plain_text_start (boost::weak_ptr<Piece>, boost::weak_ptr<const TextContent>, ContentStringText);
-	void subtitle_stop (boost::weak_ptr<Piece>, boost::weak_ptr<const TextContent>, dcpomatic::ContentTime);
+	void text_stop (boost::weak_ptr<Piece>, boost::weak_ptr<const TextContent>, dcpomatic::ContentTime);
 	void atmos (boost::weak_ptr<Piece>, ContentAtmos);
 
 	dcpomatic::DCPTime one_video_frame () const;

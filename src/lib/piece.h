@@ -24,6 +24,10 @@
 
 #include "audio_stream.h"
 #include "colour_conversion.h"
+#include "content_atmos.h"
+#include "content_audio.h"
+#include "content_text.h"
+#include "content_video.h"
 #include "font.h"
 #include "dcpomatic_time.h"
 #include "frame_rate_change.h"
@@ -38,6 +42,18 @@ struct check_reuse_old_data_test;
 class Piece
 {
 public:
+	Piece (
+		boost::shared_ptr<const Film> film,
+		ContentList content,
+		bool fast,
+		bool tolerant,
+		bool ignore_video,
+		bool ignore_audio,
+		bool ignore_text,
+		bool play_referenced,
+		boost::optional<int> dcp_decode_reduction
+	      );
+
 	Piece (boost::shared_ptr<Content> c, boost::shared_ptr<Decoder> d, FrameRateChange f);
 
 	void update_pull_to (dcpomatic::DCPTime& pull_to) const;
@@ -72,6 +88,13 @@ public:
 	boost::optional<dcpomatic::DCPTime> content_time_to_dcp (boost::shared_ptr<Content> content, dcpomatic::ContentTime t) const;
 
 	void add_fonts (std::list<boost::shared_ptr<dcpomatic::Font> >& fonts) const;
+
+	boost::signals2::signal<void (ContentVideo)> Video;
+	boost::signals2::signal<void (AudioStreamPtr, ContentAudio)> Audio;
+	boost::signals2::signal<void (boost::weak_ptr<const TextContent>, ContentBitmapText)> BitmapTextStart;
+	boost::signals2::signal<void (boost::weak_ptr<const TextContent>, ContentStringText)> PlainTextStart;
+	boost::signals2::signal<void (boost::weak_ptr<const TextContent>, dcpomatic::ContentTime)> TextStop;
+	boost::signals2::signal<void (ContentAtmos)> Atmos;
 
 private:
 	friend struct ::check_reuse_old_data_test;

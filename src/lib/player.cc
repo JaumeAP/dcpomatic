@@ -177,91 +177,65 @@ Player::setup_pieces_unlocked ()
 	_shuffler = new Shuffler();
 	_shuffler->Video.connect(bind(&Player::video, this, _1, _2));
 
-	BOOST_FOREACH (shared_ptr<Content> i, playlist()->content()) {
+	BOOST_FOREACH (ContentList const& i, coalesce(playlist()->content())) {
 
-		if (!i->paths_valid ()) {
+		bool invalid = false;
+		bool interesting = true;
+		BOOST_FOREACH (shared_ptr<Content> j, i) {
+			if (!j->paths_valid()) {
+				invalid = true;
+				continue;
+			}
+			if (_ignore_video && _ignore_audio && j->text.empty()) {
+				/* We're only interested in text and this content has none */
+				interesting = false;
+				continue;
+			}
+		}
+
+		if (invalid || !interesting) {
 			continue;
 		}
 
-		if (_ignore_video && _ignore_audio && i->text.empty()) {
-			/* We're only interested in text and this content has none */
-			continue;
-		}
+		shared_ptr<Piece> piece(
+			new Piece(
+				_film,
+				i,
+				_fast,
+				_tolerant,
+				_ignore_video,
+				_ignore_audio,
+				_ignore_text,
+				_play_referenced,
+				_dcp_decode_reduction
+				));
 
-		shared_ptr<Decoder> old_decoder;
-		/* XXX: needs to check vector of Content and use the old decoders, but
-		 * this will all be different as we have to coalesce content before
-		 * this happens.
-		BOOST_FOREACH (shared_ptr<Piece> j, old_pieces) {
-			if (j->content == i) {
-				old_decoder = j->decoder;
-				break;
-			}
-		}
-		*/
+		piece->Video.connect (bind(&Player::video, this, weak_ptr<Piece>(piece), _1));
+		piece->Audio.connect (bind(&Player::audio, this, weak_ptr<Piece>(piece), _1, _2));
+		piece->BitmapTextStart.connect (bind(&Player::bitmap_text_start, this, weak_ptr<Piece>(piece), _1, _2));
+		piece->PlainTextStart.connect (bind(&Player::plain_text_start, this, weak_ptr<Piece>(piece), _1, _2));
+		piece->TextStop.connect (bind(&Player::text_stop, this, weak_ptr<Piece>(piece), _1, _2));
+		piece->Atmos.connect (bind(&Player::atmos, this, weak_ptr<Piece>(piece), _1));
 
-		shared_ptr<Decoder> decoder = decoder_factory (_film, i, _fast, _tolerant, old_decoder);
-		DCPOMATIC_ASSERT (decoder);
-
-		FrameRateChange frc (_film, i);
-
-		if (decoder->video && _ignore_video) {
-			decoder->video->set_ignore (true);
-		}
-
-		if (decoder->audio && _ignore_audio) {
-			decoder->audio->set_ignore (true);
-		}
-
-		if (_ignore_text) {
-			BOOST_FOREACH (shared_ptr<TextDecoder> i, decoder->text) {
-				i->set_ignore (true);
-			}
-		}
-
-		shared_ptr<DCPDecoder> dcp = dynamic_pointer_cast<DCPDecoder> (decoder);
-		if (dcp) {
-			dcp->set_decode_referenced (_play_referenced);
-			if (_play_referenced) {
-				dcp->set_forced_reduction (_dcp_decode_reduction);
-			}
-		}
-
-		shared_ptr<Piece> piece (new Piece (i, decoder, frc));
 		_pieces.push_back (piece);
 
-		if (decoder->video) {
-			if (i->video->frame_type() == VIDEO_FRAME_TYPE_3D_LEFT || i->video->frame_type() == VIDEO_FRAME_TYPE_3D_RIGHT) {
-				/* We need a Shuffler to cope with 3D L/R video data arriving out of sequence */
-				decoder->video->Data.connect (bind (&Shuffler::video, _shuffler, weak_ptr<Piece>(piece), _1));
-			} else {
-				decoder->video->Data.connect (bind (&Player::video, this, weak_ptr<Piece>(piece), _1));
-			}
-		}
+			/* XXX: needs to check vector of Content and use the old decoders, but
+			 * this will all be different as we have to coalesce content before
+			 * this happens.
+			 BOOST_FOREACH (shared_ptr<Piece> j, old_pieces) {
+			 if (j->content == i) {
+			 old_decoder = j->decoder;
+			 break;
+			 }
+			 }
+			 */
 
-		if (decoder->audio) {
-			decoder->audio->Data.connect (bind (&Player::audio, this, weak_ptr<Piece> (piece), _1, _2));
-		}
-
-		list<shared_ptr<TextDecoder> >::const_iterator j = decoder->text.begin();
-
-		while (j != decoder->text.end()) {
-			(*j)->BitmapStart.connect (
-				bind(&Player::bitmap_text_start, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>((*j)->content()), _1)
-				);
-			(*j)->PlainStart.connect (
-				bind(&Player::plain_text_start, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>((*j)->content()), _1)
-				);
-			(*j)->Stop.connect (
-				bind(&Player::subtitle_stop, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>((*j)->content()), _1)
-				);
-
-			++j;
-		}
-
-		if (decoder->atmos) {
-			decoder->atmos->Data.connect (bind(&Player::atmos, this, weak_ptr<Piece>(piece), _1));
-		}
+#if 0
+			XXX
+				if (j->video->frame_type() == VIDEO_FRAME_TYPE_3D_LEFT || j->video->frame_type() == VIDEO_FRAME_TYPE_3D_RIGHT) {
+					/* We need a Shuffler to cope with 3D L/R video data arriving out of sequence */
+					decoder->video->Data.connect (bind(&Shuffler::video, _shuffler, weak_ptr<Piece>(piece), _1));
+#endif
 	}
 
 	_black = Empty (_film, playlist(), bind(&have_video, _1), _playback_length);
@@ -988,7 +962,7 @@ Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Co
 }
 
 void
-Player::subtitle_stop (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, ContentTime to)
+Player::text_stop (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, ContentTime to)
 {
 	shared_ptr<const TextContent> text = wc.lock ();
 	if (!text) {
@@ -1207,5 +1181,19 @@ void
 Player::atmos (weak_ptr<Piece>, ContentAtmos data)
 {
 	Atmos (data.data, DCPTime::from_frames(data.frame, _film->video_frame_rate()), data.metadata);
+}
+
+
+vector<ContentList>
+Player::coalesce (ContentList const& content) const
+{
+	vector<ContentList> coalesced;
+	BOOST_FOREACH (shared_ptr<Content> i, content) {
+		ContentList group;
+		group.push_back (i);
+		coalesced.push_back (group);
+	}
+
+	return coalesced;
 }
 
