@@ -144,7 +144,7 @@ J2KImageProxy::prepare (optional<dcp::Size> target_size) const
 	}
 
 	try {
-		shared_ptr<dcp::OpenJPEGImage> decompressed = dcp::decompress_j2k (const_cast<uint8_t*> (_data.data().get()), _data.size (), reduce);
+		shared_ptr<dcp::OpenJPEGImage> decompressed = dcp::decompress_j2k (_data, reduce);
 		_image.reset (new Image (_pixel_format, decompressed->size(), true));
 
 		int const shift = 16 - decompressed->precision (0);
