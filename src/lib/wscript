@@ -202,7 +202,7 @@ def build(bld):
                  AVCODEC AVUTIL AVFORMAT AVFILTER SWSCALE
                  BOOST_FILESYSTEM BOOST_THREAD BOOST_DATETIME BOOST_SIGNALS2 BOOST_REGEX
                  SAMPLERATE POSTPROC TIFF SSH DCP CXML GLIB LZMA XML++
-                 CURL ZIP FONTCONFIG PANGOMM CAIROMM XMLSEC SUB ICU NETTLE PNG LEQM_NRT
+                 CURL ZIP FONTCONFIG PANGOMM CAIROMM XMLSEC SUB ICU NETTLE PNG LEQM_NRT FASTVIDEO
                  """
 
     if bld.env.TARGET_OSX:
@@ -228,6 +228,8 @@ def build(bld):
         obj.source += ' cross_linux.cc'
     if bld.env.STATIC_DCPOMATIC:
         obj.uselib += ' XMLPP'
+    if bld.env.ENABLE_FASTVIDEO:
+        obj.source += ' fastvideo.cc'
 
     obj.target = 'dcpomatic2'
 

@@ -76,6 +76,7 @@ def options(opt):
     opt.add_option('--use-lld',           action='store_true', default=False, help='use lld linker')
     opt.add_option('--enable-disk',       action='store_true', default=False, help='build dcpomatic2_disk tool; requires Boost process, lwext4 and nanomsg libraries')
     opt.add_option('--warnings-are-errors', action='store_true', default=False, help='build with -Werror')
+    opt.add_option('--fastvideo-sdk',     help='path to fastvideo SDK (containing fastvideo_sdk directory)')
 
 def configure(conf):
     conf.load('compiler_cxx')
@@ -93,6 +94,7 @@ def configure(conf):
     conf.env.DEBUG = conf.options.enable_debug
     conf.env.STATIC_DCPOMATIC = conf.options.static_dcpomatic
     conf.env.ENABLE_DISK = conf.options.enable_disk
+    conf.env.ENABLE_FASTVIDEO = conf.options.fastvideo_sdk is not None
     if conf.options.install_prefix is None:
         conf.env.INSTALL_PREFIX = conf.env.PREFIX
     else:
@@ -564,6 +566,11 @@ def configure(conf):
     v = (int(s[0]) << 16) | (int(s[1]) << 8) | int(s[2])
     if v >= 0x022D1F:
         conf.env.append_value('CXXFLAGS', '-std=c++11')
+
+    # fastvideo
+    if conf.options.fastvideo_sdk is not None:
+        conf.env.INCLUDES = [ os.path.join(conf.options.fastvideo_sdk, "fastvideo_sdk", "inc") ]
+
 
     # Other stuff
 
