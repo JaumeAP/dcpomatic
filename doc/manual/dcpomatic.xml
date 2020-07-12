@@ -2470,7 +2470,7 @@ KDMs</guilabel>.
 <para>
 By default the <guilabel>DKDM</guilabel> list will list any DCPs for
 which you have clicked <guilabel>Make DKDM for
-DCP-o-matic</guilabel>in the main DCP-o-matic program.  If you have
+DCP-o-matic</guilabel> in the main DCP-o-matic program.  If you have
 other DKDMs you can add them by clicking <guilabel>Add...</guilabel> and
 specifying the file containing the DKDM.
 </para>
