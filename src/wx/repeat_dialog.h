@@ -18,9 +18,12 @@
 
 */
 
+#include "table_dialog.h"
+#include "lib/warnings.h"
+DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 #include <wx/spinctrl.h>
-#include "table_dialog.h"
+DCPOMATIC_ENABLE_WARNINGS
 
 class RepeatDialog : public TableDialog
 {

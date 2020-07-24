@@ -20,6 +20,7 @@
 
 #include "cross.h"
 #include "compose.hpp"
+#include "dcpomatic_assert.h"
 #include "log.h"
 #include "dcpomatic_log.h"
 #include "config.h"
@@ -65,13 +66,15 @@ using boost::function;
 void
 dcpomatic_sleep_seconds (int s)
 {
-	sleep (s);
+	DCPOMATIC_ASSERT (s >= 0);
+	sleep (static_cast<unsigned int>(s));
 }
 
 void
 dcpomatic_sleep_milliseconds (int ms)
 {
-	usleep (ms * 1000);
+	DCPOMATIC_ASSERT (ms >= 0);
+	usleep (static_cast<unsigned int>(ms) * 1000);
 }
 
 /** @return A string of CPU information (model name etc.) */

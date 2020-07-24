@@ -622,7 +622,7 @@ FilmViewer::average_latency () const
                 total += i;
         }
 
-        return total / _latency_history.size();
+        return total / static_cast<Frame>(_latency_history.size());
 }
 
 void

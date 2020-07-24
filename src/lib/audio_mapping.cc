@@ -60,12 +60,15 @@ AudioMapping::AudioMapping (int input_channels, int output_channels)
 void
 AudioMapping::setup (int input_channels, int output_channels)
 {
+	DCPOMATIC_ASSERT (input_channels >= 0);
+	DCPOMATIC_ASSERT (output_channels >= 0);
+
 	_input_channels = input_channels;
 	_output_channels = output_channels;
 
-	_gain.resize (_input_channels);
+	_gain.resize (static_cast<size_t>(_input_channels));
 	for (int i = 0; i < _input_channels; ++i) {
-		_gain[i].resize (_output_channels);
+		_gain[i].resize (static_cast<size_t>(_output_channels));
 	}
 
 	make_zero ();
@@ -179,17 +182,17 @@ AudioMapping::AudioMapping (cxml::ConstNodePtr node, int state_version)
 void
 AudioMapping::set (int input_channel, int output_channel, float g)
 {
-	DCPOMATIC_ASSERT (input_channel < int(_gain.size()));
-	DCPOMATIC_ASSERT (output_channel < int(_gain[0].size()));
-	_gain[input_channel][output_channel] = g;
+	DCPOMATIC_ASSERT (input_channel >= 0 && input_channel < int(_gain.size()));
+	DCPOMATIC_ASSERT (output_channel >= 0 && output_channel < int(_gain[0].size()));
+	_gain[static_cast<size_t>(input_channel)][static_cast<size_t>(output_channel)] = g;
 }
 
 float
 AudioMapping::get (int input_channel, int output_channel) const
 {
-	DCPOMATIC_ASSERT (input_channel < int (_gain.size()));
-	DCPOMATIC_ASSERT (output_channel < int (_gain[0].size()));
-	return _gain[input_channel][output_channel];
+	DCPOMATIC_ASSERT (input_channel >= 0 && input_channel < int(_gain.size()));
+	DCPOMATIC_ASSERT (output_channel >= 0 && output_channel < int(_gain[0].size()));
+	return _gain[static_cast<size_t>(input_channel)][static_cast<size_t>(output_channel)];
 }
 
 void
@@ -217,8 +220,8 @@ AudioMapping::digest () const
 	Digester digester;
 	digester.add (_input_channels);
 	digester.add (_output_channels);
-	for (int i = 0; i < _input_channels; ++i) {
-		for (int j = 0; j < _output_channels; ++j) {
+	for (size_t i = 0; i < static_cast<size_t>(_input_channels); ++i) {
+		for (int j = 0; j < static_cast<size_t>(_output_channels); ++j) {
 			digester.add (_gain[i][j]);
 		}
 	}

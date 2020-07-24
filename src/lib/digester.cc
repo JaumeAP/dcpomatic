@@ -76,7 +76,7 @@ Digester::get (uint8_t* buffer) const
 }
 
 
-int
+size_t
 Digester::size () const
 {
 	return MD5_DIGEST_SIZE;

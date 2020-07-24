@@ -185,7 +185,12 @@ get_from_zip_url (string url, string file, bool pasv, bool skip_pasv_ip, functio
 	char buffer[4096];
 	while (true) {
 		int const N = zip_fread (file_in_zip, buffer, sizeof (buffer));
-		checked_fwrite (buffer, N, f, temp_cert.file());
+		if (N == -1) {
+			zip_fclose (file_in_zip);
+			zip_close (zip);
+			return optional<string>(_("Could not read from ZIP file"));
+		}
+		checked_fwrite (buffer, static_cast<size_t>(N), f, temp_cert.file());
 		if (N < int (sizeof (buffer))) {
 			break;
 		}

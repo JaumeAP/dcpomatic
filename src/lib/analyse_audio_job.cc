@@ -92,7 +92,7 @@ AnalyseAudioJob::AnalyseAudioJob (shared_ptr<const Film> film, shared_ptr<const 
 	}
 
 	/* XXX: is this right?  Especially for more than 5.1? */
-	vector<double> channel_corrections(film->audio_channels(), 1);
+	vector<double> channel_corrections(static_cast<size_t>(film->audio_channels()), 1);
 	add_if_required (channel_corrections,  4,   -3); // Ls
 	add_if_required (channel_corrections,  5,   -3); // Rs
 	add_if_required (channel_corrections,  6, -144); // HI
@@ -113,7 +113,7 @@ AnalyseAudioJob::AnalyseAudioJob (shared_ptr<const Film> film, shared_ptr<const 
 		channel_corrections,
 		850, // suggested by leqm_nrt CLI source
 		64,  // suggested by leqm_nrt CLI source
-		boost::thread::hardware_concurrency()
+		static_cast<int>(boost::thread::hardware_concurrency())
 		));
 }
 
@@ -231,16 +231,17 @@ AnalyseAudioJob::analyse (shared_ptr<const AudioBuffers> b, DCPTime time)
 	}
 #endif
 
-	int const frames = b->frames ();
-	int const channels = b->channels ();
-	vector<double> interleaved(frames * channels);
+	DCPOMATIC_ASSERT (b->frames());
+	DCPOMATIC_ASSERT (b->channels());
 
-	for (int j = 0; j < channels; ++j) {
+	vector<double> interleaved(static_cast<size_t>(b->frames() * b->channels()));
+
+	for (int j = 0; j < b->channels(); ++j) {
 		float* data = b->data(j);
-		for (int i = 0; i < frames; ++i) {
-			float s = data[i];
+		for (Frame i = 0; i < b->frames(); ++i) {
+			float s = data[static_cast<size_t>(i)];
 
-			interleaved[i * channels + j] = s;
+			interleaved[static_cast<size_t>(i * b->channels() + j)] = s;
 
 			float as = fabsf (s);
 			if (as < 10e-7) {
@@ -266,7 +267,7 @@ AnalyseAudioJob::analyse (shared_ptr<const AudioBuffers> b, DCPTime time)
 
 	_leqm->add(interleaved);
 
-	_done += frames;
+	_done += b->frames();
 
 	DCPTime const length = _playlist->length (_film);
 	set_progress ((time.seconds() - _start.seconds()) / (length.seconds() - _start.seconds()));

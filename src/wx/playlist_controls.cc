@@ -202,7 +202,7 @@ PlaylistControls::previous_clicked ()
 bool
 PlaylistControls::can_do_next ()
 {
-	return _selected_playlist && (_selected_playlist_position + 1) < int(_playlists[*_selected_playlist].get().size());
+	return _selected_playlist && (_selected_playlist_position + 1) < _playlists[*_selected_playlist].get().size();
 }
 
 void
@@ -321,7 +321,7 @@ PlaylistControls::get_kdm_from_directory (shared_ptr<DCPContent> dcp)
 void
 PlaylistControls::spl_selection_changed ()
 {
-	long int selected = _spl_view->GetNextItem (-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	size_t const selected = _spl_view->GetNextItem (-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 	if (selected == -1) {
 		_current_spl_view->DeleteAllItems ();
 		_selected_playlist = boost::none;
@@ -343,7 +343,7 @@ PlaylistControls::spl_selection_changed ()
 }
 
 void
-PlaylistControls::select_playlist (int selected, int position)
+PlaylistControls::select_playlist (size_t selected, size_t position)
 {
 	log (wxString::Format("load-playlist %s", std_to_wx(_playlists[selected].name()).data()));
 
@@ -351,7 +351,7 @@ PlaylistControls::select_playlist (int selected, int position)
 
 	BOOST_FOREACH (SPLEntry const & i, _playlists[selected].get()) {
 		dialog.Pulse ();
-		shared_ptr<DCPContent> dcp = dynamic_pointer_cast<DCPContent> (i.content);
+		shared_ptr<DCPContent> dcp = dynamic_ponter_cast<DCPContent> (i.content);
 		if (dcp && dcp->needs_kdm()) {
 			optional<dcp::EncryptedKDM> kdm;
 			kdm = get_kdm_from_directory (dcp);
@@ -441,7 +441,7 @@ PlaylistControls::viewer_finished ()
 	}
 
 	_selected_playlist_position++;
-	if (_selected_playlist_position < int(_playlists[*_selected_playlist].get().size())) {
+	if (_selected_playlist_position < _playlists[*_selected_playlist].get().size()) {
 		/* Next piece of content on the SPL */
 		update_current_content ();
 		_viewer->start ();

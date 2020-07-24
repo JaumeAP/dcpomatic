@@ -28,8 +28,11 @@
 #include "lib/player_text.h"
 #include "lib/timer.h"
 #include "lib/signaller.h"
+#include "lib/warnings.h"
 #include <RtAudio.h>
+DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
+DCPOMATIC_ENABLE_WARNINGS
 
 class wxToggleButton;
 class FFmpegPlayer;
@@ -179,7 +182,7 @@ private:
 	dcp::Size _out_size;
 
 	RtAudio _audio;
-	int _audio_channels;
+	unsigned int _audio_channels;
 	unsigned int _audio_block_size;
 	bool _playing;
 	int _suspended;

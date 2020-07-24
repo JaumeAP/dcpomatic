@@ -43,10 +43,13 @@
 #include "lib/string_text_file_content.h"
 #include "lib/string_text_file.h"
 #include "lib/dcpomatic_log.h"
+#include "lib/warnings.h"
+DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 #include <wx/notebook.h>
 #include <wx/listctrl.h>
 #include <wx/display.h>
+DCPOMATIC_ENABLE_WARNINGS
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <iostream>
@@ -664,7 +667,7 @@ ContentPanel::set_selection (ContentList cl)
 	_no_check_selection = true;
 
 	ContentList content = _film->content ();
-	for (size_t i = 0; i < content.size(); ++i) {
+	for (long int i = 0; i < static_cast<long int>(content.size()); ++i) {
 		if (find(cl.begin(), cl.end(), content[i]) != cl.end()) {
 			_content->SetItemState (i, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 		} else {

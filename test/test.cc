@@ -513,7 +513,7 @@ write_image (shared_ptr<const Image> image, boost::filesystem::path file, string
 {
 	using namespace MagickCore;
 
-	Magick::Image m (image->size().width, image->size().height, format.c_str(), pixel_type, (void *) image->data()[0]);
+	Magick::Image m (static_cast<size_t>(image->size().width), static_cast<size_t>(image->size().height), format.c_str(), pixel_type, reinterpret_cast<void *>(image->data()[0]));
 	m.write (file.string ());
 }
 

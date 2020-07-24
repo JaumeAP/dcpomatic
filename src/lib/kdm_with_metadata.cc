@@ -142,7 +142,7 @@ write_directories (
 	function<bool (boost::filesystem::path)> confirm_overwrite
 	)
 {
-	int written = 0;
+	size_t written = 0;
 
 	BOOST_FOREACH (list<KDMWithMetadataPtr> const & i, kdms) {
 		boost::filesystem::path path = directory;
@@ -154,7 +154,7 @@ write_directories (
 		written += i.size();
 	}
 
-	return written;
+	return static_cast<int>(written);
 }
 
 
@@ -168,7 +168,7 @@ write_zip_files (
 	function<bool (boost::filesystem::path)> confirm_overwrite
 	)
 {
-	int written = 0;
+	size_t written = 0;
 
 	BOOST_FOREACH (list<KDMWithMetadataPtr> const & i, kdms) {
 		boost::filesystem::path path = directory;
@@ -183,7 +183,7 @@ write_zip_files (
 		}
 	}
 
-	return written;
+	return static_cast<size_t>(written);
 }
 
 

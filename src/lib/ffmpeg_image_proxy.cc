@@ -83,7 +83,7 @@ avio_seek_wrapper (void* data, int64_t offset, int whence)
 int
 FFmpegImageProxy::avio_read (uint8_t* buffer, int const amount)
 {
-	int const to_do = min(int64_t(amount), _data.size() - _pos);
+	size_t const to_do = min(static_cast<size_t>(amount), _data.size() - _pos);
 	if (to_do == 0) {
 		return AVERROR_EOF;
 	}
@@ -97,18 +97,22 @@ FFmpegImageProxy::avio_seek (int64_t const pos, int whence)
 {
 	switch (whence) {
 	case AVSEEK_SIZE:
-		return _data.size();
+		return static_cast<int64_t>(_data.size());
 	case SEEK_CUR:
-		_pos += pos;
+		DCPOMATIC_ASSERT ((static_cast<int_64_t>(_pos) + pos) >= 0);
+		_pos = static_cast<size_t>(_pos + pos);
 		break;
 	case SEEK_SET:
-		_pos = pos;
+		DCPOMATIC_ASSERT (pos >= 0);
+		_pos = static_cast<size_t>(pos);
 		break;
 	case SEEK_END:
-		_pos = _data.size() - pos;
+		DCPOMATIC_ASSERT ((static_cast<int64_t>(_data.size()) - pos) >= 0);
+		_pos = static_cast<size_t>(_data.size() - pos);
 		break;
 	}
 
+	DCPOMATIC_ASSERT (_pos >= 0);
 	return _pos;
 }
 

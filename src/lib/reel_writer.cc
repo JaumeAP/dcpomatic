@@ -766,7 +766,7 @@ ReelWriter::existing_picture_frame_ok (FILE* asset_file, shared_ptr<InfoFileHand
 	bool ok = true;
 
 	/* Read the data from the asset and hash it */
-	dcpomatic_fseek (asset_file, info.offset, SEEK_SET);
+	dcpomatic_fseek (asset_file, static_cast<int64_t>(info.offset), SEEK_SET);
 	Data data (info.size);
 	size_t const read = fread (data.data().get(), 1, data.size(), asset_file);
 	LOG_GENERAL ("Read %1 bytes of asset data; wanted %2", read, info.size);

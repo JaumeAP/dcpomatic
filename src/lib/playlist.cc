@@ -625,20 +625,22 @@ Playlist::move_later (shared_ptr<const Film> film, shared_ptr<Content> c)
 	c->set_position (film, c->position() + next_c->length_after_trim(film));
 }
 
-int64_t
+size_t
 Playlist::required_disk_space (shared_ptr<const Film> film, int j2k_bandwidth, int audio_channels, int audio_frame_rate) const
 {
-	int64_t video = uint64_t (j2k_bandwidth / 8) * length(film).seconds();
-	int64_t audio = uint64_t (audio_channels * audio_frame_rate * 3) * length(film).seconds();
+	size_t video = static_cast<size_t>(j2k_bandwidth / 8) * length(film).seconds();
+	size_t audio = static_cast<size_t>(audio_channels * audio_frame_rate * 3) * length(film).seconds();
 
 	BOOST_FOREACH (shared_ptr<Content> i, content()) {
 		shared_ptr<DCPContent> d = dynamic_pointer_cast<DCPContent> (i);
 		if (d) {
+			DCPTime const len = d->length_after_trim(film);
+			DCPOMATIC_ASSERT (len.get() >= 0);
 			if (d->reference_video()) {
-				video -= uint64_t (j2k_bandwidth / 8) * d->length_after_trim(film).seconds();
+				video -= static_cast<size_t>(j2k_bandwidth / 8) * len.seconds();
 			}
 			if (d->reference_audio()) {
-				audio -= uint64_t (audio_channels * audio_frame_rate * 3) * d->length_after_trim(film).seconds();
+				audio -= static_cast<size_t>(audio_channels * audio_frame_rate * 3) * len.seconds();
 			}
 		}
 	}

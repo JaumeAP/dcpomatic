@@ -152,7 +152,7 @@ namespace StringPrivate
 	  // save string
 	  output.push_back(fmt.substr(b, i - b));
 
-	  int n = 1;		// number of digits
+	  std::string::size_type n = 1;		// number of digits
 	  int spec_no = 0;
 
 	  do {

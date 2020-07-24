@@ -57,7 +57,7 @@ Frame
 VideoRingBuffers::size () const
 {
 	boost::mutex::scoped_lock lm (_mutex);
-	return _data.size ();
+	return static_cast<Frame>(_data.size());
 }
 
 bool

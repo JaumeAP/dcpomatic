@@ -36,8 +36,8 @@ ImageFilenameSorter::operator() (boost::filesystem::path a, boost::filesystem::p
 	string an = extract_numbers (a);
 	string bn = extract_numbers (b);
 
-	int const anl = an.length ();
-	int const bnl = bn.length ();
+	size_t const anl = an.length ();
+	size_t const bnl = bn.length ();
 
 	if (anl > bnl) {
 		bn = string(anl - bnl, '0') + bn;

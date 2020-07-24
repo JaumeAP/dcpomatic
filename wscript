@@ -75,6 +75,7 @@ def options(opt):
     opt.add_option('--variant',           help='build variant (swaroop-studio, swaroop-theater)', choices=['swaroop-studio', 'swaroop-theater'])
     opt.add_option('--use-lld',           action='store_true', default=False, help='use lld linker')
     opt.add_option('--enable-disk',       action='store_true', default=False, help='build dcpomatic2_disk tool; requires Boost process, lwext4 and nanomsg libraries')
+    opt.add_option('--warnings-are-errors', action='store_true', default=False, help='build with -Werror')
 
 def configure(conf):
     conf.load('compiler_cxx')
@@ -112,6 +113,9 @@ def configure(conf):
                                        '-Wno-ignored-qualifiers',
                                        '-Wno-parentheses',
                                        '-D_FILE_OFFSET_BITS=64'])
+
+    if conf.options.warnings_are_errors:
+        conf.env.append_value('CXXFLAGS', '-Werror')
 
     if conf.options.force_cpp11:
         conf.env.append_value('CXXFLAGS', ['-std=c++11', '-DBOOST_NO_CXX11_SCOPED_ENUMS'])
@@ -325,7 +329,7 @@ def configure(conf):
         conf.check_cc(fragment="""
                                #include <libssh/libssh.h>\n
                                int main () {\n
-                               ssh_session s = ssh_new ();\n
+                               ssh_new ();\n
                                return 0;\n
                                }
                                """,

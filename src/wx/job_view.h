@@ -48,7 +48,7 @@ public:
 
 	void setup ();
 	void maybe_pulse ();
-	void insert (int pos);
+	void insert (size_t pos);
 	void detach ();
 
 	boost::shared_ptr<Job> job () const {

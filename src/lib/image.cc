@@ -187,7 +187,8 @@ Image::crop_scale_window (
 	}
 
 	/* Prepare input data pointers with crop */
-	uint8_t* scale_in_data[planes()];
+	DCPOMATIC_ASSERT (planes() > 0);
+	uint8_t* scale_in_data[static_cast<size_t>(planes())];
 	for (int c = 0; c < planes(); ++c) {
 		/* To work out the crop in bytes, start by multiplying
 		   the crop by the (average) bytes per pixel.  Then
@@ -206,7 +207,7 @@ Image::crop_scale_window (
 		throw PixelFormatError ("crop_scale_window()", out_format);
 	}
 
-	uint8_t* scale_out_data[out->planes()];
+	uint8_t* scale_out_data[static_cast<size_t>(out->planes())];
 	for (int c = 0; c < out->planes(); ++c) {
 		/* See the note in the crop loop above */
 		int const x = lrintf (out->bytes_per_pixel(c) * corner.x) & ~ ((int) out_desc->log2_chroma_w);
@@ -302,9 +303,9 @@ Image::scale (dcp::Size out_size, dcp::YUVToRGB yuv_to_rgb, AVPixelFormat out_fo
 void
 Image::yuv_16_black (uint16_t v, bool alpha)
 {
-	memset (data()[0], 0, sample_size(0).height * stride()[0]);
+	memset (data()[0], 0, static_cast<size_t>(sample_size(0).height * stride()[0]));
 	for (int i = 1; i < 3; ++i) {
-		int16_t* p = reinterpret_cast<int16_t*> (data()[i]);
+		uint16_t* p = reinterpret_cast<uint16_t*> (data()[i]);
 		int const lines = sample_size(i).height;
 		for (int y = 0; y < lines; ++y) {
 			/* We divide by 2 here because we are writing 2 bytes at a time */
@@ -316,7 +317,7 @@ Image::yuv_16_black (uint16_t v, bool alpha)
 	}
 
 	if (alpha) {
-		memset (data()[3], 0, sample_size(3).height * stride()[3]);
+		memset (data()[3], 0, static_cast<size_t>(sample_size(3).height * stride()[3]));
 	}
 }
 
@@ -345,7 +346,7 @@ Image::make_part_black (int x, int w)
 		int const s = stride()[0];
 		uint8_t* p = data()[0];
 		for (int y = 0; y < h; y++) {
-			memset (p + x * bpp, 0, w * bpp);
+			memset (p + x * bpp, 0, static_cast<size_t>(w * bpp));
 			p += s;
 		}
 		break;
@@ -373,17 +374,17 @@ Image::make_black ()
 	case AV_PIX_FMT_YUV422P:
 	case AV_PIX_FMT_YUV444P:
 	case AV_PIX_FMT_YUV411P:
-		memset (data()[0], 0, sample_size(0).height * stride()[0]);
-		memset (data()[1], eight_bit_uv, sample_size(1).height * stride()[1]);
-		memset (data()[2], eight_bit_uv, sample_size(2).height * stride()[2]);
+		memset (data()[0], 0, static_cast<size_t>(sample_size(0).height * stride()[0]));
+		memset (data()[1], eight_bit_uv, static_cast<size_t>(sample_size(1).height * stride()[1]));
+		memset (data()[2], eight_bit_uv, static_cast<size_t>(sample_size(2).height * stride()[2]));
 		break;
 
 	case AV_PIX_FMT_YUVJ420P:
 	case AV_PIX_FMT_YUVJ422P:
 	case AV_PIX_FMT_YUVJ444P:
-		memset (data()[0], 0, sample_size(0).height * stride()[0]);
-		memset (data()[1], eight_bit_uv + 1, sample_size(1).height * stride()[1]);
-		memset (data()[2], eight_bit_uv + 1, sample_size(2).height * stride()[2]);
+		memset (data()[0], 0, static_cast<size_t>(sample_size(0).height * stride()[0]));
+		memset (data()[1], eight_bit_uv + 1, static_cast<size_t>(sample_size(1).height * stride()[1]));
+		memset (data()[2], eight_bit_uv + 1, static_cast<size_t>(sample_size(2).height * stride()[2]));
 		break;
 
 	case AV_PIX_FMT_YUV422P9LE:
@@ -456,7 +457,7 @@ Image::make_black ()
 	case AV_PIX_FMT_RGB48LE:
 	case AV_PIX_FMT_RGB48BE:
 	case AV_PIX_FMT_XYZ12LE:
-		memset (data()[0], 0, sample_size(0).height * stride()[0]);
+		memset (data()[0], 0, static_cast<size_t>(sample_size(0).height * stride()[0]));
 		break;
 
 	case AV_PIX_FMT_UYVY422:
@@ -487,7 +488,7 @@ Image::make_transparent ()
 		throw PixelFormatError ("make_transparent()", _pixel_format);
 	}
 
-	memset (data()[0], 0, sample_size(0).height * stride()[0]);
+	memset (data()[0], 0, static_cast<size_t>(sample_size(0).height * stride()[0]));
 }
 
 void
@@ -747,7 +748,7 @@ Image::copy (shared_ptr<const Image> other, Position<int> position)
 	for (int ty = position.y, oy = 0; ty < size().height && oy < other->size().height; ++ty, ++oy) {
 		uint8_t * const tp = data()[0] + ty * stride()[0] + position.x * 3;
 		uint8_t * const op = other->data()[0] + oy * other->stride()[0];
-		memcpy (tp, op, N * 3);
+		memcpy (tp, op, static_cast<size_t>(N * 3));
 	}
 }
 
@@ -758,7 +759,7 @@ Image::read_from_socket (shared_ptr<Socket> socket)
 		uint8_t* p = data()[i];
 		int const lines = sample_size(i).height;
 		for (int y = 0; y < lines; ++y) {
-			socket->read (p, line_size()[i]);
+			socket->read (p, static_cast<size_t>(line_size()[i]));
 			p += stride()[i];
 		}
 	}
@@ -771,7 +772,7 @@ Image::write_to_socket (shared_ptr<Socket> socket) const
 		uint8_t* p = data()[i];
 		int const lines = sample_size(i).height;
 		for (int y = 0; y < lines; ++y) {
-			socket->write (p, line_size()[i]);
+			socket->write (p, static_cast<size_t>(line_size()[i]));
 			p += stride()[i];
 		}
 	}
@@ -891,7 +892,7 @@ Image::allocate ()
 		   |XXXwrittenXXX|<------line-size------------->|XXXwrittenXXXXXXwrittenXXX
 		                                                               ^^^^ out of bounds
 		*/
-		_data[i] = (uint8_t *) wrapped_av_malloc (_stride[i] * (sample_size(i).height + 1) + 32);
+		_data[i] = (uint8_t *) wrapped_av_malloc (static_cast<size_t>(_stride[i] * (sample_size(i).height + 1) + 32));
 #if HAVE_VALGRIND_MEMCHECK_H
 		/* The data between the end of the line size and the stride is undefined but processed by
 		   libswscale, causing lots of valgrind errors.  Mark it all defined to quell these errors.
@@ -914,7 +915,7 @@ Image::Image (Image const & other)
 		uint8_t* q = other._data[i];
 		int const lines = sample_size(i).height;
 		for (int j = 0; j < lines; ++j) {
-			memcpy (p, q, _line_size[i]);
+			memcpy (p, q, static_cast<size_t>(_line_size[i]));
 			p += stride()[i];
 			q += other.stride()[i];
 		}
@@ -933,7 +934,7 @@ Image::Image (AVFrame* frame)
 		uint8_t* q = frame->data[i];
 		int const lines = sample_size(i).height;
 		for (int j = 0; j < lines; ++j) {
-			memcpy (p, q, _line_size[i]);
+			memcpy (p, q, static_cast<size_t>(_line_size[i]));
 			p += stride()[i];
 			/* AVFrame's linesize is what we call `stride' */
 			q += frame->linesize[i];
@@ -954,7 +955,7 @@ Image::Image (shared_ptr<const Image> other, bool aligned)
 		uint8_t* q = other->data()[i];
 		int const lines = sample_size(i).height;
 		for (int j = 0; j < lines; ++j) {
-			memcpy (p, q, line_size()[i]);
+			memcpy (p, q, static_cast<size_t>(line_size()[i]));
 			p += stride()[i];
 			q += other->stride()[i];
 		}
@@ -1071,7 +1072,7 @@ operator== (Image const & a, Image const & b)
 		uint8_t* q = b.data()[c];
 		int const lines = a.sample_size(c).height;
 		for (int y = 0; y < lines; ++y) {
-			if (memcmp (p, q, a.line_size()[c]) != 0) {
+			if (memcmp(p, q, static_cast<size_t>(a.line_size()[c])) != 0) {
 				return false;
 			}
 
@@ -1218,7 +1219,7 @@ Image::memory_used () const
 {
 	size_t m = 0;
 	for (int i = 0; i < planes(); ++i) {
-		m += _stride[i] * sample_size(i).height;
+		m += static_cast<size_t>(_stride[i] * sample_size(i).height);
 	}
 	return m;
 }
@@ -1303,9 +1304,13 @@ Image::as_png () const
 		throw EncodeError (N_("could not create PNG info struct"));
 	}
 
-	png_set_IHDR (png_ptr, info_ptr, size().width, size().height, 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	png_set_IHDR (
+		png_ptr, info_ptr,
+		static_cast<png_uint_32>(size().width), static_cast<png_uint_32>(size().height),
+		8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT
+		);
 
-	png_byte ** row_pointers = reinterpret_cast<png_byte **>(png_malloc(png_ptr, size().height * sizeof(png_byte *)));
+	png_byte ** row_pointers = reinterpret_cast<png_byte **>(png_malloc(png_ptr, static_cast<size_t>(size().height) * sizeof(png_byte *)));
 	for (int i = 0; i < size().height; ++i) {
 		row_pointers[i] = (png_byte *) (data()[0] + i * stride()[0]);
 	}

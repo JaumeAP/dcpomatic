@@ -89,13 +89,13 @@ AudioBuffers::allocate (int channels, int32_t frames)
 	_frames = frames;
 	_allocated_frames = frames;
 
-	_data = static_cast<float**> (malloc (_channels * sizeof (float *)));
+	_data = static_cast<float**>(malloc(static_cast<size_t>(_channels) * sizeof(float *)));
 	if (!_data) {
 		throw bad_alloc ();
 	}
 
 	for (int i = 0; i < _channels; ++i) {
-		_data[i] = static_cast<float*> (malloc (frames * sizeof (float)));
+		_data[i] = static_cast<float*>(malloc(static_cast<size_t>(frames) * sizeof(float)));
 		if (!_data[i]) {
 			throw bad_alloc ();
 		}
@@ -158,7 +158,8 @@ AudioBuffers::make_silent (int c)
 	/* This isn't really allowed, as all-bits-0 is not guaranteed to mean a 0 float,
 	   but it seems that we can get away with it.
 	*/
-	memset (_data[c], 0, _frames * sizeof(float));
+	DCPOMATIC_ASSERT (_frames >= 0);
+	memset (_data[c], 0, static_cast<size_t>(_frames) * sizeof(float));
 }
 
 /** Make some frames.
@@ -169,12 +170,13 @@ void
 AudioBuffers::make_silent (int32_t from, int32_t frames)
 {
 	DCPOMATIC_ASSERT ((from + frames) <= _allocated_frames);
+	DCPOMATIC_ASSERT (frames >= 0);
 
 	for (int c = 0; c < _channels; ++c) {
 		/* This isn't really allowed, as all-bits-0 is not guaranteed to mean a 0 float,
 		   but it seems that we can get away with it.
 		*/
-		memset (_data[c] + from, 0, frames * sizeof(float));
+		memset (_data[c] + from, 0, static_cast<size_t>(frames) * sizeof(float));
 	}
 }
 
@@ -197,9 +199,10 @@ AudioBuffers::copy_from (AudioBuffers const * from, int32_t frames_to_copy, int3
 	DCPOMATIC_ASSERT (from);
 	DCPOMATIC_ASSERT (read_offset >= 0 && (read_offset + frames_to_copy) <= from->_allocated_frames);
 	DCPOMATIC_ASSERT (write_offset >= 0 && (write_offset + frames_to_copy) <= _allocated_frames);
+	DCPOMATIC_ASSERT (frames_to_copy > 0);
 
 	for (int i = 0; i < _channels; ++i) {
-		memcpy (_data[i] + write_offset, from->_data[i] + read_offset, frames_to_copy * sizeof(float));
+		memcpy (_data[i] + write_offset, from->_data[i] + read_offset, static_cast<size_t>(frames_to_copy) * sizeof(float));
 	}
 }
 
@@ -225,7 +228,7 @@ AudioBuffers::move (int32_t frames, int32_t from, int32_t to)
 	DCPOMATIC_ASSERT ((to + frames) <= _allocated_frames);
 
 	for (int i = 0; i < _channels; ++i) {
-		memmove (_data[i] + to, _data[i] + from, frames * sizeof(float));
+		memmove (_data[i] + to, _data[i] + from, static_cast<size_t>(frames) * sizeof(float));
 	}
 }
 
@@ -256,6 +259,8 @@ AudioBuffers::accumulate_channel (AudioBuffers const * from, int from_channel, i
 void
 AudioBuffers::ensure_size (int32_t frames)
 {
+	DCPOMATIC_ASSERT (frames >= 0);
+
 	if (_allocated_frames >= frames) {
 		return;
 	}
@@ -272,7 +277,7 @@ AudioBuffers::ensure_size (int32_t frames)
 	frames++;
 
 	for (int i = 0; i < _channels; ++i) {
-		_data[i] = static_cast<float*> (realloc (_data[i], frames * sizeof (float)));
+		_data[i] = static_cast<float*>(realloc(_data[i], static_cast<size_t>(frames) * sizeof (float)));
 		if (!_data[i]) {
 			throw bad_alloc ();
 		}
@@ -339,7 +344,8 @@ void
 AudioBuffers::copy_channel_from (AudioBuffers const * from, int from_channel, int to_channel)
 {
 	DCPOMATIC_ASSERT (from->frames() == frames());
-	memcpy (data(to_channel), from->data(from_channel), frames() * sizeof (float));
+	DCPOMATIC_ASSERT (frames() >= 0);
+	memcpy (data(to_channel), from->data(from_channel), static_cast<size_t>(frames()) * sizeof(float));
 }
 
 /** Make a copy of these AudioBuffers */

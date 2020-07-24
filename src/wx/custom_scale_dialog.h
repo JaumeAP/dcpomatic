@@ -21,8 +21,11 @@
 
 #include "table_dialog.h"
 #include <dcp/types.h>
+#include "lib/warnings.h"
+DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 #include <wx/spinctrl.h>
+DCPOMATIC_ENABLE_WARNINGS
 
 
 class CustomScaleDialog : public TableDialog

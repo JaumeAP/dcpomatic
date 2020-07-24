@@ -44,7 +44,7 @@ public:
 
 private:
 	dcp::Data _data;
-	mutable int64_t _pos;
+	mutable size_t _pos;
 	/** Path of a file that this image came from, if applicable; stored so that
 	    failed-decode errors can give more detail.
 	*/

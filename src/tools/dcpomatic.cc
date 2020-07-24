@@ -646,9 +646,12 @@ private:
 
 	void file_history (wxCommandEvent& event)
 	{
+		if (event.GetId() < ID_file_history) {
+			return;
+		}
+		size_t const n = event.GetId() - ID_file_history;
 		vector<boost::filesystem::path> history = Config::instance()->history ();
-		int n = event.GetId() - ID_file_history;
-		if (n >= 0 && n < static_cast<int> (history.size ()) && maybe_save_then_delete_film<FilmChangedClosingDialog>()) {
+		if (n < history.size() && maybe_save_then_delete_film<FilmChangedClosingDialog>()) {
 			load_film (history[n]);
 		}
 	}
@@ -1394,7 +1397,7 @@ private:
 		delete _history_separator;
 		_history_separator = 0;
 
-		int pos = _history_position;
+		unsigned int pos = _history_position;
 
 		/* Clear out non-existant history items before we re-build the menu */
 		Config::instance()->clean_history ();
@@ -1492,7 +1495,7 @@ private:
 	wxMenu* _file_menu;
 	shared_ptr<Film> _film;
 	int _history_items;
-	int _history_position;
+	unsigned int _history_position;
 	wxMenuItem* _history_separator;
 	boost::signals2::scoped_connection _config_changed_connection;
 	boost::signals2::scoped_connection _analytics_message_connection;

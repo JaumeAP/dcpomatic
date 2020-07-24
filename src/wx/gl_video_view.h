@@ -21,7 +21,10 @@
 #include "video_view.h"
 #include "lib/signaller.h"
 #include "lib/position.h"
+#include "lib/warnings.h"
+DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
+DCPOMATIC_ENABLE_WARNINGS
 #include <wx/glcanvas.h>
 #include <dcp/util.h>
 #include <boost/atomic.hpp>

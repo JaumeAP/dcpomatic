@@ -108,7 +108,7 @@ J2KImageProxy::J2KImageProxy (shared_ptr<cxml::Node> xml, shared_ptr<Socket> soc
 	if (xml->optional_number_child<int> ("Eye")) {
 		_eye = static_cast<dcp::Eye> (xml->number_child<int> ("Eye"));
 	}
-	_data = Data (xml->number_child<int> ("Size"));
+	_data = Data (xml->number_child<size_t>("Size"));
 	/* This only matters when we are using J2KImageProxy for the preview, which
 	   will never use this constructor (which is only used for passing data to
 	   encode servers).  So we can put anything in here.  It's a bit of a hack.
@@ -238,7 +238,7 @@ J2KImageProxy::memory_used () const
 	size_t m = _data.size();
 	if (_image) {
 		/* 3 components, 16-bits per pixel */
-		m += 3 * 2 * _image->size().width * _image->size().height;
+		m += static_cast<size_t>(3 * 2 * _image->size().width * _image->size().height);
 	}
 	return m;
 }

@@ -179,7 +179,7 @@ JobView::cancel_clicked (wxCommandEvent &)
 }
 
 void
-JobView::insert (int pos)
+JobView::insert (size_t pos)
 {
 	_table->Insert (pos, _gauge_message, 1, wxEXPAND | wxLEFT | wxRIGHT);
 	_table->Insert (pos + 1, _controls, 1, wxALIGN_CENTER_VERTICAL | wxALL, 3);

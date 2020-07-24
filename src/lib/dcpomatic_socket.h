@@ -44,9 +44,9 @@ public:
 	void connect (boost::asio::ip::tcp::endpoint);
 
 	void write (uint32_t n);
-	void write (uint8_t const * data, int size);
+	void write (uint8_t const * data, size_t size);
 
-	void read (uint8_t* data, int size);
+	void read (uint8_t* data, size_t size);
 	uint32_t read_uint32 ();
 
 	class ReadDigestScope

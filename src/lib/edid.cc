@@ -78,7 +78,11 @@ get_monitors()
 
 			mon.manufacturer_product_code = (edid[11] << 8) | edid[10];
 
-			mon.serial_number = (edid[15] << 24) | (edid[14] << 16) | (edid[13] << 8) | edid[12];
+			mon.serial_number = (static_cast<uint32_t>(edid[15]) << 24) |
+				(static_cast<uint32_t>(edid[14]) << 16) |
+				(static_cast<uint32_t>(edid[13]) << 8) |
+				static_cast<uint32_t>(edid[12]);
+
 			mon.week_of_manufacture = edid[16];
 			mon.year_of_manufacture = edid[17];
 			monitors.push_back (mon);

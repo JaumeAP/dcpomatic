@@ -79,7 +79,7 @@ Socket::connect (boost::asio::ip::tcp::endpoint endpoint)
  *  @param size Number of bytes to write.
  */
 void
-Socket::write (uint8_t const * data, int size)
+Socket::write (uint8_t const * data, size_t size)
 {
 	_deadline.expires_from_now (boost::posix_time::seconds (_timeout));
 	boost::system::error_code ec = boost::asio::error::would_block;
@@ -111,7 +111,7 @@ Socket::write (uint32_t v)
  *  @param size Number of bytes to read.
  */
 void
-Socket::read (uint8_t* data, int size)
+Socket::read (uint8_t* data, size_t size)
 {
 	_deadline.expires_from_now (boost::posix_time::seconds (_timeout));
 	boost::system::error_code ec = boost::asio::error::would_block;
@@ -200,7 +200,7 @@ bool
 Socket::check_read_digest ()
 {
 	DCPOMATIC_ASSERT (_read_digester);
-	int const size = _read_digester->size ();
+	size_t const size = _read_digester->size ();
 
 	uint8_t ref[size];
 	_read_digester->get (ref);
@@ -220,7 +220,7 @@ void
 Socket::finish_write_digest ()
 {
 	DCPOMATIC_ASSERT (_write_digester);
-	int const size = _write_digester->size();
+	size_t const size = _write_digester->size();
 
 	uint8_t buffer[size];
 	_write_digester->get (buffer);

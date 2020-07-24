@@ -50,7 +50,7 @@ private:
 	void update_content_directory ();
 	void update_playlist_directory ();
 	void spl_selection_changed ();
-	void select_playlist (int selected, int position);
+	void select_playlist (size_t selected, size_t position);
 	void started ();
 	void stopped ();
 	void setup_sensitivity ();
@@ -78,5 +78,5 @@ private:
 
 	std::vector<SPL> _playlists;
 	boost::optional<int> _selected_playlist;
-	int _selected_playlist_position;
+	size_t _selected_playlist_position;
 };

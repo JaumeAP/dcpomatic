@@ -1566,7 +1566,7 @@ Film::make_kdm (
 /** @return The approximate disk space required to encode a DCP of this film with the
  *  current settings, in bytes.
  */
-uint64_t
+size_t
 Film::required_disk_space () const
 {
 	return _playlist->required_disk_space (shared_from_this(), j2k_bandwidth(), audio_channels(), audio_frame_rate());

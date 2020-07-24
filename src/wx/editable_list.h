@@ -23,8 +23,11 @@
 
 #include "wx_util.h"
 #include "dcpomatic_button.h"
+#include "lib/warnings.h"
+DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 #include <wx/listctrl.h>
+DCPOMATIC_ENABLE_WARNINGS
 #include <boost/function.hpp>
 #include <vector>
 

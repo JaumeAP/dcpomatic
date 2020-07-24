@@ -99,8 +99,8 @@ ColourConversion::ColourConversion (cxml::NodePtr node, int version)
 		/* Read in old <Matrix> nodes and convert them to chromaticities */
 		boost::numeric::ublas::matrix<double> C (3, 3);
 		for (list<cxml::NodePtr>::iterator i = m.begin(); i != m.end(); ++i) {
-			int const ti = (*i)->number_attribute<int> ("i");
-			int const tj = (*i)->number_attribute<int> ("j");
+			size_t const ti = (*i)->number_attribute<size_t>("i");
+			size_t const tj = (*i)->number_attribute<size_t>("j");
 			C(ti, tj) = raw_convert<double> ((*i)->content ());
 		}
 

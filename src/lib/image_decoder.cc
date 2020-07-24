@@ -55,7 +55,8 @@ ImageDecoder::pass ()
 
 	if (!_image_content->still() || !_image) {
 		/* Either we need an image or we are using moving images, so load one */
-		boost::filesystem::path path = _image_content->path (_image_content->still() ? 0 : _frame_video_position);
+		DCPOMATIC_ASSERT (_frame_video_position >= 0);
+		boost::filesystem::path path = _image_content->path (_image_content->still() ? 0 : static_cast<size_t>(_frame_video_position));
 		if (valid_j2k_file (path)) {
 			AVPixelFormat pf;
 			if (_image_content->video->colour_conversion()) {

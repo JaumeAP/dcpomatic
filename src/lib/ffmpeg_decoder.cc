@@ -420,7 +420,8 @@ FFmpegDecoder::decode_audio_packet ()
 	*/
 
 	AVPacket copy_packet = _packet;
-	int const stream_index = copy_packet.stream_index;
+	DCPOMATIC_ASSERT (copy_packet.stream_index >= 0);
+	size_t const stream_index = static_cast<size_t>(copy_packet.stream_index);
 
 	/* XXX: inefficient */
 	vector<shared_ptr<FFmpegAudioStream> > streams = ffmpeg_content()->ffmpeg_audio_streams ();
@@ -645,8 +646,10 @@ FFmpegDecoder::decode_bitmap_subtitle (AVSubtitleRect const * rect, ContentTime 
 	   chosen by the user; created a `mapped' palette from those settings.
 	*/
 	map<RGBA, RGBA> colour_map = ffmpeg_content()->subtitle_stream()->colours ();
-	vector<RGBA> mapped_palette (rect->nb_colors);
-	for (int i = 0; i < rect->nb_colors; ++i) {
+	DCPOMATIC_ASSERT (rect->nb_colors);
+	size_t const colors = static_cast<size_t>(rect->nb_colors);
+	vector<RGBA> mapped_palette (colors);
+	for (size_t i = 0; i < colors; ++i) {
 		RGBA c (palette[2], palette[1], palette[0], palette[3]);
 		map<RGBA, RGBA>::const_iterator j = colour_map.find (c);
 		if (j != colour_map.end ()) {

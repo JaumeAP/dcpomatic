@@ -42,7 +42,7 @@ public:
 
 	void get (uint8_t* buffer) const;
 
-	int size () const;
+	size_t size () const;
 
 private:
 	mutable md5_ctx _context;
