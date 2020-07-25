@@ -286,6 +286,13 @@ public:
 		return _("Advanced");
 	}
 
+#ifdef DCPOMATIC_OSX
+	wxBitmap GetLargeIcon () const
+	{
+		return wxBitmap ("advanced", wxBITMAP_TYPE_PNG_RESOURCE);
+	}
+#endif
+
 private:
 	void add_top_aligned_label_to_sizer (wxSizer* table, wxWindow* parent, wxString text)
 	{
