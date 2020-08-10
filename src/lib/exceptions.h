@@ -383,7 +383,7 @@ public:
 class FastvideoError : public std::runtime_error
 {
 public:
-	explicit FastvideoError (std::string s);
+	explicit FastvideoError (std::string s, int code=0);
 };
 
 #endif

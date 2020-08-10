@@ -139,8 +139,8 @@ VerifyError::VerifyError (string m, int n)
 }
 
 
-FastvideoError::FastvideoError (string s)
-	: runtime_error (String::compose("Fastvideo error in %1", s))
+FastvideoError::FastvideoError (string s, int code)
+	: runtime_error (String::compose("Fastvideo error in %1 (%2)", s, code))
 {
 
 }
