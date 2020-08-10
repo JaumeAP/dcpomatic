@@ -569,7 +569,9 @@ def configure(conf):
 
     # fastvideo
     if conf.options.fastvideo_sdk is not None:
-        conf.env.INCLUDES = [ os.path.join(conf.options.fastvideo_sdk, "fastvideo_sdk", "inc") ]
+        conf.env.INCLUDES_FASTVIDEO = [os.path.join(conf.options.fastvideo_sdk, "fastvideo_sdk", "inc") ]
+        conf.env.LIBPATH_FASTVIDEO = [ os.path.join(conf.options.fastvideo_sdk, "fastvideo_sdk", "lib") ]
+        conf.env.LIB_FASTVIDEO = [ 'fastvideo_decoder_j2k', 'fastvideo_sdk', 'cuda', 'cudart' ]
 
 
     # Other stuff

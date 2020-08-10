@@ -379,4 +379,11 @@ public:
 		{}
 };
 
+
+class FastvideoError : public std::runtime_error
+{
+public:
+	explicit FastvideoError (std::string s);
+};
+
 #endif
