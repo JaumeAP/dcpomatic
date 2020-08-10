@@ -10,8 +10,13 @@ using boost::shared_ptr;
 shared_ptr<OpenJPEGImage>
 fastvideo_decompress_j2k (dcp::Data data, int reduce)
 {
+	fastStatus_t r = fastInit(1, true);
+	if (r != FAST_OK) {
+		throw FastvideoError ("Init", r);
+	}
+
 	fastJ2kImageInfo_t info;
-	fastStatus_t r = fastDecoderJ2kPredecode(&info, data.data().get(), data.size());
+	r = fastDecoderJ2kPredecode(&info, data.data().get(), data.size());
 	if (r != FAST_OK) {
 		throw FastvideoError ("J2kPredecode");
 	}
@@ -53,8 +58,7 @@ fastvideo_decompress_j2k (dcp::Data data, int reduce)
 			&buffer
 			);
 	if (r != FAST_OK) {
-		std::cout << "r=" << r << "\n";
-		throw FastvideoError ("J2kCreate");
+		throw FastvideoError ("J2kCreate", r);
 	}
 
 	unsigned long long requested_mem_size = 0;
