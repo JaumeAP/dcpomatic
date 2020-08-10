@@ -1,19 +1,22 @@
 #include "exceptions.h"
 #include "fastvideo.h"
 #include <fastvideo_decoder_j2k.h>
+#include <iostream>
 
 
 using boost::shared_ptr;
 
 
 shared_ptr<OpenJPEGImage>
-fastvideo_decompess_j2k (dcp::Data data, int reduce)
+fastvideo_decompress_j2k (dcp::Data data, int reduce)
 {
 	fastJ2kImageInfo_t info;
 	fastStatus_t r = fastDecoderJ2kPredecode(&info, data.data().get(), data.size());
 	if (r != FAST_OK) {
 		throw FastvideoError ("J2kPredecode");
 	}
+
+	std::cout << "predecode -> " << info.width << "x" << info.height << " stream size " << info.streamSize << "\n";
 
 	/* Init */
 
@@ -50,6 +53,7 @@ fastvideo_decompess_j2k (dcp::Data data, int reduce)
 			&buffer
 			);
 	if (r != FAST_OK) {
+		std::cout << "r=" << r << "\n";
 		throw FastvideoError ("J2kCreate");
 	}
 

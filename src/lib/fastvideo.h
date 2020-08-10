@@ -3,4 +3,4 @@
 
 class OpenJPEGImage;
 
-boost::shared_ptr<OpenJPEGImage> fastvideo_decompess_j2k (dcp::Data data, int reduce);
+boost::shared_ptr<OpenJPEGImage> fastvideo_decompress_j2k (dcp::Data data, int reduce);
