@@ -30,10 +30,13 @@
 #include <boost/thread.hpp>
 #include <boost/noncopyable.hpp>
 
-class Image;
-class wxWindow;
 class FilmViewer;
 class PlayerVideo;
+class wxWindow;
+
+namespace dcpomatic {
+	class Image;
+}
 
 class VideoView : public ExceptionStore, public boost::noncopyable
 {

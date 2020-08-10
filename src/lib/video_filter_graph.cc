@@ -35,6 +35,8 @@ using std::vector;
 using std::string;
 using std::make_pair;
 using boost::shared_ptr;
+using namespace dcpomatic;
+
 
 VideoFilterGraph::VideoFilterGraph (dcp::Size s, AVPixelFormat p, dcp::Fraction r)
 	: _size (s)

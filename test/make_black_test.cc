@@ -33,6 +33,8 @@ extern "C" {
 #include "lib/image.h"
 
 using std::list;
+using namespace dcpomatic;
+
 
 BOOST_AUTO_TEST_CASE (make_black_test)
 {

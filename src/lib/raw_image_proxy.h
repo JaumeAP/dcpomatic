@@ -26,7 +26,7 @@
 class RawImageProxy : public ImageProxy
 {
 public:
-	explicit RawImageProxy (boost::shared_ptr<Image>);
+	explicit RawImageProxy (boost::shared_ptr<dcpomatic::Image>);
 	RawImageProxy (boost::shared_ptr<cxml::Node> xml, boost::shared_ptr<Socket> socket);
 
 	Result image (
@@ -39,7 +39,7 @@ public:
 	size_t memory_used () const;
 
 private:
-	boost::shared_ptr<Image> _image;
+	boost::shared_ptr<dcpomatic::Image> _image;
 };
 
 #endif

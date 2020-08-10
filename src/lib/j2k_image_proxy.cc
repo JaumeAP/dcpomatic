@@ -48,6 +48,8 @@ using boost::optional;
 using boost::dynamic_pointer_cast;
 using dcp::Data;
 using dcp::raw_convert;
+using namespace dcpomatic;
+
 
 /** Construct a J2KImageProxy from a JPEG2000 file */
 J2KImageProxy::J2KImageProxy (boost::filesystem::path path, dcp::Size size, AVPixelFormat pixel_format)

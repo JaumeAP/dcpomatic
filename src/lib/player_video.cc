@@ -42,6 +42,7 @@ using boost::optional;
 using boost::function;
 using dcp::Data;
 using dcp::raw_convert;
+using namespace dcpomatic;
 
 PlayerVideo::PlayerVideo (
 	shared_ptr<const ImageProxy> in,

@@ -36,6 +36,7 @@ extern "C" {
 
 using std::list;
 using std::cout;
+using namespace dcpomatic;
 
 /** @struct Case
  *  @brief  A test case for pixel_formats_test.

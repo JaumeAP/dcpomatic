@@ -54,6 +54,7 @@ using std::list;
 using std::runtime_error;
 using boost::shared_ptr;
 using dcp::Size;
+using namespace dcpomatic;
 
 int
 Image::vertical_factor (int n) const
@@ -613,9 +614,9 @@ Image::alpha_blend (shared_ptr<const Image> other, Position<int> position)
 				double const b = lut_in[op[blue]];
 
 				/* RGB to XYZ, including Bradford transform and DCI companding */
-				double const x = max (0.0, min (65535.0, r * fast_matrix[0] + g * fast_matrix[1] + b * fast_matrix[2]));
-				double const y = max (0.0, min (65535.0, r * fast_matrix[3] + g * fast_matrix[4] + b * fast_matrix[5]));
-				double const z = max (0.0, min (65535.0, r * fast_matrix[6] + g * fast_matrix[7] + b * fast_matrix[8]));
+				double const x = std::max(0.0, std::min(65535.0, r * fast_matrix[0] + g * fast_matrix[1] + b * fast_matrix[2]));
+				double const y = std::max(0.0, std::min(65535.0, r * fast_matrix[3] + g * fast_matrix[4] + b * fast_matrix[5]));
+				double const z = std::max(0.0, std::min(65535.0, r * fast_matrix[6] + g * fast_matrix[7] + b * fast_matrix[8]));
 
 				/* Out gamma LUT and blend */
 				tp[0] = lrint(lut_out[lrint(x)] * 65535) * alpha + tp[0] * (1 - alpha);
@@ -743,7 +744,7 @@ Image::copy (shared_ptr<const Image> other, Position<int> position)
 	DCPOMATIC_ASSERT (_pixel_format == AV_PIX_FMT_RGB24 && other->pixel_format() == AV_PIX_FMT_RGB24);
 	DCPOMATIC_ASSERT (position.x >= 0 && position.y >= 0);
 
-	int const N = min (position.x + other->size().width, size().width) - position.x;
+	int const N = std::min (position.x + other->size().width, size().width) - position.x;
 	for (int ty = position.y, oy = 0; ty < size().height && oy < other->size().height; ++ty, ++oy) {
 		uint8_t * const tp = data()[0] + ty * stride()[0] + position.x * 3;
 		uint8_t * const op = other->data()[0] + oy * other->stride()[0];
@@ -1031,7 +1032,7 @@ Image::aligned () const
 }
 
 PositionImage
-merge (list<PositionImage> images)
+dcpomatic::merge (list<PositionImage> images)
 {
 	if (images.empty ()) {
 		return PositionImage ();
@@ -1056,7 +1057,7 @@ merge (list<PositionImage> images)
 }
 
 bool
-operator== (Image const & a, Image const & b)
+dcpomatic::operator== (Image const & a, Image const & b)
 {
 	if (a.planes() != b.planes() || a.pixel_format() != b.pixel_format() || a.aligned() != b.aligned()) {
 		return false;

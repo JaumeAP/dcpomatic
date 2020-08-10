@@ -94,10 +94,10 @@ private:
 
 	boost::shared_ptr<AudioBuffers> _pending_audio;
 
-	/** Store of shared_ptr<Image> to keep them alive whilst raw pointers into
+	/** Store of shared_ptr<dcpomatic::Image> to keep them alive whilst raw pointers into
 	    their data have been passed to FFmpeg.
 	*/
-	std::map<uint8_t*, boost::shared_ptr<const Image> > _pending_images;
+	std::map<uint8_t*, boost::shared_ptr<const dcpomatic::Image> > _pending_images;
 	boost::mutex _pending_images_mutex;
 
 	static int _video_stream_index;

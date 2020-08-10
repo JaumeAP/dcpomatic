@@ -33,11 +33,10 @@
 #include <boost/signals2.hpp>
 #include <boost/shared_ptr.hpp>
 
-class VideoContent;
-class ImageProxy;
-class Image;
-class Log;
 class FrameIntervalChecker;
+class ImageProxy;
+class Log;
+class VideoContent;
 
 /** @class VideoDecoder
  *  @brief Parent for classes which decode video.

@@ -30,10 +30,13 @@ namespace dcp {
 	class OpenJPEGImage;
 }
 
-class PlayerVideo;
-class Image;
+namespace dcpomatic {
+	class Image;
+}
+
 class Film;
 class FilmViewer;
+class PlayerVideo;
 
 class VideoWaveformPlot : public wxPanel
 {
@@ -60,7 +63,7 @@ private:
 
 	boost::weak_ptr<const Film> _film;
 	boost::shared_ptr<dcp::OpenJPEGImage> _image;
-	boost::shared_ptr<const Image> _waveform;
+	boost::shared_ptr<const dcpomatic::Image> _waveform;
 	bool _dirty;
 	bool _enabled;
 	int _component;

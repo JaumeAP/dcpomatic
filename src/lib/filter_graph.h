@@ -32,7 +32,6 @@ extern "C" {
 
 struct AVFilterContext;
 struct AVFrame;
-class Image;
 class Filter;
 
 /** @class FilterGraph

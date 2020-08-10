@@ -33,7 +33,10 @@ extern "C" {
 #include <boost/optional.hpp>
 #include <boost/utility.hpp>
 
-class Image;
+namespace dcpomatic {
+	class Image;
+}
+
 class Socket;
 
 namespace xmlpp {
@@ -61,20 +64,20 @@ public:
 	virtual ~ImageProxy () {}
 
 	struct Result {
-		Result (boost::shared_ptr<Image> image_, int log2_scaling_)
+		Result (boost::shared_ptr<dcpomatic::Image> image_, int log2_scaling_)
 			: image (image_)
 			, log2_scaling (log2_scaling_)
 			, error (false)
 		{}
 
-		Result (boost::shared_ptr<Image> image_, int log2_scaling_, bool error_)
+		Result (boost::shared_ptr<dcpomatic::Image> image_, int log2_scaling_, bool error_)
 			: image (image_)
 			, log2_scaling (log2_scaling_)
 			, error (error_)
 		{}
 
 		/** Image (which will be aligned) */
-		boost::shared_ptr<Image> image;
+		boost::shared_ptr<dcpomatic::Image> image;
 		/** log2 of any scaling down that has already been applied to the image;
 		 *  e.g. if the image is already half the size of the original, this value
 		 *  will be 1.

@@ -49,6 +49,6 @@ private:
 	    failed-decode errors can give more detail.
 	*/
 	boost::optional<boost::filesystem::path> _path;
-	mutable boost::shared_ptr<Image> _image;
+	mutable boost::shared_ptr<dcpomatic::Image> _image;
 	mutable boost::mutex _mutex;
 };

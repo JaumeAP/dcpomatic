@@ -24,17 +24,19 @@
 #include "rect.h"
 #include <boost/shared_ptr.hpp>
 
-class Image;
+namespace dcpomatic {
+	class Image;
+}
 
 class BitmapText
 {
 public:
-	BitmapText (boost::shared_ptr<Image> i, dcpomatic::Rect<double> r)
+	BitmapText (boost::shared_ptr<dcpomatic::Image> i, dcpomatic::Rect<double> r)
 		: image (i)
 		, rectangle (r)
 	{}
 
-	boost::shared_ptr<Image> image;
+	boost::shared_ptr<dcpomatic::Image> image;
 	/** Area that the subtitle covers on its corresponding video, expressed in
 	 *  proportions of the image size; e.g. rectangle.x = 0.5 would mean that
 	 *  the rectangle starts half-way across the video.

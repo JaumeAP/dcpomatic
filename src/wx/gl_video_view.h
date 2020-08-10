@@ -54,7 +54,7 @@ public:
 	}
 
 private:
-	void set_image (boost::shared_ptr<const Image> image);
+	void set_image (boost::shared_ptr<const dcpomatic::Image> image);
 	void set_image_and_draw ();
 	void draw (Position<int> inter_position, dcp::Size inter_size);
 	void thread ();

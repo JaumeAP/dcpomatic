@@ -39,6 +39,8 @@ using std::string;
 using boost::weak_ptr;
 using boost::shared_ptr;
 using dcp::locale_convert;
+using namespace dcpomatic;
+
 
 int const VideoWaveformPlot::_vertical_margin = 8;
 int const VideoWaveformPlot::_pixel_values = 4096;

@@ -170,7 +170,7 @@ private:
 	 *  the size of preview in a window.
 	 */
 	dcp::Size _video_container_size;
-	boost::shared_ptr<Image> _black_image;
+	boost::shared_ptr<dcpomatic::Image> _black_image;
 
 	/** true if the player should ignore all video; i.e. never produce any */
 	bool _ignore_video;

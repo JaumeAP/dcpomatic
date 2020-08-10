@@ -38,6 +38,8 @@ extern "C" {
 struct AVFrame;
 class Socket;
 
+namespace dcpomatic {
+
 class Image : public boost::enable_shared_from_this<Image>
 {
 public:
@@ -106,5 +108,7 @@ private:
 
 extern PositionImage merge (std::list<PositionImage> images);
 extern bool operator== (Image const & a, Image const & b);
+
+}
 
 #endif

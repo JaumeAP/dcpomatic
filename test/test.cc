@@ -509,7 +509,7 @@ wait_for_jobs ()
 }
 
 void
-write_image (shared_ptr<const Image> image, boost::filesystem::path file, string format, MagickCore::StorageType pixel_type)
+write_image (shared_ptr<const dcpomatic::Image> image, boost::filesystem::path file, string format, MagickCore::StorageType pixel_type)
 {
 	using namespace MagickCore;
 

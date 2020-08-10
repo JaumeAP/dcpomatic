@@ -51,6 +51,7 @@
 using std::cout;
 using boost::shared_ptr;
 using boost::optional;
+using namespace dcpomatic;
 
 
 static void

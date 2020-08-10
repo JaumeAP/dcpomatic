@@ -47,6 +47,8 @@ using boost::shared_ptr;
 using boost::optional;
 using boost::dynamic_pointer_cast;
 using dcp::raw_convert;
+using namespace dcpomatic;
+
 
 FFmpegImageProxy::FFmpegImageProxy (boost::filesystem::path path)
 	: _data (path)

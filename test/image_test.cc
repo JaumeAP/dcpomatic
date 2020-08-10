@@ -34,6 +34,8 @@ using std::string;
 using std::list;
 using std::cout;
 using boost::shared_ptr;
+using namespace dcpomatic;
+
 
 BOOST_AUTO_TEST_CASE (aligned_image_test)
 {

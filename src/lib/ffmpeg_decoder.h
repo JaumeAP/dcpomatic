@@ -32,11 +32,14 @@ extern "C" {
 #include <boost/thread/mutex.hpp>
 #include <stdint.h>
 
+namespace dcpomatic {
+	class Image;
+}
+
+class AudioBuffers;
+class FFmpegAudioStream;
 class Log;
 class VideoFilterGraph;
-class FFmpegAudioStream;
-class AudioBuffers;
-class Image;
 struct ffmpeg_pts_offset_test;
 
 /** @class FFmpegDecoder
@@ -76,7 +79,7 @@ private:
 	/** true if we have a subtitle which has not had emit_stop called for it yet */
 	bool _have_current_subtitle;
 
-	boost::shared_ptr<Image> _black_image;
+	boost::shared_ptr<dcpomatic::Image> _black_image;
 
 	std::vector<boost::optional<dcpomatic::ContentTime> > _next_time;
 };

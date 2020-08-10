@@ -34,7 +34,10 @@ extern "C" {
 #include <boost/thread/mutex.hpp>
 #include <boost/noncopyable.hpp>
 
-class Image;
+namespace dcpomatic {
+	class Image;
+}
+
 class ImageProxy;
 class Film;
 class Socket;
@@ -68,7 +71,7 @@ public:
 	void set_text (PositionImage);
 
 	void prepare (boost::function<AVPixelFormat (AVPixelFormat)> pixel_format, bool aligned, bool fast);
-	boost::shared_ptr<Image> image (boost::function<AVPixelFormat (AVPixelFormat)> pixel_format, bool aligned, bool fast) const;
+	boost::shared_ptr<dcpomatic::Image> image (boost::function<AVPixelFormat (AVPixelFormat)> pixel_format, bool aligned, bool fast) const;
 
 	static AVPixelFormat force (AVPixelFormat, AVPixelFormat);
 	static AVPixelFormat keep_xyz_or_rgb (AVPixelFormat);
@@ -134,7 +137,7 @@ private:
 	boost::optional<Frame> _video_frame;
 
 	mutable boost::mutex _mutex;
-	mutable boost::shared_ptr<Image> _image;
+	mutable boost::shared_ptr<dcpomatic::Image> _image;
 	/** _crop that was used to make _image */
 	mutable Crop _image_crop;
 	/** _inter_size that was used to make _image */

@@ -28,7 +28,9 @@
 #include <dcp/subtitle_string.h>
 #include <list>
 
-class Image;
+namespace dcpomatic {
+	class Image;
+}
 
 class ContentText
 {
@@ -48,7 +50,7 @@ private:
 class ContentBitmapText : public ContentText
 {
 public:
-	ContentBitmapText (dcpomatic::ContentTime f, boost::shared_ptr<Image> im, dcpomatic::Rect<double> r)
+	ContentBitmapText (dcpomatic::ContentTime f, boost::shared_ptr<dcpomatic::Image> im, dcpomatic::Rect<double> r)
 		: ContentText (f)
 		, sub (im, r)
 	{}

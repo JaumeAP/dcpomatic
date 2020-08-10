@@ -34,14 +34,13 @@ DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
 
-class wxToggleButton;
-class FFmpegPlayer;
-class Image;
-class RGBPlusAlphaImage;
-class PlayerVideo;
-class Player;
 class Butler;
 class ClosedCaptionsDialog;
+class FFmpegPlayer;
+class Player;
+class PlayerVideo;
+class RGBPlusAlphaImage;
+class wxToggleButton;
 
 /** @class FilmViewer
  *  @brief A wx widget to view a Film.

@@ -79,7 +79,7 @@ private:
 	dcp::Data _data;
 	dcp::Size _size;
 	boost::optional<dcp::Eye> _eye;
-	mutable boost::shared_ptr<Image> _image;
+	mutable boost::shared_ptr<dcpomatic::Image> _image;
 	mutable boost::optional<dcp::Size> _target_size;
 	mutable boost::optional<int> _reduce;
 	AVPixelFormat _pixel_format;

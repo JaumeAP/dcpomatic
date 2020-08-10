@@ -40,6 +40,7 @@ using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 using boost::optional;
 using dcp::raw_convert;
+using namespace dcpomatic;
 
 RawImageProxy::RawImageProxy (shared_ptr<Image> image)
 	: _image (image)

@@ -65,6 +65,8 @@ using dcp::raw_convert;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
+using namespace dcpomatic;
+
 
 #define DCI_COEFFICENT (48.0 / 52.37)
 

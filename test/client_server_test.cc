@@ -47,6 +47,8 @@ using boost::thread;
 using boost::optional;
 using boost::weak_ptr;
 using dcp::Data;
+using namespace dcpomatic;
+
 
 void
 do_remote_encode (shared_ptr<DCPVideo> frame, EncodeServerDescription description, Data locally_encoded)
