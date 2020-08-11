@@ -56,6 +56,7 @@ sources = """
           content.cc
           content_factory.cc
           copy_dcp_details_to_film.cc
+          cpu_player_video_preparer.cc
           create_cli.cc
           cross_common.cc
           crypto.cc
@@ -229,7 +230,7 @@ def build(bld):
     if bld.env.STATIC_DCPOMATIC:
         obj.uselib += ' XMLPP'
     if bld.env.ENABLE_FASTVIDEO:
-        obj.source += ' fastvideo.cc'
+        obj.source += ' fastvideo_player_video_preparer.cc'
 
     obj.target = 'dcpomatic2'
 

@@ -127,9 +127,23 @@ J2KImageProxy::prepare (optional<dcp::Size> target_size) const
 {
 	boost::mutex::scoped_lock lm (_mutex);
 
-	if (_image && target_size == _target_size) {
-		DCPOMATIC_ASSERT (_reduce);
-		return *_reduce;
+	if (target_size) {
+		std::cout << "target_size is " << target_size->width << " " << target_size->height << "\n";
+	} else {
+		std::cout << "no target size.\n";
+	}
+
+	if (_target_size) {
+		std::cout << "_target_size is " << _target_size->width << " " << _target_size->height << "\n";
+	} else {
+		std::cout << "no _target size.\n";
+	}
+
+	if (_image) {// && target_size == _target_size) {
+		std::cout << "hit.\n";
+		return 0;
+		//DCPOMATIC_ASSERT (_reduce);
+		//return *_reduce;
 	}
 
 	int reduce = 0;
@@ -146,6 +160,7 @@ J2KImageProxy::prepare (optional<dcp::Size> target_size) const
 	}
 
 	try {
+		std::cout << "cpu decompress.\n";
 		shared_ptr<dcp::OpenJPEGImage> decompressed = dcp::decompress_j2k (_data, reduce);
 		_image.reset (new Image (_pixel_format, decompressed->size(), true));
 
@@ -246,4 +261,13 @@ J2KImageProxy::memory_used () const
 		m += 3 * 2 * _image->size().width * _image->size().height;
 	}
 	return m;
+}
+
+
+void
+J2KImageProxy::set_image (shared_ptr<dcpomatic::Image> image)
+{
+	// XXX need _target_size to be set up
+	boost::mutex::scoped_lock lm (_mutex);
+	_image = image;
 }

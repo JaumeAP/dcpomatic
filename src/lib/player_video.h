@@ -82,6 +82,7 @@ public:
 	bool reset_metadata (boost::shared_ptr<const Film> film, dcp::Size video_container_size, dcp::Size film_frame_size);
 
 	bool has_j2k () const;
+	/* XXX: who's using this?! */
 	dcp::Data j2k () const;
 
 	Eyes eyes () const {
@@ -114,6 +115,10 @@ public:
 
 	bool error () const {
 		return _error;
+	}
+
+	boost::shared_ptr<const ImageProxy> image_proxy () const {
+		return _in;
 	}
 
 private:

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2017 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2016-2020 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -28,10 +28,10 @@
 #include <boost/thread.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/signals2.hpp>
-#include <boost/asio.hpp>
 
 class Player;
 class PlayerVideo;
+class PlayerVideoPreparer;
 
 class Butler : public ExceptionStore, public boost::noncopyable
 {
@@ -93,10 +93,6 @@ private:
 	AudioRingBuffers _audio;
 	TextRingBuffers _closed_caption;
 
-	boost::thread_group _prepare_pool;
-	boost::asio::io_service _prepare_service;
-	boost::shared_ptr<boost::asio::io_service::work> _prepare_work;
-
 	/** mutex to protect _pending_seek_position, _pending_seek_accurate, _finished, _died, _stop_thread */
 	boost::mutex _mutex;
 	boost::condition _summon;
@@ -122,6 +118,8 @@ private:
 	    seeking to.
 	*/
 	boost::optional<dcpomatic::DCPTime> _awaiting;
+
+	boost::shared_ptr<PlayerVideoPreparer> _preparer;
 
 	boost::signals2::scoped_connection _player_video_connection;
 	boost::signals2::scoped_connection _player_audio_connection;

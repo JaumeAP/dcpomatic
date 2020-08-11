@@ -26,6 +26,8 @@
 #include "cross.h"
 #include "compose.hpp"
 #include "exceptions.h"
+#include "cpu_player_video_preparer.h"
+#include "fastvideo_player_video_preparer.h"
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -44,9 +46,9 @@ using namespace boost::placeholders;
 #endif
 
 /** Minimum video readahead in frames */
-#define MINIMUM_VIDEO_READAHEAD 10
+#define MINIMUM_VIDEO_READAHEAD 64
 /** Maximum video readahead in frames; should never be exceeded (by much) unless there are bugs in Player */
-#define MAXIMUM_VIDEO_READAHEAD 48
+#define MAXIMUM_VIDEO_READAHEAD 128
 /** Minimum audio readahead in frames */
 #define MINIMUM_AUDIO_READAHEAD (48000 * MINIMUM_VIDEO_READAHEAD / 24)
 /** Maximum audio readahead in frames; should never be exceeded (by much) unless there are bugs in Player */
@@ -66,7 +68,6 @@ Butler::Butler (
 	bool fast
 	)
 	: _player (player)
-	, _prepare_work (new boost::asio::io_service::work (_prepare_service))
 	, _pending_seek_accurate (false)
 	, _suspended (0)
 	, _finished (false)
@@ -79,6 +80,8 @@ Butler::Butler (
 	, _aligned (aligned)
 	, _fast (fast)
 {
+	_preparer.reset (new FastvideoPlayerVideoPreparer(pixel_format, aligned, fast));
+
 	_player_video_connection = _player->Video.connect (bind (&Butler::video, this, _1, _2));
 	_player_audio_connection = _player->Audio.connect (bind (&Butler::audio, this, _1, _2, _3));
 	_player_text_connection = _player->Text.connect (bind (&Butler::text, this, _1, _2, _3, _4));
@@ -90,16 +93,6 @@ Butler::Butler (
 #ifdef DCPOMATIC_LINUX
 	pthread_setname_np (_thread.native_handle(), "butler");
 #endif
-
-	/* Create some threads to do work on the PlayerVideos we are creating; at present this is used to
-	   multi-thread JPEG2000 decoding.
-	*/
-
-	LOG_TIMING("start-prepare-threads %1", boost::thread::hardware_concurrency() * 2);
-
-	for (size_t i = 0; i < boost::thread::hardware_concurrency() * 2; ++i) {
-		_prepare_pool.create_thread (bind (&boost::asio::io_service::run, &_prepare_service));
-	}
 }
 
 Butler::~Butler ()
@@ -111,14 +104,12 @@ Butler::~Butler ()
 		_stop_thread = true;
 	}
 
-	_prepare_work.reset ();
-	_prepare_pool.join_all ();
-	_prepare_service.stop ();
-
 	_thread.interrupt ();
 	try {
 		_thread.join ();
 	} catch (...) {}
+
+	_preparer.reset ();
 }
 
 /** Caller must hold a lock on _mutex */
@@ -298,32 +289,6 @@ Butler::seek_unlocked (DCPTime position, bool accurate)
 }
 
 void
-Butler::prepare (weak_ptr<PlayerVideo> weak_video)
-try
-{
-	shared_ptr<PlayerVideo> video = weak_video.lock ();
-	/* If the weak_ptr cannot be locked the video obviously no longer requires any work */
-	if (video) {
-		LOG_TIMING("start-prepare in %1", thread_id());
-		video->prepare (_pixel_format, _aligned, _fast);
-		LOG_TIMING("finish-prepare in %1", thread_id());
-	}
-}
-catch (std::exception& e)
-{
-	store_current ();
-	boost::mutex::scoped_lock lm (_mutex);
-	_died = true;
-	_died_message = e.what ();
-}
-catch (...)
-{
-	store_current ();
-	boost::mutex::scoped_lock lm (_mutex);
-	_died = true;
-}
-
-void
 Butler::video (shared_ptr<PlayerVideo> video, DCPTime time)
 {
 	boost::mutex::scoped_lock lm (_mutex);
@@ -333,7 +298,7 @@ Butler::video (shared_ptr<PlayerVideo> video, DCPTime time)
 		return;
 	}
 
-	_prepare_service.post (bind (&Butler::prepare, this, weak_ptr<PlayerVideo>(video)));
+	_preparer->request (video);
 
 	_video.put (video, time);
 }

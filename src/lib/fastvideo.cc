@@ -129,7 +129,7 @@ fastvideo_decompress_j2k (dcp::Data data, int reduce)
 			&decoder,
 			&parameters,
 			FAST_RGB8, info.width, info.height,
-			max_batch_si\e,
+			max_batch_size,
 			&buffer
 			);
 	if (r != FAST_OK) {

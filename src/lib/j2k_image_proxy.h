@@ -58,7 +58,12 @@ public:
 	void write_to_socket (boost::shared_ptr<Socket>) const;
 	/** @return true if our image is definitely the same as another, false if it is probably not */
 	bool same (boost::shared_ptr<const ImageProxy>) const;
+
+	/* these are kind of related; one prepares by calculating the image in-place,
+	 * one by being given the image; they could be renamed, perhaps.
+	 */
 	int prepare (boost::optional<dcp::Size> = boost::optional<dcp::Size>()) const;
+	void set_image (boost::shared_ptr<dcpomatic::Image> image);
 
 	dcp::Data j2k () const {
 		return _data;
