@@ -8,9 +8,53 @@
 using boost::shared_ptr;
 
 
+void
+handle (fastExportToHostHandle_t& adapter, fastGpuTimerHandle_t& device_to_host_timer)
+{
+	fastExportParameters_t exportParameters;
+	exportParameters.convert = options.ConvertToBGR ? FAST_CONVERT_BGR : FAST_CONVERT_NONE;
+
+	int aligned_width = info.width * 3;
+	aligned_width += 4 - (aligned_width % FAST_ALIGNMENT);
+	size_t decoded_size = info.height * aligned_width;
+	uint8_t* decoded = 0;
+	fastStatus_t r = fastMalloc(reinterpret_cast<void**>(&decoded), decoded_size);
+	if (r != FAST_OK) {
+		throw FastvideoError ("fastMalloc");
+	}
+
+	fastGpuTimerStart(device_to_host_timer	);
+
+	CHECK_FAST(fastExportToHostCopy(
+			adapter,
+
+			img.data.get(),
+			img.w,
+			img.wPitch,
+			img.h,
+
+			&exportParameters
+			));
+
+	float elapsedTimeGpu = 0.;
+	fastGpuTimerStop(deviceToHostTimer);
+	fastGpuTimerGetTime(deviceToHostTimer, &elapsedTimeGpu);
+
+	totalInternalTime += elapsedTimeGpu / 1000.0;
+
+	outputImgs->push_back(img);
+	if (imagesLeft == 0)
+		break;
+	CHECK_FAST(fastDecoderJ2kGetNextDecodedImage(decoder, &report, &imagesLeft));
+}
+
+
 shared_ptr<OpenJPEGImage>
 fastvideo_decompress_j2k (dcp::Data data, int reduce)
 {
+	const int max_batch_size = 16;
+	const int images_to_convert = 64;
+
 	fastTraceCreate("/home/carl/trace.log");
 
 	/*
@@ -85,7 +129,7 @@ fastvideo_decompress_j2k (dcp::Data data, int reduce)
 			&decoder,
 			&parameters,
 			FAST_RGB8, info.width, info.height,
-			1,
+			max_batch_si\e,
 			&buffer
 			);
 	if (r != FAST_OK) {
@@ -143,9 +187,20 @@ fastvideo_decompress_j2k (dcp::Data data, int reduce)
 		throw FastvideoError ("fastMalloc");
 	}
 
-	r = fastDecoderJ2kTransform (decoder, data.data().get(), data.size(), &report);
-	if (r != FAST_OK) {
-		throw FastvideoError ("J2kTransform");
+	for (int i = 0; i < images_to_convert; ++i) {
+		fastDecoderJ2kAddImageToBatch(decoder, data.data().get(), data.size());
+		int free_slots = 0;
+		fastDecoderJ2kFreeSlotsInBatch(decoder, &free_slots);
+		if (free_slots == 0) {
+			CHECK_FAST(TransformAndExtractBatch(img, &outputImgs));
+		}
+	}
+
+	int unprocessed_images_count = 0;
+	r = fastDecoderJ2kUnprocessedImagesCount(decoder, &unprocessed_images_count);
+	if (unprocessed_images_count > 0) { // Process the last non-complete batch
+
+		CHECK_FAST(TransformAndExtractBatch(img, &outputImgs));
 	}
 
 	total_time += report.elapsedTime;
