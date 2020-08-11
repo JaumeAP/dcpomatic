@@ -1,6 +1,7 @@
 #include "exceptions.h"
 #include "fastvideo.h"
 #include <fastvideo_decoder_j2k.h>
+#include <fastvideo_sdk.h>
 #include <iostream>
 
 
@@ -10,9 +11,23 @@ using boost::shared_ptr;
 shared_ptr<OpenJPEGImage>
 fastvideo_decompress_j2k (dcp::Data data, int reduce)
 {
-	fastStatus_t r = fastInit(1, true);
+	fastTraceCreate("/home/carl/trace.log");
+
+	/*
+	fastStatus_t r = fastInit(0, true);
 	if (r != FAST_OK) {
 		throw FastvideoError ("Init", r);
+	}
+	*/
+
+	fastSdkParametersHandle_t sdk_parameters;
+	fastStatus_t r = fastGetSdkParametersHandle(&sdk_parameters);
+	if (r != FAST_OK) {
+		throw FastvideoError ("GetSdkParametersHandle", r);
+	}
+	r = fastDecoderJ2kLibraryInit(sdk_parameters);
+	if (r != FAST_OK) {
+		throw FastvideoError ("J2kLibraryInit", r);
 	}
 
 	fastJ2kImageInfo_t info;
@@ -28,12 +43,12 @@ fastvideo_decompress_j2k (dcp::Data data, int reduce)
 	fastDecoderJ2kStaticParameters_t parameters;
 	memset(&parameters, 0, sizeof(fastDecoderJ2kStaticParameters_t));
 
-	parameters.ResolutionLevels = 5 - reduce;
+	parameters.ResolutionLevels = 0;
 	parameters.verboseLevel = 1;
 	parameters.enableROI = 0;
 
-	parameters.maxTileHeight = info.width;
-	parameters.maxTileWidth = info.height;
+	parameters.maxTileHeight = info.height;
+	parameters.maxTileWidth = info.width;
 
 	parameters.windowX0 = 0;
 	parameters.windowY0 = 0;
@@ -48,7 +63,23 @@ fastvideo_decompress_j2k (dcp::Data data, int reduce)
 	parameters.imageInfo = &info;
 	parameters.maxStreamSize = info.streamSize;
 
-	fastDecoderJ2kHandle_t decoder;
+	std::cout << "verboseLevel " << parameters.verboseLevel << "\n";
+	std::cout << "maxTileWidth " << parameters.maxTileWidth << "\n";
+	std::cout << "maxTileHeight " << parameters.maxTileHeight << "\n";
+	std::cout << "ResolutionLevels " << parameters.ResolutionLevels << "\n";
+	std::cout << "DecodePasses " << parameters.DecodePasses << "\n";
+	std::cout << "maxStreamSize " << parameters.maxStreamSize << "\n";
+	std::cout << "truncationMode " << parameters.truncationMode << "\n";
+	std::cout << "truncationRate " << parameters.truncationRate << "\n";
+	std::cout << "truncationLength " << parameters.truncationLength << "\n";
+	std::cout << "windowX0 " << parameters.windowX0 << "\n";
+	std::cout << "windowY0 " << parameters.windowY0 << "\n";
+	std::cout << "windowWidth " << parameters.windowWidth << "\n";
+	std::cout << "windowHeight " << parameters.windowHeight << "\n";
+	std::cout << "enableROI " << parameters.enableROI << "\n";
+	std::cout << "enableMemoryReallocation " << parameters.enableMemoryReallocation << "\n";
+
+	fastDecoderJ2kHandle_t decoder = 0;
 	fastDeviceSurfaceBufferHandle_t buffer;
 	r = fastDecoderJ2kCreate(
 			&decoder,
@@ -58,6 +89,7 @@ fastvideo_decompress_j2k (dcp::Data data, int reduce)
 			&buffer
 			);
 	if (r != FAST_OK) {
+		fastTraceClose ();
 		throw FastvideoError ("J2kCreate", r);
 	}
 
@@ -111,7 +143,7 @@ fastvideo_decompress_j2k (dcp::Data data, int reduce)
 		throw FastvideoError ("fastMalloc");
 	}
 
-	r = fastDecoderJ2kTransform (decoder, decoded, decoded_size, &report);
+	r = fastDecoderJ2kTransform (decoder, data.data().get(), data.size(), &report);
 	if (r != FAST_OK) {
 		throw FastvideoError ("J2kTransform");
 	}
@@ -171,5 +203,7 @@ fastvideo_decompress_j2k (dcp::Data data, int reduce)
 	}
 
 	fastFree(decoded);
+
+	return shared_ptr<OpenJPEGImage>();
 }
 
