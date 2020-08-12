@@ -891,6 +891,10 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 			)
 		);
 
+#ifdef DCPOMATIC_DEBUG
+	_last_video[wp]->time = time;
+#endif
+
 	DCPTime t = time;
 	for (int i = 0; i < frc.repeat; ++i) {
 		if (t < piece->content->end(_film)) {

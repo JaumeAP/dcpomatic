@@ -30,6 +30,10 @@
 #include <string>
 #include <map>
 
+
+void timestamped_printf(char const* format, ...);
+
+
 /** @class PeriodTimer
  *  @brief A class to allow timing of a period within the caller.
  *

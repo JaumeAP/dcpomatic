@@ -121,6 +121,10 @@ public:
 		return _in;
 	}
 
+#ifdef DCPOMATIC_DEBUG
+	dcpomatic::DCPTime time;
+#endif
+
 private:
 	void make_image (boost::function<AVPixelFormat (AVPixelFormat)> pixel_format, bool aligned, bool fast) const;
 

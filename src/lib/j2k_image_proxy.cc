@@ -127,20 +127,7 @@ J2KImageProxy::prepare (optional<dcp::Size> target_size) const
 {
 	boost::mutex::scoped_lock lm (_mutex);
 
-	if (target_size) {
-		std::cout << "target_size is " << target_size->width << " " << target_size->height << "\n";
-	} else {
-		std::cout << "no target size.\n";
-	}
-
-	if (_target_size) {
-		std::cout << "_target_size is " << _target_size->width << " " << _target_size->height << "\n";
-	} else {
-		std::cout << "no _target size.\n";
-	}
-
 	if (_image) {// && target_size == _target_size) {
-		std::cout << "hit.\n";
 		return 0;
 		//DCPOMATIC_ASSERT (_reduce);
 		//return *_reduce;
@@ -160,7 +147,6 @@ J2KImageProxy::prepare (optional<dcp::Size> target_size) const
 	}
 
 	try {
-		std::cout << "cpu decompress.\n";
 		shared_ptr<dcp::OpenJPEGImage> decompressed = dcp::decompress_j2k (_data, reduce);
 		_image.reset (new Image (_pixel_format, decompressed->size(), true));
 

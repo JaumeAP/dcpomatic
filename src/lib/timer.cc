@@ -25,6 +25,7 @@
 #include "timer.h"
 #include "util.h"
 #include "compose.hpp"
+#include <boost/thread.hpp>
 #include <iostream>
 #include <sys/time.h>
 
@@ -134,3 +135,19 @@ StateTimer::~StateTimer ()
 		cout << N_("\t") << i->second << "\n";
 	}
 }
+
+
+void timestamped_printf (char const* format, ...)
+{
+	static boost::mutex mutex;
+	boost::mutex::scoped_lock lm (mutex);
+
+	va_list arg;
+	va_start (arg, format);
+	struct timeval t;
+	gettimeofday (&t, 0);
+	printf("%.4f ", seconds(t));
+	vfprintf (stdout, format, arg);
+	va_end (arg);
+}
+

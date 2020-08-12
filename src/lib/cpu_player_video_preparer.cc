@@ -2,6 +2,7 @@
 #include "cross.h"
 #include "dcpomatic_log.h"
 #include "player_video.h"
+#include "timer.h"
 #include <boost/thread.hpp>
 
 
@@ -42,6 +43,7 @@ try
 		LOG_TIMING("start-prepare in %1", thread_id());
 		video->prepare (_pixel_format, _aligned, _fast);
 		LOG_TIMING("finish-prepare in %1", thread_id());
+		timestamped_printf("cpu finishes %d\n", video->time.frames_round(24));
 	}
 }
 catch (...)

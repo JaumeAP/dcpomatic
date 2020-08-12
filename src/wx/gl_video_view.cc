@@ -40,6 +40,7 @@
 #ifdef DCPOMATIC_LINUX
 #include <GL/glu.h>
 #include <GL/glext.h>
+#include <sched.h>
 #endif
 
 #ifdef DCPOMATIC_WINDOWS
@@ -294,7 +295,9 @@ GLVideoView::stop ()
 void
 GLVideoView::thread_playing ()
 {
+	StateTimer st("wake to done");
 	if (length() != dcpomatic::DCPTime()) {
+		st.set("get next time");
 		dcpomatic::DCPTime const next = position() + one_video_frame();
 
 		if (next >= length()) {
@@ -302,9 +305,12 @@ GLVideoView::thread_playing ()
 			return;
 		}
 
+		st.set("get next frame");
 		get_next_frame (false);
+		st.set("set im and draw");
 		set_image_and_draw ();
 	}
+	printf("done that frame: time til next frame %d\n", time_until_next_frame().get_value_or(0));
 
 	while (true) {
 		optional<int> n = time_until_next_frame();
@@ -320,9 +326,15 @@ GLVideoView::thread_playing ()
 void
 GLVideoView::set_image_and_draw ()
 {
+	StateTimer st("set_image_and_draw");
 	shared_ptr<PlayerVideo> pv = player_video().first;
 	if (pv) {
-		set_image (pv->image(bind(&PlayerVideo::force, _1, AV_PIX_FMT_RGB24), false, true));
+		timestamped_printf("view gets image for %d\n", pv->time.frames_round(24));
+		st.set("get-image");
+		shared_ptr<Image> im = pv->image(bind(&PlayerVideo::force, _1, AV_PIX_FMT_RGB24), false, true);
+		st.set("set-image");
+		set_image (im);
+		st.set("draw");
 		draw (pv->inter_position(), pv->inter_size());
 	}
 }
@@ -338,6 +350,9 @@ try
 		_canvas->SetCurrent (*_context);
 	}
 
+	struct sched_param param;
+	param.sched_priority = 90;
+	sched_setscheduler (0, SCHED_RR, &param);
 
 #if defined(DCPOMATIC_LINUX) && defined(DCPOMATIC_HAVE_GLX_SWAP_INTERVAL_EXT)
 	if (_canvas->IsExtensionSupported("GLX_EXT_swap_control")) {
@@ -380,6 +395,7 @@ try
 			_thread_work_condition.wait (lm);
 		}
 		lm.unlock ();
+		printf("awake: time til next frame %d\n", time_until_next_frame().get_value_or(0));
 
 		if (_playing) {
 			thread_playing ();

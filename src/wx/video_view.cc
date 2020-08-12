@@ -93,6 +93,8 @@ VideoView::get_next_frame (bool non_blocking)
 		++_errored;
 	}
 
+	timestamped_printf("get_next_frame %d\n", _player_video.first->time.frames_round(24));
+
 	return true;
 }
 
