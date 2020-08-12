@@ -40,6 +40,8 @@ private:
 	bool _setup_done;
 
 	std::vector<boost::weak_ptr<PlayerVideo> > _batch;
+	void* _decoded;
+	int _decoded_stride;
 
 	CPUPlayerVideoPreparer _cpu;
 

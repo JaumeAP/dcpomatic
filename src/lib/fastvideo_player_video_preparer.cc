@@ -6,11 +6,13 @@
 #include "j2k_image_proxy.h"
 #include "player_video.h"
 #include "timer.h"
+#include <cuda_runtime.h>
 #include <fastvideo_decoder_j2k.h>
 #include <fastvideo_sdk.h>
 #include <boost/bind.hpp>
 
 
+using std::bad_alloc;
 using boost::bind;
 using boost::const_pointer_cast;
 using boost::dynamic_pointer_cast;
@@ -22,6 +24,7 @@ FastvideoPlayerVideoPreparer::FastvideoPlayerVideoPreparer (boost::function<AVPi
 	: _stop_thread (false)
 	, _decoder (0)
 	, _setup_done (false)
+	, _decoded (0)
 	, _cpu (pixel_format, aligned, fast)
 {
 	fastSdkParametersHandle_t sdk_parameters;
@@ -49,6 +52,7 @@ FastvideoPlayerVideoPreparer::~FastvideoPlayerVideoPreparer ()
 	if (_setup_done) {
 		fastDecoderJ2kDestroy(_decoder);
 		fastExportToHostDestroy(_adapter);
+		cudaFreeHost (_decoded);
 	}
 }
 
@@ -142,13 +146,27 @@ FastvideoPlayerVideoPreparer::transform_and_extract ()
 			/* XXX: this should be memlocked or whatever fastMalloc does */
 			shared_ptr<J2KImageProxy> proxy = const_pointer_cast<J2KImageProxy>(dynamic_pointer_cast<const J2KImageProxy>(pv->image_proxy()));
 			DCPOMATIC_ASSERT (proxy);
-			dcp::Size const size = proxy->size();
-			shared_ptr<dcpomatic::Image> image(new dcpomatic::Image(AV_PIX_FMT_RGB24, size, true));
 			fastExportParameters_t export_parameters;
 			export_parameters.convert = FAST_CONVERT_NONE;
-			fastStatus_t r = fastExportToHostCopy(_adapter, image->data()[0], size.width, image->stride()[0], size.height, &export_parameters);
+			dcp::Size const size = proxy->size();
+			fastStatus_t r = fastExportToHostCopy(_adapter, _decoded, size.width, _decoded_stride, size.height, &export_parameters);
 			if (r != FAST_OK) {
 				throw FastvideoError ("ExportToHostCopy", r);
+			}
+
+			shared_ptr<dcpomatic::Image> image(new dcpomatic::Image(AV_PIX_FMT_XYZ12LE, size, true));
+			uint8_t* from = reinterpret_cast<uint8_t*>(_decoded);
+			uint16_t* to = reinterpret_cast<uint16_t*>(image->data()[0]);
+			for (int y = 0; y < size.height; ++y) {
+				uint8_t* from_p = from;
+				uint16_t* to_p = to;
+				for (int x = 0; x < size.width; ++x) {
+					*to_p++ = uint16_t(*from_p++) << 8;
+					*to_p++ = uint16_t(*from_p++) << 8;
+					*to_p++ = uint16_t(*from_p++) << 8;
+				}
+				from += _decoded_stride;
+				to += image->stride()[0] / 2;
 			}
 
 			timestamped_printf("fv sets image for %d\n", pv->time.frames_round(24));
@@ -221,5 +239,12 @@ FastvideoPlayerVideoPreparer::setup (dcp::Data sample)
 	r = fastExportToHostCreate(&_adapter, &surface_format, _buffer);
 	if (r != FAST_OK) {
 		throw FastvideoError ("ExportToHostCreate");
+	}
+
+	_decoded_stride = info.width * 3;
+	_decoded_stride += 32 - (_decoded_stride % 32);
+	cudaError e = cudaMallocHost (&_decoded, _decoded_stride * info.height);
+	if (e != cudaSuccess) {
+		throw bad_alloc ();
 	}
 }
