@@ -295,9 +295,7 @@ GLVideoView::stop ()
 void
 GLVideoView::thread_playing ()
 {
-	StateTimer st("wake to done");
 	if (length() != dcpomatic::DCPTime()) {
-		st.set("get next time");
 		dcpomatic::DCPTime const next = position() + one_video_frame();
 
 		if (next >= length()) {
@@ -305,12 +303,10 @@ GLVideoView::thread_playing ()
 			return;
 		}
 
-		st.set("get next frame");
 		get_next_frame (false);
-		st.set("set im and draw");
 		set_image_and_draw ();
 	}
-	printf("done that frame: time til next frame %d\n", time_until_next_frame().get_value_or(0));
+	//printf("done that frame: time til next frame %d\n", time_until_next_frame().get_value_or(0));
 
 	while (true) {
 		optional<int> n = time_until_next_frame();
@@ -319,6 +315,7 @@ GLVideoView::thread_playing ()
 		}
 		get_next_frame (true);
 		add_dropped ();
+		timestamped_printf("_____________DROP______________________\n");
 	}
 }
 
@@ -326,15 +323,11 @@ GLVideoView::thread_playing ()
 void
 GLVideoView::set_image_and_draw ()
 {
-	StateTimer st("set_image_and_draw");
 	shared_ptr<PlayerVideo> pv = player_video().first;
 	if (pv) {
-		timestamped_printf("view gets image for %d\n", pv->time.frames_round(24));
-		st.set("get-image");
+		//timestamped_printf("view gets image for %d\n", pv->time.frames_round(24));
 		shared_ptr<Image> im = pv->image(bind(&PlayerVideo::force, _1, AV_PIX_FMT_RGB24), false, true);
-		st.set("set-image");
 		set_image (im);
-		st.set("draw");
 		draw (pv->inter_position(), pv->inter_size());
 	}
 }
@@ -395,7 +388,6 @@ try
 			_thread_work_condition.wait (lm);
 		}
 		lm.unlock ();
-		printf("awake: time til next frame %d\n", time_until_next_frame().get_value_or(0));
 
 		if (_playing) {
 			thread_playing ();

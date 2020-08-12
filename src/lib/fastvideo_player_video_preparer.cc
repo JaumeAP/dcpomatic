@@ -108,18 +108,15 @@ FastvideoPlayerVideoPreparer::send_to_gpu (shared_ptr<PlayerVideo> pv, shared_pt
 		_setup_done = true;
 	}
 
-	//std::cout << "add to batch.\n";
-	timestamped_printf("fv sends %d to gpu\n", pv->time.frames_round(24));
+	//timestamped_printf("fv sends %d to gpu\n", pv->time.frames_round(24));
 	fastDecoderJ2kAddImageToBatch(_decoder, proxy->j2k().data().get(), proxy->j2k().size());
 	_batch.push_back (pv);
 
 	int free_slots = 0;
 	fastDecoderJ2kFreeSlotsInBatch(_decoder, &free_slots);
-	timestamped_printf("now %d slots left.\n", free_slots);
-	//std::cout << free_slots << " left in batch.\n";
 	if (free_slots == 0) {
 		/* Do some decoding */
-		timestamped_printf("tx & extract\n");
+		PeriodTimer pt("tx/extract");
 		transform_and_extract ();
 	}
 
@@ -130,6 +127,7 @@ FastvideoPlayerVideoPreparer::send_to_gpu (shared_ptr<PlayerVideo> pv, shared_pt
 void
 FastvideoPlayerVideoPreparer::transform_and_extract ()
 {
+	StateTimer st("transform_and_extract", "tx");
 	fastDecoderJ2kReport_t report;
 	fastStatus_t r = fastDecoderJ2kTransformBatch(_decoder, &report);
 	if (r != FAST_OK) {
@@ -142,8 +140,7 @@ FastvideoPlayerVideoPreparer::transform_and_extract ()
 		DCPOMATIC_ASSERT (index <= _batch.size());
 		shared_ptr<PlayerVideo> pv = _batch[index].lock();
 		if (pv) {
-			//std::cout << "got a pv for batch number " << index << "\n";
-			/* XXX: this should be memlocked or whatever fastMalloc does */
+			st.set("copy gpu -> host");
 			shared_ptr<J2KImageProxy> proxy = const_pointer_cast<J2KImageProxy>(dynamic_pointer_cast<const J2KImageProxy>(pv->image_proxy()));
 			DCPOMATIC_ASSERT (proxy);
 			fastExportParameters_t export_parameters;
@@ -153,7 +150,9 @@ FastvideoPlayerVideoPreparer::transform_and_extract ()
 			if (r != FAST_OK) {
 				throw FastvideoError ("ExportToHostCopy", r);
 			}
+			//timestamped_printf("fv copies _decoded to Image\n");
 
+			st.set("convert to Image");
 			shared_ptr<dcpomatic::Image> image(new dcpomatic::Image(AV_PIX_FMT_XYZ12LE, size, true));
 			uint8_t* from = reinterpret_cast<uint8_t*>(_decoded);
 			uint16_t* to = reinterpret_cast<uint16_t*>(image->data()[0]);
@@ -169,7 +168,7 @@ FastvideoPlayerVideoPreparer::transform_and_extract ()
 				to += image->stride()[0] / 2;
 			}
 
-			timestamped_printf("fv sets image for %d\n", pv->time.frames_round(24));
+			//timestamped_printf("fv sets image for %d\n", pv->time.frames_round(24));
 			proxy->set_image (image);
 
 			_cpu.request (pv);
@@ -178,6 +177,7 @@ FastvideoPlayerVideoPreparer::transform_and_extract ()
 		if (images_left == 0) {
 			break;
 		}
+		st.set("get next");
 		fastStatus_t r = fastDecoderJ2kGetNextDecodedImage(_decoder, &report, &images_left);
 		if (r != FAST_OK) {
 			throw FastvideoError ("DecoderJ2kGetNextDecodedImage", r);
@@ -218,7 +218,7 @@ FastvideoPlayerVideoPreparer::setup (dcp::Data sample)
 	parameters.truncationMode = 0;
 	parameters.truncationRate = 0;
 
-	parameters.DecodePasses = 0;
+	parameters.DecodePasses = 22;
 	parameters.imageInfo = &info;
 	parameters.maxStreamSize = max_stream_size;
 
