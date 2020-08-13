@@ -27,6 +27,7 @@
 
 #include "server.h"
 #include "exception_store.h"
+#include "j2k_encoder_cpu_backend.h"
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread/condition.hpp>
@@ -60,6 +61,8 @@ private:
 	boost::condition _empty_condition;
 	bool _verbose;
 	int _num_threads;
+
+	J2KEncoderCPUBackend _cpu_encoder;
 
 	struct Broadcast {
 

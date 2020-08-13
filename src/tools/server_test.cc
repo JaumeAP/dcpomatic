@@ -31,6 +31,8 @@
 #include "lib/player.h"
 #include "lib/player_video.h"
 #include "lib/encode_server_description.h"
+#include "lib/j2k_encoder_cpu_backend.h"
+#include "lib/j2k_encoder_remote_backend.h"
 #include <getopt.h>
 #include <iostream>
 #include <iomanip>
@@ -63,12 +65,14 @@ process_video (shared_ptr<PlayerVideo> pvf)
 
 	++frame_count;
 
-	Data local_encoded = local->encode_locally ();
+	J2KEncoderCPUBackend cpu_backend;
+	Data local_encoded = *cpu_backend.encode (local);
 	Data remote_encoded;
 
 	string remote_error;
 	try {
-		remote_encoded = remote->encode_remotely (*server);
+		J2KEncoderRemoteBackend remote_backend(*server);
+		remote_encoded = *remote_backend.encode (remote);
 	} catch (NetworkError& e) {
 		remote_error = e.what ();
 	}

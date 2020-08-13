@@ -141,11 +141,11 @@ EncodeServer::process (shared_ptr<Socket> socket, struct timeval& after_read, st
 		throw NetworkError ("Checksums do not match");
 	}
 
-	DCPVideo dcp_video_frame (pvf, xml);
+	shared_ptr<DCPVideo> frame(new DCPVideo(pvf, xml));
 
 	gettimeofday (&after_read, 0);
 
-	Data encoded = dcp_video_frame.encode_locally ();
+	Data encoded = *_cpu_encoder.encode (frame);
 
 	gettimeofday (&after_encode, 0);
 
@@ -154,12 +154,12 @@ EncodeServer::process (shared_ptr<Socket> socket, struct timeval& after_read, st
 		socket->write (encoded.size());
 		socket->write (encoded.data().get(), encoded.size());
 	} catch (std::exception& e) {
-		cerr << "Send failed; frame " << dcp_video_frame.index() << "\n";
-		LOG_ERROR ("Send failed; frame %1", dcp_video_frame.index());
+		cerr << "Send failed; frame " << frame->index() << "\n";
+		LOG_ERROR ("Send failed; frame %1", frame->index());
 		throw;
 	}
 
-	return dcp_video_frame.index ();
+	return frame->index ();
 }
 
 void

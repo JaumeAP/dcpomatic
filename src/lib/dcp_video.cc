@@ -32,7 +32,6 @@
 #include "config.h"
 #include "exceptions.h"
 #include "encode_server_description.h"
-#include "dcpomatic_socket.h"
 #include "image.h"
 #include "log.h"
 #include "dcpomatic_log.h"
@@ -48,7 +47,6 @@
 DCPOMATIC_DISABLE_WARNINGS
 #include <libxml++/libxml++.h>
 DCPOMATIC_ENABLE_WARNINGS
-#include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <stdint.h>
 #include <iomanip>
@@ -117,95 +115,6 @@ DCPVideo::convert_to_xyz (shared_ptr<const PlayerVideo> frame, dcp::NoteHandler 
 	return xyz;
 }
 
-/** J2K-encode this frame on the local host.
- *  @return Encoded data.
- */
-Data
-DCPVideo::encode_locally ()
-{
-	string const comment = Config::instance()->dcp_j2k_comment();
-
-	Data enc = dcp::compress_j2k (
-		convert_to_xyz (_frame, boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2)),
-		_j2k_bandwidth,
-		_frames_per_second,
-		_frame->eyes() == EYES_LEFT || _frame->eyes() == EYES_RIGHT,
-		_resolution == RESOLUTION_4K,
-		comment.empty() ? "libdcp" : comment
-		);
-
-	switch (_frame->eyes()) {
-	case EYES_BOTH:
-		LOG_DEBUG_ENCODE (N_("Finished locally-encoded frame %1 for mono"), _index);
-		break;
-	case EYES_LEFT:
-		LOG_DEBUG_ENCODE (N_("Finished locally-encoded frame %1 for L"), _index);
-		break;
-	case EYES_RIGHT:
-		LOG_DEBUG_ENCODE (N_("Finished locally-encoded frame %1 for R"), _index);
-		break;
-	default:
-		break;
-	}
-
-	return enc;
-}
-
-/** Send this frame to a remote server for J2K encoding, then read the result.
- *  @param serv Server to send to.
- *  @param timeout timeout in seconds.
- *  @return Encoded data.
- */
-Data
-DCPVideo::encode_remotely (EncodeServerDescription serv, int timeout)
-{
-	boost::asio::io_service io_service;
-	boost::asio::ip::tcp::resolver resolver (io_service);
-	boost::asio::ip::tcp::resolver::query query (serv.host_name(), raw_convert<string> (ENCODE_FRAME_PORT));
-	boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve (query);
-
-	shared_ptr<Socket> socket (new Socket (timeout));
-
-	socket->connect (*endpoint_iterator);
-
-	/* Collect all XML metadata */
-	xmlpp::Document doc;
-	xmlpp::Element* root = doc.create_root_node ("EncodingRequest");
-	root->add_child("Version")->add_child_text (raw_convert<string> (SERVER_LINK_VERSION));
-	add_metadata (root);
-
-	LOG_DEBUG_ENCODE (N_("Sending frame %1 to remote"), _index);
-
-	{
-		Socket::WriteDigestScope ds (socket);
-
-		/* Send XML metadata */
-		string xml = doc.write_to_string ("UTF-8");
-		socket->write (xml.length() + 1);
-		socket->write ((uint8_t *) xml.c_str(), xml.length() + 1);
-
-		/* Send binary data */
-		LOG_TIMING("start-remote-send thread=%1", thread_id ());
-		_frame->write_to_socket (socket);
-	}
-
-	/* Read the response (JPEG2000-encoded data); this blocks until the data
-	   is ready and sent back.
-	*/
-	Socket::ReadDigestScope ds (socket);
-	LOG_TIMING("start-remote-encode thread=%1", thread_id ());
-	Data e (socket->read_uint32 ());
-	LOG_TIMING("start-remote-receive thread=%1", thread_id ());
-	socket->read (e.data().get(), e.size());
-	LOG_TIMING("finish-remote-receive thread=%1", thread_id ());
-	if (!ds.check()) {
-		throw NetworkError ("Checksums do not match");
-	}
-
-	LOG_DEBUG_ENCODE (N_("Finished remotely-encoded frame %1"), _index);
-
-	return e;
-}
 
 void
 DCPVideo::add_metadata (xmlpp::Element* el) const
@@ -217,11 +126,6 @@ DCPVideo::add_metadata (xmlpp::Element* el) const
 	_frame->add_metadata (el);
 }
 
-Eyes
-DCPVideo::eyes () const
-{
-	return _frame->eyes ();
-}
 
 /** @return true if this DCPVideo is definitely the same as another;
  *  (apart from the frame index), false if it is probably not.

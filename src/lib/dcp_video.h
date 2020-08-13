@@ -45,23 +45,32 @@ public:
 	DCPVideo (boost::shared_ptr<const PlayerVideo>, int, int, int, Resolution);
 	DCPVideo (boost::shared_ptr<const PlayerVideo>, cxml::ConstNodePtr);
 
-	dcp::Data encode_locally ();
-	dcp::Data encode_remotely (EncodeServerDescription, int timeout = 30);
+	boost::shared_ptr<const PlayerVideo> frame () const {
+		return _frame;
+	}
 
 	int index () const {
 		return _index;
 	}
 
-	Eyes eyes () const;
+	int frames_per_second () const {
+		return _frames_per_second;
+	}
+
+	int j2k_bandwidth () const {
+		return _j2k_bandwidth;
+	}
+
+	Resolution resolution () const {
+		return _resolution;
+	}
 
 	bool same (boost::shared_ptr<const DCPVideo> other) const;
+	void add_metadata (xmlpp::Element *) const;
 
 	static boost::shared_ptr<dcp::OpenJPEGImage> convert_to_xyz (boost::shared_ptr<const PlayerVideo> frame, dcp::NoteHandler note);
 
 private:
-
-	void add_metadata (xmlpp::Element *) const;
-
 	boost::shared_ptr<const PlayerVideo> _frame;
 	int _index;			 ///< frame index within the DCP's intrinsic duration
 	int _frames_per_second;		 ///< Frames per second that we will use for the DCP
