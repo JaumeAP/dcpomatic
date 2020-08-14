@@ -10,14 +10,18 @@
 
 
 using std::string;
+using std::vector;
 using boost::optional;
 using boost::shared_ptr;
 using dcp::Data;
 
 
-optional<Data>
-J2KEncoderCPUBackend::encode (shared_ptr<DCPVideo> video)
+vector<Data>
+J2KEncoderCPUBackend::encode (vector<shared_ptr<DCPVideo> > all_video)
 {
+	DCPOMATIC_ASSERT (all_video.size() == 1);
+	shared_ptr<DCPVideo> video = all_video.front();
+
 	try {
 		LOG_TIMING ("start-local-encode thread=%1 frame=%2", thread_id(), video->index());
 		string const comment = Config::instance()->dcp_j2k_comment();
@@ -46,7 +50,9 @@ J2KEncoderCPUBackend::encode (shared_ptr<DCPVideo> video)
 		}
 
 		LOG_TIMING ("finish-local-encode thread=%1 frame=%2", thread_id(), video->index());
-		return enc;
+		vector<Data> data;
+		data.push_back (enc);
+		return data;
 	} catch (std::exception& e) {
 		/* This is very bad, so don't cope with it, just pass it on */
 		LOG_ERROR (N_("Local encode failed (%1)"), e.what());

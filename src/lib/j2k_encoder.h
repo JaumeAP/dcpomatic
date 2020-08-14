@@ -81,7 +81,7 @@ private:
 
 	static void call_servers_list_changed (boost::weak_ptr<J2KEncoder> encoder);
 
-	void frame_done ();
+	void frames_done (int number);
 
 	void encoder_thread (boost::shared_ptr<J2KEncoderBackend> backend);
 	void terminate_threads ();

@@ -31,7 +31,7 @@ public:
 	explicit EventHistory (int size);
 
 	boost::optional<float> rate () const;
-	void event ();
+	void event (int count = 1);
 
 private:
 	/** Mutex for _history */
@@ -39,8 +39,8 @@ private:
 	/** List of the times of the last _history_size events
 	    first is the most recently completed.
 	*/
-	std::list<struct timeval> _history;
-	/** Number of events that we should keep history for */
+	std::list<std::pair<struct timeval, int> > _history;
+	/** Maximum size of _history */
 	int const _size;
 };
 

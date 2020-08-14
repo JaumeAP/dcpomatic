@@ -42,6 +42,7 @@ using std::cout;
 using std::cerr;
 using std::string;
 using std::pair;
+using std::vector;
 using boost::shared_ptr;
 using boost::optional;
 using boost::bind;
@@ -58,7 +59,11 @@ void
 process_video (shared_ptr<PlayerVideo> pvf)
 {
 	shared_ptr<DCPVideo> local  (new DCPVideo (pvf, frame_count, film->video_frame_rate(), 250000000, RESOLUTION_2K));
+	vector<shared_ptr<DCPVideo> > locals;
+	locals.push_back (local);
 	shared_ptr<DCPVideo> remote (new DCPVideo (pvf, frame_count, film->video_frame_rate(), 250000000, RESOLUTION_2K));
+	vector<shared_ptr<DCPVideo> > remotes;
+	remotes.push_back (remote);
 
 	cout << "Frame " << frame_count << ": ";
 	cout.flush ();
@@ -66,13 +71,13 @@ process_video (shared_ptr<PlayerVideo> pvf)
 	++frame_count;
 
 	J2KEncoderCPUBackend cpu_backend;
-	Data local_encoded = *cpu_backend.encode (local);
+	Data local_encoded = cpu_backend.encode(locals).front();
 	Data remote_encoded;
 
 	string remote_error;
 	try {
 		J2KEncoderRemoteBackend remote_backend(*server);
-		remote_encoded = *remote_backend.encode (remote);
+		remote_encoded = remote_backend.encode(remotes).front();
 	} catch (NetworkError& e) {
 		remote_error = e.what ();
 	}

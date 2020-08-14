@@ -44,6 +44,7 @@
 #include <boost/thread.hpp>
 
 using std::list;
+using std::vector;
 using boost::shared_ptr;
 using boost::thread;
 using boost::optional;
@@ -56,7 +57,9 @@ void
 do_remote_encode (shared_ptr<DCPVideo> frame, shared_ptr<J2KEncoderBackend> backend, Data locally_encoded)
 {
 	Data remotely_encoded;
-	BOOST_REQUIRE_NO_THROW (remotely_encoded = *backend->encode(frame));
+	vector<shared_ptr<DCPVideo> > frames;
+	frames.push_back (frame);
+	BOOST_REQUIRE_NO_THROW (remotely_encoded = backend->encode(frames).front());
 
 	BOOST_REQUIRE_EQUAL (locally_encoded.size(), remotely_encoded.size());
 	BOOST_CHECK_EQUAL (memcmp (locally_encoded.data().get(), remotely_encoded.data().get(), locally_encoded.size()), 0);
@@ -122,8 +125,11 @@ BOOST_AUTO_TEST_CASE (client_server_test_rgb)
 			)
 		);
 
+	vector<shared_ptr<DCPVideo> > frames;
+	frames.push_back (frame);
+
 	J2KEncoderCPUBackend cpu;
-	Data locally_encoded = *cpu.encode(frame);
+	Data locally_encoded = cpu.encode(frames).front();
 
 	EncodeServer* server = new EncodeServer (true, 2);
 
@@ -210,8 +216,11 @@ BOOST_AUTO_TEST_CASE (client_server_test_yuv)
 			)
 		);
 
+	vector<shared_ptr<DCPVideo> > frames;
+	frames.push_back (frame);
+
 	J2KEncoderCPUBackend cpu;
-	Data locally_encoded = *cpu.encode(frame);
+	Data locally_encoded = cpu.encode(frames).front();
 
 	EncodeServer* server = new EncodeServer (true, 2);
 
@@ -283,8 +292,11 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 			)
 		);
 
+	vector<shared_ptr<DCPVideo> > raw_frames;
+	raw_frames.push_back (raw_frame);
+
 	J2KEncoderCPUBackend cpu;
-	Data raw_locally_encoded = *cpu.encode(raw_frame);
+	Data raw_locally_encoded = cpu.encode(raw_frames).front();
 
 	shared_ptr<PlayerVideo> j2k_pvf (
 		new PlayerVideo (
@@ -313,7 +325,10 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 			)
 		);
 
-	Data j2k_locally_encoded = *cpu.encode(j2k_frame);
+	vector<shared_ptr<DCPVideo> > j2k_frames;
+	j2k_frames.push_back (j2k_frame);
+
+	Data j2k_locally_encoded = cpu.encode(j2k_frames).front();
 
 	EncodeServer* server = new EncodeServer (true, 2);
 

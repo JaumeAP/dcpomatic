@@ -26,6 +26,7 @@
 #include "j2k_encoder_backend.h"
 #include "j2k_encoder_cpu_backend.h"
 #include "j2k_encoder_remote_backend.h"
+#include "j2k_encoder_fastvideo_backend.h"
 #include "util.h"
 #include "film.h"
 #include "log.h"
@@ -48,6 +49,7 @@
 using std::list;
 using std::cout;
 using std::exception;
+using std::vector;
 using boost::shared_ptr;
 using boost::weak_ptr;
 using boost::optional;
@@ -130,12 +132,15 @@ J2KEncoder::end ()
 	BOOST_FOREACH (shared_ptr<DCPVideo> i, _queue) {
 		LOG_GENERAL (N_("Encode left-over frame %1"), i->index());
 		try {
+			/* XXX: ewww */
+			vector<shared_ptr<DCPVideo> > frames;
+			frames.push_back (i);
 			_writer->write (
-				*_cpu_backend->encode(i),
+				_cpu_backend->encode(frames).front(),
 				i->index(),
 				i->frame()->eyes()
 				);
-			frame_done ();
+			frames_done (1);
 		} catch (std::exception& e) {
 			LOG_ERROR (N_("Local encode failed (%1)"), e.what ());
 		}
@@ -164,9 +169,9 @@ J2KEncoder::video_frames_enqueued () const
 
 /** Should be called when a frame has been encoded successfully */
 void
-J2KEncoder::frame_done ()
+J2KEncoder::frames_done (int number)
 {
-	_history.event ();
+	_history.event (number);
 }
 
 /** Called to request encoding of the next video frame in the DCP.  This is called in order,
@@ -208,7 +213,7 @@ J2KEncoder::encode (shared_ptr<PlayerVideo> pv, DCPTime time)
 		/* We can fake-write this frame */
 		LOG_DEBUG_ENCODE("Frame @ %1 FAKE", to_string(time));
 		_writer->fake_write (position, pv->eyes ());
-		frame_done ();
+		frames_done (1);
 	} else if (pv->has_j2k() && !_film->reencode_j2k()) {
 		LOG_DEBUG_ENCODE("Frame @ %1 J2K", to_string(time));
 		/* This frame already has J2K data, so just write it */
@@ -271,34 +276,44 @@ try
 
 		LOG_TIMING ("encoder-sleep thread=%1", thread_id ());
 		boost::mutex::scoped_lock lock (_queue_mutex);
-		while (_queue.empty ()) {
+		while (static_cast<int>(_queue.size()) < backend->quantity()) {
 			_empty_condition.wait (lock);
 		}
 
 		LOG_TIMING ("encoder-wake thread=%1 queue=%2", thread_id(), _queue.size());
-		shared_ptr<DCPVideo> vf = _queue.front ();
+		vector<shared_ptr<DCPVideo> > video;
+		for (int i = 0; i < backend->quantity(); ++i) {
+			video.push_back (_queue.front());
+		}
 
-		/* We're about to commit to either encoding this frame or putting it back onto the queue,
+		/* We're about to commit to either encoding these frame(s) or putting them back onto the queue,
 		   so we must not be interrupted until one or other of these things have happened.  This
 		   block has thread interruption disabled.
 		*/
 		{
 			boost::this_thread::disable_interruption dis;
 
-			LOG_TIMING ("encoder-pop thread=%1 frame=%2 eyes=%3", thread_id(), vf->index(), (int) vf->frame()->eyes());
-			_queue.pop_front ();
+			LOG_TIMING ("encoder-pop thread=%1 frames=%2 eyes=%3", thread_id(), video.size());
+			for (int i = 0; i < backend->quantity(); ++i) {
+				_queue.pop_front ();
+			}
 
 			lock.unlock ();
 
-			optional<Data> encoded = backend->encode (vf);
+			vector<Data> encoded = backend->encode (video);
 
-			if (encoded) {
-				_writer->write (encoded.get(), vf->index (), vf->frame()->eyes());
-				frame_done ();
+			if (!encoded.empty()) {
+				DCPOMATIC_ASSERT (static_cast<int>(encoded.size()) == backend->quantity());
+				for (int i = 0; i < backend->quantity(); ++i) {
+					_writer->write (encoded[i], video[i]->index(), video[i]->frame()->eyes());
+				}
+				frames_done (backend->quantity());
 			} else {
 				lock.lock ();
-				LOG_GENERAL (N_("[%1] J2KEncoder thread pushes frame %2 back onto queue after failure"), thread_id(), vf->index());
-				_queue.push_front (vf);
+				LOG_GENERAL (N_("[%1] J2KEncoder thread pushes %2 frames back onto queue after failure"), thread_id(), video.size());
+				for (vector<shared_ptr<DCPVideo> >::const_reverse_iterator i = video.rbegin(); i != video.rend(); ++i) {
+					_queue.push_front (*i);
+				}
 				lock.unlock ();
 			}
 		}
@@ -349,6 +364,9 @@ J2KEncoder::servers_list_changed ()
 			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, backend));
 		}
 	}
+
+	shared_ptr<J2KEncoderFastvideoBackend> fastvideo(new J2KEncoderFastvideoBackend());
+	_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, fastvideo));
 
 	_writer->set_encoder_threads (_threads->size());
 }

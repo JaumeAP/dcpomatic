@@ -6,7 +6,7 @@ class J2KEncoderRemoteBackend : public J2KEncoderBackend
 {
 public:
 	J2KEncoderRemoteBackend (EncodeServerDescription server);
-	boost::optional<dcp::Data> encode (boost::shared_ptr<DCPVideo> video);
+	std::vector<dcp::Data> encode (std::vector<boost::shared_ptr<DCPVideo> > video);
 
 private:
 	EncodeServerDescription _server;

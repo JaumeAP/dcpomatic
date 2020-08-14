@@ -142,10 +142,12 @@ EncodeServer::process (shared_ptr<Socket> socket, struct timeval& after_read, st
 	}
 
 	shared_ptr<DCPVideo> frame(new DCPVideo(pvf, xml));
+	vector<shared_ptr<DCPVideo> > frames;
+	frames.push_back (frame);
 
 	gettimeofday (&after_read, 0);
 
-	Data encoded = *_cpu_encoder.encode (frame);
+	Data encoded = _cpu_encoder.encode (frames).front();
 
 	gettimeofday (&after_encode, 0);
 

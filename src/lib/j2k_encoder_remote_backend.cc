@@ -18,6 +18,7 @@ DCPOMATIC_ENABLE_WARNINGS
 
 
 using std::string;
+using std::vector;
 using boost::optional;
 using boost::shared_ptr;
 using dcp::Data;
@@ -32,9 +33,12 @@ J2KEncoderRemoteBackend::J2KEncoderRemoteBackend (EncodeServerDescription server
 }
 
 
-optional<Data>
-J2KEncoderRemoteBackend::encode (shared_ptr<DCPVideo> video)
+vector<Data>
+J2KEncoderRemoteBackend::encode (vector<shared_ptr<DCPVideo> > all_video)
 {
+	DCPOMATIC_ASSERT (all_video.size() == 1);
+	shared_ptr<DCPVideo> video = all_video.front();
+
 	int const timeout = 30;
 
 	try {
@@ -90,7 +94,9 @@ J2KEncoderRemoteBackend::encode (shared_ptr<DCPVideo> video)
 		/* This job succeeded, so remove any backoff */
 		_backoff = 0;
 
-		return e;
+		vector<Data> data;
+		data.push_back(e);
+		return data;
 
 	} catch (std::exception& e) {
 		if (_backoff < 60) {
@@ -102,7 +108,7 @@ J2KEncoderRemoteBackend::encode (shared_ptr<DCPVideo> video)
 			);
 
 		boost::this_thread::sleep (boost::posix_time::seconds(_backoff));
-		return optional<Data>();
+		return vector<Data>();
 	}
 }
 

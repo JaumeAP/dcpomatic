@@ -8,7 +8,7 @@
 class J2KEncoderCPUBackend : public J2KEncoderBackend
 {
 public:
-	boost::optional<dcp::Data> encode (boost::shared_ptr<DCPVideo> video);
+	std::vector<dcp::Data> encode (std::vector<boost::shared_ptr<DCPVideo> > video);
 };
 
 #endif

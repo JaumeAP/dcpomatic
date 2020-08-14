@@ -117,7 +117,7 @@ PlayerVideo::image (function<AVPixelFormat (AVPixelFormat)> pixel_format, bool a
 
 	boost::mutex::scoped_lock lm (_mutex);
 	if (!_image || _crop != _image_crop || _inter_size != _image_inter_size || _out_size != _image_out_size || _fade != _image_fade) {
-		timestamped_printf("_________________!!! make_image() for %d [%d]\n", time.frames_round(24), !_image);
+		//timestamped_printf("_________________!!! make_image() for %d [%d]\n", time.frames_round(24), !_image);
 		make_image (pixel_format, aligned, fast);
 	}
 	return _image;
