@@ -122,6 +122,15 @@ FFmpegFileEncoder::FFmpegFileEncoder (
 	_pending_audio.reset (new AudioBuffers(channels, 0));
 }
 
+
+FFmpegFileEncoder::~FFmpegFileEncoder ()
+{
+	avcodec_close (_video_codec_context);
+	avcodec_close (_audio_codec_context);
+	avformat_close_input (&_format_context);
+}
+
+
 AVPixelFormat
 FFmpegFileEncoder::pixel_format (ExportFormat format)
 {
@@ -225,11 +234,6 @@ FFmpegFileEncoder::flush ()
 	}
 
 	av_write_trailer (_format_context);
-
-	avcodec_close (_video_codec_context);
-	avcodec_close (_audio_codec_context);
-	avio_close (_format_context->pb);
-	avformat_free_context (_format_context);
 }
 
 void

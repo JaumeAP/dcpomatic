@@ -53,6 +53,10 @@ FFmpegEncoder::FFmpegEncoder (
 	)
 	: Encoder (film, job)
 	, _history (1000)
+	, _output (output)
+	, _format (format)
+	, _split_reels (split_reels)
+	, _x264_crf (x264_crf)
 {
 	_player->set_always_burn_open_subtitles ();
 	_player->set_play_referenced ();
@@ -91,35 +95,8 @@ FFmpegEncoder::FFmpegEncoder (
 	}
 
 	_butler.reset (new Butler(_player, map, _output_audio_channels, bind(&PlayerVideo::force, _1, FFmpegFileEncoder::pixel_format(format)), true, false));
-
-	int const files = split_reels ? film->reels().size() : 1;
-	for (int i = 0; i < files; ++i) {
-
-		boost::filesystem::path filename = output;
-		string extension = boost::filesystem::extension (filename);
-		filename = boost::filesystem::change_extension (filename, "");
-
-		if (files > 1) {
-			/// TRANSLATORS: _reel%1 here is to be added to an export filename to indicate
-			/// which reel it is.  Preserve the %1; it will be replaced with the reel number.
-			filename = filename.string() + String::compose(_("_reel%1"), i + 1);
-		}
-
-		_file_encoders.push_back (
-			FileEncoderSet (
-				_film->frame_size(),
-				_film->video_frame_rate(),
-				_film->audio_frame_rate(),
-				_output_audio_channels,
-				format,
-				x264_crf,
-				_film->three_d(),
-				filename,
-				extension
-				)
-			);
-	}
 }
+
 
 void
 FFmpegEncoder::go ()
@@ -132,9 +109,39 @@ FFmpegEncoder::go ()
 
 	Waker waker;
 
+	std::list<FileEncoderSet> file_encoders;
+
+	int const files = _split_reels ? _film->reels().size() : 1;
+	for (int i = 0; i < files; ++i) {
+
+		boost::filesystem::path filename = _output;
+		string extension = boost::filesystem::extension (filename);
+		filename = boost::filesystem::change_extension (filename, "");
+
+		if (files > 1) {
+			/// TRANSLATORS: _reel%1 here is to be added to an export filename to indicate
+			/// which reel it is.  Preserve the %1; it will be replaced with the reel number.
+			filename = filename.string() + String::compose(_("_reel%1"), i + 1);
+		}
+
+		file_encoders.push_back (
+			FileEncoderSet (
+				_film->frame_size(),
+				_film->video_frame_rate(),
+				_film->audio_frame_rate(),
+				_output_audio_channels,
+				_format,
+				_x264_crf,
+				_film->three_d(),
+				filename,
+				extension
+				)
+			);
+	}
+
 	list<DCPTimePeriod> reel_periods = _film->reels ();
 	list<DCPTimePeriod>::const_iterator reel = reel_periods.begin ();
-	list<FileEncoderSet>::iterator encoder = _file_encoders.begin ();
+	list<FileEncoderSet>::iterator encoder = file_encoders.begin ();
 
 	DCPTime const video_frame = DCPTime::from_frames (1, _film->video_frame_rate ());
 	int const audio_frames = video_frame.frames_round(_film->audio_frame_rate());
@@ -143,19 +150,19 @@ FFmpegEncoder::go ()
 	int const gets_per_frame = _film->three_d() ? 2 : 1;
 	for (DCPTime i; i < _film->length(); i += video_frame) {
 
-		if (_file_encoders.size() > 1 && !reel->contains(i)) {
+		if (file_encoders.size() > 1 && !reel->contains(i)) {
 			/* Next reel and file */
 			++reel;
 			++encoder;
 			DCPOMATIC_ASSERT (reel != reel_periods.end());
-			DCPOMATIC_ASSERT (encoder != _file_encoders.end());
+			DCPOMATIC_ASSERT (encoder != file_encoders.end());
 		}
 
 		for (int j = 0; j < gets_per_frame; ++j) {
 			Butler::Error e;
 			pair<shared_ptr<PlayerVideo>, DCPTime> v = _butler->get_video (&e);
 			if (!v.first) {
-				throw ProgrammingError(__FILE__, __LINE__, String::compose("butler returned no video; error was %1", e.summary()));
+				throw DecodeError(String::compose(_("Error during decoding: %1"), e.summary()));
 			}
 			shared_ptr<FFmpegFileEncoder> fe = encoder->get (v.first->eyes());
 			if (fe) {
@@ -189,7 +196,7 @@ FFmpegEncoder::go ()
 	}
 	delete[] interleaved;
 
-	BOOST_FOREACH (FileEncoderSet i, _file_encoders) {
+	BOOST_FOREACH (FileEncoderSet i, file_encoders) {
 		i.flush ();
 	}
 

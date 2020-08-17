@@ -29,8 +29,9 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 }
+#include <boost/noncopyable.hpp>
 
-class FFmpegFileEncoder
+class FFmpegFileEncoder : public boost::noncopyable
 {
 public:
 	FFmpegFileEncoder (
@@ -42,6 +43,8 @@ public:
 		int x264_crf,
 		boost::filesystem::path output
 		);
+
+	~FFmpegFileEncoder ();
 
 	void video (boost::shared_ptr<PlayerVideo>, DCPTime);
 	void audio (boost::shared_ptr<AudioBuffers>);
