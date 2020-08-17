@@ -239,7 +239,10 @@ FilmViewer::get ()
 	do {
 		Butler::Error e;
 		_player_video = _butler->get_video (&e);
-		if (!_player_video.first && e == Butler::AGAIN) {
+		if (e.code == Butler::Error::DIED) {
+			LOG_ERROR ("Butler died with %1", e.message);
+		}
+		if (!_player_video.first && e.code == Butler::Error::Code::AGAIN) {
 			signal_manager->when_idle (boost::bind(&FilmViewer::get, this));
 			return;
 		}

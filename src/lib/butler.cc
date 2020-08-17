@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2018 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2016-2020 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -30,6 +30,7 @@
 #include <boost/shared_ptr.hpp>
 
 using std::cout;
+using std::exception;
 using std::pair;
 using std::make_pair;
 using std::string;
@@ -208,6 +209,12 @@ try
 	boost::mutex::scoped_lock lm (_mutex);
 	_finished = true;
 	_arrived.notify_all ();
+} catch (exception& e) {
+	store_current ();
+	boost::mutex::scoped_lock lm (_mutex);
+	_died = true;
+	_died_message = e.what();
+	_arrived.notify_all ();
 } catch (...) {
 	store_current ();
 	boost::mutex::scoped_lock lm (_mutex);
@@ -222,7 +229,7 @@ Butler::get_video (Error* e)
 
 	if (_suspended) {
 		if (e) {
-			*e = AGAIN;
+			e->code = Error::AGAIN;
 		}
 		return make_pair(shared_ptr<PlayerVideo>(), DCPTime());
 	}
@@ -233,8 +240,9 @@ Butler::get_video (Error* e)
 	}
 
 	if (_video.empty()) {
-		if (e) {
-			*e = _died ? DIED : NONE;
+		if (e && _died) {
+			e->code = Error::DIED;
+			e->message = _died_message;
 		}
 		return make_pair(shared_ptr<PlayerVideo>(), DCPTime());
 	}
@@ -291,6 +299,13 @@ try
 		video->prepare (_pixel_format, _aligned, _fast);
 		LOG_TIMING("finish-prepare in %1", thread_id());
 	}
+}
+catch (exception& e)
+{
+	store_current ();
+	boost::mutex::scoped_lock lm (_mutex);
+	_died = true;
+	_died_message = e.what();
 }
 catch (...)
 {
@@ -403,4 +418,21 @@ Butler::text (PlayerText pt, TextType type, optional<DCPTextTrack> track, DCPTim
 
 	boost::mutex::scoped_lock lm2 (_buffers_mutex);
 	_closed_caption.put (pt, *track, period);
+}
+
+
+string
+Butler::Error::summary () const
+{
+	switch (code)
+	{
+		case Error::NONE:
+			return "No error registered";
+		case Error::AGAIN:
+			return "Butler not ready";
+		case Error::DIED:
+			return String::compose("Butler died (%1)", message);
+	}
+
+	return "";
 }

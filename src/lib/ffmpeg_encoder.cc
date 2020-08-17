@@ -155,7 +155,7 @@ FFmpegEncoder::go ()
 			Butler::Error e;
 			pair<shared_ptr<PlayerVideo>, DCPTime> v = _butler->get_video (&e);
 			if (!v.first) {
-				throw ProgrammingError(__FILE__, __LINE__, String::compose("butler returned no video; error was %1", static_cast<int>(e)));
+				throw ProgrammingError(__FILE__, __LINE__, String::compose("butler returned no video; error was %1", e.summary()));
 			}
 			shared_ptr<FFmpegFileEncoder> fe = encoder->get (v.first->eyes());
 			if (fe) {
