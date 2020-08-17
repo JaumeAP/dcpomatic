@@ -362,7 +362,7 @@ DCPDecoder::get_readers ()
 		shared_ptr<dcp::StereoPictureAsset> stereo = dynamic_pointer_cast<dcp::StereoPictureAsset> (asset);
 		DCPOMATIC_ASSERT (mono || stereo);
 		if (mono) {
-			_mono_reader = mono->start_read ();
+			_mono_reader = mono->start_read (false);
 			_stereo_reader.reset ();
 		} else {
 			_stereo_reader = stereo->start_read ();
@@ -374,7 +374,7 @@ DCPDecoder::get_readers ()
 	}
 
 	if ((*_reel)->main_sound()) {
-		_sound_reader = (*_reel)->main_sound()->asset()->start_read ();
+		_sound_reader = (*_reel)->main_sound()->asset()->start_read (false);
 	} else {
 		_sound_reader.reset ();
 	}
