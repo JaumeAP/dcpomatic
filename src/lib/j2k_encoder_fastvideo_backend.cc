@@ -29,13 +29,14 @@ J2KEncoderFastvideoBackend::J2KEncoderFastvideoBackend ()
 	if (r != FAST_OK) {
 		throw FastvideoError ("DecoderJ2kLibraryInit", r);
 	}
+	fastTraceCreate("/home/carl/trace.log");
 }
 
 
 J2KEncoderFastvideoBackend::~J2KEncoderFastvideoBackend ()
 {
 	if (_setup_done) {
-		delete[] _xyz_buffer;
+		fastFree (_xyz_buffer);
 		fastEncoderJ2kDestroy (_encoder);
 		fastImportFromHostDestroy (_adapter);
 	}
@@ -57,12 +58,12 @@ J2KEncoderFastvideoBackend::setup (dcp::Size size)
 	parameters.pcrdEnabled = true;
 	parameters.dwtLevels = 6;
 	parameters.codeblockSize = 32;
-	parameters.maxQuality = 50;
-	parameters.compressionRatio = 0.5;
+	parameters.maxQuality = 0.5;
+	parameters.compressionRatio = 2;
 	parameters.info = false;
 	parameters.tier2Threads = 4;
-	parameters.tileWidth = size.width;
-	parameters.tileHeight = size.height;
+	parameters.tileWidth = 0;//size.width;
+	parameters.tileHeight = 0;//size.height;
 	parameters.noMCT = false;
 	parameters.ss1_x = 1;
 	parameters.ss1_y = 1;
@@ -88,7 +89,10 @@ J2KEncoderFastvideoBackend::setup (dcp::Size size)
 
 	_xyz_buffer_stride = size.width * 6;
 	_xyz_buffer_stride += 4 - (_xyz_buffer_stride % 4);
-	_xyz_buffer = new uint16_t[_xyz_buffer_stride * size.height];
+	r = fastMalloc(reinterpret_cast<void**>(&_xyz_buffer), _xyz_buffer_stride * size.height);
+	if (r != FAST_OK) {
+		throw FastvideoError ("Malloc", r);
+	}
 }
 
 
@@ -99,7 +103,7 @@ J2KEncoderFastvideoBackend::encode (vector<shared_ptr<DCPVideo> > video)
 	std::cout << "FV: " << video.size() << " from " << video.front()->index() << "\n";
 
 	if (!_setup_done) {
-		setup (video.front()->frame()->inter_size());
+		setup (video.front()->frame()->out_size());
 		_setup_done = true;
 	}
 
@@ -118,7 +122,6 @@ J2KEncoderFastvideoBackend::encode (vector<shared_ptr<DCPVideo> > video)
 			/* XXX */
 		}
 
-
 		fastStatus_t r = fastImportFromHostCopy(
 			_adapter,
 			_xyz_buffer,
@@ -131,7 +134,7 @@ J2KEncoderFastvideoBackend::encode (vector<shared_ptr<DCPVideo> > video)
 		}
 
 		fastEncoderJ2kDynamicParameters_t dynamic_parameters;
-		dynamic_parameters.targetStreamSize = 0;
+		dynamic_parameters.targetStreamSize = _xyz_buffer_stride * image->size().width / 2;
 		dynamic_parameters.quality = 0.5;
 		dynamic_parameters.writeHeader = false;
 
@@ -149,15 +152,26 @@ J2KEncoderFastvideoBackend::encode (vector<shared_ptr<DCPVideo> > video)
 	DCPOMATIC_ASSERT (free_slots == 0);
 
 	fastEncoderJ2kReport_t report;
+
 	fastEncoderJ2kOutput_t output;
+	int const max_j2k_size = 1024 * 1024 * 2;
+	output.bufferSize = max_j2k_size;
+	dcp::Data data(output.bufferSize);
+	output.byteStream = data.data().get();
+
 	fastStatus_t r = fastEncoderJ2kTransformBatch(_encoder, &output, &report);
 	if (r != FAST_OK) {
+		fastTraceClose();
 		throw FastvideoError ("EncoderJ2KTransformBatch", r);
 	}
 
 	vector<Data> encoded;
 	for (size_t i = 0; i < video.size(); ++i) {
-		encoded.push_back (Data(output.byteStream, output.streamSize));
+		std::cout << "\tframe " << output.streamSize << "\n";
+		data.set_size (output.streamSize);
+		encoded.push_back (data);
+		data = dcp::Data(output.bufferSize);
+		output.byteStream = data.data().get();
 		int images_left = 0;
 		r = fastEncoderJ2kGetNextEncodedImage (_encoder, &output, &report, &images_left);
 	}

@@ -764,7 +764,8 @@ void
 Writer::set_encoder_threads (int threads)
 {
 	boost::mutex::scoped_lock lm (_state_mutex);
-	_maximum_frames_in_memory = lrint (threads * Config::instance()->frames_in_memory_multiplier());
+	/* XXX: add some to cope with the FV encoder returning lots */
+	_maximum_frames_in_memory = lrint (threads * Config::instance()->frames_in_memory_multiplier()) + 32;
 	_maximum_queue_size = threads * 16;
 }
 

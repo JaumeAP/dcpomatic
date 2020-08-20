@@ -284,6 +284,7 @@ try
 		vector<shared_ptr<DCPVideo> > video;
 		for (int i = 0; i < backend->quantity(); ++i) {
 			video.push_back (_queue.front());
+			_queue.pop_front();
 		}
 
 		/* We're about to commit to either encoding these frame(s) or putting them back onto the queue,
@@ -294,9 +295,6 @@ try
 			boost::this_thread::disable_interruption dis;
 
 			LOG_TIMING ("encoder-pop thread=%1 frames=%2 eyes=%3", thread_id(), video.size());
-			for (int i = 0; i < backend->quantity(); ++i) {
-				_queue.pop_front ();
-			}
 
 			lock.unlock ();
 
