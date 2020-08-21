@@ -58,7 +58,7 @@ J2KEncoderFastvideoBackend::setup (dcp::Size size)
 	parameters.pcrdEnabled = true;
 	parameters.dwtLevels = 6;
 	parameters.codeblockSize = 32;
-	parameters.maxQuality = 0.5;
+	parameters.maxQuality = 1.0;
 	parameters.compressionRatio = 2;
 	parameters.info = false;
 	parameters.tier2Threads = 4;
@@ -135,7 +135,7 @@ J2KEncoderFastvideoBackend::encode (vector<shared_ptr<DCPVideo> > video)
 
 		fastEncoderJ2kDynamicParameters_t dynamic_parameters;
 		dynamic_parameters.targetStreamSize = _xyz_buffer_stride * image->size().width / 2;
-		dynamic_parameters.quality = 0.5;
+		dynamic_parameters.quality = 1.0;
 		dynamic_parameters.writeHeader = false;
 
 		r = fastEncoderJ2kAddImageToBatch(
