@@ -21,6 +21,7 @@
 #include "gpu_j2k_encode_worker.h"
 #include "dcp_video.h"
 #include "cross.h"
+#include "timer.h"
 #include "dcpomatic_log.h"
 #include <dcp/openjpeg_image.h>
 extern "C" {
@@ -78,6 +79,8 @@ GPUJ2KEncodeWorker::encode (shared_ptr<DCPVideo> vf)
 
 	init_tiles (&img, width, height, 5, 5);
 	type_tile* tile = &(img.tile[0]);
+
+	PeriodTimer encode("poz-encode");
 
 	// XXX: it's a big shame about this int -> float conversion
 	for (int i = 0; i < 3; ++i) {

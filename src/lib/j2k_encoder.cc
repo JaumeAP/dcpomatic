@@ -382,13 +382,12 @@ J2KEncoder::servers_list_changed ()
 			shared_ptr<RemoteJ2KEncodeWorker> w (new RemoteJ2KEncodeWorker(i));
 			_workers.push_back (w);
 			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, w));
-			_threads.push_back (new boost::thread(boost::bind(&J2KEncoder::encoder_thread, this, w)));
 		}
 	}
 
 	shared_ptr<GPUJ2KEncodeWorker> w (new GPUJ2KEncodeWorker());
 	_workers.push_back (w);
-	_threads.push_back (new boost::thread(boost::bind(&J2KEncoder::encoder_thread, this, w)));
+	_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, w));
 
-	_writer->set_encoder_threads (_threads.size());
+	_writer->set_encoder_threads (_threads->size());
 }

@@ -32,11 +32,11 @@ using boost::weak_ptr;
 BOOST_AUTO_TEST_CASE (gpu_test)
 {
 	GPUJ2KEncodeWorker w;
-	shared_ptr<ImageProxy> ip (new FFmpegImageProxy(private_data / "card.png"));
+	shared_ptr<ImageProxy> ip (new FFmpegImageProxy(TestPaths::private_data / "card.png"));
 	shared_ptr<PlayerVideo> pv (
 		new PlayerVideo(
 			ip, Crop(), optional<double>(), dcp::Size(1998, 1080), dcp::Size(1998, 1080),
-			EYES_BOTH, PART_WHOLE, optional<ColourConversion>(), weak_ptr<Content>(), optional<Frame>()
+			EYES_BOTH, PART_WHOLE, optional<ColourConversion>(), VIDEO_RANGE_FULL, weak_ptr<Content>(), optional<Frame>(), false
 			)
 		);
 	shared_ptr<DCPVideo> vf (new DCPVideo(pv, 0, 24, 100000000, RESOLUTION_2K));
