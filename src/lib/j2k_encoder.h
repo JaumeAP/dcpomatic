@@ -107,6 +107,8 @@ private:
 	boost::shared_ptr<PlayerVideo> _last_player_video[EYES_COUNT];
 	boost::optional<dcpomatic::DCPTime> _last_player_video_time;
 
+	boost::barrier _gpu_barrier;
+
 	boost::signals2::scoped_connection _server_found_connection;
 };
 

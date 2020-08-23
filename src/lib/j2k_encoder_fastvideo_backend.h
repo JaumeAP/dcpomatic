@@ -7,23 +7,25 @@
 #include <fastvideo_encoder_j2k.h>
 #include <fastvideo_sdk.h>
 #include <boost/thread.hpp>
+#include <boost/thread/barrier.hpp>
 
 
 class J2KEncoderFastvideoBackend : public J2KEncoderBackend
 {
 public:
-	J2KEncoderFastvideoBackend ();
+	J2KEncoderFastvideoBackend (boost::barrier& barrier);
 	~J2KEncoderFastvideoBackend ();
 
 	std::vector<dcp::Data> encode (std::vector<boost::shared_ptr<DCPVideo> > video);
 
 	int quantity () const {
-		return 16;
+		return 4;
 	}
 
 private:
 	void setup (dcp::Size size);
 
+	boost::barrier& _barrier;
 	bool _setup_done;
 	fastImportFromHostHandle_t _adapter;
 	fastDeviceSurfaceBufferHandle_t _src_buffer;

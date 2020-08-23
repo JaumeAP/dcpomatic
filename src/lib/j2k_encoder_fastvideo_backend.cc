@@ -17,8 +17,9 @@ using dcp::Data;
 
 
 
-J2KEncoderFastvideoBackend::J2KEncoderFastvideoBackend ()
-	: _setup_done (false)
+J2KEncoderFastvideoBackend::J2KEncoderFastvideoBackend (boost::barrier& barrier)
+	: _barrier (barrier)
+	, _setup_done (false)
 {
 	fastSdkParametersHandle_t sdk_parameters;
 	fastStatus_t r = fastGetSdkParametersHandle(&sdk_parameters);
@@ -99,14 +100,18 @@ J2KEncoderFastvideoBackend::setup (dcp::Size size)
 vector<Data>
 J2KEncoderFastvideoBackend::encode (vector<shared_ptr<DCPVideo> > video)
 {
-	DCPOMATIC_ASSERT (static_cast<int>(video.size()) == quantity());
+	DCPOMATIC_ASSERT (static_cast<int>(video.size()) <= quantity());
 	std::cout << "FV: " << video.size() << " from " << video.front()->index() << "\n";
+	// XXX: works most of the time, not sure how it helps (need to ask) but screws
+	// things up when we're only encoding one frame
+	//_barrier.wait();
 
 	if (!_setup_done) {
 		setup (video.front()->frame()->out_size());
 		_setup_done = true;
 	}
 
+	std::cout << "hello dolly.\n";
 	BOOST_FOREACH (shared_ptr<DCPVideo> i, video) {
 		shared_ptr<dcpomatic::Image> image = i->frame()->image(boost::bind(&PlayerVideo::keep_xyz_or_rgb, _1), true, false);
 		if (i->frame()->colour_conversion()) {
@@ -122,6 +127,7 @@ J2KEncoderFastvideoBackend::encode (vector<shared_ptr<DCPVideo> > video)
 			/* XXX */
 		}
 
+		std::cout << "here we go.\n";
 		fastStatus_t r = fastImportFromHostCopy(
 			_adapter,
 			_xyz_buffer,
@@ -147,12 +153,7 @@ J2KEncoderFastvideoBackend::encode (vector<shared_ptr<DCPVideo> > video)
 	}
 
 
-	int free_slots = 0;
-	fastEncoderJ2kFreeSlotsInBatch(_encoder, &free_slots);
-	DCPOMATIC_ASSERT (free_slots == 0);
-
 	fastEncoderJ2kReport_t report;
-
 	fastEncoderJ2kOutput_t output;
 	int const max_j2k_size = 1024 * 1024 * 2;
 	output.bufferSize = max_j2k_size;
