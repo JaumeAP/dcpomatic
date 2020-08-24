@@ -68,6 +68,10 @@ ContentAdvancedDialog::ContentAdvancedDialog (wxWindow* parent, shared_ptr<Conte
 	sizer->Add (ignore_video, wxGBPosition(r, 0), wxGBSpan(1, 2));
 	++r;
 
+	wxCheckBox* trim_playlist = new wxCheckBox (this, wxID_ANY, _("Use the playlist to trim rather than removing data from content"));
+	sizer->Add (trim_playlist, wxGBPosition(r, 0), wxGBSpan(1, 2));
+	++r;
+
 	wxSizer* overall = new wxBoxSizer (wxVERTICAL);
 	overall->Add (sizer, 1, wxALL, DCPOMATIC_DIALOG_BORDER);
 	wxSizer* buttons = CreateSeparatedButtonSizer (wxOK | wxCANCEL);
@@ -79,9 +83,11 @@ ContentAdvancedDialog::ContentAdvancedDialog (wxWindow* parent, shared_ptr<Conte
 
 	ignore_video->Enable (static_cast<bool>(_content->video));
 	ignore_video->SetValue (_content->video ? !content->video->use() : false);
+	trim_playlist->SetValue (_content->trim_behaviour() == Content::TRIM_PLAYLIST);
 	setup_filters ();
 
 	ignore_video->Bind (wxEVT_CHECKBOX, bind(&ContentAdvancedDialog::ignore_video_changed, this, _1));
+	trim_playlist->Bind (wxEVT_CHECKBOX, bind(&ContentAdvancedDialog::trim_playlist_changed, this, _1));
 	_filters_button->Bind (wxEVT_BUTTON, bind(&ContentAdvancedDialog::edit_filters, this));
 }
 
@@ -92,6 +98,13 @@ ContentAdvancedDialog::ignore_video_changed (wxCommandEvent& ev)
 	 if (_content->video) {
 		 _content->video->set_use (!ev.IsChecked());
 	 }
+}
+
+
+void
+ContentAdvancedDialog::trim_playlist_changed (wxCommandEvent& ev)
+{
+	_content->set_trim_behaviour (ev.IsChecked() ? Content::TRIM_PLAYLIST : Content::TRIM_CONTENT);
 }
 
 

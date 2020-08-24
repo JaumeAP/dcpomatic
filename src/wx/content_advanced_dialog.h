@@ -38,6 +38,7 @@ public:
 
 private:
 	void ignore_video_changed (wxCommandEvent& ev);
+	void trim_playlist_changed (wxCommandEvent& ev);
 	void edit_filters ();
 	void filters_changed (std::vector<Filter const *> filters);
 	void setup_filters ();
