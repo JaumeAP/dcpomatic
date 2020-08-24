@@ -385,9 +385,11 @@ J2KEncoder::servers_list_changed ()
 		}
 	}
 
-	shared_ptr<GPUJ2KEncodeWorker> w (new GPUJ2KEncodeWorker());
-	_workers.push_back (w);
-	_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, w));
+	for (int i = 0; i < 1; ++i) {
+		shared_ptr<GPUJ2KEncodeWorker> w (new GPUJ2KEncodeWorker());
+		_workers.push_back (w);
+		_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, w));
+	}
 
 	_writer->set_encoder_threads (_threads->size());
 }

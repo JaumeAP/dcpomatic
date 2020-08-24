@@ -45,7 +45,11 @@ using boost::shared_ptr;
 
 GPUJ2KEncodeWorker::GPUJ2KEncodeWorker ()
 {
-	init_device (0);
+	static bool init_called = false;
+	if (!init_called) {
+		init_device (0);
+		init_called = true;
+	}
 }
 
 optional<Data>
@@ -80,31 +84,40 @@ GPUJ2KEncodeWorker::encode (shared_ptr<DCPVideo> vf)
 	init_tiles (&img, width, height, 5, 5);
 	type_tile* tile = &(img.tile[0]);
 
-	PeriodTimer encode("poz-encode");
+	StateTimer encode("");
 
 	// XXX: it's a big shame about this int -> float conversion
 	for (int i = 0; i < 3; ++i) {
+		encode.set("convert");
 		type_tile_comp* c = &tile->tile_comp[i];
 		c->tile_comp_no = i;
 		int const pixels = c->width * c->height;
 		for (int j = 0; j < pixels; ++j) {
 			c->img_data[j] = float (image->data(i)[j]);
 		}
+		encode.set("copy to gpu");
 		cuda_memcpy_htd (c->img_data, c->img_data_d, pixels * sizeof(type_data));
 	}
 
+	encode.set("mct");
 	mct (&img, 10000, 0.000001, 1.0e-7);
+	encode.set("fwt");
 	fwt (tile);
+	encode.set("quantize");
 	quantize_tile (tile);
+	encode.set("encode");
 	encode_tile (tile);
 
+	encode.set("t2");
 	type_buffer buffer;
 	init_buffer (&buffer);
 	encode_codestream (&buffer, &img);
+	encode.set("sync");
 	cudaThreadSynchronize ();
 
 	image_destroy(&img);
 
+	encode.set("out");
 	// XXX: remove this memcpy
 	dcp::Data encoded (buffer.bytes_count);
 	memcpy (encoded.data().get(), buffer.data, buffer.bytes_count);
