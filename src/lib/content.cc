@@ -59,12 +59,14 @@ int const ContentProperty::POSITION = 401;
 int const ContentProperty::LENGTH = 402;
 int const ContentProperty::TRIM_START = 403;
 int const ContentProperty::TRIM_END = 404;
-int const ContentProperty::VIDEO_FRAME_RATE = 405;
+int const ContentProperty::TRIM_BEHAVIOUR = 405;
+int const ContentProperty::VIDEO_FRAME_RATE = 406;
 
 Content::Content ()
 	: _position (0)
 	, _trim_start (0)
 	, _trim_end (0)
+	, _trim_behaviour (TRIM_CONTENT)
 	, _change_signals_frequent (false)
 {
 
@@ -74,6 +76,7 @@ Content::Content (DCPTime p)
 	: _position (p)
 	, _trim_start (0)
 	, _trim_end (0)
+	, _trim_behaviour (TRIM_CONTENT)
 	, _change_signals_frequent (false)
 {
 
@@ -83,6 +86,7 @@ Content::Content (boost::filesystem::path p)
 	: _position (0)
 	, _trim_start (0)
 	, _trim_end (0)
+	, _trim_behaviour (TRIM_CONTENT)
 	, _change_signals_frequent (false)
 {
 	add_path (p);
@@ -107,6 +111,7 @@ Content::Content (cxml::ConstNodePtr node)
 	_position = DCPTime (node->number_child<DCPTime::Type> ("Position"));
 	_trim_start = ContentTime (node->number_child<ContentTime::Type> ("TrimStart"));
 	_trim_end = ContentTime (node->number_child<ContentTime::Type> ("TrimEnd"));
+	_trim_behaviour = node->optional_string_child("TrimBehaviour").get_value_or("content") == "content" ? TRIM_CONTENT : TRIM_PLAYLIST;
 	_video_frame_rate = node->optional_number_child<double> ("VideoFrameRate");
 }
 
@@ -124,6 +129,10 @@ Content::Content (vector<shared_ptr<Content> > c)
 
 		if (i < (c.size() - 1) && c[i]->trim_end () > ContentTime ()) {
 			throw JoinError (_("Only the last piece of content to be joined can have an end trim."));
+		}
+
+		if (_trim_behaviour != c[i]->_trim_behaviour) {
+			throw JoinError (_("Content to be joined must ahve the same trim behaviour setting"));
 		}
 
 		if (
@@ -160,6 +169,7 @@ Content::as_xml (xmlpp::Node* node, bool with_paths) const
 	node->add_child("Position")->add_child_text (raw_convert<string> (_position.get ()));
 	node->add_child("TrimStart")->add_child_text (raw_convert<string> (_trim_start.get ()));
 	node->add_child("TrimEnd")->add_child_text (raw_convert<string> (_trim_end.get ()));
+	node->add_child("TrimBehaviour")->add_child_text (_trim_behaviour == TRIM_CONTENT ? N_("content") : N_("playlist"));
 	if (_video_frame_rate) {
 		node->add_child("VideoFrameRate")->add_child_text (raw_convert<string> (_video_frame_rate.get()));
 	}
@@ -273,6 +283,18 @@ Content::set_trim_end (ContentTime t)
 	{
 		boost::mutex::scoped_lock lm (_mutex);
 		_trim_end = t;
+	}
+}
+
+
+void
+Content::set_trim_behaviour (TrimBehaviour t)
+{
+	ChangeSignaller<Content> cc (this, ContentProperty::TRIM_BEHAVIOUR);
+
+	{
+		boost::mutex::scoped_lock lm (_mutex);
+		_trim_behaviour = t;
 	}
 }
 

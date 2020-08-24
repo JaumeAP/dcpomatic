@@ -56,6 +56,7 @@ public:
 	static int const LENGTH;
 	static int const TRIM_START;
 	static int const TRIM_END;
+	static int const TRIM_BEHAVIOUR;
 	static int const VIDEO_FRAME_RATE;
 };
 
@@ -160,6 +161,19 @@ public:
 		return _trim_end;
 	}
 
+	enum TrimBehaviour
+	{
+		TRIM_CONTENT,
+		TRIM_PLAYLIST
+	};
+
+	void set_trim_behaviour (TrimBehaviour b);
+
+	TrimBehaviour trim_behaviour () const {
+		boost::mutex::scoped_lock lm (_mutex);
+		return _trim_behaviour;
+	}
+
 	/** @return Time immediately after the last thing in this content */
 	dcpomatic::DCPTime end (boost::shared_ptr<const Film> film) const {
 		return position() + length_after_trim(film);
@@ -224,6 +238,7 @@ private:
 	dcpomatic::DCPTime _position;
 	dcpomatic::ContentTime _trim_start;
 	dcpomatic::ContentTime _trim_end;
+	TrimBehaviour _trim_behaviour;
 	/** The video frame rate that this content is or was prepared to be used with,
 	 *  or empty if the effective rate of this content should be dictated by something
 	 *  else (either some video happening at the same time, or the rate of the DCP).
