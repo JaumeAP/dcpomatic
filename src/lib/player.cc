@@ -97,6 +97,7 @@ Player::Player (shared_ptr<const Film> film)
 	, _fast (false)
 	, _tolerant (film->tolerant())
 	, _play_referenced (false)
+	, _always_trim (false)
 	, _audio_merger (_film->audio_frame_rate())
 	, _shuffler (0)
 {
@@ -114,6 +115,7 @@ Player::Player (shared_ptr<const Film> film, shared_ptr<const Playlist> playlist
 	, _fast (false)
 	, _tolerant (film->tolerant())
 	, _play_referenced (false)
+	, _always_trim (false)
 	, _audio_merger (_film->audio_frame_rate())
 	, _shuffler (0)
 {
@@ -503,6 +505,16 @@ Player::set_play_referenced ()
 	_play_referenced = true;
 	setup_pieces_unlocked ();
 }
+
+
+void
+Player::set_always_trim ()
+{
+	boost::mutex::scoped_lock lm (_mutex);
+	_always_trim = true;
+	setup_pieces_unlocked ();
+}
+
 
 static void
 maybe_add_asset (list<ReferencedReelAsset>& a, shared_ptr<dcp::ReelAsset> r, Frame reel_trim_start, Frame reel_trim_end, DCPTime from, int const ffr)

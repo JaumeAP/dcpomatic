@@ -93,6 +93,7 @@ public:
 	void set_always_burn_open_subtitles ();
 	void set_fast ();
 	void set_play_referenced ();
+	void set_always_trim ();
 	void set_dcp_decode_reduction (boost::optional<int> reduction);
 
 	boost::optional<dcpomatic::DCPTime> content_time_to_dcp (boost::shared_ptr<Content> content, dcpomatic::ContentTime t);
@@ -184,6 +185,8 @@ private:
 	bool _tolerant;
 	/** true if we should `play' (i.e output) referenced DCP data (e.g. for preview) */
 	bool _play_referenced;
+	/** true if we should always trim content, even if it is set to TRIM_PLAYLIST (e.g. for preview) */
+	bool _always_trim;
 
 	/** Time just after the last video frame we emitted, or the time of the last accurate seek */
 	boost::optional<dcpomatic::DCPTime> _last_video_time;

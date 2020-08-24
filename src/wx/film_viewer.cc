@@ -178,6 +178,7 @@ FilmViewer::set_film (shared_ptr<Film> film)
 
 	_player->set_always_burn_open_subtitles ();
 	_player->set_play_referenced ();
+	_player->set_always_trim ();
 
 	_film->Change.connect (boost::bind (&FilmViewer::film_change, this, _1, _2));
 	_film->ContentChange.connect (boost::bind(&FilmViewer::content_change, this, _1, _3));
