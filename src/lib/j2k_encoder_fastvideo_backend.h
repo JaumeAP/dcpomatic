@@ -19,7 +19,7 @@ public:
 	std::vector<dcp::Data> encode (std::vector<boost::shared_ptr<DCPVideo> > video);
 
 	int quantity () const {
-		return 4;
+		return 8;
 	}
 
 private:
