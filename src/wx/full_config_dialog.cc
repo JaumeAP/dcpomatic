@@ -288,15 +288,15 @@ private:
 		_panel->GetSizer()->Add (table, 1, wxALL | wxEXPAND, _border);
 
 		{
-			add_label_to_sizer (table, _panel, _("Default duration of still images"), true);
+			add_label_to_sizer (table, _panel, _("Default duration of still images"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 			wxBoxSizer* s = new wxBoxSizer (wxHORIZONTAL);
 			_still_length = new wxSpinCtrl (_panel);
 			s->Add (_still_length);
-			add_label_to_sizer (s, _panel, _("s"), false);
+			add_label_to_sizer (s, _panel, _("s"), false, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 			table->Add (s, 1);
 		}
 
-		add_label_to_sizer (table, _panel, _("Default directory for new films"), true);
+		add_label_to_sizer (table, _panel, _("Default directory for new films"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 #ifdef DCPOMATIC_USE_OWN_PICKER
 		_directory = new DirPickerCtrl (_panel);
 #else
@@ -304,24 +304,24 @@ private:
 #endif
 		table->Add (_directory, 1, wxEXPAND);
 
-		add_label_to_sizer (table, _panel, _("Default ISDCF name details"), true);
+		add_label_to_sizer (table, _panel, _("Default ISDCF name details"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 		_isdcf_metadata_button = new Button (_panel, _("Edit..."));
 		table->Add (_isdcf_metadata_button);
 
-		add_label_to_sizer (table, _panel, _("Default container"), true);
+		add_label_to_sizer (table, _panel, _("Default container"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 		_container = new wxChoice (_panel, wxID_ANY);
 		table->Add (_container);
 
-		add_label_to_sizer (table, _panel, _("Default content type"), true);
+		add_label_to_sizer (table, _panel, _("Default content type"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 		_dcp_content_type = new wxChoice (_panel, wxID_ANY);
 		table->Add (_dcp_content_type);
 
-		add_label_to_sizer (table, _panel, _("Default DCP audio channels"), true);
+		add_label_to_sizer (table, _panel, _("Default DCP audio channels"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 		_dcp_audio_channels = new wxChoice (_panel, wxID_ANY);
 		table->Add (_dcp_audio_channels);
 
 		{
-			add_label_to_sizer (table, _panel, _("Default JPEG2000 bandwidth"), true);
+			add_label_to_sizer (table, _panel, _("Default JPEG2000 bandwidth"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 			wxBoxSizer* s = new wxBoxSizer (wxHORIZONTAL);
 			_j2k_bandwidth = new wxSpinCtrl (_panel);
 			s->Add (_j2k_bandwidth);
@@ -330,7 +330,7 @@ private:
 		}
 
 		{
-			add_label_to_sizer (table, _panel, _("Default audio delay"), true);
+			add_label_to_sizer (table, _panel, _("Default audio delay"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 			wxBoxSizer* s = new wxBoxSizer (wxHORIZONTAL);
 			_audio_delay = new wxSpinCtrl (_panel);
 			s->Add (_audio_delay);
@@ -338,11 +338,11 @@ private:
 			table->Add (s, 1);
 		}
 
-		add_label_to_sizer (table, _panel, _("Default standard"), true);
+		add_label_to_sizer (table, _panel, _("Default standard"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 		_standard = new wxChoice (_panel, wxID_ANY);
 		table->Add (_standard);
 
-		add_label_to_sizer (table, _panel, _("Default KDM directory"), true);
+		add_label_to_sizer (table, _panel, _("Default KDM directory"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 #ifdef DCPOMATIC_USE_OWN_PICKER
 		_kdm_directory = new DirPickerCtrl (_panel);
 #else
