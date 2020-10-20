@@ -27,7 +27,11 @@
 #include "dcpomatic_socket.h"
 #include <dcp/raw_convert.h>
 #include <libcxml/cxml.h>
+#if BOOST_VERSION >= 107400
 #include <boost/bind/placeholders.hpp>
+#else
+#include <boost/bind/bind.hpp>
+#endif
 #include <boost/lambda/lambda.hpp>
 #include <iostream>
 
