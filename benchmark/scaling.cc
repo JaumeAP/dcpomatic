@@ -32,9 +32,9 @@ using boost::shared_ptr;
 
 static
 shared_ptr<Image>
-dummy_image(dcp::Size size)
+dummy_image(dcp::Size size, AVPixelFormat pixel)
 {
-	shared_ptr<Image> image(new Image(AV_PIX_FMT_RGB24, size, true));
+	shared_ptr<Image> image(new Image(pixel, size, true));
 	int v = 0;
 	for (int y = 0; y < size.height; ++y) {
 		for (int c = 0; c < image->planes(); ++c) {
@@ -52,10 +52,10 @@ dummy_image(dcp::Size size)
 
 static
 void
-test (dcp::Size from, dcp::Size to, bool fast)
+test (dcp::Size from_size, AVPixelFormat from_pixel, dcp::Size to, bool fast)
 {
-	shared_ptr<Image> image = dummy_image(from);
-	PeriodTimer pt (String::compose("%1:%2 -> %3:%4 %5", from.width, from.height, to.width, to.height, fast ? "fast" : "slow"));
+	shared_ptr<Image> image = dummy_image(from_size, from_pixel);
+	PeriodTimer pt (String::compose("%1:%2 -> %3:%4 %5 %6", from_size.width, from_size.height, to.width, to.height, static_cast<int>(from_pixel), fast ? "fast" : "slow"));
 	for (int i = 0; i < ITERATIONS; ++i) {
 		image->scale (to, dcp::YUV_TO_RGB_REC709, AV_PIX_FMT_RGB48, true, fast);
 	}
@@ -65,17 +65,29 @@ test (dcp::Size from, dcp::Size to, bool fast)
 int
 main ()
 {
-	test (dcp::Size(1998, 1080), dcp::Size(1998, 1080), true);
-	test (dcp::Size(1998, 1080), dcp::Size(1998, 1080), false);
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_RGB24, dcp::Size(1998, 1080), true);
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_RGB24, dcp::Size(1998, 1080), false);
 
-	test (dcp::Size(1998, 1080), dcp::Size(2006, 1088), true);
-	test (dcp::Size(1998, 1080), dcp::Size(2006, 1088), false);
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_RGB24, dcp::Size(2006, 1088), true);
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_RGB24, dcp::Size(2006, 1088), false);
 
-	test (dcp::Size(996, 540), dcp::Size(1998, 1080), true);
-	test (dcp::Size(996, 540), dcp::Size(1998, 1080), false);
+	test (dcp::Size(996, 540), AV_PIX_FMT_RGB24, dcp::Size(1998, 1080), true);
+	test (dcp::Size(996, 540), AV_PIX_FMT_RGB24, dcp::Size(1998, 1080), false);
 
-	test (dcp::Size(498, 270), dcp::Size(1998, 1080), true);
-	test (dcp::Size(498, 270), dcp::Size(1998, 1080), false);
+	test (dcp::Size(498, 270), AV_PIX_FMT_RGB24, dcp::Size(1998, 1080), true);
+	test (dcp::Size(498, 270), AV_PIX_FMT_RGB24, dcp::Size(1998, 1080), false);
+
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_XYZ12LE, dcp::Size(1998, 1080), true);
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_XYZ12LE, dcp::Size(1998, 1080), false);
+
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_XYZ12LE, dcp::Size(2006, 1088), true);
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_XYZ12LE, dcp::Size(2006, 1088), false);
+
+	test (dcp::Size(996, 540), AV_PIX_FMT_XYZ12LE, dcp::Size(1998, 1080), true);
+	test (dcp::Size(996, 540), AV_PIX_FMT_XYZ12LE, dcp::Size(1998, 1080), false);
+
+	test (dcp::Size(498, 270), AV_PIX_FMT_XYZ12LE, dcp::Size(1998, 1080), true);
+	test (dcp::Size(498, 270), AV_PIX_FMT_XYZ12LE, dcp::Size(1998, 1080), false);
 
 	return 0;
 }

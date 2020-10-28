@@ -170,6 +170,7 @@ PlayerVideo::make_image (function<AVPixelFormat (AVPixelFormat)> pixel_format, b
 		yuv_to_rgb = _colour_conversion.get().yuv_to_rgb();
 	}
 
+	std::cout << "from " << prox.image->pixel_format() << "\n";
 	_image = prox.image->crop_scale_window (
 		total_crop, _inter_size, _out_size, yuv_to_rgb, _video_range, pixel_format (prox.image->pixel_format()), aligned, fast
 		);
