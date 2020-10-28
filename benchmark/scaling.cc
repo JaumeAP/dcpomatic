@@ -77,6 +77,9 @@ main ()
 	test (dcp::Size(498, 270), AV_PIX_FMT_RGB24, dcp::Size(1998, 1080), true);
 	test (dcp::Size(498, 270), AV_PIX_FMT_RGB24, dcp::Size(1998, 1080), false);
 
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_RGB24, dcp::Size(1720, 930), true);
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_RGB24, dcp::Size(1720, 930), false);
+
 	test (dcp::Size(1998, 1080), AV_PIX_FMT_XYZ12LE, dcp::Size(1998, 1080), true);
 	test (dcp::Size(1998, 1080), AV_PIX_FMT_XYZ12LE, dcp::Size(1998, 1080), false);
 
@@ -88,6 +91,9 @@ main ()
 
 	test (dcp::Size(498, 270), AV_PIX_FMT_XYZ12LE, dcp::Size(1998, 1080), true);
 	test (dcp::Size(498, 270), AV_PIX_FMT_XYZ12LE, dcp::Size(1998, 1080), false);
+
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_XYZ12LE, dcp::Size(1720, 930), true);
+	test (dcp::Size(1998, 1080), AV_PIX_FMT_XYZ12LE, dcp::Size(1720, 930), false);
 
 	return 0;
 }
