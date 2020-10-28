@@ -144,16 +144,32 @@ J2KImageProxy::prepare (optional<dcp::Size> target_size) const
 	}
 
 	try {
-		shared_ptr<dcp::OpenJPEGImage> decompressed = dcp::decompress_j2k (const_cast<uint8_t*> (_data.data().get()), _data.size (), reduce);
+		// shared_ptr<dcp::OpenJPEGImage> decompressed = dcp::decompress_j2k (const_cast<uint8_t*> (_data.data().get()), _data.size (), reduce);
+		shared_ptr<dcp::OpenJPEGImage> decompressed (new dcp::OpenJPEGImage(dcp::Size(999, 540)));
 		_image.reset (new Image (_pixel_format, decompressed->size(), true));
+		int const width = decompressed->size().width;
 
-		int const shift = 16 - decompressed->precision (0);
+		{
+			int p = 0;
+			int* decomp_0 = decompressed->data (0);
+			int* decomp_1 = decompressed->data (1);
+			int* decomp_2 = decompressed->data (2);
+			for (int y = 0; y < decompressed->size().height; ++y) {
+				for (int x = 0; x < width; ++x) {
+					decomp_0[p] = 65535;
+					decomp_1[p] = 0;
+					decomp_2[p] = 0;
+					++p;
+				}
+			}
+		}
+		int const shift = 1;//16 - decompressed->precision (0);
+		// int const shift = 16 - decompressed->precision (0);
 
 		/* Copy data in whatever format (sRGB or XYZ) into our Image; I'm assuming
 		   the data is 12-bit either way.
 		   */
 
-		int const width = decompressed->size().width;
 
 		int p = 0;
 		int* decomp_0 = decompressed->data (0);

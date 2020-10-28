@@ -60,12 +60,13 @@ SimpleVideoView::SimpleVideoView (FilmViewer* viewer, wxWindow* parent)
 void
 SimpleVideoView::paint ()
 {
-        _state_timer.set("paint-panel");
+        _state_timer.set("paint-panel-part1");
 	wxPaintDC dc (_panel);
 
 	dcp::Size const out_size = _viewer->out_size ();
 	wxSize const panel_size = _panel->GetSize ();
 
+        _state_timer.set("paint-panel-part2");
 #ifdef DCPOMATIC_VARIANT_SWAROOP
 	if (_viewer->background_image()) {
 		dc.Clear ();
@@ -83,10 +84,13 @@ SimpleVideoView::paint ()
 		dc.Clear ();
 	} else {
 
+        _state_timer.set("paint-panel-part3");
 		wxImage frame (out_size.width, out_size.height, _image->data()[0], true);
+        _state_timer.set("paint-panel-part4");
 		wxBitmap frame_bitmap (frame);
+        _state_timer.set("paint-panel-part5");
 		dc.DrawBitmap (frame_bitmap, 0, max(0, (panel_size.GetHeight() - out_size.height) / 2));
-
+        _state_timer.set("paint-panel-part6");
 #ifdef DCPOMATIC_VARIANT_SWAROOP
 		DCPTime const period = DCPTime::from_seconds(Config::instance()->player_watermark_period() * 60);
 		int64_t n = position().get() / period.get();
@@ -108,6 +112,8 @@ SimpleVideoView::paint ()
 		}
 #endif
 	}
+
+        _state_timer.set("paint-panel-part7");
 
 	if (out_size.width < panel_size.GetWidth()) {
 		/* XXX: these colours are right for GNOME; may need adjusting for other OS */
