@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# run/benchmark <name>
+
+executable=build/benchmark/$1
+
+if [ "$1" == "--debug" ]; then
+    shift;
+    gdb --args $executable --catch_system_errors=no --log_level=test_suite 
+elif [ "$1" == "--backtrace" ]; then
+    shift;
+    gdb -batch -ex "run" -ex "thread apply all bt" -return-child-result --args $executable --catch_system_errors=yes 
+elif [ "$1" == "--valgrind" ]; then
+    shift;
+    valgrind --tool="memcheck" --suppressions=suppressions $executable 
+elif [ "$1" == "--callgrind" ]; then
+    shift;
+    valgrind --tool="callgrind" $executable 
+elif [ "$1" == "--quiet" ]; then
+    shift;
+    $executable --catch_system_errors=no 
+elif [ "$1" == "--drd" ]; then
+    shift;
+    valgrind --tool="drd" $executable 
+elif [ "$1" == "--helgrind" ]; then
+    shift;
+    valgrind --tool="helgrind" $executable 
+else
+    ulimit -c unlimited
+    $executable --catch_system_errors=no --log_level=test_suite
+fi
