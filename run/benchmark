@@ -3,6 +3,7 @@
 # run/benchmark <name>
 
 executable=build/benchmark/$1
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/Users/carl/osx-environment/64/lib
 
 if [ "$1" == "--debug" ]; then
     shift;
