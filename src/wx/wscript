@@ -233,17 +233,6 @@ def configure(conf):
         conf.env.LIB_RTAUDIO.append('mfuuid')
         conf.env.LIB_RTAUDIO.append('wmcodecdspuuid')
 
-    conf.check_cxx(fragment="""
-                            #include <RtAudio.h>\n
-                            int main() { throw RtError("Hello"); }
-			    """,
-                   msg='Checking for RtError class',
-                   use='RTAUDIO',
-                   uselib_store='',
-                   define_name='DCPOMATIC_USE_RTERROR',
-                   mandatory=False)
-
-
 
 def build(bld):
     if bld.env.STATIC_DCPOMATIC:

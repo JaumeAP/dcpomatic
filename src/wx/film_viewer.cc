@@ -684,11 +684,7 @@ FilmViewer::config_changed (Config::Property p)
 		sp.firstChannel = 0;
 		try {
 			_audio.openStream (&sp, 0, RTAUDIO_FLOAT32, 48000, &_audio_block_size, &rtaudio_callback, this);
-#ifdef DCPOMATIC_USE_RTERROR
-		} catch (RtError& e) {
-#else
 		} catch (RtAudioError& e) {
-#endif
 			error_dialog (
 				_panel,
 				_("Could not set up audio output.  There will be no audio during the preview."), std_to_wx(e.what())
