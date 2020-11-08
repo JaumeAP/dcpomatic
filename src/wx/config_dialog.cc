@@ -177,9 +177,13 @@ GeneralPage::add_play_sound_controls (wxGridBagSizer* table, int& r)
 
 	RtAudio audio (DCPOMATIC_RTAUDIO_API);
 	for (unsigned int i = 0; i < audio.getDeviceCount(); ++i) {
-		RtAudio::DeviceInfo dev = audio.getDeviceInfo (i);
-		if (dev.probed && dev.outputChannels > 0) {
-			_sound_output->Append (std_to_wx (dev.name));
+		try {
+			RtAudio::DeviceInfo dev = audio.getDeviceInfo (i);
+			if (dev.probed && dev.outputChannels > 0) {
+				_sound_output->Append (std_to_wx (dev.name));
+			}
+		} catch (RtAudioError&) {
+			/* Something went wrong, so let's just ignore that device */
 		}
 	}
 
@@ -248,7 +252,7 @@ GeneralPage::config_changed ()
 		RtAudio audio (DCPOMATIC_RTAUDIO_API);
 		try {
 			configured_so = audio.getDeviceInfo(audio.getDefaultOutputDevice()).name;
-		} catch (RtAudioError& e) {
+		} catch (RtAudioError&) {
 			/* Probably no audio devices at all */
 		}
 	}
@@ -281,9 +285,13 @@ GeneralPage::config_changed ()
 	int channels = 0;
 	if (configured_so) {
 		for (unsigned int i = 0; i < audio.getDeviceCount(); ++i) {
-			RtAudio::DeviceInfo info = audio.getDeviceInfo(i);
-			if (info.name == *configured_so && info.outputChannels > 0) {
-				channels = info.outputChannels;
+			try {
+				RtAudio::DeviceInfo info = audio.getDeviceInfo(i);
+				if (info.name == *configured_so && info.outputChannels > 0) {
+					channels = info.outputChannels;
+				}
+			} catch (RtAudioError&) {
+				/* Never mind */
 			}
 		}
 	}
@@ -360,7 +368,14 @@ GeneralPage::sound_output_changed ()
 {
 	RtAudio audio (DCPOMATIC_RTAUDIO_API);
 	optional<string> const so = get_sound_output();
-	if (!so || *so == audio.getDeviceInfo(audio.getDefaultOutputDevice()).name) {
+	string default_device;
+	try {
+		default_device = audio.getDeviceInfo(audio.getDefaultOutputDevice()).name;
+	} catch (RtAudioError&) {
+		/* Never mind */
+	}
+
+	if (!so || *so == default_device) {
 		Config::instance()->unset_sound_output ();
 	} else {
 		Config::instance()->set_sound_output (*so);
