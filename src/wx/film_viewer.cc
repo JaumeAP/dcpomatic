@@ -668,7 +668,8 @@ FilmViewer::config_changed (Config::Property p)
 					if (_audio.getDeviceInfo(st).name == Config::instance()->sound_output().get()) {
 						break;
 					}
-				} catch (RtAudioError&) {
+				} catch (RtAudioError& e) {
+					std::cerr << "RtAudio: " << e.what() << "\n";
 					/* Something went wrong with the device so we don't want to use it anyway */
 				}
 				++st;
