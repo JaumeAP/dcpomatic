@@ -1262,6 +1262,7 @@ public:
 		, _log_debug_video_view (0)
 		, _log_debug_player (0)
 		, _log_debug_audio_analysis (0)
+		, _log_debug_encode_servers (0)
 	{}
 
 	wxString GetName () const
@@ -1396,6 +1397,8 @@ private:
 			t->Add (_log_debug_player, 1, wxEXPAND | wxALL);
 			_log_debug_audio_analysis = new CheckBox (_panel, _("Debug: audio analysis"));
 			t->Add (_log_debug_audio_analysis, 1, wxEXPAND | wxALL);
+			_log_debug_encode_servers = new CheckBox (_panel, _("Debug: encode servers"));
+			t->Add (_log_debug_encode_servers, 1, wxEXPAND | wxALL);
 			table->Add (t, 0, wxALL, 6);
 		}
 
@@ -1427,6 +1430,7 @@ private:
 		_log_debug_video_view->Bind (wxEVT_CHECKBOX, boost::bind (&AdvancedPage::log_changed, this));
 		_log_debug_player->Bind (wxEVT_CHECKBOX, boost::bind (&AdvancedPage::log_changed, this));
 		_log_debug_audio_analysis->Bind (wxEVT_CHECKBOX, boost::bind (&AdvancedPage::log_changed, this));
+		_log_debug_encode_servers->Bind (wxEVT_CHECKBOX, boost::bind (&AdvancedPage::log_changed, this));
 #ifdef DCPOMATIC_WINDOWS
 		_win32_console->Bind (wxEVT_CHECKBOX, boost::bind (&AdvancedPage::win32_console_changed, this));
 #endif
@@ -1459,6 +1463,7 @@ private:
 		checked_set (_log_debug_video_view, config->log_types() & LogEntry::TYPE_DEBUG_VIDEO_VIEW);
 		checked_set (_log_debug_player, config->log_types() & LogEntry::TYPE_DEBUG_PLAYER);
 		checked_set (_log_debug_audio_analysis, config->log_types() & LogEntry::TYPE_DEBUG_AUDIO_ANALYSIS);
+		checked_set (_log_debug_encode_servers, config->log_types() & LogEntry::TYPE_DEBUG_ENCODE_SERVERS);
 		checked_set (_frames_in_memory_multiplier, config->frames_in_memory_multiplier());
 #ifdef DCPOMATIC_WINDOWS
 		checked_set (_win32_console, config->win32_console());
@@ -1547,6 +1552,9 @@ private:
 		if (_log_debug_audio_analysis->GetValue()) {
 			types |= LogEntry::TYPE_DEBUG_AUDIO_ANALYSIS;
 		}
+		if (_log_debug_encode_servers->GetValue()) {
+			types |= LogEntry::TYPE_DEBUG_ENCODE_SERVERS;
+		}
 		Config::instance()->set_log_types (types);
 	}
 
@@ -1576,6 +1584,7 @@ private:
 	wxCheckBox* _log_debug_video_view;
 	wxCheckBox* _log_debug_player;
 	wxCheckBox* _log_debug_audio_analysis;
+	wxCheckBox* _log_debug_encode_servers;
 #ifdef DCPOMATIC_WINDOWS
 	wxCheckBox* _win32_console;
 #endif
