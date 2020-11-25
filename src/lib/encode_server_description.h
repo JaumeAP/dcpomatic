@@ -60,6 +60,10 @@ public:
 		return _threads;
 	}
 
+	int link_version () const {
+		return _link_version;
+	}
+
 	bool current_link_version () const {
 		return _link_version == SERVER_LINK_VERSION;
 	}

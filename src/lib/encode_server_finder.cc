@@ -24,6 +24,7 @@
 #include "config.h"
 #include "cross.h"
 #include "encode_server_description.h"
+#include "dcpomatic_log.h"
 #include "dcpomatic_socket.h"
 #include <dcp/raw_convert.h>
 #include <libcxml/cxml.h>
@@ -129,6 +130,7 @@ try
 				continue;
 			}
 			try {
+				LOG_DEBUG_ENCODE_SERVERS("Sending query to configured server %1", *i);
 				boost::asio::ip::udp::resolver resolver (io_service);
 				boost::asio::ip::udp::resolver::query query (*i, raw_convert<string> (HELLO_PORT));
 				boost::asio::ip::udp::endpoint end_point (*resolver.resolve (query));
@@ -174,6 +176,7 @@ void
 EncodeServerFinder::listen_thread ()
 try {
 	using namespace boost::asio::ip;
+	LOG_DEBUG_ENCODE_SERVERS_NC("Listen thread starting");
 
 	try {
 		_listen_acceptor.reset (
@@ -186,8 +189,14 @@ try {
 	start_accept ();
 	_listen_io_service.run ();
 }
+catch (std::exception& e)
+{
+	LOG_DEBUG_ENCODE_SERVERS("Listen thread terminating (%1)", e.what());
+	store_current ();
+}
 catch (...)
 {
+	LOG_DEBUG_ENCODE_SERVERS_NC("Listen thread terminating (unknown)");
 	store_current ();
 }
 
@@ -205,9 +214,13 @@ void
 EncodeServerFinder::handle_accept (boost::system::error_code ec, shared_ptr<Socket> socket)
 {
 	if (ec) {
+		LOG_DEBUG_ENCODE_SERVERS_NC("Error arrived at handle_accept");
 		start_accept ();
 		return;
 	}
+
+	string const ip = socket->socket().remote_endpoint().address().to_string ();
+	LOG_DEBUG_ENCODE_SERVERS("Received reply from remote server %1", ip);
 
 	uint32_t length;
 	socket->read (reinterpret_cast<uint8_t*> (&length), sizeof (uint32_t));
@@ -220,9 +233,9 @@ EncodeServerFinder::handle_accept (boost::system::error_code ec, shared_ptr<Sock
 	shared_ptr<cxml::Document> xml (new cxml::Document ("ServerAvailable"));
 	xml->read_string (s);
 
-	string const ip = socket->socket().remote_endpoint().address().to_string ();
 	optional<list<EncodeServerDescription>::iterator> found = server_found (ip);
 	if (found) {
+		LOG_DEBUG_ENCODE_SERVERS("%1 already seen", ip);
 		(*found)->set_seen ();
 	} else {
 		EncodeServerDescription sd (ip, xml->number_child<int>("Threads"), xml->optional_number_child<int>("Version").get_value_or(0));
@@ -230,6 +243,7 @@ EncodeServerFinder::handle_accept (boost::system::error_code ec, shared_ptr<Sock
 			boost::mutex::scoped_lock lm (_servers_mutex);
 			_servers.push_back (sd);
 		}
+		LOG_DEBUG_ENCODE_SERVERS("%1 is new; offers %2 threads, version %3", sd.threads(), sd.link_version());
 		emit (boost::bind (boost::ref (ServersListChanged)));
 	}
 
