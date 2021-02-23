@@ -615,25 +615,17 @@ private:
  */
 class App : public wxApp
 {
-public:
-	App ()
-		: wxApp ()
-		, _frame (0)
-	{}
-
 private:
 
 	bool OnInit ()
 	{
-		wxSplashScreen* splash = nullptr;
-
 		try {
 			wxInitAllImageHandlers ();
 
 			Config::FailedToLoad.connect (boost::bind (&App::config_failed_to_load, this));
 			Config::Warning.connect (boost::bind (&App::config_warning, this, _1));
 
-			splash = maybe_show_splash ();
+			_splash = maybe_show_splash ();
 
 			SetAppName (_("DCP-o-matic KDM Creator"));
 
@@ -672,10 +664,7 @@ private:
 			_frame = new DOMFrame (_("DCP-o-matic KDM Creator"));
 			SetTopWindow (_frame);
 			_frame->Maximize ();
-			if (splash) {
-				splash->Destroy ();
-				splash = 0;
-			}
+			close_splash ();
 			_frame->Show ();
 
 			signal_manager = new wxSignalManager (this);
@@ -683,9 +672,7 @@ private:
 		}
 		catch (exception& e)
 		{
-			if (splash) {
-				splash->Destroy ();
-			}
+			close_splash ();
 			error_dialog (0, _("DCP-o-matic could not start"), std_to_wx(e.what()));
 		}
 
@@ -732,17 +719,28 @@ private:
 		signal_manager->ui_idle ();
 	}
 
+	void close_splash ()
+	{
+		if (_splash) {
+			_splash->Destroy ();
+			_splash = 0;
+		}
+	}
+
 	void config_failed_to_load ()
 	{
+		close_splash ();
 		message_dialog (_frame, _("The existing configuration failed to load.  Default values will be used instead.  These may take a short time to create."));
 	}
 
 	void config_warning (string m)
 	{
+		close_splash ();
 		message_dialog (_frame, std_to_wx (m));
 	}
 
-	DOMFrame* _frame;
+	DOMFrame* _frame = nullptr;
+	wxSplashScreen* _splash = nullptr;
 };
 
 IMPLEMENT_APP (App)

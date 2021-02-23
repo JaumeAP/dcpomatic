@@ -255,12 +255,6 @@ private:
 
 class App : public wxApp, public ExceptionStore
 {
-public:
-	App ()
-		: wxApp ()
-		, _icon (0)
-	{}
-
 private:
 
 	bool OnInit ()
@@ -278,7 +272,7 @@ private:
 		Config::FailedToLoad.connect (boost::bind (&App::config_failed_to_load, this));
 		Config::Warning.connect (boost::bind (&App::config_warning, this, _1));
 
-		wxSplashScreen* splash = maybe_show_splash ();
+		_splash = maybe_show_splash ();
 
 		dcpomatic_setup_path_encoding ();
 		dcpomatic_setup_i18n ();
@@ -307,9 +301,7 @@ private:
 		_timer.reset (new wxTimer (this));
 		_timer->Start (1000);
 
-		if (splash) {
-			splash->Destroy ();
-		}
+		close_splash ();
 
 		SetExitOnFrameDelete (false);
 
@@ -348,19 +340,30 @@ private:
 		signal_manager->ui_idle ();
 	}
 
+	void close_splash ()
+	{
+		if (_splash) {
+			_splash->Destroy ();
+			_splash = 0;
+		}
+	}
+
 	void config_failed_to_load ()
 	{
+		close_splash ();
 		message_dialog (0, _("The existing configuration failed to load.  Default values will be used instead.  These may take a short time to create."));
 	}
 
 	void config_warning (string m)
 	{
+		close_splash ();
 		message_dialog (0, std_to_wx (m));
 	}
 
 	boost::thread _thread;
-	TaskBarIcon* _icon;
+	TaskBarIcon* _icon = nullptr;
 	shared_ptr<wxTimer> _timer;
+	wxSplashScreen* _splash = nullptr;
 };
 
 IMPLEMENT_APP (App)

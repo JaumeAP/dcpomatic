@@ -1066,7 +1066,6 @@ class App : public wxApp
 public:
 	App ()
 		: wxApp ()
-		, _frame (0)
 	{
 #ifdef DCPOMATIC_LINUX
 		XInitThreads ();
@@ -1077,14 +1076,13 @@ private:
 
 	bool OnInit ()
 	{
-		wxSplashScreen* splash = 0;
 		try {
 			wxInitAllImageHandlers ();
 
 			Config::FailedToLoad.connect (boost::bind (&App::config_failed_to_load, this));
 			Config::Warning.connect (boost::bind (&App::config_warning, this, _1));
 
-			splash = maybe_show_splash ();
+			_splash = maybe_show_splash ();
 
 			SetAppName (_("DCP-o-matic Player"));
 
@@ -1125,10 +1123,7 @@ private:
 			_frame = new DOMFrame ();
 			SetTopWindow (_frame);
 			_frame->Maximize ();
-			if (splash) {
-				splash->Destroy ();
-				splash = 0;
-			}
+			close_splash ();
 			_frame->Show ();
 
 			PlayServer* server = new PlayServer (_frame);
@@ -1158,9 +1153,7 @@ private:
 		}
 		catch (exception& e)
 		{
-			if (splash) {
-				splash->Destroy ();
-			}
+			close_splash ();
 			error_dialog (0, _("DCP-o-matic Player could not start."), std_to_wx(e.what()));
 		}
 
@@ -1235,17 +1228,28 @@ private:
 		signal_manager->ui_idle ();
 	}
 
+	void close_splash ()
+	{
+		if (_splash) {
+			_splash->Destroy ();
+			_splash = nullptr;
+		}
+	}
+
 	void config_failed_to_load ()
 	{
+		close_splash ();
 		message_dialog (_frame, _("The existing configuration failed to load.  Default values will be used instead.  These may take a short time to create."));
 	}
 
 	void config_warning (string m)
 	{
+		close_splash ();
 		message_dialog (_frame, std_to_wx (m));
 	}
 
-	DOMFrame* _frame;
+	DOMFrame* _frame = nullptr;
+	wxSplashScreen* _splash = nullptr;
 	string _dcp_to_load;
 	boost::optional<string> _stress;
 };

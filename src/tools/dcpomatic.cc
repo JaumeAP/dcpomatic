@@ -1553,8 +1553,6 @@ class App : public wxApp
 public:
 	App ()
 		: wxApp ()
-		, _frame (0)
-		, _splash (0)
 	{
 #ifdef DCPOMATIC_LINUX
 		XInitThreads ();
@@ -1661,10 +1659,7 @@ private:
 		}
 		catch (exception& e)
 		{
-			if (_splash) {
-				_splash->Destroy ();
-				_splash = nullptr;
-			}
+			close_splash ();
 			error_dialog (nullptr, wxString::Format ("DCP-o-matic could not start."), std_to_wx(e.what()));
 		}
 
@@ -1778,7 +1773,7 @@ private:
 	{
 		if (_splash) {
 			_splash->Destroy ();
-			_splash = 0;
+			_splash = nullptr;
 		}
 	}
 
@@ -1799,8 +1794,7 @@ private:
 		/* Destroy the splash screen here, as otherwise bad things seem to happen (for reasons unknown)
 		   when we open our recreate dialog, close it, *then* try to Destroy the splash (the Destroy fails).
 		*/
-		_splash->Destroy ();
-		_splash = nullptr;
+		close_splash ();
 
 		auto config = Config::instance();
 		switch (reason) {
@@ -1859,8 +1853,8 @@ private:
 		}
 	}
 
-	DOMFrame* _frame;
-	wxSplashScreen* _splash;
+	DOMFrame* _frame = nullptr;
+	wxSplashScreen* _splash = nullptr;
 	shared_ptr<wxTimer> _timer;
 	string _film_to_load;
 	string _film_to_create;
