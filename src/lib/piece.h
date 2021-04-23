@@ -46,7 +46,7 @@ public:
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;
 	FrameRateChange frc;
-	bool done;
+	bool done = false;
 
 private:
 	std::map<AudioStreamPtr, dcpomatic::DCPTime> _stream_last_push_end;

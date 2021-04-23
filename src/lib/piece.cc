@@ -32,7 +32,6 @@ Piece::Piece (shared_ptr<Content> c, shared_ptr<Decoder> d, FrameRateChange f)
 	: content (c)
 	, decoder (d)
 	, frc (f)
-	, done (false)
 {
 	if (content->audio) {
 		for (auto j: content->audio->streams()) {
