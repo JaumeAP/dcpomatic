@@ -49,6 +49,8 @@ public:
 	dcpomatic::ContentTime dcp_to_content_time (dcpomatic::DCPTime t, std::shared_ptr<const Film> film) const;
 	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const;
 
+	void pass ();
+
 	bool use_video () const;
 	VideoFrameType video_frame_type () const;
 

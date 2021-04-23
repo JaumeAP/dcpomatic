@@ -21,6 +21,7 @@
 
 #include "audio_content.h"
 #include "content.h"
+#include "dcpomatic_log.h"
 #include "decoder.h"
 #include "film.h"
 #include "piece.h"
@@ -189,5 +190,13 @@ DCPTime
 Piece::decoder_position () const
 {
 	return content_time_to_dcp(std::max(decoder->position(), content->trim_start()));
+}
+
+
+void
+Piece::pass ()
+{
+	LOG_DEBUG_PLAYER ("Calling pass() on %1", content->path(0));
+	done = decoder->pass();
 }
 
