@@ -774,7 +774,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 		return;
 	}
 
-	FrameRateChange frc (_film, piece->content);
+	auto frc = piece->frame_rate_change();
 	if (frc.skip && (video.frame % 2) == 1) {
 		return;
 	}
