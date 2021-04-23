@@ -61,6 +61,7 @@ public:
 	std::shared_ptr<PlayerVideo> player_video (ContentVideo video, std::shared_ptr<const Film> film, dcp::Size container_size) const;
 
 	int resampled_audio_frame_rate (std::shared_ptr<const Film> film) const;
+	double audio_gain () const;
 
 	std::shared_ptr<Content> content;
 	std::shared_ptr<Decoder> decoder;

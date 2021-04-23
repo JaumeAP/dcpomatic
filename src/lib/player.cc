@@ -869,9 +869,6 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 		return;
 	}
 
-	auto content = piece->content->audio;
-	DCPOMATIC_ASSERT (content);
-
 	int const rfr = piece->resampled_audio_frame_rate (_film);
 
 	/* Compute time in the DCP */
@@ -905,9 +902,9 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 
 	/* Gain */
 
-	if (content->gain() != 0) {
+	if (piece->audio_gain() != 0) {
 		auto gain = make_shared<AudioBuffers>(content_audio.audio);
-		gain->apply_gain (content->gain());
+		gain->apply_gain (piece->audio_gain());
 		content_audio.audio = gain;
 	}
 
