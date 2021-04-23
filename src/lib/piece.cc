@@ -21,6 +21,7 @@
 
 #include "audio_content.h"
 #include "content.h"
+#include "dcp_content.h"
 #include "dcpomatic_log.h"
 #include "decoder.h"
 #include "film.h"
@@ -29,8 +30,9 @@
 #include "video_content.h"
 
 
-using std::shared_ptr;
+using std::dynamic_pointer_cast;
 using std::make_shared;
+using std::shared_ptr;
 using namespace dcpomatic;
 
 
@@ -200,3 +202,10 @@ Piece::pass ()
 	done = decoder->pass();
 }
 
+
+bool
+Piece::reference_dcp_audio () const
+{
+	auto dcp = dynamic_pointer_cast<DCPContent>(content);
+	return dcp && dcp->reference_audio();
+}

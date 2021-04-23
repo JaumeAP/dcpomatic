@@ -65,6 +65,7 @@ public:
 
 	int resampled_audio_frame_rate (std::shared_ptr<const Film> film) const;
 	double audio_gain () const;
+	bool reference_dcp_audio () const;
 
 	std::shared_ptr<Decoder> decoder_for (std::shared_ptr<Content> content) const;
 
