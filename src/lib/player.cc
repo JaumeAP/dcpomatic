@@ -847,20 +847,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 		}
 	}
 
-	_last_video[wp] = std::make_shared<PlayerVideo>(
-		video.image,
-		piece->content->video->crop (),
-		piece->content->video->fade (_film, video.frame),
-		scale_for_display(piece->content->video->scaled_size(_film->frame_size()), _video_container_size, _film->frame_size()),
-		_video_container_size,
-		video.eyes,
-		video.part,
-		piece->content->video->colour_conversion(),
-		piece->content->video->range(),
-		piece->content,
-		video.frame,
-		false
-		);
+	_last_video[wp] = piece->player_video (video, _film, _video_container_size);
 
 	DCPTime t = time;
 	for (int i = 0; i < frc.repeat; ++i) {

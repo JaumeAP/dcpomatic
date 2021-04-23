@@ -24,6 +24,7 @@
 
 
 #include "audio_stream.h"
+#include "content_video.h"
 #include "dcpomatic_time.h"
 #include "frame_rate_change.h"
 #include "types.h"
@@ -32,6 +33,7 @@
 
 class Content;
 class Decoder;
+class PlayerVideo;
 
 
 class Piece
@@ -55,6 +57,8 @@ public:
 
 	dcpomatic::DCPTime position () const;
 	dcpomatic::DCPTime end (std::shared_ptr<const Film> film) const;
+
+	std::shared_ptr<PlayerVideo> player_video (ContentVideo video, std::shared_ptr<const Film> film, dcp::Size container_size) const;
 
 	std::shared_ptr<Content> content;
 	std::shared_ptr<Decoder> decoder;

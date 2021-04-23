@@ -23,10 +23,12 @@
 #include "content.h"
 #include "film.h"
 #include "piece.h"
+#include "player_video.h"
 #include "video_content.h"
 
 
 using std::shared_ptr;
+using std::make_shared;
 using namespace dcpomatic;
 
 
@@ -126,3 +128,22 @@ Piece::end (shared_ptr<const Film> film) const
 	return content->end (film);
 }
 
+
+shared_ptr<PlayerVideo>
+Piece::player_video (ContentVideo video, shared_ptr<const Film> film, dcp::Size container_size) const
+{
+	return std::make_shared<PlayerVideo>(
+		video.image,
+		content->video->crop (),
+		content->video->fade (film, video.frame),
+		scale_for_display(content->video->scaled_size(film->frame_size()), container_size, film->frame_size()),
+		container_size,
+		video.eyes,
+		video.part,
+		content->video->colour_conversion(),
+		content->video->range(),
+		content,
+		video.frame,
+		false
+		);
+}
