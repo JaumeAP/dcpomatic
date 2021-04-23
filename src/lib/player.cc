@@ -872,7 +872,7 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 	auto content = piece->content->audio;
 	DCPOMATIC_ASSERT (content);
 
-	int const rfr = content->resampled_frame_rate (_film);
+	int const rfr = piece->resampled_audio_frame_rate (_film);
 
 	/* Compute time in the DCP */
 	auto time = piece->resampled_audio_to_dcp (content_audio.frame, _film);

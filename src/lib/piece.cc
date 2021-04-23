@@ -147,3 +147,12 @@ Piece::player_video (ContentVideo video, shared_ptr<const Film> film, dcp::Size 
 		false
 		);
 }
+
+
+int
+Piece::resampled_audio_frame_rate (shared_ptr<const Film> film) const
+{
+	DCPOMATIC_ASSERT (content->audio);
+	return content->audio->resampled_frame_rate (film);
+}
+
