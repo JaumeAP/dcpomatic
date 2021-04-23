@@ -63,6 +63,8 @@ public:
 	int resampled_audio_frame_rate (std::shared_ptr<const Film> film) const;
 	double audio_gain () const;
 
+	std::shared_ptr<Decoder> decoder_for (std::shared_ptr<Content> content) const;
+
 	std::shared_ptr<Content> content;
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;

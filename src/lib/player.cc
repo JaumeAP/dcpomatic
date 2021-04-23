@@ -187,8 +187,9 @@ Player::setup_pieces_unlocked ()
 
 		shared_ptr<Decoder> old_decoder;
 		for (auto j: old_pieces) {
-			if (j->content == i) {
-				old_decoder = j->decoder;
+			auto decoder = j->decoder_for(i);
+			if (decoder) {
+				old_decoder = decoder;
 				break;
 			}
 		}

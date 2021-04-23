@@ -163,3 +163,16 @@ Piece::audio_gain () const
 	DCPOMATIC_ASSERT (content->audio);
 	return content->audio->gain();
 }
+
+
+shared_ptr<Decoder>
+Piece::decoder_for (shared_ptr<Content> content_) const
+{
+	if (content_ == content) {
+		return decoder;
+	}
+
+	return {};
+}
+
+
