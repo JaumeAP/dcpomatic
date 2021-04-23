@@ -50,6 +50,7 @@ public:
 	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const;
 
 	bool use_video () const;
+	VideoFrameType video_frame_type () const;
 
 	FrameRateChange frame_rate_change () const {
 		return frc;

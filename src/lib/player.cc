@@ -259,7 +259,7 @@ Player::setup_pieces_unlocked ()
 	}
 
 	for (auto i = _pieces.begin(); i != _pieces.end(); ++i) {
-		if ((*i)->use_video() && (*i)->content->video->frame_type() != VideoFrameType::THREE_D_LEFT && (*i)->content->video->frame_type() != VideoFrameType::THREE_D_RIGHT) {
+		if ((*i)->use_video() && (*i)->video_frame_type() != VideoFrameType::THREE_D_LEFT && (*i)->video_frame_type() != VideoFrameType::THREE_D_RIGHT) {
 			/* Look for content later in the content list with in-use video that overlaps this */
 			auto period = DCPTimePeriod((*i)->position(), (*i)->end(_film));
 			auto j = i;

@@ -115,6 +115,14 @@ Piece::use_video () const
 }
 
 
+VideoFrameType
+Piece::video_frame_type () const
+{
+	DCPOMATIC_ASSERT (content->video);
+	return content->video->frame_type ();
+}
+
+
 dcpomatic::DCPTime
 Piece::position () const
 {
