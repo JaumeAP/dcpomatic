@@ -112,3 +112,10 @@ Piece::use_video () const
 	return content->video && content->video->use();
 }
 
+
+dcpomatic::DCPTime
+Piece::position () const
+{
+	return content->position ();
+}
+

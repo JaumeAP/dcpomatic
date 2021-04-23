@@ -48,9 +48,12 @@ public:
 	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const;
 
 	bool use_video () const;
+
 	FrameRateChange frame_rate_change () const {
 		return frc;
 	}
+
+	dcpomatic::DCPTime position () const;
 
 	std::shared_ptr<Content> content;
 	std::shared_ptr<Decoder> decoder;

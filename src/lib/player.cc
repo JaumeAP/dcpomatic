@@ -260,12 +260,12 @@ Player::setup_pieces_unlocked ()
 	for (auto i = _pieces.begin(); i != _pieces.end(); ++i) {
 		if ((*i)->use_video() && (*i)->content->video->frame_type() != VideoFrameType::THREE_D_LEFT && (*i)->content->video->frame_type() != VideoFrameType::THREE_D_RIGHT) {
 			/* Look for content later in the content list with in-use video that overlaps this */
-			auto period = DCPTimePeriod((*i)->content->position(), (*i)->content->end(_film));
+			auto period = DCPTimePeriod((*i)->position(), (*i)->content->end(_film));
 			auto j = i;
 			++j;
 			for (; j != _pieces.end(); ++j) {
 				if ((*j)->use_video()) {
-					(*i)->ignore_video = DCPTimePeriod((*j)->content->position(), (*j)->content->end(_film)).overlap(period);
+					(*i)->ignore_video = DCPTimePeriod((*j)->position(), (*j)->content->end(_film)).overlap(period);
 				}
 			}
 		}
@@ -787,7 +787,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 	   if it's after the content's period here as in that case we still need to fill any gap between
 	   `now' and the end of the content's period.
 	*/
-	if (time < piece->content->position() || (_last_video_time && time < *_last_video_time)) {
+	if (time < piece->position() || (_last_video_time && time < *_last_video_time)) {
 		return;
 	}
 
@@ -801,7 +801,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 	DCPTime fill_to = min (time, piece->content->end(_film));
 
 	if (_last_video_time) {
-		DCPTime fill_from = max (*_last_video_time, piece->content->position());
+		DCPTime fill_from = max (*_last_video_time, piece->position());
 
 		/* Fill if we have more than half a frame to do */
 		if ((fill_to - fill_from) > one_video_frame() / 2) {
@@ -895,8 +895,8 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 	auto end = time + DCPTime::from_frames(content_audio.audio->frames(), rfr);
 
 	/* Remove anything that comes before the start or after the end of the content */
-	if (time < piece->content->position()) {
-		auto cut = discard_audio (content_audio.audio, time, piece->content->position());
+	if (time < piece->position()) {
+		auto cut = discard_audio (content_audio.audio, time, piece->position());
 		if (!cut.first) {
 			/* This audio is entirely discarded */
 			return;
@@ -1084,15 +1084,15 @@ Player::seek (DCPTime time, bool accurate)
 	}
 
 	for (auto i: _pieces) {
-		if (time < i->content->position()) {
+		if (time < i->position()) {
 			/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
 			   we must seek this (following) content accurately, otherwise when we come to the end of the current
 			   content we may not start right at the beginning of the next, causing a gap (if the next content has
 			   been trimmed to a point between keyframes, or something).
 			*/
-			i->decoder->seek (i->dcp_to_content_time(i->content->position(), _film), true);
+			i->decoder->seek (i->dcp_to_content_time(i->position(), _film), true);
 			i->done = false;
-		} else if (i->content->position() <= time && time < i->content->end(_film)) {
+		} else if (i->position() <= time && time < i->content->end(_film)) {
 			/* During; seek to position */
 			i->decoder->seek (i->dcp_to_content_time(time, _film), accurate);
 			i->done = false;
