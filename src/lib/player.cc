@@ -585,7 +585,7 @@ Player::pass ()
 			continue;
 		}
 
-		auto const t = i->content_time_to_dcp (max(i->decoder->position(), i->content->trim_start()));
+		auto const t = i->decoder_position ();
 		if (t > i->end(_film)) {
 			i->done = true;
 		} else {

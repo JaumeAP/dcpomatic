@@ -21,6 +21,7 @@
 
 #include "audio_content.h"
 #include "content.h"
+#include "decoder.h"
 #include "film.h"
 #include "piece.h"
 #include "player_video.h"
@@ -183,4 +184,10 @@ Piece::decoder_for (shared_ptr<Content> content_) const
 	return {};
 }
 
+
+DCPTime
+Piece::decoder_position () const
+{
+	return content_time_to_dcp(std::max(decoder->position(), content->trim_start()));
+}
 
