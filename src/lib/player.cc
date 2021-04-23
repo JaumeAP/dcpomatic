@@ -260,12 +260,12 @@ Player::setup_pieces_unlocked ()
 	for (auto i = _pieces.begin(); i != _pieces.end(); ++i) {
 		if ((*i)->use_video() && (*i)->content->video->frame_type() != VideoFrameType::THREE_D_LEFT && (*i)->content->video->frame_type() != VideoFrameType::THREE_D_RIGHT) {
 			/* Look for content later in the content list with in-use video that overlaps this */
-			auto period = DCPTimePeriod((*i)->position(), (*i)->content->end(_film));
+			auto period = DCPTimePeriod((*i)->position(), (*i)->end(_film));
 			auto j = i;
 			++j;
 			for (; j != _pieces.end(); ++j) {
 				if ((*j)->use_video()) {
-					(*i)->ignore_video = DCPTimePeriod((*j)->position(), (*j)->content->end(_film)).overlap(period);
+					(*i)->ignore_video = DCPTimePeriod((*j)->position(), (*j)->end(_film)).overlap(period);
 				}
 			}
 		}
@@ -585,7 +585,7 @@ Player::pass ()
 		}
 
 		auto const t = i->content_time_to_dcp (max(i->decoder->position(), i->content->trim_start()));
-		if (t > i->content->end(_film)) {
+		if (t > i->end(_film)) {
 			i->done = true;
 		} else {
 
@@ -798,7 +798,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 	/* Fill gaps that we discover now that we have some video which needs to be emitted.
 	   This is where we need to fill to.
 	*/
-	DCPTime fill_to = min (time, piece->content->end(_film));
+	DCPTime fill_to = min (time, piece->end(_film));
 
 	if (_last_video_time) {
 		DCPTime fill_from = max (*_last_video_time, piece->position());
@@ -811,7 +811,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 				if (fill_to_eyes == Eyes::BOTH) {
 					fill_to_eyes = Eyes::LEFT;
 				}
-				if (fill_to == piece->content->end(_film)) {
+				if (fill_to == piece->end(_film)) {
 					/* Don't fill after the end of the content */
 					fill_to_eyes = Eyes::LEFT;
 				}
@@ -864,7 +864,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 
 	DCPTime t = time;
 	for (int i = 0; i < frc.repeat; ++i) {
-		if (t < piece->content->end(_film)) {
+		if (t < piece->end(_film)) {
 			emit_video (_last_video[wp], t);
 		}
 		t += one_video_frame ();
@@ -903,11 +903,11 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 		}
 		content_audio.audio = cut.first;
 		time = cut.second;
-	} else if (time > piece->content->end(_film)) {
+	} else if (time > piece->end(_film)) {
 		/* Discard it all */
 		return;
-	} else if (end > piece->content->end(_film)) {
-		Frame const remaining_frames = DCPTime(piece->content->end(_film) - time).frames_round(rfr);
+	} else if (end > piece->end(_film)) {
+		Frame const remaining_frames = DCPTime(piece->end(_film) - time).frames_round(rfr);
 		if (remaining_frames == 0) {
 			return;
 		}
@@ -992,7 +992,7 @@ Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Co
 	PlayerText ps;
 	DCPTime const from (piece->content_time_to_dcp(subtitle.from()));
 
-	if (from > piece->content->end(_film)) {
+	if (from > piece->end(_film)) {
 		return;
 	}
 
@@ -1044,7 +1044,7 @@ Player::subtitle_stop (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Conte
 
 	auto const dcp_to = piece->content_time_to_dcp(to);
 
-	if (dcp_to > piece->content->end(_film)) {
+	if (dcp_to > piece->end(_film)) {
 		return;
 	}
 
@@ -1092,7 +1092,7 @@ Player::seek (DCPTime time, bool accurate)
 			*/
 			i->decoder->seek (i->dcp_to_content_time(i->position(), _film), true);
 			i->done = false;
-		} else if (i->position() <= time && time < i->content->end(_film)) {
+		} else if (i->position() <= time && time < i->end(_film)) {
 			/* During; seek to position */
 			i->decoder->seek (i->dcp_to_content_time(time, _film), accurate);
 			i->done = false;

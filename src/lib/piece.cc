@@ -119,3 +119,10 @@ Piece::position () const
 	return content->position ();
 }
 
+
+dcpomatic::DCPTime
+Piece::end (shared_ptr<const Film> film) const
+{
+	return content->end (film);
+}
+

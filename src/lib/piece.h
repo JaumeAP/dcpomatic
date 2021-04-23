@@ -54,6 +54,7 @@ public:
 	}
 
 	dcpomatic::DCPTime position () const;
+	dcpomatic::DCPTime end (std::shared_ptr<const Film> film) const;
 
 	std::shared_ptr<Content> content;
 	std::shared_ptr<Decoder> decoder;
