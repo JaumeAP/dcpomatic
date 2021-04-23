@@ -23,6 +23,7 @@
 #include "content.h"
 #include "film.h"
 #include "piece.h"
+#include "video_content.h"
 
 
 using std::shared_ptr;
@@ -103,3 +104,11 @@ Piece::content_time_to_dcp (ContentTime t) const
 {
 	return max (DCPTime(), DCPTime(t - content->trim_start(), frc) + content->position());
 }
+
+
+bool
+Piece::use_video () const
+{
+	return content->video && content->video->use();
+}
+

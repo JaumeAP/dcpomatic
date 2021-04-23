@@ -47,6 +47,8 @@ public:
 	dcpomatic::ContentTime dcp_to_content_time (dcpomatic::DCPTime t, std::shared_ptr<const Film> film) const;
 	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const;
 
+	bool use_video () const;
+
 	std::shared_ptr<Content> content;
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;

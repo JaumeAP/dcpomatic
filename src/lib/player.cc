@@ -258,16 +258,14 @@ Player::setup_pieces_unlocked ()
 	}
 
 	for (auto i = _pieces.begin(); i != _pieces.end(); ++i) {
-		if (auto video = (*i)->content->video) {
-			if (video->use() && video->frame_type() != VideoFrameType::THREE_D_LEFT && video->frame_type() != VideoFrameType::THREE_D_RIGHT) {
-				/* Look for content later in the content list with in-use video that overlaps this */
-				auto period = DCPTimePeriod((*i)->content->position(), (*i)->content->end(_film));
-				auto j = i;
-				++j;
-				for (; j != _pieces.end(); ++j) {
-					if ((*j)->content->video && (*j)->content->video->use()) {
-						(*i)->ignore_video = DCPTimePeriod((*j)->content->position(), (*j)->content->end(_film)).overlap(period);
-					}
+		if ((*i)->use_video() && (*i)->content->video->frame_type() != VideoFrameType::THREE_D_LEFT && (*i)->content->video->frame_type() != VideoFrameType::THREE_D_RIGHT) {
+			/* Look for content later in the content list with in-use video that overlaps this */
+			auto period = DCPTimePeriod((*i)->content->position(), (*i)->content->end(_film));
+			auto j = i;
+			++j;
+			for (; j != _pieces.end(); ++j) {
+				if ((*j)->use_video()) {
+					(*i)->ignore_video = DCPTimePeriod((*j)->content->position(), (*j)->content->end(_film)).overlap(period);
 				}
 			}
 		}
@@ -772,7 +770,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 		return;
 	}
 
-	if (!piece->content->video->use()) {
+	if (!piece->use_video()) {
 		return;
 	}
 
