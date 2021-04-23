@@ -131,10 +131,6 @@ private:
 	void film_change (ChangeType, Film::Property);
 	void playlist_change (ChangeType);
 	void playlist_content_change (ChangeType, int, bool);
-	dcpomatic::DCPTime content_video_to_dcp (std::shared_ptr<const Piece> piece, Frame f) const;
-	dcpomatic::DCPTime resampled_audio_to_dcp (std::shared_ptr<const Piece> piece, Frame f) const;
-	dcpomatic::ContentTime dcp_to_content_time (std::shared_ptr<const Piece> piece, dcpomatic::DCPTime t) const;
-	dcpomatic::DCPTime content_time_to_dcp (std::shared_ptr<const Piece> piece, dcpomatic::ContentTime t) const;
 	std::shared_ptr<PlayerVideo> black_player_video_frame (Eyes eyes) const;
 
 	void video (std::weak_ptr<Piece>, ContentVideo);

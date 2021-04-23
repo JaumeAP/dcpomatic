@@ -42,6 +42,11 @@ public:
 	void update_pull_to (dcpomatic::DCPTime& pull_to) const;
 	void set_last_push_end (AudioStreamPtr stream, dcpomatic::DCPTime last_push_end);
 
+	dcpomatic::DCPTime content_video_to_dcp (Frame f) const;
+	dcpomatic::DCPTime resampled_audio_to_dcp (Frame f, std::shared_ptr<const Film> film) const;
+	dcpomatic::ContentTime dcp_to_content_time (dcpomatic::DCPTime t, std::shared_ptr<const Film> film) const;
+	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const;
+
 	std::shared_ptr<Content> content;
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;

@@ -21,6 +21,7 @@
 
 #include "audio_content.h"
 #include "content.h"
+#include "film.h"
 #include "piece.h"
 
 
@@ -62,3 +63,43 @@ Piece::set_last_push_end (AudioStreamPtr stream, DCPTime end)
 	_stream_last_push_end[stream] = end;
 }
 
+
+DCPTime
+Piece::content_video_to_dcp (Frame f) const
+{
+	/* See comment in resampled_audio_to_dcp */
+	auto const d = DCPTime::from_frames(f * frc.factor(), frc.dcp) - DCPTime(content->trim_start(), frc);
+	return d + content->position();
+}
+
+
+DCPTime
+Piece::resampled_audio_to_dcp (Frame f, shared_ptr<const Film> film) const
+{
+	/* It might seem more logical here to convert s to a ContentTime (using the FrameRateChange)
+	   then convert that ContentTime to frames at the content's rate.  However this fails for
+	   situations like content at 29.9978733fps, DCP at 30fps.  The accuracy of the Time type is not
+	   enough to distinguish between the two with low values of time (e.g. 3200 in Time units).
+
+	   Instead we convert the DCPTime using the DCP video rate then account for any skip/repeat.
+	*/
+	return DCPTime::from_frames(f, film->audio_frame_rate())
+		- DCPTime(content->trim_start(), frc)
+		+ content->position();
+}
+
+
+ContentTime
+Piece::dcp_to_content_time (DCPTime t, shared_ptr<const Film> film) const
+{
+	auto s = t - content->position ();
+	s = min (content->length_after_trim(film), s);
+	return max (ContentTime(), ContentTime(s, frc) + content->trim_start());
+}
+
+
+DCPTime
+Piece::content_time_to_dcp (ContentTime t) const
+{
+	return max (DCPTime(), DCPTime(t - content->trim_start(), frc) + content->position());
+}
