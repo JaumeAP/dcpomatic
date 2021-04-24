@@ -232,7 +232,7 @@ private:
 
 	dcpomatic::DCPTime _playback_length;
 
-	boost::shared_ptr<ResamplerManager> _resampler_manager;
+	std::shared_ptr<ResamplerManager> _resampler_manager;
 
 	boost::signals2::scoped_connection _film_changed_connection;
 	boost::signals2::scoped_connection _playlist_change_connection;

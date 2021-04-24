@@ -86,7 +86,7 @@ private:
 	typedef std::map<AudioStreamPtr, std::shared_ptr<Resampler>> ResamplerMap;
 	ResamplerMap _resamplers;
 
-	boost::shared_ptr<ResamplerManager> _resampler_manager;
+	std::shared_ptr<ResamplerManager> _resampler_manager;
 
 	bool _fast;
 };

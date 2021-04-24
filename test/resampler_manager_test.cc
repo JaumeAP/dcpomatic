@@ -5,7 +5,8 @@
 #include "test.h"
 #include <boost/test/unit_test.hpp>
 
-using boost::shared_ptr;
+using std::make_shared;
+using std::shared_ptr;
 using namespace dcpomatic;
 
 
@@ -22,12 +23,12 @@ get_some_content (shared_ptr<Film> film)
 
 BOOST_AUTO_TEST_CASE (resampler_manager_setup_test)
 {
-	shared_ptr<Film> film = new_test_film2 ("resampler_manager_setup_test");
+	auto film = new_test_film2 ("resampler_manager_setup_test");
 
 	/* One thing */
-	shared_ptr<Content> ac = get_some_content (film);
+	auto ac = get_some_content (film);
 	ac->set_position(film, DCPTime::from_seconds(5));
-	shared_ptr<Player> player (new Player(film, film->playlist()));
+	auto player = make_shared<Player>(film, film->playlist());
 	shared_ptr<ResamplerManager> rm = player->_resampler_manager;
 	BOOST_CHECK_EQUAL (rm->_groups.size(), 1);
 

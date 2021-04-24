@@ -12,15 +12,18 @@ class AudioStream;
 class Resampler;
 
 
-class ResamplerManager : public boost::noncopyable
+class ResamplerManager
 {
 public:
-	ResamplerManager (boost::weak_ptr<const Film> film)
+	ResamplerManager (std::weak_ptr<const Film> film)
 		: _film (film)
 	{}
 
-	void add (dcpomatic::DCPTime start, dcpomatic::DCPTime end, boost::shared_ptr<AudioContent> content, boost::shared_ptr<AudioDecoder> decoder);
-	boost::shared_ptr<Resampler> get (AudioDecoder* decoder, AudioStreamPtr stream, bool fast);
+	ResamplerManager (ResamplerManager const&) = delete;
+	ResamplerManager& operator= (ResamplerManager const&) = delete;
+
+	void add (dcpomatic::DCPTime start, dcpomatic::DCPTime end, std::shared_ptr<AudioContent> content, std::shared_ptr<AudioDecoder> decoder);
+	std::shared_ptr<Resampler> get (AudioDecoder* decoder, AudioStreamPtr stream, bool fast);
 
 private:
 	friend struct resampler_manager_setup_test;
@@ -28,7 +31,7 @@ private:
 	class Group
 	{
 	public:
-		Group (dcpomatic::DCPTime start_, dcpomatic::DCPTime end_, boost::shared_ptr<AudioContent> content, boost::shared_ptr<AudioDecoder> decoder)
+		Group (dcpomatic::DCPTime start_, dcpomatic::DCPTime end_, std::shared_ptr<AudioContent> content, std::shared_ptr<AudioDecoder> decoder)
 			: start(start_)
 			, end(end_)
 		{
@@ -39,16 +42,16 @@ private:
 
 		dcpomatic::DCPTime start;
 		dcpomatic::DCPTime end;
-		std::vector<boost::shared_ptr<AudioContent> > contents;
-		std::vector<boost::shared_ptr<AudioDecoder> > decoders;
-		std::vector<boost::shared_ptr<Resampler> > resamplers;
+		std::vector<std::shared_ptr<AudioContent>> contents;
+		std::vector<std::shared_ptr<AudioDecoder>> decoders;
+		std::vector<std::shared_ptr<Resampler>> resamplers;
 	};
 
 	bool can_share (Group const& a, Group const& b) const;
 	void coalesce ();
 	bool coalesce_pass ();
 
-	boost::weak_ptr<const Film> _film;
+	std::weak_ptr<const Film> _film;
 	std::vector<Group> _groups;
 };
 
