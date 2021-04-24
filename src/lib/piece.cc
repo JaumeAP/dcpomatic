@@ -40,7 +40,7 @@ using namespace dcpomatic;
 Piece::Piece (shared_ptr<Content> c, shared_ptr<Decoder> d, FrameRateChange f)
 	: _content (c)
 	, decoder (d)
-	, frc (f)
+	, _frc (f)
 {
 	if (_content->audio) {
 		for (auto j: _content->audio->streams()) {
@@ -76,7 +76,7 @@ DCPTime
 Piece::content_video_to_dcp (Frame f) const
 {
 	/* See comment in resampled_audio_to_dcp */
-	auto const d = DCPTime::from_frames(f * frc.factor(), frc.dcp) - DCPTime(_content->trim_start(), frc);
+	auto const d = DCPTime::from_frames(f * _frc.factor(), _frc.dcp) - DCPTime(_content->trim_start(), _frc);
 	return d + _content->position();
 }
 
@@ -92,7 +92,7 @@ Piece::resampled_audio_to_dcp (Frame f, shared_ptr<const Film> film) const
 	   Instead we convert the DCPTime using the DCP video rate then account for any skip/repeat.
 	*/
 	return DCPTime::from_frames(f, film->audio_frame_rate())
-		- DCPTime(_content->trim_start(), frc)
+		- DCPTime(_content->trim_start(), _frc)
 		+ _content->position();
 }
 
@@ -102,7 +102,7 @@ Piece::dcp_to_content_time (DCPTime t, shared_ptr<const Film> film) const
 {
 	auto s = t - _content->position ();
 	s = min (_content->length_after_trim(film), s);
-	return max (ContentTime(), ContentTime(s, frc) + _content->trim_start());
+	return max (ContentTime(), ContentTime(s, _frc) + _content->trim_start());
 }
 
 
@@ -113,7 +113,7 @@ Piece::content_time_to_dcp (shared_ptr<const Content> content, ContentTime t) co
 		return {};
 	}
 
-	return max (DCPTime(), DCPTime(t - _content->trim_start(), frc) + _content->position());
+	return max (DCPTime(), DCPTime(t - _content->trim_start(), _frc) + _content->position());
 }
 
 

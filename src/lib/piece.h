@@ -56,7 +56,7 @@ public:
 	VideoFrameType video_frame_type () const;
 
 	FrameRateChange frame_rate_change () const {
-		return frc;
+		return _frc;
 	}
 
 	dcpomatic::DCPTime position () const;
@@ -74,13 +74,13 @@ public:
 
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;
-	FrameRateChange frc;
 	bool done = false;
 
 private:
 	friend struct overlap_video_test1;
 
 	std::shared_ptr<Content> _content;
+	FrameRateChange _frc;
 	std::map<AudioStreamPtr, dcpomatic::DCPTime> _stream_last_push_end;
 };
 
