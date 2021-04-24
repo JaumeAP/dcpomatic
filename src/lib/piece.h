@@ -34,6 +34,7 @@
 class Content;
 class Decoder;
 class PlayerVideo;
+struct overlap_video_test1;
 
 
 class Piece
@@ -71,13 +72,15 @@ public:
 
 	dcpomatic::DCPTime decoder_position () const;
 
-	std::shared_ptr<Content> content;
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;
 	FrameRateChange frc;
 	bool done = false;
 
 private:
+	friend struct overlap_video_test1;
+
+	std::shared_ptr<Content> _content;
 	std::map<AudioStreamPtr, dcpomatic::DCPTime> _stream_last_push_end;
 };
 

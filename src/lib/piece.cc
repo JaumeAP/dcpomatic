@@ -38,13 +38,13 @@ using namespace dcpomatic;
 
 
 Piece::Piece (shared_ptr<Content> c, shared_ptr<Decoder> d, FrameRateChange f)
-	: content (c)
+	: _content (c)
 	, decoder (d)
 	, frc (f)
 {
-	if (content->audio) {
-		for (auto j: content->audio->streams()) {
-			_stream_last_push_end[j] = content->position();
+	if (_content->audio) {
+		for (auto j: _content->audio->streams()) {
+			_stream_last_push_end[j] = _content->position();
 		}
 	}
 }
@@ -76,8 +76,8 @@ DCPTime
 Piece::content_video_to_dcp (Frame f) const
 {
 	/* See comment in resampled_audio_to_dcp */
-	auto const d = DCPTime::from_frames(f * frc.factor(), frc.dcp) - DCPTime(content->trim_start(), frc);
-	return d + content->position();
+	auto const d = DCPTime::from_frames(f * frc.factor(), frc.dcp) - DCPTime(_content->trim_start(), frc);
+	return d + _content->position();
 }
 
 
@@ -92,57 +92,57 @@ Piece::resampled_audio_to_dcp (Frame f, shared_ptr<const Film> film) const
 	   Instead we convert the DCPTime using the DCP video rate then account for any skip/repeat.
 	*/
 	return DCPTime::from_frames(f, film->audio_frame_rate())
-		- DCPTime(content->trim_start(), frc)
-		+ content->position();
+		- DCPTime(_content->trim_start(), frc)
+		+ _content->position();
 }
 
 
 ContentTime
 Piece::dcp_to_content_time (DCPTime t, shared_ptr<const Film> film) const
 {
-	auto s = t - content->position ();
-	s = min (content->length_after_trim(film), s);
-	return max (ContentTime(), ContentTime(s, frc) + content->trim_start());
+	auto s = t - _content->position ();
+	s = min (_content->length_after_trim(film), s);
+	return max (ContentTime(), ContentTime(s, frc) + _content->trim_start());
 }
 
 
 optional<DCPTime>
-Piece::content_time_to_dcp (shared_ptr<const Content> content_, ContentTime t) const
+Piece::content_time_to_dcp (shared_ptr<const Content> content, ContentTime t) const
 {
-	if (content != content_) {
+	if (_content != content) {
 		return {};
 	}
 
-	return max (DCPTime(), DCPTime(t - content->trim_start(), frc) + content->position());
+	return max (DCPTime(), DCPTime(t - _content->trim_start(), frc) + _content->position());
 }
 
 
 bool
 Piece::use_video () const
 {
-	return content->video && content->video->use();
+	return _content->video && _content->video->use();
 }
 
 
 VideoFrameType
 Piece::video_frame_type () const
 {
-	DCPOMATIC_ASSERT (content->video);
-	return content->video->frame_type ();
+	DCPOMATIC_ASSERT (_content->video);
+	return _content->video->frame_type ();
 }
 
 
 dcpomatic::DCPTime
 Piece::position () const
 {
-	return content->position ();
+	return _content->position ();
 }
 
 
 dcpomatic::DCPTime
 Piece::end (shared_ptr<const Film> film) const
 {
-	return content->end (film);
+	return _content->end (film);
 }
 
 
@@ -151,15 +151,15 @@ Piece::player_video (ContentVideo video, shared_ptr<const Film> film, dcp::Size 
 {
 	return std::make_shared<PlayerVideo>(
 		video.image,
-		content->video->crop (),
-		content->video->fade (film, video.frame),
-		scale_for_display(content->video->scaled_size(film->frame_size()), container_size, film->frame_size()),
+		_content->video->crop (),
+		_content->video->fade (film, video.frame),
+		scale_for_display(_content->video->scaled_size(film->frame_size()), container_size, film->frame_size()),
 		container_size,
 		video.eyes,
 		video.part,
-		content->video->colour_conversion(),
-		content->video->range(),
-		content,
+		_content->video->colour_conversion(),
+		_content->video->range(),
+		_content,
 		video.frame,
 		false
 		);
@@ -169,23 +169,23 @@ Piece::player_video (ContentVideo video, shared_ptr<const Film> film, dcp::Size 
 int
 Piece::resampled_audio_frame_rate (shared_ptr<const Film> film) const
 {
-	DCPOMATIC_ASSERT (content->audio);
-	return content->audio->resampled_frame_rate (film);
+	DCPOMATIC_ASSERT (_content->audio);
+	return _content->audio->resampled_frame_rate (film);
 }
 
 
 double
 Piece::audio_gain () const
 {
-	DCPOMATIC_ASSERT (content->audio);
-	return content->audio->gain();
+	DCPOMATIC_ASSERT (_content->audio);
+	return _content->audio->gain();
 }
 
 
 shared_ptr<Decoder>
-Piece::decoder_for (shared_ptr<Content> content_) const
+Piece::decoder_for (shared_ptr<Content> content) const
 {
-	if (content_ == content) {
+	if (content == _content) {
 		return decoder;
 	}
 
@@ -196,7 +196,7 @@ Piece::decoder_for (shared_ptr<Content> content_) const
 DCPTime
 Piece::decoder_position () const
 {
-	auto t = content_time_to_dcp(content, std::max(decoder->position(), content->trim_start()));
+	auto t = content_time_to_dcp(_content, std::max(decoder->position(), _content->trim_start()));
 	DCPOMATIC_ASSERT (t);
 	return *t;
 }
@@ -205,7 +205,7 @@ Piece::decoder_position () const
 void
 Piece::pass ()
 {
-	LOG_DEBUG_PLAYER ("Calling pass() on %1", content->path(0));
+	LOG_DEBUG_PLAYER ("Calling pass() on %1", _content->path(0));
 	done = decoder->pass();
 }
 
@@ -213,6 +213,6 @@ Piece::pass ()
 bool
 Piece::reference_dcp_audio () const
 {
-	auto dcp = dynamic_pointer_cast<DCPContent>(content);
+	auto dcp = dynamic_pointer_cast<DCPContent>(_content);
 	return dcp && dcp->reference_audio();
 }
