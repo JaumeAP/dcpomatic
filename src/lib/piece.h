@@ -47,7 +47,7 @@ public:
 	dcpomatic::DCPTime content_video_to_dcp (Frame f) const;
 	dcpomatic::DCPTime resampled_audio_to_dcp (Frame f, std::shared_ptr<const Film> film) const;
 	dcpomatic::ContentTime dcp_to_content_time (dcpomatic::DCPTime t, std::shared_ptr<const Film> film) const;
-	dcpomatic::DCPTime content_time_to_dcp (dcpomatic::ContentTime t) const;
+	boost::optional<dcpomatic::DCPTime> content_time_to_dcp (std::shared_ptr<const Content> content, dcpomatic::ContentTime t) const;
 
 	void pass ();
 

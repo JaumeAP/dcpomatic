@@ -135,9 +135,9 @@ private:
 
 	void video (std::weak_ptr<Piece>, ContentVideo);
 	void audio (std::weak_ptr<Piece>, AudioStreamPtr, ContentAudio);
-	void bitmap_text_start (std::weak_ptr<Piece>, std::weak_ptr<const TextContent>, ContentBitmapText);
-	void plain_text_start (std::weak_ptr<Piece>, std::weak_ptr<const TextContent>, ContentStringText);
-	void subtitle_stop (std::weak_ptr<Piece>, std::weak_ptr<const TextContent>, dcpomatic::ContentTime);
+	void bitmap_text_start (std::weak_ptr<Piece>, std::weak_ptr<const Content>, std::weak_ptr<const TextContent>, ContentBitmapText);
+	void plain_text_start (std::weak_ptr<Piece>, std::weak_ptr<const Content>, std::weak_ptr<const TextContent>, ContentStringText);
+	void subtitle_stop (std::weak_ptr<Piece>, std::weak_ptr<const Content>, std::weak_ptr<const TextContent>, dcpomatic::ContentTime);
 	void atmos (std::weak_ptr<Piece>, ContentAtmos);
 
 	dcpomatic::DCPTime one_video_frame () const;
@@ -163,7 +163,7 @@ private:
 
 	/** > 0 if we are suspended (i.e. pass() and seek() do nothing) */
 	boost::atomic<int> _suspended;
-	std::list<std::shared_ptr<Piece> > _pieces;
+	std::list<std::shared_ptr<Piece>> _pieces;
 
 	/** Size of the image we are rendering to; this may be the DCP frame size, or
 	 *  the size of preview in a window.

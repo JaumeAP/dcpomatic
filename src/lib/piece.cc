@@ -33,6 +33,7 @@
 using std::dynamic_pointer_cast;
 using std::make_shared;
 using std::shared_ptr;
+using boost::optional;
 using namespace dcpomatic;
 
 
@@ -105,9 +106,13 @@ Piece::dcp_to_content_time (DCPTime t, shared_ptr<const Film> film) const
 }
 
 
-DCPTime
-Piece::content_time_to_dcp (ContentTime t) const
+optional<DCPTime>
+Piece::content_time_to_dcp (shared_ptr<const Content> content_, ContentTime t) const
 {
+	if (content != content_) {
+		return {};
+	}
+
 	return max (DCPTime(), DCPTime(t - content->trim_start(), frc) + content->position());
 }
 
@@ -191,7 +196,9 @@ Piece::decoder_for (shared_ptr<Content> content_) const
 DCPTime
 Piece::decoder_position () const
 {
-	return content_time_to_dcp(std::max(decoder->position(), content->trim_start()));
+	auto t = content_time_to_dcp(content, std::max(decoder->position(), content->trim_start()));
+	DCPOMATIC_ASSERT (t);
+	return *t;
 }
 
 

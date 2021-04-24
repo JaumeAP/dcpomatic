@@ -241,13 +241,13 @@ Player::setup_pieces_unlocked ()
 
 		while (j != decoder->text.end()) {
 			(*j)->BitmapStart.connect (
-				bind(&Player::bitmap_text_start, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>((*j)->content()), _1)
+				bind(&Player::bitmap_text_start, this, weak_ptr<Piece>(piece), i, weak_ptr<const TextContent>((*j)->content()), _1)
 				);
 			(*j)->PlainStart.connect (
-				bind(&Player::plain_text_start, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>((*j)->content()), _1)
+				bind(&Player::plain_text_start, this, weak_ptr<Piece>(piece), i, weak_ptr<const TextContent>((*j)->content()), _1)
 				);
 			(*j)->Stop.connect (
-				bind(&Player::subtitle_stop, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>((*j)->content()), _1)
+				bind(&Player::subtitle_stop, this, weak_ptr<Piece>(piece), i, weak_ptr<const TextContent>((*j)->content()), _1)
 				);
 
 			++j;
@@ -278,6 +278,23 @@ Player::setup_pieces_unlocked ()
 	_last_video_time = boost::optional<dcpomatic::DCPTime>();
 	_last_video_eyes = Eyes::BOTH;
 	_last_audio_time = boost::optional<dcpomatic::DCPTime>();
+}
+
+
+optional<DCPTime>
+Player::content_time_to_dcp (shared_ptr<Content> content, ContentTime t)
+{
+	boost::mutex::scoped_lock lm (_mutex);
+
+	for (auto i: _pieces) {
+		auto dcp = i->content_time_to_dcp(content, t);
+		if (dcp) {
+			return *dcp;
+		}
+	}
+
+	/* We couldn't find this content; perhaps things are being changed over */
+	return {};
 }
 
 
@@ -925,11 +942,12 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 
 
 void
-Player::bitmap_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, ContentBitmapText subtitle)
+Player::bitmap_text_start (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_ptr<const TextContent> wt, ContentBitmapText subtitle)
 {
 	auto piece = wp.lock ();
-	auto text = wc.lock ();
-	if (!piece || !text) {
+	auto content = wc.lock ();
+	auto text = wt.lock ();
+	if (!piece || !content || !text) {
 		return;
 	}
 
@@ -957,23 +975,26 @@ Player::bitmap_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, C
 
 	dcp::Size scaled_size (width, height);
 	ps.bitmap.push_back (BitmapText(image->scale(scaled_size, dcp::YUVToRGB::REC601, image->pixel_format(), true, _fast), subtitle.sub.rectangle));
-	DCPTime from (piece->content_time_to_dcp(subtitle.from()));
+	auto from = piece->content_time_to_dcp(content, subtitle.from());
+	DCPOMATIC_ASSERT (from);
 
-	_active_texts[static_cast<int>(text->type())].add_from (wc, ps, from);
+	_active_texts[static_cast<int>(text->type())].add_from (wt, ps, *from);
 }
 
 
 void
-Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, ContentStringText subtitle)
+Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_ptr<const TextContent> wt, ContentStringText subtitle)
 {
 	auto piece = wp.lock ();
-	auto text = wc.lock ();
-	if (!piece || !text) {
+	auto content = wc.lock ();
+	auto text = wt.lock ();
+	if (!piece || !content || !text) {
 		return;
 	}
 
 	PlayerText ps;
-	DCPTime const from (piece->content_time_to_dcp(subtitle.from()));
+	auto const from = piece->content_time_to_dcp(content, subtitle.from());
+	DCPOMATIC_ASSERT (from);
 
 	if (from > piece->end(_film)) {
 		return;
@@ -999,24 +1020,25 @@ Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Co
 			s.set_aspect_adjust (xs / ys);
 		}
 
-		s.set_in (dcp::Time(from.seconds(), 1000));
+		s.set_in (dcp::Time(from->seconds(), 1000));
 		ps.string.push_back (StringText (s, text->outline_width()));
 		ps.add_fonts (text->fonts ());
 	}
 
-	_active_texts[static_cast<int>(text->type())].add_from (wc, ps, from);
+	_active_texts[static_cast<int>(text->type())].add_from (wt, ps, *from);
 }
 
 
 void
-Player::subtitle_stop (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, ContentTime to)
+Player::subtitle_stop (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_ptr<const TextContent> wt, ContentTime to)
 {
-	auto text = wc.lock ();
+	auto content = wc.lock ();
+	auto text = wt.lock ();
 	if (!text) {
 		return;
 	}
 
-	if (!_active_texts[static_cast<int>(text->type())].have(wc)) {
+	if (!_active_texts[static_cast<int>(text->type())].have(wt)) {
 		return;
 	}
 
@@ -1025,17 +1047,18 @@ Player::subtitle_stop (weak_ptr<Piece> wp, weak_ptr<const TextContent> wc, Conte
 		return;
 	}
 
-	auto const dcp_to = piece->content_time_to_dcp(to);
+	auto const dcp_to = piece->content_time_to_dcp(content, to);
+	DCPOMATIC_ASSERT (dcp_to);
 
-	if (dcp_to > piece->end(_film)) {
+	if (*dcp_to > piece->end(_film)) {
 		return;
 	}
 
-	auto from = _active_texts[static_cast<int>(text->type())].add_to (wc, dcp_to);
+	auto from = _active_texts[static_cast<int>(text->type())].add_to(wt, *dcp_to);
 
 	bool const always = (text->type() == TextType::OPEN_SUBTITLE && _always_burn_open_subtitles);
 	if (text->use() && !always && !text->burn()) {
-		Text (from.first, text->type(), text->dcp_track().get_value_or(DCPTextTrack()), DCPTimePeriod (from.second, dcp_to));
+		Text (from.first, text->type(), text->dcp_track().get_value_or(DCPTextTrack()), DCPTimePeriod (from.second, *dcp_to));
 	}
 }
 
@@ -1231,22 +1254,6 @@ Player::set_dcp_decode_reduction (optional<int> reduction)
 	}
 
 	Change (ChangeType::DONE, PlayerProperty::DCP_DECODE_REDUCTION, false);
-}
-
-
-optional<DCPTime>
-Player::content_time_to_dcp (shared_ptr<Content> content, ContentTime t)
-{
-	boost::mutex::scoped_lock lm (_mutex);
-
-	for (auto i: _pieces) {
-		if (i->content == content) {
-			return i->content_time_to_dcp(t);
-		}
-	}
-
-	/* We couldn't find this content; perhaps things are being changed over */
-	return {};
 }
 
 
