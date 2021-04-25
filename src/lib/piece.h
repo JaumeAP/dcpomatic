@@ -75,13 +75,13 @@ public:
 
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;
-	bool done = false;
 
 private:
 	friend struct overlap_video_test1;
 
 	std::shared_ptr<Content> _content;
 	FrameRateChange _frc;
+	bool _done = false;
 	std::map<AudioStreamPtr, dcpomatic::DCPTime> _stream_last_push_end;
 };
 

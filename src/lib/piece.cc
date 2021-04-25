@@ -54,7 +54,7 @@ Piece::Piece (shared_ptr<Content> c, shared_ptr<Decoder> d, FrameRateChange f)
 void
 Piece::update_pull_to (DCPTime& pull_to) const
 {
-	if (done) {
+	if (_done) {
 		return;
 	}
 
@@ -197,7 +197,7 @@ void
 Piece::pass ()
 {
 	LOG_DEBUG_PLAYER ("Calling pass() on %1", _content->path(0));
-	done = decoder->pass();
+	_done = decoder->pass();
 }
 
 
@@ -219,14 +219,14 @@ Piece::seek (shared_ptr<const Film> film, DCPTime time, bool accurate)
 		   been trimmed to a point between keyframes, or something).
 		   */
 		decoder->seek (dcp_to_content_time(position(), film), true);
-		done = false;
+		_done = false;
 	} else if (position() <= time && time < end(film)) {
 		/* During; seek to position */
 		decoder->seek (dcp_to_content_time(time, film), accurate);
-		done = false;
+		_done = false;
 	} else {
 		/* After; this piece is done */
-		done = true;
+		_done = true;
 	}
 }
 
@@ -234,7 +234,7 @@ Piece::seek (shared_ptr<const Film> film, DCPTime time, bool accurate)
 optional<dcpomatic::DCPTime>
 Piece::decoder_before(shared_ptr<const Film> film, optional<dcpomatic::DCPTime> time)
 {
-	if (done) {
+	if (_done) {
 		return {};
 	}
 
@@ -242,7 +242,7 @@ Piece::decoder_before(shared_ptr<const Film> film, optional<dcpomatic::DCPTime> 
 	DCPOMATIC_ASSERT (t);
 
 	if (*t > end(film)) {
-		done = true;
+		_done = true;
 	} else {
 		/* Given two choices at the same time, pick the one with texts so we see it before
 		   the video.
