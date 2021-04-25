@@ -425,7 +425,7 @@ Player::get_subtitle_fonts ()
 		/* XXX: things may go wrong if there are duplicate font IDs
 		   with different font files.
 		*/
-		auto f = i->decoder->fonts ();
+		auto f = i->fonts ();
 		copy (f.begin(), f.end(), back_inserter(fonts));
 	}
 

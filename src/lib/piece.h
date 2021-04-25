@@ -26,6 +26,7 @@
 #include "audio_stream.h"
 #include "content_video.h"
 #include "dcpomatic_time.h"
+#include "font_data.h"
 #include "frame_rate_change.h"
 #include "types.h"
 #include <map>
@@ -72,6 +73,7 @@ public:
 
 	void seek (std::shared_ptr<const Film> film, dcpomatic::DCPTime time, bool accurate);
 	boost::optional<dcpomatic::DCPTime> decoder_before(std::shared_ptr<const Film> film, boost::optional<dcpomatic::DCPTime> time);
+	std::vector<dcpomatic::FontData> fonts () const;
 
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;

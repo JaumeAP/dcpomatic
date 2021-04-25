@@ -33,6 +33,7 @@
 using std::dynamic_pointer_cast;
 using std::make_shared;
 using std::shared_ptr;
+using std::vector;
 using boost::optional;
 using namespace dcpomatic;
 
@@ -253,5 +254,11 @@ Piece::decoder_before(shared_ptr<const Film> film, optional<dcpomatic::DCPTime> 
 	}
 
 	return {};
+}
+
+vector<dcpomatic::FontData>
+Piece::fonts () const
+{
+	return decoder->fonts();
 }
 
