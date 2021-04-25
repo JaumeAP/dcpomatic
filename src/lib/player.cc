@@ -261,12 +261,9 @@ Player::setup_pieces_unlocked ()
 	for (auto i = _pieces.begin(); i != _pieces.end(); ++i) {
 		if ((*i)->use_video() && (*i)->video_frame_type() != VideoFrameType::THREE_D_LEFT && (*i)->video_frame_type() != VideoFrameType::THREE_D_RIGHT) {
 			/* Look for content later in the content list with in-use video that overlaps this */
-			auto period = DCPTimePeriod((*i)->position(), (*i)->end(_film));
-			auto j = i;
-			++j;
-			for (; j != _pieces.end(); ++j) {
+			for (auto j = std::next(i); j != _pieces.end(); ++j) {
 				if ((*j)->use_video()) {
-					(*i)->set_ignore_video (DCPTimePeriod((*j)->position(), (*j)->end(_film)).overlap(period));
+					(*i)->set_ignore_video ((*j)->period(_film).overlap((*i)->period(_film)));
 				}
 			}
 		}

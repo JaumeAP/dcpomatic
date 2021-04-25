@@ -269,3 +269,10 @@ Piece::ignore_video_at (DCPTime time) const
 	return _ignore_video && _ignore_video->contains(time);
 }
 
+
+DCPTimePeriod
+Piece::period (shared_ptr<const Film> film) const
+{
+	return DCPTimePeriod(position(), end(film));
+}
+
