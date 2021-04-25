@@ -221,7 +221,7 @@ Player::setup_pieces_unlocked ()
 			}
 		}
 
-		auto piece = make_shared<Piece>(i, decoder, frc);
+		auto piece = make_shared<Piece>(_film, i, decoder, frc);
 		_pieces.push_back (piece);
 
 		if (decoder->video) {
@@ -263,7 +263,7 @@ Player::setup_pieces_unlocked ()
 			/* Look for content later in the content list with in-use video that overlaps this */
 			for (auto j = std::next(i); j != _pieces.end(); ++j) {
 				if ((*j)->use_video()) {
-					(*i)->set_ignore_video ((*j)->period(_film).overlap((*i)->period(_film)));
+					(*i)->set_ignore_video ((*j)->period().overlap((*i)->period()));
 				}
 			}
 		}
@@ -595,7 +595,7 @@ Player::pass ()
 	optional<DCPTime> earliest_time;
 
 	for (auto i: _pieces) {
-		auto time = i->decoder_before(_film, earliest_time);
+		auto time = i->decoder_before(earliest_time);
 		if (time) {
 			earliest_time = *time;
 			earliest_content = i;
@@ -634,7 +634,7 @@ Player::pass ()
 			   to `hide' the fact that no audio was emitted during the referenced DCP (though
 			   we need to behave as though it was).
 			*/
-			_last_audio_time = earliest_content->end (_film);
+			_last_audio_time = earliest_content->end ();
 		}
 		break;
 	}
@@ -799,7 +799,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 	/* Fill gaps that we discover now that we have some video which needs to be emitted.
 	   This is where we need to fill to.
 	*/
-	DCPTime fill_to = min (time, piece->end(_film));
+	DCPTime fill_to = min (time, piece->end());
 
 	if (_last_video_time) {
 		DCPTime fill_from = max (*_last_video_time, piece->position());
@@ -812,7 +812,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 				if (fill_to_eyes == Eyes::BOTH) {
 					fill_to_eyes = Eyes::LEFT;
 				}
-				if (fill_to == piece->end(_film)) {
+				if (fill_to == piece->end()) {
 					/* Don't fill after the end of the content */
 					fill_to_eyes = Eyes::LEFT;
 				}
@@ -848,11 +848,11 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 		}
 	}
 
-	_last_video[wp] = piece->player_video (video, _film, _video_container_size);
+	_last_video[wp] = piece->player_video (video, _video_container_size);
 
 	DCPTime t = time;
 	for (int i = 0; i < frc.repeat; ++i) {
-		if (t < piece->end(_film)) {
+		if (t < piece->end()) {
 			emit_video (_last_video[wp], t);
 		}
 		t += one_video_frame ();
@@ -870,10 +870,10 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 		return;
 	}
 
-	int const rfr = piece->resampled_audio_frame_rate (_film);
+	int const rfr = piece->resampled_audio_frame_rate ();
 
 	/* Compute time in the DCP */
-	auto time = piece->resampled_audio_to_dcp (content_audio.frame, _film);
+	auto time = piece->resampled_audio_to_dcp (content_audio.frame);
 	LOG_DEBUG_PLAYER("Received audio frame %1 at %2", content_audio.frame, to_string(time));
 
 	/* And the end of this block in the DCP */
@@ -888,11 +888,11 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 		}
 		content_audio.audio = cut.first;
 		time = cut.second;
-	} else if (time > piece->end(_film)) {
+	} else if (time > piece->end()) {
 		/* Discard it all */
 		return;
-	} else if (end > piece->end(_film)) {
-		Frame const remaining_frames = DCPTime(piece->end(_film) - time).frames_round(rfr);
+	} else if (end > piece->end()) {
+		Frame const remaining_frames = DCPTime(piece->end() - time).frames_round(rfr);
 		if (remaining_frames == 0) {
 			return;
 		}
@@ -981,7 +981,7 @@ Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_p
 	auto const from = piece->content_time_to_dcp(content, subtitle.from());
 	DCPOMATIC_ASSERT (from);
 
-	if (from > piece->end(_film)) {
+	if (from > piece->end()) {
 		return;
 	}
 
@@ -1035,7 +1035,7 @@ Player::subtitle_stop (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_ptr<
 	auto const dcp_to = piece->content_time_to_dcp(content, to);
 	DCPOMATIC_ASSERT (dcp_to);
 
-	if (*dcp_to > piece->end(_film)) {
+	if (*dcp_to > piece->end()) {
 		return;
 	}
 
@@ -1075,7 +1075,7 @@ Player::seek (DCPTime time, bool accurate)
 	}
 
 	for (auto i: _pieces) {
-		i->seek (_film, time, accurate);
+		i->seek (time, accurate);
 	}
 
 	if (accurate) {

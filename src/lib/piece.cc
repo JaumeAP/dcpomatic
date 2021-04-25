@@ -34,12 +34,14 @@ using std::dynamic_pointer_cast;
 using std::make_shared;
 using std::shared_ptr;
 using std::vector;
+using std::weak_ptr;
 using boost::optional;
 using namespace dcpomatic;
 
 
-Piece::Piece (shared_ptr<Content> c, shared_ptr<Decoder> d, FrameRateChange f)
-	: _content (c)
+Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> c, shared_ptr<Decoder> d, FrameRateChange f)
+	: _film (film)
+	, _content (c)
 	, _decoder (d)
 	, _frc (f)
 {
@@ -83,8 +85,11 @@ Piece::content_video_to_dcp (Frame f) const
 
 
 DCPTime
-Piece::resampled_audio_to_dcp (Frame f, shared_ptr<const Film> film) const
+Piece::resampled_audio_to_dcp (Frame f) const
 {
+	auto film = _film.lock ();
+	DCPOMATIC_ASSERT (film);
+
 	/* It might seem more logical here to convert s to a ContentTime (using the FrameRateChange)
 	   then convert that ContentTime to frames at the content's rate.  However this fails for
 	   situations like content at 29.9978733fps, DCP at 30fps.  The accuracy of the Time type is not
@@ -99,8 +104,11 @@ Piece::resampled_audio_to_dcp (Frame f, shared_ptr<const Film> film) const
 
 
 ContentTime
-Piece::dcp_to_content_time (DCPTime t, shared_ptr<const Film> film) const
+Piece::dcp_to_content_time (DCPTime t) const
 {
+	auto film = _film.lock ();
+	DCPOMATIC_ASSERT (film);
+
 	auto s = t - _content->position ();
 	s = min (_content->length_after_trim(film), s);
 	return max (ContentTime(), ContentTime(s, _frc) + _content->trim_start());
@@ -141,15 +149,20 @@ Piece::position () const
 
 
 dcpomatic::DCPTime
-Piece::end (shared_ptr<const Film> film) const
+Piece::end () const
 {
+	auto film = _film.lock ();
+	DCPOMATIC_ASSERT (film);
 	return _content->end (film);
 }
 
 
 shared_ptr<PlayerVideo>
-Piece::player_video (ContentVideo video, shared_ptr<const Film> film, dcp::Size container_size) const
+Piece::player_video (ContentVideo video, dcp::Size container_size) const
 {
+	auto film = _film.lock ();
+	DCPOMATIC_ASSERT (film);
+
 	return std::make_shared<PlayerVideo>(
 		video.image,
 		_content->video->crop (),
@@ -168,8 +181,11 @@ Piece::player_video (ContentVideo video, shared_ptr<const Film> film, dcp::Size 
 
 
 int
-Piece::resampled_audio_frame_rate (shared_ptr<const Film> film) const
+Piece::resampled_audio_frame_rate () const
 {
+	auto film = _film.lock ();
+	DCPOMATIC_ASSERT (film);
+
 	DCPOMATIC_ASSERT (_content->audio);
 	return _content->audio->resampled_frame_rate (film);
 }
@@ -211,7 +227,7 @@ Piece::reference_dcp_audio () const
 
 
 void
-Piece::seek (shared_ptr<const Film> film, DCPTime time, bool accurate)
+Piece::seek (DCPTime time, bool accurate)
 {
 	if (time < position()) {
 		/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
@@ -219,11 +235,11 @@ Piece::seek (shared_ptr<const Film> film, DCPTime time, bool accurate)
 		   content we may not start right at the beginning of the next, causing a gap (if the next content has
 		   been trimmed to a point between keyframes, or something).
 		   */
-		_decoder->seek (dcp_to_content_time(position(), film), true);
+		_decoder->seek (dcp_to_content_time(position()), true);
 		_done = false;
-	} else if (position() <= time && time < end(film)) {
+	} else if (position() <= time && time < end()) {
 		/* During; seek to position */
-		_decoder->seek (dcp_to_content_time(time, film), accurate);
+		_decoder->seek (dcp_to_content_time(time), accurate);
 		_done = false;
 	} else {
 		/* After; this piece is done */
@@ -233,7 +249,7 @@ Piece::seek (shared_ptr<const Film> film, DCPTime time, bool accurate)
 
 
 optional<dcpomatic::DCPTime>
-Piece::decoder_before(shared_ptr<const Film> film, optional<dcpomatic::DCPTime> time)
+Piece::decoder_before(optional<dcpomatic::DCPTime> time)
 {
 	if (_done) {
 		return {};
@@ -242,7 +258,7 @@ Piece::decoder_before(shared_ptr<const Film> film, optional<dcpomatic::DCPTime> 
 	auto t = content_time_to_dcp(_content, std::max(_decoder->position(), _content->trim_start()));
 	DCPOMATIC_ASSERT (t);
 
-	if (*t > end(film)) {
+	if (*t > end()) {
 		_done = true;
 	} else {
 		/* Given two choices at the same time, pick the one with texts so we see it before
@@ -271,8 +287,8 @@ Piece::ignore_video_at (DCPTime time) const
 
 
 DCPTimePeriod
-Piece::period (shared_ptr<const Film> film) const
+Piece::period () const
 {
-	return DCPTimePeriod(position(), end(film));
+	return DCPTimePeriod(position(), end());
 }
 

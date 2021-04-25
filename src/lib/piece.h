@@ -41,14 +41,14 @@ struct check_reuse_old_data_test;
 class Piece
 {
 public:
-	Piece (std::shared_ptr<Content> c, std::shared_ptr<Decoder> d, FrameRateChange f);
+	Piece (std::weak_ptr<const Film> film, std::shared_ptr<Content> c, std::shared_ptr<Decoder> d, FrameRateChange f);
 
 	void update_pull_to (dcpomatic::DCPTime& pull_to) const;
 	void set_last_push_end (AudioStreamPtr stream, dcpomatic::DCPTime last_push_end);
 
 	dcpomatic::DCPTime content_video_to_dcp (Frame f) const;
-	dcpomatic::DCPTime resampled_audio_to_dcp (Frame f, std::shared_ptr<const Film> film) const;
-	dcpomatic::ContentTime dcp_to_content_time (dcpomatic::DCPTime t, std::shared_ptr<const Film> film) const;
+	dcpomatic::DCPTime resampled_audio_to_dcp (Frame f) const;
+	dcpomatic::ContentTime dcp_to_content_time (dcpomatic::DCPTime t) const;
 	boost::optional<dcpomatic::DCPTime> content_time_to_dcp (std::shared_ptr<const Content> content, dcpomatic::ContentTime t) const;
 
 	void pass ();
@@ -61,19 +61,19 @@ public:
 	}
 
 	dcpomatic::DCPTime position () const;
-	dcpomatic::DCPTime end (std::shared_ptr<const Film> film) const;
-	dcpomatic::DCPTimePeriod period (std::shared_ptr<const Film> film) const;
+	dcpomatic::DCPTime end () const;
+	dcpomatic::DCPTimePeriod period () const;
 
-	std::shared_ptr<PlayerVideo> player_video (ContentVideo video, std::shared_ptr<const Film> film, dcp::Size container_size) const;
+	std::shared_ptr<PlayerVideo> player_video (ContentVideo video, dcp::Size container_size) const;
 
-	int resampled_audio_frame_rate (std::shared_ptr<const Film> film) const;
+	int resampled_audio_frame_rate () const;
 	double audio_gain () const;
 	bool reference_dcp_audio () const;
 
 	std::shared_ptr<Decoder> decoder_for (std::shared_ptr<Content> content) const;
 
-	void seek (std::shared_ptr<const Film> film, dcpomatic::DCPTime time, bool accurate);
-	boost::optional<dcpomatic::DCPTime> decoder_before(std::shared_ptr<const Film> film, boost::optional<dcpomatic::DCPTime> time);
+	void seek (dcpomatic::DCPTime time, bool accurate);
+	boost::optional<dcpomatic::DCPTime> decoder_before(boost::optional<dcpomatic::DCPTime> time);
 	std::vector<dcpomatic::FontData> fonts () const;
 
 	void set_ignore_video (boost::optional<dcpomatic::DCPTimePeriod> period) {
@@ -86,6 +86,7 @@ private:
 	friend struct overlap_video_test1;
 	friend struct check_reuse_old_data_test;
 
+	std::weak_ptr<const Film> _film;
 	std::shared_ptr<Content> _content;
 	std::shared_ptr<Decoder> _decoder;
 	FrameRateChange _frc;
