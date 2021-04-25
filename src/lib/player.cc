@@ -1090,22 +1090,7 @@ Player::seek (DCPTime time, bool accurate)
 	}
 
 	for (auto i: _pieces) {
-		if (time < i->position()) {
-			/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
-			   we must seek this (following) content accurately, otherwise when we come to the end of the current
-			   content we may not start right at the beginning of the next, causing a gap (if the next content has
-			   been trimmed to a point between keyframes, or something).
-			*/
-			i->decoder->seek (i->dcp_to_content_time(i->position(), _film), true);
-			i->done = false;
-		} else if (i->position() <= time && time < i->end(_film)) {
-			/* During; seek to position */
-			i->decoder->seek (i->dcp_to_content_time(time, _film), accurate);
-			i->done = false;
-		} else {
-			/* After; this piece is done */
-			i->done = true;
-		}
+		i->seek (_film, time, accurate);
 	}
 
 	if (accurate) {

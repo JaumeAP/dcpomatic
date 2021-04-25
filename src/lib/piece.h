@@ -72,6 +72,7 @@ public:
 
 	dcpomatic::DCPTime decoder_position () const;
 	bool has_text () const;
+	void seek (std::shared_ptr<const Film> film, dcpomatic::DCPTime time, bool accurate);
 
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;

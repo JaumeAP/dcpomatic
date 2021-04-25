@@ -224,3 +224,25 @@ Piece::has_text () const
 	return !decoder->text.empty();
 }
 
+
+void
+Piece::seek (shared_ptr<const Film> film, DCPTime time, bool accurate)
+{
+	if (time < position()) {
+		/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
+		   we must seek this (following) content accurately, otherwise when we come to the end of the current
+		   content we may not start right at the beginning of the next, causing a gap (if the next content has
+		   been trimmed to a point between keyframes, or something).
+		   */
+		decoder->seek (dcp_to_content_time(position(), film), true);
+		done = false;
+	} else if (position() <= time && time < end(film)) {
+		/* During; seek to position */
+		decoder->seek (dcp_to_content_time(time, film), accurate);
+		done = false;
+	} else {
+		/* After; this piece is done */
+		done = true;
+	}
+}
+
