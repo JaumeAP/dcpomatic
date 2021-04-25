@@ -75,7 +75,11 @@ public:
 	boost::optional<dcpomatic::DCPTime> decoder_before(std::shared_ptr<const Film> film, boost::optional<dcpomatic::DCPTime> time);
 	std::vector<dcpomatic::FontData> fonts () const;
 
-	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;
+	void set_ignore_video (boost::optional<dcpomatic::DCPTimePeriod> period) {
+		_ignore_video = period;
+	}
+
+	bool ignore_video_at (dcpomatic::DCPTime time) const;
 
 private:
 	friend struct overlap_video_test1;
@@ -85,6 +89,7 @@ private:
 	std::shared_ptr<Decoder> _decoder;
 	FrameRateChange _frc;
 	bool _done = false;
+	boost::optional<dcpomatic::DCPTimePeriod> _ignore_video;
 	std::map<AudioStreamPtr, dcpomatic::DCPTime> _stream_last_push_end;
 };
 

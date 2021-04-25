@@ -62,8 +62,8 @@ BOOST_AUTO_TEST_CASE (overlap_video_test1)
 	BOOST_REQUIRE_EQUAL (pieces.size(), 2U);
 	BOOST_CHECK_EQUAL (pieces.front()->_content, A);
 	BOOST_CHECK_EQUAL (pieces.back()->_content, B);
-	BOOST_CHECK (pieces.front()->ignore_video);
-	BOOST_CHECK (pieces.front()->ignore_video.get() == dcpomatic::DCPTimePeriod(dcpomatic::DCPTime::from_seconds(1), dcpomatic::DCPTime::from_seconds(1) + B->length_after_trim(film)));
+	BOOST_CHECK (pieces.front()->_ignore_video);
+	BOOST_CHECK (pieces.front()->_ignore_video.get() == dcpomatic::DCPTimePeriod(dcpomatic::DCPTime::from_seconds(1), dcpomatic::DCPTime::from_seconds(1) + B->length_after_trim(film)));
 
 	BOOST_CHECK (player->_black.done());
 

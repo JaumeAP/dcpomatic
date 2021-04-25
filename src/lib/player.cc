@@ -266,7 +266,7 @@ Player::setup_pieces_unlocked ()
 			++j;
 			for (; j != _pieces.end(); ++j) {
 				if ((*j)->use_video()) {
-					(*i)->ignore_video = DCPTimePeriod((*j)->position(), (*j)->end(_film)).overlap(period);
+					(*i)->set_ignore_video (DCPTimePeriod((*j)->position(), (*j)->end(_film)).overlap(period));
 				}
 			}
 		}
@@ -795,7 +795,7 @@ Player::video (weak_ptr<Piece> wp, ContentVideo video)
 		return;
 	}
 
-	if (piece->ignore_video && piece->ignore_video->contains(time)) {
+	if (piece->ignore_video_at(time)) {
 		return;
 	}
 

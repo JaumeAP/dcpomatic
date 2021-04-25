@@ -262,3 +262,10 @@ Piece::fonts () const
 	return _decoder->fonts();
 }
 
+
+bool
+Piece::ignore_video_at (DCPTime time) const
+{
+	return _ignore_video && _ignore_video->contains(time);
+}
+
