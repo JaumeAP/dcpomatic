@@ -23,9 +23,11 @@
 #define DCPOMATIC_PIECE_H
 
 
+#include "audio_stream.h"
 #include "dcpomatic_time.h"
 #include "frame_rate_change.h"
 #include "types.h"
+#include <map>
 
 
 class Content;
@@ -35,18 +37,19 @@ class Decoder;
 class Piece
 {
 public:
-	Piece (std::shared_ptr<Content> c, std::shared_ptr<Decoder> d, FrameRateChange f)
-		: content (c)
-		, decoder (d)
-		, frc (f)
-		, done (false)
-	{}
+	Piece (std::shared_ptr<Content> c, std::shared_ptr<Decoder> d, FrameRateChange f);
+
+	void update_pull_to (dcpomatic::DCPTime& pull_to) const;
+	void set_last_push_end (AudioStreamPtr stream, dcpomatic::DCPTime last_push_end);
 
 	std::shared_ptr<Content> content;
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;
 	FrameRateChange frc;
 	bool done;
+
+private:
+	std::map<AudioStreamPtr, dcpomatic::DCPTime> _stream_last_push_end;
 };
 
 

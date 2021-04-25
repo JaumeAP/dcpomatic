@@ -205,21 +205,6 @@ private:
 	Shuffler* _shuffler = nullptr;
 	std::list<std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime> > _delay;
 
-	class StreamState
-	{
-	public:
-		StreamState () {}
-
-		StreamState (std::shared_ptr<Piece> p, dcpomatic::DCPTime l)
-			: piece(p)
-			, last_push_end(l)
-		{}
-
-		std::shared_ptr<Piece> piece;
-		dcpomatic::DCPTime last_push_end;
-	};
-	std::map<AudioStreamPtr, StreamState> _stream_states;
-
 	Empty _black;
 	Empty _silent;
 

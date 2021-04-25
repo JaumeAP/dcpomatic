@@ -257,15 +257,6 @@ Player::setup_pieces_unlocked ()
 		}
 	}
 
-	_stream_states.clear ();
-	for (auto i: _pieces) {
-		if (i->content->audio) {
-			for (auto j: i->content->audio->streams()) {
-				_stream_states[j] = StreamState (i, i->content->position ());
-			}
-		}
-	}
-
 	for (auto i = _pieces.begin(); i != _pieces.end(); ++i) {
 		if (auto video = (*i)->content->video) {
 			if (video->use() && video->frame_type() != VideoFrameType::THREE_D_LEFT && video->frame_type() != VideoFrameType::THREE_D_RIGHT) {
@@ -753,10 +744,8 @@ Player::pass ()
 	   of our streams, or the position of the _silent.
 	*/
 	auto pull_to = _playback_length;
-	for (auto const& i: _stream_states) {
-		if (!i.second.piece->done && i.second.last_push_end < pull_to) {
-			pull_to = i.second.last_push_end;
-		}
+	for (auto i: _pieces) {
+		i->update_pull_to (pull_to);
 	}
 	if (!_silent.done() && _silent.position() < pull_to) {
 		pull_to = _silent.position();
@@ -1013,8 +1002,7 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 	/* Push */
 
 	_audio_merger.push (content_audio.audio, time);
-	DCPOMATIC_ASSERT (_stream_states.find (stream) != _stream_states.end ());
-	_stream_states[stream].last_push_end = time + DCPTime::from_frames (content_audio.audio->frames(), _film->audio_frame_rate());
+	piece->set_last_push_end (stream, time + DCPTime::from_frames(content_audio.audio->frames(), _film->audio_frame_rate()));
 }
 
 
