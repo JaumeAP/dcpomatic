@@ -71,6 +71,7 @@ public:
 	std::shared_ptr<Decoder> decoder_for (std::shared_ptr<Content> content) const;
 
 	dcpomatic::DCPTime decoder_position () const;
+	bool has_text () const;
 
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;

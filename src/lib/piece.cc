@@ -216,3 +216,11 @@ Piece::reference_dcp_audio () const
 	auto dcp = dynamic_pointer_cast<DCPContent>(_content);
 	return dcp && dcp->reference_audio();
 }
+
+
+bool
+Piece::has_text () const
+{
+	return !decoder->text.empty();
+}
+

@@ -610,7 +610,7 @@ Player::pass ()
 			/* Given two choices at the same time, pick the one with texts so we see it before
 			   the video.
 			*/
-			if (!earliest_time || t < *earliest_time || (t == *earliest_time && !i->decoder->text.empty())) {
+			if (!earliest_time || t < *earliest_time || (t == *earliest_time && i->has_text())) {
 				earliest_time = t;
 				earliest_content = i;
 			}
