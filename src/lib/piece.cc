@@ -40,7 +40,7 @@ using namespace dcpomatic;
 
 Piece::Piece (shared_ptr<Content> c, shared_ptr<Decoder> d, FrameRateChange f)
 	: _content (c)
-	, decoder (d)
+	, _decoder (d)
 	, _frc (f)
 {
 	if (_content->audio) {
@@ -187,7 +187,7 @@ shared_ptr<Decoder>
 Piece::decoder_for (shared_ptr<Content> content) const
 {
 	if (content == _content) {
-		return decoder;
+		return _decoder;
 	}
 
 	return {};
@@ -198,7 +198,7 @@ void
 Piece::pass ()
 {
 	LOG_DEBUG_PLAYER ("Calling pass() on %1", _content->path(0));
-	_done = decoder->pass();
+	_done = _decoder->pass();
 }
 
 
@@ -219,11 +219,11 @@ Piece::seek (shared_ptr<const Film> film, DCPTime time, bool accurate)
 		   content we may not start right at the beginning of the next, causing a gap (if the next content has
 		   been trimmed to a point between keyframes, or something).
 		   */
-		decoder->seek (dcp_to_content_time(position(), film), true);
+		_decoder->seek (dcp_to_content_time(position(), film), true);
 		_done = false;
 	} else if (position() <= time && time < end(film)) {
 		/* During; seek to position */
-		decoder->seek (dcp_to_content_time(time, film), accurate);
+		_decoder->seek (dcp_to_content_time(time, film), accurate);
 		_done = false;
 	} else {
 		/* After; this piece is done */
@@ -239,7 +239,7 @@ Piece::decoder_before(shared_ptr<const Film> film, optional<dcpomatic::DCPTime> 
 		return {};
 	}
 
-	auto t = content_time_to_dcp(_content, std::max(decoder->position(), _content->trim_start()));
+	auto t = content_time_to_dcp(_content, std::max(_decoder->position(), _content->trim_start()));
 	DCPOMATIC_ASSERT (t);
 
 	if (*t > end(film)) {
@@ -248,7 +248,7 @@ Piece::decoder_before(shared_ptr<const Film> film, optional<dcpomatic::DCPTime> 
 		/* Given two choices at the same time, pick the one with texts so we see it before
 		   the video.
 		   */
-		if (!time || t < *time || (t == *time && !decoder->text.empty())) {
+		if (!time || t < *time || (t == *time && !_decoder->text.empty())) {
 			return t;
 		}
 	}
@@ -259,6 +259,6 @@ Piece::decoder_before(shared_ptr<const Film> film, optional<dcpomatic::DCPTime> 
 vector<dcpomatic::FontData>
 Piece::fonts () const
 {
-	return decoder->fonts();
+	return _decoder->fonts();
 }
 

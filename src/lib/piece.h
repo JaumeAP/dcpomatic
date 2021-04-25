@@ -36,7 +36,7 @@ class Content;
 class Decoder;
 class PlayerVideo;
 struct overlap_video_test1;
-
+struct check_reuse_old_data_test;
 
 class Piece
 {
@@ -75,13 +75,14 @@ public:
 	boost::optional<dcpomatic::DCPTime> decoder_before(std::shared_ptr<const Film> film, boost::optional<dcpomatic::DCPTime> time);
 	std::vector<dcpomatic::FontData> fonts () const;
 
-	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;
 
 private:
 	friend struct overlap_video_test1;
+	friend struct check_reuse_old_data_test;
 
 	std::shared_ptr<Content> _content;
+	std::shared_ptr<Decoder> _decoder;
 	FrameRateChange _frc;
 	bool _done = false;
 	std::map<AudioStreamPtr, dcpomatic::DCPTime> _stream_last_push_end;
