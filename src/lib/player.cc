@@ -598,22 +598,10 @@ Player::pass ()
 	optional<DCPTime> earliest_time;
 
 	for (auto i: _pieces) {
-		if (i->done) {
-			continue;
-		}
-
-		auto const t = i->decoder_position ();
-		if (t > i->end(_film)) {
-			i->done = true;
-		} else {
-
-			/* Given two choices at the same time, pick the one with texts so we see it before
-			   the video.
-			*/
-			if (!earliest_time || t < *earliest_time || (t == *earliest_time && i->has_text())) {
-				earliest_time = t;
-				earliest_content = i;
-			}
+		auto time = i->decoder_before(_film, earliest_time);
+		if (time) {
+			earliest_time = *time;
+			earliest_content = i;
 		}
 	}
 

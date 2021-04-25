@@ -70,9 +70,8 @@ public:
 
 	std::shared_ptr<Decoder> decoder_for (std::shared_ptr<Content> content) const;
 
-	dcpomatic::DCPTime decoder_position () const;
-	bool has_text () const;
 	void seek (std::shared_ptr<const Film> film, dcpomatic::DCPTime time, bool accurate);
+	boost::optional<dcpomatic::DCPTime> decoder_before(std::shared_ptr<const Film> film, boost::optional<dcpomatic::DCPTime> time);
 
 	std::shared_ptr<Decoder> decoder;
 	boost::optional<dcpomatic::DCPTimePeriod> ignore_video;

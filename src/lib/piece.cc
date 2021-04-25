@@ -193,15 +193,6 @@ Piece::decoder_for (shared_ptr<Content> content) const
 }
 
 
-DCPTime
-Piece::decoder_position () const
-{
-	auto t = content_time_to_dcp(_content, std::max(decoder->position(), _content->trim_start()));
-	DCPOMATIC_ASSERT (t);
-	return *t;
-}
-
-
 void
 Piece::pass ()
 {
@@ -215,13 +206,6 @@ Piece::reference_dcp_audio () const
 {
 	auto dcp = dynamic_pointer_cast<DCPContent>(_content);
 	return dcp && dcp->reference_audio();
-}
-
-
-bool
-Piece::has_text () const
-{
-	return !decoder->text.empty();
 }
 
 
@@ -244,5 +228,30 @@ Piece::seek (shared_ptr<const Film> film, DCPTime time, bool accurate)
 		/* After; this piece is done */
 		done = true;
 	}
+}
+
+
+optional<dcpomatic::DCPTime>
+Piece::decoder_before(shared_ptr<const Film> film, optional<dcpomatic::DCPTime> time)
+{
+	if (done) {
+		return {};
+	}
+
+	auto t = content_time_to_dcp(_content, std::max(decoder->position(), _content->trim_start()));
+	DCPOMATIC_ASSERT (t);
+
+	if (*t > end(film)) {
+		done = true;
+	} else {
+		/* Given two choices at the same time, pick the one with texts so we see it before
+		   the video.
+		   */
+		if (!time || t < *time || (t == *time && !decoder->text.empty())) {
+			return t;
+		}
+	}
+
+	return {};
 }
 
