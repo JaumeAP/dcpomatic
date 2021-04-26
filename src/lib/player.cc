@@ -20,38 +20,38 @@
 
 
 #include "atmos_decoder.h"
-#include "player.h"
-#include "film.h"
 #include "audio_buffers.h"
+#include "audio_content.h"
+#include "audio_decoder.h"
+#include "audio_processor.h"
+#include "compose.hpp"
+#include "config.h"
 #include "content_audio.h"
 #include "dcp_content.h"
+#include "dcp_decoder.h"
 #include "dcpomatic_log.h"
-#include "job.h"
-#include "image.h"
-#include "raw_image_proxy.h"
-#include "ratio.h"
-#include "log.h"
-#include "render_text.h"
-#include "config.h"
-#include "content_video.h"
-#include "player_video.h"
-#include "frame_rate_change.h"
-#include "audio_processor.h"
-#include "playlist.h"
-#include "referenced_reel_asset.h"
-#include "decoder_factory.h"
 #include "decoder.h"
-#include "video_decoder.h"
-#include "audio_decoder.h"
+#include "decoder_factory.h"
+#include "ffmpeg_content.h"
+#include "film.h"
+#include "frame_rate_change.h"
+#include "image.h"
+#include "image_decoder.h"
+#include "job.h"
+#include "log.h"
+#include "piece_video.h"
+#include "player.h"
+#include "player_video.h"
+#include "playlist.h"
+#include "ratio.h"
+#include "raw_image_proxy.h"
+#include "referenced_reel_asset.h"
+#include "render_text.h"
+#include "shuffler.h"
 #include "text_content.h"
 #include "text_decoder.h"
-#include "ffmpeg_content.h"
-#include "audio_content.h"
-#include "dcp_decoder.h"
-#include "image_decoder.h"
-#include "compose.hpp"
-#include "shuffler.h"
 #include "timer.h"
+#include "video_decoder.h"
 #include <dcp/reel.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/reel_subtitle_asset.h>
@@ -217,12 +217,12 @@ Player::setup_pieces_unlocked ()
 		auto piece = make_shared<Piece>(_film, i, decoder, frc);
 		_pieces.push_back (piece);
 
-		if (decoder->video) {
+		if (i->video) {
 			if (i->video->frame_type() == VideoFrameType::THREE_D_LEFT || i->video->frame_type() == VideoFrameType::THREE_D_RIGHT) {
 				/* We need a Shuffler to cope with 3D L/R video data arriving out of sequence */
-				decoder->video->Data.connect (bind(&Shuffler::video, _shuffler.get(), weak_ptr<Piece>(piece), _1));
+				piece->Video.connect (bind(&Shuffler::video, _shuffler.get(), weak_ptr<Piece>(piece), _1));
 			} else {
-				decoder->video->Data.connect (bind(&Player::video, this, weak_ptr<Piece>(piece), _1));
+				piece->Video.connect (bind(&Player::video, this, weak_ptr<Piece>(piece), _1));
 			}
 		}
 
@@ -757,7 +757,7 @@ Player::open_subtitles_for_frame (DCPTime time) const
 
 
 void
-Player::video (weak_ptr<Piece> wp, ContentVideo video)
+Player::video (weak_ptr<Piece> wp, PieceVideo video)
 {
 	auto piece = wp.lock ();
 	if (!piece) {

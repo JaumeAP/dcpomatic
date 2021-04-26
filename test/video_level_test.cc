@@ -26,17 +26,17 @@
 
 
 #include "lib/content_factory.h"
-#include "lib/content_video.h"
 #include "lib/dcp_content.h"
-#include "lib/film.h"
 #include "lib/ffmpeg_content.h"
 #include "lib/ffmpeg_decoder.h"
+#include "lib/ffmpeg_encoder.h"
 #include "lib/ffmpeg_image_proxy.h"
+#include "lib/film.h"
 #include "lib/image.h"
 #include "lib/image_content.h"
 #include "lib/image_decoder.h"
-#include "lib/ffmpeg_encoder.h"
 #include "lib/job_manager.h"
+#include "lib/piece_video.h"
 #include "lib/transcode_job.h"
 #include "lib/video_decoder.h"
 #include "test.h"
@@ -125,14 +125,14 @@ BOOST_AUTO_TEST_CASE (ffmpeg_image_video_range_expanded)
 }
 
 
-static optional<ContentVideo> content_video;
+static shared_ptr<const ImageProxy> decoded_image;
 
 
 static
 void
-video_handler (ContentVideo cv)
+video_handler (shared_ptr<const ImageProxy> image)
 {
-	content_video = cv;
+	decoded_image = image;
 }
 
 
@@ -201,12 +201,12 @@ pixel_range (shared_ptr<Film> film, shared_ptr<const FFmpegContent> content)
 {
 	auto decoder = make_shared<FFmpegDecoder>(film, content, false);
 	decoder->video->Data.connect (bind(&video_handler, _1));
-	content_video = boost::none;
-	while (!content_video) {
+	decoded_image = {};
+	while (!decoded_image) {
 		BOOST_REQUIRE (!decoder->pass());
 	}
 
-	return pixel_range (content_video->image->image().image);
+	return pixel_range (decoded_image->image().image);
 }
 
 
@@ -216,12 +216,12 @@ pixel_range (shared_ptr<Film> film, shared_ptr<const ImageContent> content)
 {
 	auto decoder = make_shared<ImageDecoder>(film, content);
 	decoder->video->Data.connect (bind(&video_handler, _1));
-	content_video = boost::none;
-	while (!content_video) {
+	decoded_image = {};
+	while (!decoded_image) {
 		BOOST_REQUIRE (!decoder->pass());
 	}
 
-	return pixel_range (content_video->image->image().image);
+	return pixel_range (decoded_image->image().image);
 }
 
 

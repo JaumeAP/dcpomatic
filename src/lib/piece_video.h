@@ -18,26 +18,26 @@
 
 */
 
-#ifndef DCPOMATIC_CONTENT_VIDEO_H
-#define DCPOMATIC_CONTENT_VIDEO_H
+
+#ifndef DCPOMATIC_PIECE_VIDEO_H
+#define DCPOMATIC_PIECE_VIDEO_H
+
 
 #include "types.h"
 
+
 class ImageProxy;
 
-/** @class ContentVideo
- *  @brief A frame of video straight out of some content.
+
+/** @class PieceVideo
+ *  @brief A frame of video straight out of a Piece.
  */
-class ContentVideo
+class PieceVideo
 {
 public:
-	ContentVideo ()
-		: frame (0)
-		, eyes (Eyes::LEFT)
-		, part (Part::WHOLE)
-	{}
+	PieceVideo () {}
 
-	ContentVideo (std::shared_ptr<const ImageProxy> i, Frame f, Eyes e, Part p)
+	PieceVideo (std::shared_ptr<const ImageProxy> i, Frame f, Eyes e, Part p)
 		: image (i)
 		, frame (f)
 		, eyes (e)
@@ -45,9 +45,10 @@ public:
 	{}
 
 	std::shared_ptr<const ImageProxy> image;
-	Frame frame;
-	Eyes eyes;
-	Part part;
+	Frame frame = 0;
+	Eyes eyes = Eyes::LEFT;
+	Part part = Part::WHOLE;
 };
+
 
 #endif

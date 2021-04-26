@@ -24,7 +24,7 @@
 
 
 #include "types.h"
-#include "content_video.h"
+#include "piece_video.h"
 #include <boost/signals2.hpp>
 
 
@@ -39,17 +39,17 @@ class Shuffler
 public:
 	void clear ();
 	void flush ();
-	void video (std::weak_ptr<Piece>, ContentVideo video);
+	void video (std::weak_ptr<Piece>, PieceVideo video);
 
-	boost::signals2::signal<void (std::weak_ptr<Piece>, ContentVideo)> Video;
+	boost::signals2::signal<void (std::weak_ptr<Piece>, PieceVideo)> Video;
 
-	typedef std::pair<std::weak_ptr<Piece>, ContentVideo> Store;
+	typedef std::pair<std::weak_ptr<Piece>, PieceVideo> Store;
 
 private:
 	friend struct ::shuffler_test5;
 
 	std::list<Store> _store;
-	boost::optional<ContentVideo> _last;
+	boost::optional<PieceVideo> _last;
 	static int const _max_size;
 };
 

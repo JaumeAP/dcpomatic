@@ -31,10 +31,10 @@
 #include "content_atmos.h"
 #include "content_audio.h"
 #include "content_text.h"
-#include "content_video.h"
 #include "empty.h"
 #include "film.h"
 #include "piece.h"
+#include "piece_video.h"
 #include "player_text.h"
 #include "position_image.h"
 #include "shuffler.h"
@@ -138,7 +138,7 @@ private:
 	void playlist_content_change (ChangeType, int, bool);
 	std::shared_ptr<PlayerVideo> black_player_video_frame (Eyes eyes) const;
 
-	void video (std::weak_ptr<Piece>, ContentVideo);
+	void video (std::weak_ptr<Piece>, PieceVideo);
 	void audio (std::weak_ptr<Piece>, AudioStreamPtr, ContentAudio);
 	void bitmap_text_start (std::weak_ptr<Piece>, std::weak_ptr<const Content>, std::weak_ptr<const TextContent>, ContentBitmapText);
 	void plain_text_start (std::weak_ptr<Piece>, std::weak_ptr<const Content>, std::weak_ptr<const TextContent>, ContentStringText);

@@ -28,9 +28,9 @@
 
 #include "lib/ffmpeg_content.h"
 #include "lib/ffmpeg_decoder.h"
-#include "lib/null_log.h"
 #include "lib/film.h"
-#include "lib/content_video.h"
+#include "lib/null_log.h"
+#include "lib/piece_video.h"
 #include "lib/video_decoder.h"
 #include "test.h"
 #include <boost/test/unit_test.hpp>
@@ -39,21 +39,23 @@
 #include <iostream>
 
 using std::cerr;
-using std::vector;
-using std::list;
 using std::cout;
+using std::list;
+using std::make_shared;
 using std::shared_ptr;
+using std::vector;
 using boost::optional;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
 using namespace dcpomatic;
 
-static optional<ContentVideo> stored;
+static optional<Frame> stored_frame;
+
 static bool
-store (ContentVideo v)
+store (Frame frame)
 {
-	stored = v;
+	stored_frame = frame;
 	return true;
 }
 
@@ -62,9 +64,9 @@ check (shared_ptr<FFmpegDecoder> decoder, int frame)
 {
 	BOOST_REQUIRE (decoder->ffmpeg_content()->video_frame_rate ());
 	decoder->seek (ContentTime::from_frames (frame, decoder->ffmpeg_content()->video_frame_rate().get()), true);
-	stored = optional<ContentVideo> ();
-	while (!decoder->pass() && !stored) {}
-	BOOST_CHECK (stored->frame <= frame);
+	stored_frame = {};
+	while (!decoder->pass() && !stored_frame) {}
+	BOOST_CHECK (*stored_frame <= frame);
 }
 
 static void
@@ -74,11 +76,11 @@ test (boost::filesystem::path file, vector<int> frames)
 	BOOST_REQUIRE (boost::filesystem::exists (path));
 
 	shared_ptr<Film> film = new_test_film ("ffmpeg_decoder_seek_test_" + file.string());
-	shared_ptr<FFmpegContent> content (new FFmpegContent (path));
+	auto content = make_shared<FFmpegContent>(path);
 	film->examine_and_add_content (content);
 	BOOST_REQUIRE (!wait_for_jobs());
-	shared_ptr<FFmpegDecoder> decoder (new FFmpegDecoder (film, content, false));
-	decoder->video->Data.connect (bind (&store, _1));
+	auto decoder = make_shared<FFmpegDecoder>(film, content, false);
+	decoder->video->Data.connect (bind (&store, _2));
 
 	for (vector<int>::const_iterator i = frames.begin(); i != frames.end(); ++i) {
 		check (decoder, *i);

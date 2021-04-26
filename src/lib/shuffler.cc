@@ -20,7 +20,6 @@
 
 
 #include "shuffler.h"
-#include "content_video.h"
 #include "dcpomatic_assert.h"
 #include "dcpomatic_log.h"
 #include <string>
@@ -49,7 +48,7 @@ struct Comparator
 
 
 void
-Shuffler::video (weak_ptr<Piece> weak_piece, ContentVideo video)
+Shuffler::video (weak_ptr<Piece> weak_piece, PieceVideo video)
 {
 	LOG_DEBUG_THREE_D ("Shuffler::video frame=%1 eyes=%2 part=%3", video.frame, static_cast<int>(video.eyes), static_cast<int>(video.part));
 
@@ -114,7 +113,7 @@ Shuffler::clear ()
 {
 	LOG_DEBUG_THREE_D_NC ("Shuffler::clear");
 	_store.clear ();
-	_last = optional<ContentVideo>();
+	_last = optional<PieceVideo>();
 }
 
 

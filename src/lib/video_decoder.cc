@@ -157,27 +157,27 @@ VideoDecoder::emit (shared_ptr<const Film> film, shared_ptr<const ImageProxy> im
 	switch (vft) {
 	case VideoFrameType::TWO_D:
 	case VideoFrameType::THREE_D:
-		Data (ContentVideo (image, frame, eyes, Part::WHOLE));
+		Data (image, frame, eyes, Part::WHOLE);
 		break;
 	case VideoFrameType::THREE_D_ALTERNATE:
 	{
-		Data (ContentVideo (image, frame, eyes, Part::WHOLE));
+		Data (image, frame, eyes, Part::WHOLE);
 		_last_emitted_eyes = eyes;
 		break;
 	}
 	case VideoFrameType::THREE_D_LEFT_RIGHT:
-		Data (ContentVideo (image, frame, Eyes::LEFT, Part::LEFT_HALF));
-		Data (ContentVideo (image, frame, Eyes::RIGHT, Part::RIGHT_HALF));
+		Data (image, frame, Eyes::LEFT, Part::LEFT_HALF);
+		Data (image, frame, Eyes::RIGHT, Part::RIGHT_HALF);
 		break;
 	case VideoFrameType::THREE_D_TOP_BOTTOM:
-		Data (ContentVideo (image, frame, Eyes::LEFT, Part::TOP_HALF));
-		Data (ContentVideo (image, frame, Eyes::RIGHT, Part::BOTTOM_HALF));
+		Data (image, frame, Eyes::LEFT, Part::TOP_HALF);
+		Data (image, frame, Eyes::RIGHT, Part::BOTTOM_HALF);
 		break;
 	case VideoFrameType::THREE_D_LEFT:
-		Data (ContentVideo (image, frame, Eyes::LEFT, Part::WHOLE));
+		Data (image, frame, Eyes::LEFT, Part::WHOLE);
 		break;
 	case VideoFrameType::THREE_D_RIGHT:
-		Data (ContentVideo (image, frame, Eyes::RIGHT, Part::WHOLE));
+		Data (image, frame, Eyes::RIGHT, Part::WHOLE);
 		break;
 	default:
 		DCPOMATIC_ASSERT (false);

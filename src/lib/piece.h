@@ -24,11 +24,12 @@
 
 
 #include "audio_stream.h"
-#include "content_video.h"
 #include "dcpomatic_time.h"
 #include "font_data.h"
 #include "frame_rate_change.h"
+#include "piece_video.h"
 #include "types.h"
+#include <boost/signals2.hpp>
 #include <map>
 
 
@@ -37,6 +38,7 @@ class Decoder;
 class PlayerVideo;
 struct overlap_video_test1;
 struct check_reuse_old_data_test;
+
 
 class Piece
 {
@@ -64,7 +66,7 @@ public:
 	dcpomatic::DCPTime end () const;
 	dcpomatic::DCPTimePeriod period () const;
 
-	std::shared_ptr<PlayerVideo> player_video (ContentVideo video, dcp::Size container_size) const;
+	std::shared_ptr<PlayerVideo> player_video (PieceVideo video, dcp::Size container_size) const;
 
 	int resampled_audio_frame_rate () const;
 	double audio_gain () const;
@@ -82,9 +84,13 @@ public:
 
 	bool ignore_video_at (dcpomatic::DCPTime time) const;
 
+	boost::signals2::signal<void (PieceVideo)> Video;
+
 private:
 	friend struct overlap_video_test1;
 	friend struct check_reuse_old_data_test;
+
+	void video (std::shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part);
 
 	std::weak_ptr<const Film> _film;
 	std::shared_ptr<Content> _content;

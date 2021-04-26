@@ -19,9 +19,9 @@
 */
 
 
-#include "lib/content_video.h"
 #include "lib/image_content.h"
 #include "lib/piece.h"
+#include "lib/piece_video.h"
 #include "lib/shuffler.h"
 #include <boost/test/unit_test.hpp>
 
@@ -41,16 +41,16 @@ push (Shuffler& s, int frame, Eyes eyes)
 {
 	auto content = make_shared<ImageContent>("test/data/flat_red.png");
 	auto piece = make_shared<Piece>(shared_ptr<Film>(), content, shared_ptr<Decoder>(), FrameRateChange(24, 24));
-	ContentVideo cv;
+	PieceVideo cv;
 	cv.frame = frame;
 	cv.eyes = eyes;
 	s.video (piece, cv);
 }
 
-list<ContentVideo> pending_cv;
+list<PieceVideo> pending_cv;
 
 static void
-receive (weak_ptr<Piece>, ContentVideo cv)
+receive (weak_ptr<Piece>, PieceVideo cv)
 {
 	pending_cv.push_back (cv);
 }

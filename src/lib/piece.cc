@@ -26,8 +26,10 @@
 #include "decoder.h"
 #include "film.h"
 #include "piece.h"
+#include "piece_video.h"
 #include "player_video.h"
 #include "video_content.h"
+#include "video_decoder.h"
 
 
 using std::dynamic_pointer_cast;
@@ -50,8 +52,18 @@ Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> c, shared_ptr<Decod
 			_stream_last_push_end[j] = _content->position();
 		}
 	}
+
+	if (_decoder->video) {
+		_decoder->video->Data.connect (boost::bind(&Piece::video, this, _1, _2, _3, _4));
+	}
 }
 
+
+void
+Piece::video (shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part)
+{
+	Video (PieceVideo(image, frame, eyes, part));
+}
 
 
 void
@@ -158,7 +170,7 @@ Piece::end () const
 
 
 shared_ptr<PlayerVideo>
-Piece::player_video (ContentVideo video, dcp::Size container_size) const
+Piece::player_video (PieceVideo video, dcp::Size container_size) const
 {
 	auto film = _film.lock ();
 	DCPOMATIC_ASSERT (film);
