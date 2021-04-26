@@ -18,25 +18,29 @@
 
 */
 
+
 #ifndef DCPOMATIC_PLAYER_H
 #define DCPOMATIC_PLAYER_H
 
-#include "atmos_metadata.h"
-#include "player_text.h"
+
 #include "active_text.h"
-#include "content_text.h"
-#include "film.h"
+#include "atmos_metadata.h"
+#include "audio_merger.h"
+#include "audio_stream.h"
 #include "content.h"
 #include "content_atmos.h"
-#include "position_image.h"
-#include "piece.h"
-#include "content_video.h"
 #include "content_audio.h"
-#include "audio_stream.h"
-#include "audio_merger.h"
+#include "content_text.h"
+#include "content_video.h"
 #include "empty.h"
+#include "film.h"
+#include "piece.h"
+#include "player_text.h"
+#include "position_image.h"
+#include "shuffler.h"
 #include <boost/atomic.hpp>
 #include <list>
+
 
 namespace dcp {
 	class ReelAsset;
@@ -46,12 +50,13 @@ namespace dcpomatic {
 	class FontData;
 }
 
+
 class AtmosContent;
 class PlayerVideo;
 class Playlist;
 class AudioBuffers;
 class ReferencedReelAsset;
-class Shuffler;
+
 
 class PlayerProperty
 {
@@ -64,6 +69,7 @@ public:
 	static int const PLAYBACK_LENGTH;
 };
 
+
 /** @class Player
  *  @brief A class which can play a Playlist.
  */
@@ -72,7 +78,6 @@ class Player : public std::enable_shared_from_this<Player>
 public:
 	Player (std::shared_ptr<const Film>);
 	Player (std::shared_ptr<const Film>, std::shared_ptr<const Playlist> playlist);
-	~Player ();
 
 	Player (Player const& Player) = delete;
 	Player& operator= (Player const& Player) = delete;
@@ -196,8 +201,8 @@ private:
 	LastVideoMap _last_video;
 
 	AudioMerger _audio_merger;
-	Shuffler* _shuffler = nullptr;
-	std::list<std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime> > _delay;
+	std::unique_ptr<Shuffler> _shuffler;
+	std::list<std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime>> _delay;
 
 	Empty _black;
 	Empty _silent;

@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_SHUFFLER_H
+#define DCPOMATIC_SHUFFLER_H
+
+
 #include "types.h"
 #include "content_video.h"
 #include <boost/signals2.hpp>
@@ -48,3 +52,7 @@ private:
 	boost::optional<ContentVideo> _last;
 	static int const _max_size;
 };
+
+
+#endif
+

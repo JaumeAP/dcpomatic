@@ -70,6 +70,7 @@ using std::dynamic_pointer_cast;
 using std::list;
 using std::make_pair;
 using std::make_shared;
+using std::make_shared;
 using std::map;
 using std::max;
 using std::min;
@@ -78,9 +79,8 @@ using std::pair;
 using std::shared_ptr;
 using std::vector;
 using std::weak_ptr;
-using std::make_shared;
+using std::unique_ptr;
 using boost::optional;
-using boost::scoped_ptr;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
@@ -134,12 +134,6 @@ Player::construct ()
 }
 
 
-Player::~Player ()
-{
-	delete _shuffler;
-}
-
-
 void
 Player::setup_pieces ()
 {
@@ -170,8 +164,7 @@ Player::setup_pieces_unlocked ()
 	auto old_pieces = _pieces;
 	_pieces.clear ();
 
-	delete _shuffler;
-	_shuffler = new Shuffler();
+	_shuffler.reset (new Shuffler());
 	_shuffler->Video.connect(bind(&Player::video, this, _1, _2));
 
 	for (auto i: playlist()->content()) {
@@ -227,7 +220,7 @@ Player::setup_pieces_unlocked ()
 		if (decoder->video) {
 			if (i->video->frame_type() == VideoFrameType::THREE_D_LEFT || i->video->frame_type() == VideoFrameType::THREE_D_RIGHT) {
 				/* We need a Shuffler to cope with 3D L/R video data arriving out of sequence */
-				decoder->video->Data.connect (bind(&Shuffler::video, _shuffler, weak_ptr<Piece>(piece), _1));
+				decoder->video->Data.connect (bind(&Shuffler::video, _shuffler.get(), weak_ptr<Piece>(piece), _1));
 			} else {
 				decoder->video->Data.connect (bind(&Player::video, this, weak_ptr<Piece>(piece), _1));
 			}
@@ -513,7 +506,7 @@ Player::get_reel_assets ()
 			continue;
 		}
 
-		scoped_ptr<DCPDecoder> decoder;
+		unique_ptr<DCPDecoder> decoder;
 		try {
 			decoder.reset (new DCPDecoder(_film, j, false, false, shared_ptr<DCPDecoder>()));
 		} catch (...) {
