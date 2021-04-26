@@ -52,8 +52,7 @@ TextDecoder::TextDecoder (
 
 }
 
-
-/** Called by subclasses when an image subtitle is starting.
+/* Called when an image subtitle is starting.
  *  @param from From time of the subtitle.
  *  @param image Subtitle image.
  *  @param rect Area expressed as a fraction of the video frame that this subtitle
