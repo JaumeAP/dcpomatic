@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2020 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2016-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -18,6 +18,7 @@
 
 */
 
+
 #include "atmos_mxf_content.h"
 #include "atmos_mxf_decoder.h"
 #include "ffmpeg_content.h"
@@ -34,66 +35,50 @@
 #include "video_mxf_decoder.h"
 #include "timer.h"
 
-using std::list;
+
+using std::make_shared;
 using std::shared_ptr;
 using std::dynamic_pointer_cast;
 
-template <class T>
-shared_ptr<T>
-maybe_cast (shared_ptr<Decoder> d)
-{
-	if (!d) {
-		return shared_ptr<T> ();
-	}
-	return dynamic_pointer_cast<T> (d);
-}
 
-/**
-   @param tolerant true to proceed in the face of `survivable' errors, otherwise false.
-   @param old_decoder A `used' decoder that has been previously made for this piece of content, or 0
-*/
+/** @param tolerant true to proceed in the face of `survivable' errors, otherwise false
+ *  @param old_decoder A `used' decoder that has been previously made for this piece of content, or nullptr
+ */
 shared_ptr<Decoder>
 decoder_factory (shared_ptr<const Film> film, shared_ptr<const Content> content, bool fast, bool tolerant, shared_ptr<Decoder> old_decoder)
 {
-	shared_ptr<const FFmpegContent> fc = dynamic_pointer_cast<const FFmpegContent> (content);
-	if (fc) {
-		return shared_ptr<Decoder> (new FFmpegDecoder(film, fc, fast));
+	if (auto c = dynamic_pointer_cast<const FFmpegContent>(content)) {
+		return make_shared<FFmpegDecoder>(film, c, fast);
 	}
 
-	shared_ptr<const DCPContent> dc = dynamic_pointer_cast<const DCPContent> (content);
-	if (dc) {
+	if (auto c = dynamic_pointer_cast<const DCPContent>(content)) {
 		try {
-			return shared_ptr<Decoder> (new DCPDecoder(film, dc, fast, tolerant, maybe_cast<DCPDecoder>(old_decoder)));
+			return make_shared<DCPDecoder>(film, c, fast, tolerant, dynamic_pointer_cast<DCPDecoder>(old_decoder));
 		} catch (KDMError& e) {
 			/* This will be found and reported to the user when the content is examined */
-			return shared_ptr<Decoder>();
+			return {};
 		}
 	}
 
-	shared_ptr<const ImageContent> ic = dynamic_pointer_cast<const ImageContent> (content);
-	if (ic) {
-		return shared_ptr<Decoder> (new ImageDecoder(film, ic));
+	if (auto c = dynamic_pointer_cast<const ImageContent>(content)) {
+		return make_shared<ImageDecoder>(film, c);
 	}
 
-	shared_ptr<const StringTextFileContent> rc = dynamic_pointer_cast<const StringTextFileContent> (content);
-	if (rc) {
-		return shared_ptr<Decoder> (new StringTextFileDecoder(film, rc));
+	if (auto c = dynamic_pointer_cast<const StringTextFileContent>(content)) {
+		return make_shared<StringTextFileDecoder>(film, c);
 	}
 
-	shared_ptr<const DCPSubtitleContent> dsc = dynamic_pointer_cast<const DCPSubtitleContent> (content);
-	if (dsc) {
-		return shared_ptr<Decoder> (new DCPSubtitleDecoder(film, dsc));
+	if (auto c = dynamic_pointer_cast<const DCPSubtitleContent>(content)) {
+		return make_shared<DCPSubtitleDecoder>(film, c);
 	}
 
-	shared_ptr<const VideoMXFContent> vmc = dynamic_pointer_cast<const VideoMXFContent> (content);
-	if (vmc) {
-		return shared_ptr<Decoder> (new VideoMXFDecoder(film, vmc));
+	if (auto c = dynamic_pointer_cast<const VideoMXFContent>(content)) {
+		return make_shared<VideoMXFDecoder>(film, c);
 	}
 
-	shared_ptr<const AtmosMXFContent> amc = dynamic_pointer_cast<const AtmosMXFContent> (content);
-	if (amc) {
-		return shared_ptr<Decoder> (new AtmosMXFDecoder(film, amc));
+	if (auto c = dynamic_pointer_cast<const AtmosMXFContent>(content)) {
+		return make_shared<AtmosMXFDecoder>(film, c);
 	}
 
-	return shared_ptr<Decoder> ();
+	return {};
 }

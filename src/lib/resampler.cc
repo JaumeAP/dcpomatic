@@ -18,6 +18,7 @@
 
 */
 
+
 #include "resampler.h"
 #include "audio_buffers.h"
 #include "exceptions.h"
@@ -29,11 +30,14 @@
 
 #include "i18n.h"
 
+
 using std::cout;
 using std::pair;
 using std::make_pair;
 using std::runtime_error;
 using std::shared_ptr;
+using std::make_shared;
+
 
 /** @param in Input sampling rate (Hz)
  *  @param out Output sampling rate (Hz)
@@ -77,7 +81,7 @@ Resampler::run (shared_ptr<const AudioBuffers> in)
 	int in_frames = in->frames ();
 	int in_offset = 0;
 	int out_offset = 0;
-	shared_ptr<AudioBuffers> resampled (new AudioBuffers (_channels, 0));
+	auto resampled = make_shared<AudioBuffers>(_channels, 0);
 
 	while (in_frames > 0) {
 
@@ -88,8 +92,8 @@ Resampler::run (shared_ptr<const AudioBuffers> in)
 		float* in_buffer = new float[in_frames * _channels];
 
 		{
-			float** p = in->data ();
-			float* q = in_buffer;
+			auto p = in->data ();
+			auto q = in_buffer;
 			for (int i = 0; i < in_frames; ++i) {
 				for (int j = 0; j < _channels; ++j) {
 					*q++ = p[j][in_offset + i];
@@ -131,8 +135,8 @@ Resampler::run (shared_ptr<const AudioBuffers> in)
 		resampled->set_frames (out_offset + data.output_frames_gen);
 
 		{
-			float* p = data.data_out;
-			float** q = resampled->data ();
+			auto p = data.data_out;
+			auto q = resampled->data ();
 			for (int i = 0; i < data.output_frames_gen; ++i) {
 				for (int j = 0; j < _channels; ++j) {
 					q[j][out_offset + i] = *p++;
@@ -154,12 +158,12 @@ Resampler::run (shared_ptr<const AudioBuffers> in)
 shared_ptr<const AudioBuffers>
 Resampler::flush ()
 {
-	shared_ptr<AudioBuffers> out (new AudioBuffers (_channels, 0));
+	auto out = make_shared<AudioBuffers>(_channels, 0);
 	int out_offset = 0;
 	int64_t const output_size = 65536;
 
 	float dummy[1];
-	float* buffer = new float[output_size];
+	auto buffer = new float[output_size];
 
 	SRC_DATA data;
 	data.data_in = dummy;
@@ -177,8 +181,8 @@ Resampler::flush ()
 
 	out->ensure_size (out_offset + data.output_frames_gen);
 
-	float* p = data.data_out;
-	float** q = out->data ();
+	auto p = data.data_out;
+	auto q = out->data ();
 	for (int i = 0; i < data.output_frames_gen; ++i) {
 		for (int j = 0; j < _channels; ++j) {
 			q[j][out_offset + i] = *p++;

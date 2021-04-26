@@ -18,22 +18,26 @@
 
 */
 
-#include "string_text_file_decoder.h"
+
 #include "string_text_file_content.h"
+#include "string_text_file_decoder.h"
 #include "text_content.h"
 #include "text_decoder.h"
 #include <dcp/subtitle_string.h>
 #include <iostream>
 
-using std::list;
-using std::vector;
-using std::string;
+
 using std::cout;
+using std::dynamic_pointer_cast;
+using std::list;
+using std::make_shared;
 using std::max;
 using std::shared_ptr;
+using std::string;
+using std::vector;
 using boost::optional;
-using std::dynamic_pointer_cast;
 using namespace dcpomatic;
+
 
 StringTextFileDecoder::StringTextFileDecoder (shared_ptr<const Film> film, shared_ptr<const StringTextFileContent> content)
 	: Decoder (film)
@@ -44,7 +48,7 @@ StringTextFileDecoder::StringTextFileDecoder (shared_ptr<const Film> film, share
 	if (!_subtitles.empty()) {
 		first = content_time_period(_subtitles[0]).from;
 	}
-	text.push_back (shared_ptr<TextDecoder> (new TextDecoder (this, content->only_text(), first)));
+	text.push_back (make_shared<TextDecoder>(this, content->only_text(), first));
 }
 
 void
@@ -73,7 +77,7 @@ StringTextFileDecoder::pass ()
 		return true;
 	}
 
-	ContentTimePeriod const p = content_time_period (_subtitles[_next]);
+	auto const p = content_time_period (_subtitles[_next]);
 	only_text()->emit_plain (p, _subtitles[_next]);
 
 	++_next;
