@@ -176,7 +176,7 @@ AudioDecoder::seek ()
 void
 AudioDecoder::flush ()
 {
-	_resampler_manager->maybe_flush (this);
+	_resampler_manager->flush (this);
 
 	if (_content->delay() < 0) {
 		/* Finish off with the gap caused by the delay */

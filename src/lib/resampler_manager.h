@@ -25,6 +25,8 @@ public:
 	void add (dcpomatic::DCPTime start, dcpomatic::DCPTime end, std::shared_ptr<AudioContent> content, std::shared_ptr<AudioDecoder> decoder);
 	std::shared_ptr<Resampler> get (AudioDecoder* decoder, AudioStreamPtr stream, bool fast);
 
+	void flush (AudioDecoder* decoder)
+
 private:
 	friend struct resampler_manager_setup_test;
 

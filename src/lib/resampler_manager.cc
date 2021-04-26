@@ -9,6 +9,7 @@
 
 using std::vector;
 using std::shared_ptr;
+using std::make_shared;
 using namespace dcpomatic;
 
 
@@ -34,14 +35,14 @@ ResamplerManager::coalesce ()
 bool
 ResamplerManager::can_share (Group const& a, Group const& b) const
 {
-	vector<AudioStreamPtr> as = a.contents[0]->streams();
-	vector<AudioStreamPtr> bs = b.contents[0]->streams();
+	auto as = a.contents[0]->streams();
+	auto bs = b.contents[0]->streams();
 
 	if (a.contents[0]->streams().size() != b.contents[0]->streams().size()) {
 		return false;
 	}
 
-	shared_ptr<const Film> film = _film.lock ();
+	auto film = _film.lock ();
 	DCPOMATIC_ASSERT (film);
 	if (a.contents[0]->resampled_frame_rate(film) != b.contents[0]->resampled_frame_rate(film)) {
 		return false;
@@ -49,8 +50,8 @@ ResamplerManager::can_share (Group const& a, Group const& b) const
 
 	/* The first, second, etc. streams in a and b must be the same */
 
-	vector<AudioStreamPtr>::const_iterator i = as.begin();
-	vector<AudioStreamPtr>::const_iterator j = bs.begin();
+	auto i = as.begin();
+	auto j = bs.begin();
 
 	while (i != as.end()) {
 		if (
@@ -93,14 +94,14 @@ ResamplerManager::coalesce_pass ()
 shared_ptr<Resampler>
 ResamplerManager::get (AudioDecoder* decoder, AudioStreamPtr stream, bool fast)
 {
-	shared_ptr<const Film> film = _film.lock();
+	auto film = _film.lock();
 	DCPOMATIC_ASSERT (film);
 
-	BOOST_FOREACH (Group& g, _groups) {
+	for (auto& g: _groups) {
 		for (size_t i = 0; i < g.decoders.size(); ++i) {
 			if (g.decoders[i].get() == decoder) {
-				vector<AudioStreamPtr> content_streams = g.contents[i]->streams();
-				ptrdiff_t index = find(content_streams.begin(), content_streams.end(), stream) - content_streams.begin();
+				auto content_streams = g.contents[i]->streams();
+				auto index = find(content_streams.begin(), content_streams.end(), stream) - content_streams.begin();
 				DCPOMATIC_ASSERT (index < static_cast<ptrdiff_t>(content_streams.size()));
 				if (!g.resamplers[index] && stream->frame_rate() != g.contents[i]->resampled_frame_rate(film)) {
 					LOG_GENERAL (
@@ -110,7 +111,7 @@ ResamplerManager::get (AudioDecoder* decoder, AudioStreamPtr stream, bool fast)
 						stream->channels()
 						);
 
-					g.resamplers[index].reset (new Resampler(stream->frame_rate(), g.contents[i]->resampled_frame_rate(film), stream->channels()));
+					g.resamplers[index] = make_shared<Resampler>(stream->frame_rate(), g.contents[i]->resampled_frame_rate(film), stream->channels());
 					if (fast) {
 						g.resamplers[index]->set_fast ();
 					}
@@ -121,22 +122,21 @@ ResamplerManager::get (AudioDecoder* decoder, AudioStreamPtr stream, bool fast)
 	}
 
 	DCPOMATIC_ASSERT (false);
-	return shared_ptr<Resampler>();
+	return {};
 }
 
 
 void
-ResamplerManager::maybe_flush (AudioDecoder* decoder)
+ResamplerManager::flush (AudioDecoder* decoder)
 {
-	BOOST_FOREACH (Group& g, _groups) {
-		BOOST_FOREACH (shared_ptr<AudioDecoder> d, g.decoders) {
-			if (d.get() == decoder) {
-				BOOST_FOREACH (shared_ptr<Resampler> r, g.resamplers) {
-					shared_ptr<const AudioBuffers> ro = r->flush ();
-					/* XXX: err... which content do these samples belong to?  Won't
-					 * the player throw the samples away if they appear to come from the
-					 * wrong place?
-					 */
+	for (auto& g: _groups) {
+		if (find(g.decoders.begin(), g.decoders.end(), [decoder](shared_ptr<Decoder> d) { return d->audio.get() == decoder; }) != g.decoders.end()) {
+			for (auto r: g.resamplers) {
+				auto ro = r->flush ();
+				/* XXX: err... which content do these samples belong to?  Won't
+				 * the player throw the samples away if they appear to come from the
+				 * wrong place?
+				 */
 			}
 		}
 	}
