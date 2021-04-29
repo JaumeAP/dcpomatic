@@ -27,6 +27,7 @@
 #include "dcpomatic_time.h"
 #include "font_data.h"
 #include "frame_rate_change.h"
+#include "piece_audio.h"
 #include "piece_video.h"
 #include "types.h"
 #include <boost/signals2.hpp>
@@ -85,12 +86,14 @@ public:
 	bool ignore_video_at (dcpomatic::DCPTime time) const;
 
 	boost::signals2::signal<void (PieceVideo)> Video;
+	boost::signals2::signal<void (PieceAudio)> Audio;
 
 private:
 	friend struct overlap_video_test1;
 	friend struct check_reuse_old_data_test;
 
 	void video (std::shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part);
+	void audio (std::shared_ptr<AudioStream> stream, std::shared_ptr<const AudioBuffers> audio, Frame frame);
 
 	std::weak_ptr<const Film> _film;
 	std::shared_ptr<Content> _content;

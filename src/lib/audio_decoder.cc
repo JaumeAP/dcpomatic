@@ -128,7 +128,7 @@ AudioDecoder::emit (shared_ptr<const Film> film, AudioStreamPtr stream, shared_p
 		data = ro;
 	}
 
-	Data(stream, ContentAudio (data, _positions[stream]));
+	Data(stream, data, _positions[stream]);
 	_positions[stream] += data->frames();
 }
 
@@ -178,7 +178,7 @@ AudioDecoder::flush ()
 	for (auto const& i: _resamplers) {
 		auto ro = i.second->flush ();
 		if (ro->frames() > 0) {
-			Data (i.first, ContentAudio (ro, _positions[i.first]));
+			Data (i.first, ro, _positions[i.first]);
 			_positions[i.first] += ro->frames();
 		}
 	}
@@ -197,6 +197,6 @@ AudioDecoder::silence (int milliseconds)
 		int const samples = ContentTime::from_seconds(milliseconds / 1000.0).frames_round(i->frame_rate());
 		auto silence = make_shared<AudioBuffers>(i->channels(), samples);
 		silence->make_silent ();
-		Data (i, ContentAudio (silence, _positions[i]));
+		Data (i, silence, _positions[i]);
 	}
 }

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2014 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2014-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -18,34 +18,43 @@
 
 */
 
-#ifndef DCPOMATIC_CONTENT_AUDIO_H
-#define DCPOMATIC_CONTENT_AUDIO_H
 
-/** @file  src/lib/content_audio.h
- *  @brief ContentAudio class.
+#ifndef DCPOMATIC_PIECE_AUDIO_H
+#define DCPOMATIC_PIECE_AUDIO_H
+
+
+/** @file  src/lib/piece_audio.h
+ *  @brief PieceAudio class.
  */
+
 
 #include "audio_buffers.h"
 #include "types.h"
 
-/** @class ContentAudio
- *  @brief A block of audio from a piece of content, with a timestamp as a frame within that content.
+
+class AudioStream;
+
+
+/** @class PieceAudio
+ *  @brief A block of audio from a Piece, with a timestamp as a frame within that piece.
  */
-class ContentAudio
+class PieceAudio
 {
 public:
-	ContentAudio ()
-		: audio (new AudioBuffers (0, 0))
-		, frame (0)
+	PieceAudio ()
+		: audio (new AudioBuffers(0, 0))
 	{}
 
-	ContentAudio (std::shared_ptr<const AudioBuffers> a, Frame f)
-		: audio (a)
+	PieceAudio (std::shared_ptr<AudioStream> s, std::shared_ptr<const AudioBuffers> a, Frame f)
+		: stream (s)
+		, audio (a)
 		, frame (f)
 	{}
 
+	std::shared_ptr<AudioStream> stream;
 	std::shared_ptr<const AudioBuffers> audio;
-	Frame frame;
+	Frame frame = 0;
 };
+
 
 #endif

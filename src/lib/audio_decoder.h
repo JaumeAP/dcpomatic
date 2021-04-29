@@ -28,10 +28,10 @@
 #define DCPOMATIC_AUDIO_DECODER_H
 
 
-#include "decoder.h"
-#include "content_audio.h"
 #include "audio_stream.h"
+#include "decoder.h"
 #include "decoder_part.h"
+#include "piece_audio.h"
 #include <boost/signals2.hpp>
 
 
@@ -58,7 +58,7 @@ public:
 
 	dcpomatic::ContentTime stream_position (std::shared_ptr<const Film> film, AudioStreamPtr stream) const;
 
-	boost::signals2::signal<void (AudioStreamPtr, ContentAudio)> Data;
+	boost::signals2::signal<void (AudioStreamPtr, std::shared_ptr<const AudioBuffers>, Frame)> Data;
 
 private:
 	void silence (int milliseconds);

@@ -26,7 +26,6 @@
 #include "audio_processor.h"
 #include "compose.hpp"
 #include "config.h"
-#include "content_audio.h"
 #include "dcp_content.h"
 #include "dcp_decoder.h"
 #include "dcpomatic_log.h"
@@ -226,8 +225,8 @@ Player::setup_pieces_unlocked ()
 			}
 		}
 
-		if (decoder->audio) {
-			decoder->audio->Data.connect (bind (&Player::audio, this, weak_ptr<Piece> (piece), _1, _2));
+		if (i->audio) {
+			piece->Audio.connect (bind(&Player::audio, this, weak_ptr<Piece>(piece), _1));
 		}
 
 		auto j = decoder->text.begin();
@@ -854,9 +853,9 @@ Player::video (weak_ptr<Piece> wp, PieceVideo video)
 
 
 void
-Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_audio)
+Player::audio (weak_ptr<Piece> wp, PieceAudio piece_audio)
 {
-	DCPOMATIC_ASSERT (content_audio.audio->frames() > 0);
+	DCPOMATIC_ASSERT (piece_audio.audio->frames() > 0);
 
 	auto piece = wp.lock ();
 	if (!piece) {
@@ -866,20 +865,20 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 	int const rfr = piece->resampled_audio_frame_rate ();
 
 	/* Compute time in the DCP */
-	auto time = piece->resampled_audio_to_dcp (content_audio.frame);
-	LOG_DEBUG_PLAYER("Received audio frame %1 at %2", content_audio.frame, to_string(time));
+	auto time = piece->resampled_audio_to_dcp (piece_audio.frame);
+	LOG_DEBUG_PLAYER("Received audio frame %1 at %2", piece_audio.frame, to_string(time));
 
 	/* And the end of this block in the DCP */
-	auto end = time + DCPTime::from_frames(content_audio.audio->frames(), rfr);
+	auto end = time + DCPTime::from_frames(piece_audio.audio->frames(), rfr);
 
 	/* Remove anything that comes before the start or after the end of the content */
 	if (time < piece->position()) {
-		auto cut = discard_audio (content_audio.audio, time, piece->position());
+		auto cut = discard_audio (piece_audio.audio, time, piece->position());
 		if (!cut.first) {
 			/* This audio is entirely discarded */
 			return;
 		}
-		content_audio.audio = cut.first;
+		piece_audio.audio = cut.first;
 		time = cut.second;
 	} else if (time > piece->end()) {
 		/* Discard it all */
@@ -889,33 +888,33 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 		if (remaining_frames == 0) {
 			return;
 		}
-		content_audio.audio = make_shared<AudioBuffers>(content_audio.audio, remaining_frames, 0);
+		piece_audio.audio = make_shared<AudioBuffers>(piece_audio.audio, remaining_frames, 0);
 	}
 
-	DCPOMATIC_ASSERT (content_audio.audio->frames() > 0);
+	DCPOMATIC_ASSERT (piece_audio.audio->frames() > 0);
 
 	/* Gain */
 
 	if (piece->audio_gain() != 0) {
-		auto gain = make_shared<AudioBuffers>(content_audio.audio);
+		auto gain = make_shared<AudioBuffers>(piece_audio.audio);
 		gain->apply_gain (piece->audio_gain());
-		content_audio.audio = gain;
+		piece_audio.audio = gain;
 	}
 
 	/* Remap */
 
-	content_audio.audio = remap (content_audio.audio, _film->audio_channels(), stream->mapping());
+	piece_audio.audio = remap (piece_audio.audio, _film->audio_channels(), piece_audio.stream->mapping());
 
 	/* Process */
 
 	if (_audio_processor) {
-		content_audio.audio = _audio_processor->run (content_audio.audio, _film->audio_channels ());
+		piece_audio.audio = _audio_processor->run (piece_audio.audio, _film->audio_channels ());
 	}
 
 	/* Push */
 
-	_audio_merger.push (content_audio.audio, time);
-	piece->set_last_push_end (stream, time + DCPTime::from_frames(content_audio.audio->frames(), _film->audio_frame_rate()));
+	_audio_merger.push (piece_audio.audio, time);
+	piece->set_last_push_end (piece_audio.stream, time + DCPTime::from_frames(piece_audio.audio->frames(), _film->audio_frame_rate()));
 }
 
 

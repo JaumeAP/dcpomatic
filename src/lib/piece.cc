@@ -20,6 +20,7 @@
 
 
 #include "audio_content.h"
+#include "audio_decoder.h"
 #include "content.h"
 #include "dcp_content.h"
 #include "dcpomatic_log.h"
@@ -56,6 +57,10 @@ Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> c, shared_ptr<Decod
 	if (_decoder->video) {
 		_decoder->video->Data.connect (boost::bind(&Piece::video, this, _1, _2, _3, _4));
 	}
+
+	if (_decoder->audio) {
+		_decoder->audio->Data.connect (boost::bind(&Piece::audio, this, _1, _2, _3));
+	}
 }
 
 
@@ -63,6 +68,13 @@ void
 Piece::video (shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part)
 {
 	Video (PieceVideo(image, frame, eyes, part));
+}
+
+
+void
+Piece::audio (AudioStreamPtr stream, shared_ptr<const AudioBuffers> audio, Frame frame)
+{
+	Audio (PieceAudio(stream, audio, frame));
 }
 
 
