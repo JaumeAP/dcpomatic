@@ -37,6 +37,7 @@
 class Content;
 class Decoder;
 class PlayerVideo;
+class Resampler;
 struct overlap_video_test1;
 struct check_reuse_old_data_test;
 
@@ -44,7 +45,7 @@ struct check_reuse_old_data_test;
 class Piece
 {
 public:
-	Piece (std::weak_ptr<const Film> film, std::shared_ptr<Content> c, std::shared_ptr<Decoder> d, FrameRateChange f);
+	Piece (std::weak_ptr<const Film> film, std::shared_ptr<Content> content, std::shared_ptr<Decoder> decoder, FrameRateChange frc, bool fast);
 
 	void update_pull_to (dcpomatic::DCPTime& pull_to) const;
 	void set_last_push_end (AudioStreamPtr stream, dcpomatic::DCPTime last_push_end);
@@ -95,13 +96,20 @@ private:
 	void video (std::shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part);
 	void audio (std::shared_ptr<AudioStream> stream, std::shared_ptr<const AudioBuffers> audio, Frame frame);
 
+	void flush ();
+
 	std::weak_ptr<const Film> _film;
 	std::shared_ptr<Content> _content;
 	std::shared_ptr<Decoder> _decoder;
 	FrameRateChange _frc;
+	bool _fast = false;
 	bool _done = false;
 	boost::optional<dcpomatic::DCPTimePeriod> _ignore_video;
 	std::map<AudioStreamPtr, dcpomatic::DCPTime> _stream_last_push_end;
+
+	std::map<AudioStreamPtr, std::shared_ptr<Resampler>> _resamplers;
+	std::map<AudioStreamPtr, Frame> _positions;
+
 };
 
 

@@ -199,7 +199,7 @@ static
 pair<int, int>
 pixel_range (shared_ptr<Film> film, shared_ptr<const FFmpegContent> content)
 {
-	auto decoder = make_shared<FFmpegDecoder>(film, content, false);
+	auto decoder = make_shared<FFmpegDecoder>(film, content);
 	decoder->video->Data.connect (bind(&video_handler, _1));
 	decoded_image = {};
 	while (!decoded_image) {

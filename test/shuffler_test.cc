@@ -40,7 +40,7 @@ static void
 push (Shuffler& s, int frame, Eyes eyes)
 {
 	auto content = make_shared<ImageContent>("test/data/flat_red.png");
-	auto piece = make_shared<Piece>(shared_ptr<Film>(), content, shared_ptr<Decoder>(), FrameRateChange(24, 24));
+	auto piece = make_shared<Piece>(shared_ptr<Film>(), content, shared_ptr<Decoder>(), FrameRateChange(24, 24), false);
 	PieceVideo cv;
 	cv.frame = frame;
 	cv.eyes = eyes;

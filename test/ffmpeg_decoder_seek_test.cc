@@ -79,7 +79,7 @@ test (boost::filesystem::path file, vector<int> frames)
 	auto content = make_shared<FFmpegContent>(path);
 	film->examine_and_add_content (content);
 	BOOST_REQUIRE (!wait_for_jobs());
-	auto decoder = make_shared<FFmpegDecoder>(film, content, false);
+	auto decoder = make_shared<FFmpegDecoder>(film, content);
 	decoder->video->Data.connect (bind (&store, _2));
 
 	for (vector<int>::const_iterator i = frames.begin(); i != frames.end(); ++i) {

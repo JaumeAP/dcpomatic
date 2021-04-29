@@ -186,7 +186,7 @@ Player::setup_pieces_unlocked ()
 			}
 		}
 
-		auto decoder = decoder_factory (_film, i, _fast, _tolerant, old_decoder);
+		auto decoder = decoder_factory (_film, i, _tolerant, old_decoder);
 		DCPOMATIC_ASSERT (decoder);
 
 		FrameRateChange frc (_film, i);
@@ -213,7 +213,7 @@ Player::setup_pieces_unlocked ()
 			}
 		}
 
-		auto piece = make_shared<Piece>(_film, i, decoder, frc);
+		auto piece = make_shared<Piece>(_film, i, decoder, frc, _fast);
 		_pieces.push_back (piece);
 
 		if (i->video) {
@@ -507,7 +507,7 @@ Player::get_reel_assets ()
 
 		unique_ptr<DCPDecoder> decoder;
 		try {
-			decoder.reset (new DCPDecoder(_film, j, false, false, shared_ptr<DCPDecoder>()));
+			decoder.reset (new DCPDecoder(_film, j, false, shared_ptr<DCPDecoder>()));
 		} catch (...) {
 			return a;
 		}

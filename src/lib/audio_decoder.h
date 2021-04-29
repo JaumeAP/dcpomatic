@@ -49,7 +49,7 @@ class Resampler;
 class AudioDecoder : public std::enable_shared_from_this<AudioDecoder>, public DecoderPart
 {
 public:
-	AudioDecoder (Decoder* parent, std::shared_ptr<const AudioContent> content, bool fast);
+	AudioDecoder (Decoder* parent, std::shared_ptr<const AudioContent> content);
 
 	boost::optional<dcpomatic::ContentTime> position (std::shared_ptr<const Film> film) const;
 	void emit (std::shared_ptr<const Film> film, AudioStreamPtr stream, std::shared_ptr<const AudioBuffers>, dcpomatic::ContentTime, bool time_already_delayed = false);
@@ -64,15 +64,9 @@ private:
 	void silence (int milliseconds);
 
 	std::shared_ptr<const AudioContent> _content;
-	/** Frame after the last one that was emitted from Data (i.e. at the resampled rate, if applicable)
-	 *  for each AudioStream.
-	 */
+	/** Frame after the last one that was emitted from Data for each AudioStream */
 	typedef std::map<AudioStreamPtr, Frame> PositionMap;
 	PositionMap _positions;
-	typedef std::map<AudioStreamPtr, std::shared_ptr<Resampler>> ResamplerMap;
-	ResamplerMap _resamplers;
-
-	bool _fast;
 };
 
 

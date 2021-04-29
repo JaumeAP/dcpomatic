@@ -22,7 +22,6 @@
 extern std::shared_ptr<Decoder> decoder_factory (
 	std::shared_ptr<const Film> film,
 	std::shared_ptr<const Content> content,
-	bool fast,
 	bool tolerant,
 	std::shared_ptr<Decoder> old_decoder
 	);

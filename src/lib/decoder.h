@@ -33,7 +33,7 @@
 #include "font_data.h"
 #include "types.h"
 #include "weak_film.h"
-#include <boost/utility.hpp>
+#include <boost/signals2.hpp>
 
 
 class AtmosDecoder;
@@ -74,6 +74,8 @@ public:
 	virtual std::vector<dcpomatic::FontData> fonts () const {
 		return {};
 	}
+
+	boost::signals2::signal<void ()> Flush;
 };
 
 

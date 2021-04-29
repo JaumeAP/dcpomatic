@@ -64,7 +64,7 @@ using std::make_shared;
 using boost::optional;
 using namespace dcpomatic;
 
-DCPDecoder::DCPDecoder (shared_ptr<const Film> film, shared_ptr<const DCPContent> c, bool fast, bool tolerant, shared_ptr<DCPDecoder> old)
+DCPDecoder::DCPDecoder (shared_ptr<const Film> film, shared_ptr<const DCPContent> c, bool tolerant, shared_ptr<DCPDecoder> old)
 	: DCP (c, tolerant)
 	, Decoder (film)
 {
@@ -73,7 +73,7 @@ DCPDecoder::DCPDecoder (shared_ptr<const Film> film, shared_ptr<const DCPContent
 			video = make_shared<VideoDecoder>(this, c);
 		}
 		if (c->audio) {
-			audio = make_shared<AudioDecoder>(this, c->audio, fast);
+			audio = make_shared<AudioDecoder>(this, c->audio);
 		}
 		for (auto i: c->text) {
 			/* XXX: this time here should be the time of the first subtitle, not 0 */

@@ -40,10 +40,9 @@ using boost::optional;
 using namespace dcpomatic;
 
 
-AudioDecoder::AudioDecoder (Decoder* parent, shared_ptr<const AudioContent> content, bool fast)
+AudioDecoder::AudioDecoder (Decoder* parent, shared_ptr<const AudioContent> content)
 	: DecoderPart (parent)
 	, _content (content)
-	, _fast (fast)
 {
 	/* Set up _positions so that we have one for each stream */
 	for (auto i: content->streams ()) {
@@ -99,35 +98,6 @@ AudioDecoder::emit (shared_ptr<const Film> film, AudioStreamPtr stream, shared_p
 		_positions[stream] = time.frames_round (resampled_rate);
 	}
 
-	shared_ptr<Resampler> resampler;
-	auto i = _resamplers.find(stream);
-	if (i != _resamplers.end()) {
-		resampler = i->second;
-	} else {
-		if (stream->frame_rate() != resampled_rate) {
-			LOG_GENERAL (
-				"Creating new resampler from %1 to %2 with %3 channels",
-				stream->frame_rate(),
-				resampled_rate,
-				stream->channels()
-				);
-
-			resampler = make_shared<Resampler>(stream->frame_rate(), resampled_rate, stream->channels());
-			if (_fast) {
-				resampler->set_fast ();
-			}
-			_resamplers[stream] = resampler;
-		}
-	}
-
-	if (resampler) {
-		auto ro = resampler->run (data);
-		if (ro->frames() == 0) {
-			return;
-		}
-		data = ro;
-	}
-
 	Data(stream, data, _positions[stream]);
 	_positions[stream] += data->frames();
 }
@@ -161,11 +131,6 @@ AudioDecoder::position (shared_ptr<const Film> film) const
 void
 AudioDecoder::seek ()
 {
-	for (auto i: _resamplers) {
-		i.second->flush ();
-		i.second->reset ();
-	}
-
 	for (auto& i: _positions) {
 		i.second = 0;
 	}
@@ -175,14 +140,6 @@ AudioDecoder::seek ()
 void
 AudioDecoder::flush ()
 {
-	for (auto const& i: _resamplers) {
-		auto ro = i.second->flush ();
-		if (ro->frames() > 0) {
-			Data (i.first, ro, _positions[i.first]);
-			_positions[i.first] += ro->frames();
-		}
-	}
-
 	if (_content->delay() < 0) {
 		/* Finish off with the gap caused by the delay */
 		silence (-_content->delay ());

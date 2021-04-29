@@ -48,7 +48,6 @@ public:
 	DCPDecoder (
 		std::shared_ptr<const Film> film,
 		std::shared_ptr<const DCPContent>,
-		bool fast,
 		bool tolerant,
 		std::shared_ptr<DCPDecoder> old
 		);

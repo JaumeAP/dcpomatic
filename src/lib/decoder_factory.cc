@@ -45,15 +45,15 @@ using std::dynamic_pointer_cast;
  *  @param old_decoder A `used' decoder that has been previously made for this piece of content, or nullptr
  */
 shared_ptr<Decoder>
-decoder_factory (shared_ptr<const Film> film, shared_ptr<const Content> content, bool fast, bool tolerant, shared_ptr<Decoder> old_decoder)
+decoder_factory (shared_ptr<const Film> film, shared_ptr<const Content> content, bool tolerant, shared_ptr<Decoder> old_decoder)
 {
 	if (auto c = dynamic_pointer_cast<const FFmpegContent>(content)) {
-		return make_shared<FFmpegDecoder>(film, c, fast);
+		return make_shared<FFmpegDecoder>(film, c);
 	}
 
 	if (auto c = dynamic_pointer_cast<const DCPContent>(content)) {
 		try {
-			return make_shared<DCPDecoder>(film, c, fast, tolerant, dynamic_pointer_cast<DCPDecoder>(old_decoder));
+			return make_shared<DCPDecoder>(film, c, tolerant, dynamic_pointer_cast<DCPDecoder>(old_decoder));
 		} catch (KDMError& e) {
 			/* This will be found and reported to the user when the content is examined */
 			return {};

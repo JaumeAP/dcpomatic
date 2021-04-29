@@ -29,6 +29,7 @@
 #include "piece.h"
 #include "piece_video.h"
 #include "player_video.h"
+#include "resampler.h"
 #include "video_content.h"
 #include "video_decoder.h"
 
@@ -42,15 +43,17 @@ using boost::optional;
 using namespace dcpomatic;
 
 
-Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> c, shared_ptr<Decoder> d, FrameRateChange f)
+Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> content, shared_ptr<Decoder> decoder, FrameRateChange frc, bool fast)
 	: _film (film)
-	, _content (c)
-	, _decoder (d)
-	, _frc (f)
+	, _content (content)
+	, _decoder (decoder)
+	, _frc (frc)
+	, _fast (fast)
 {
 	if (_content->audio) {
 		for (auto j: _content->audio->streams()) {
 			_stream_last_push_end[j] = _content->position();
+			_positions[j] = 0;
 		}
 	}
 
@@ -61,6 +64,8 @@ Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> c, shared_ptr<Decod
 	if (_decoder->audio) {
 		_decoder->audio->Data.connect (boost::bind(&Piece::audio, this, _1, _2, _3));
 	}
+
+	_decoder->Flush.connect (boost::bind(&Piece::flush, this));
 }
 
 
@@ -74,7 +79,46 @@ Piece::video (shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part p
 void
 Piece::audio (AudioStreamPtr stream, shared_ptr<const AudioBuffers> audio, Frame frame)
 {
-	Audio (PieceAudio(stream, audio, frame));
+	auto film = _film.lock ();
+	DCPOMATIC_ASSERT (film);
+
+	int const resampled_rate = _content->audio->resampled_frame_rate(film);
+
+	shared_ptr<Resampler> resampler;
+	auto i = _resamplers.find(stream);
+	if (i != _resamplers.end()) {
+		resampler = i->second;
+	} else {
+		if (stream->frame_rate() != resampled_rate) {
+			LOG_GENERAL (
+				"Creating new resampler from %1 to %2 with %3 channels",
+				stream->frame_rate(),
+				resampled_rate,
+				stream->channels()
+				);
+
+			resampler = make_shared<Resampler>(stream->frame_rate(), resampled_rate, stream->channels());
+			if (_fast) {
+				resampler->set_fast ();
+			}
+			_resamplers[stream] = resampler;
+		}
+	}
+
+	if (resampler) {
+		auto ro = resampler->run (audio);
+		if (ro->frames() == 0) {
+			return;
+		}
+		audio = ro;
+	}
+
+	if (_positions[stream] == 0) {
+		_positions[stream] = frame;
+	}
+
+	Audio (PieceAudio(stream, audio, _positions[stream]));
+	_positions[stream] += audio->frames();
 }
 
 
@@ -253,6 +297,15 @@ Piece::reference_dcp_audio () const
 void
 Piece::seek (DCPTime time, bool accurate)
 {
+	for (auto i: _resamplers) {
+		i.second->flush ();
+		i.second->reset ();
+	}
+
+	for (auto& i: _positions) {
+		i.second = 0;
+	}
+
 	if (time < position()) {
 		/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
 		   we must seek this (following) content accurately, otherwise when we come to the end of the current
@@ -316,3 +369,15 @@ Piece::period () const
 	return DCPTimePeriod(position(), end());
 }
 
+
+void
+Piece::flush ()
+{
+	for (auto const& i: _resamplers) {
+		auto ro = i.second->flush ();
+		if (ro->frames() > 0) {
+			Audio (PieceAudio(i.first, ro, _positions[i.first]));
+			_positions[i.first] += ro->frames();
+		}
+	}
+}

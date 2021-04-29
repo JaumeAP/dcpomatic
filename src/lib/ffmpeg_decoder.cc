@@ -78,7 +78,7 @@ using dcp::Size;
 using namespace dcpomatic;
 
 
-FFmpegDecoder::FFmpegDecoder (shared_ptr<const Film> film, shared_ptr<const FFmpegContent> c, bool fast)
+FFmpegDecoder::FFmpegDecoder (shared_ptr<const Film> film, shared_ptr<const FFmpegContent> c)
 	: FFmpeg (c)
 	, Decoder (film)
 {
@@ -93,7 +93,7 @@ FFmpegDecoder::FFmpegDecoder (shared_ptr<const Film> film, shared_ptr<const FFmp
 	}
 
 	if (c->audio) {
-		audio = make_shared<AudioDecoder>(this, c->audio, fast);
+		audio = make_shared<AudioDecoder>(this, c->audio);
 	}
 
 	if (c->only_text()) {
@@ -173,6 +173,8 @@ FFmpegDecoder::flush ()
 	if (audio) {
 		audio->flush ();
 	}
+
+	Flush ();
 
 	return true;
 }
