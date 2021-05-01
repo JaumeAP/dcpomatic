@@ -19,10 +19,12 @@
 */
 
 
+#include "lib/decoder_factory.h"
 #include "lib/image_content.h"
 #include "lib/piece.h"
 #include "lib/piece_video.h"
 #include "lib/shuffler.h"
+#include "test.h"
 #include <boost/test/unit_test.hpp>
 
 
@@ -37,10 +39,9 @@ using namespace boost::placeholders;
 
 
 static void
-push (Shuffler& s, int frame, Eyes eyes)
+push (Shuffler& s, shared_ptr<Film> film, shared_ptr<Content> content, shared_ptr<Decoder> decoder, int frame, Eyes eyes)
 {
-	auto content = make_shared<ImageContent>("test/data/flat_red.png");
-	auto piece = make_shared<Piece>(shared_ptr<Film>(), content, shared_ptr<Decoder>(), FrameRateChange(24, 24), false);
+	auto piece = make_shared<Piece>(film, content, decoder, FrameRateChange(24, 24), false);
 	PieceVideo cv;
 	cv.frame = frame;
 	cv.eyes = eyes;
@@ -70,9 +71,14 @@ BOOST_AUTO_TEST_CASE (shuffler_test1)
 	Shuffler s;
 	s.Video.connect (boost::bind (&receive, _1, _2));
 
+	auto film = new_test_film2 ("shuffler_test1");
+	auto content = make_shared<ImageContent>("test/data/flat_red.png");
+	auto decoder = decoder_factory (film, content, true, {});
+	BOOST_REQUIRE (decoder);
+
 	for (int i = 0; i < 10; ++i) {
-		push (s, i, Eyes::LEFT);
-		push (s, i, Eyes::RIGHT);
+		push (s, film, content, decoder, i, Eyes::LEFT);
+		push (s, film, content, decoder, i, Eyes::RIGHT);
 		check (i, Eyes::LEFT, __LINE__);
 		check (i, Eyes::RIGHT, __LINE__);
 	}
@@ -84,11 +90,15 @@ BOOST_AUTO_TEST_CASE (shuffler_test2)
 	Shuffler s;
 	s.Video.connect (boost::bind (&receive, _1, _2));
 
+	auto film = new_test_film2 ("shuffler_test2");
+	auto content = make_shared<ImageContent>("test/data/flat_red.png");
+	auto decoder = decoder_factory (film, content, true, {});
+
 	for (int i = 0; i < 10; i += 2) {
-		push (s, i, Eyes::LEFT);
-		push (s, i + 1, Eyes::LEFT);
-		push (s, i, Eyes::RIGHT);
-		push (s, i + 1, Eyes::RIGHT);
+		push (s, film, content, decoder, i, Eyes::LEFT);
+		push (s, film, content, decoder, i + 1, Eyes::LEFT);
+		push (s, film, content, decoder, i, Eyes::RIGHT);
+		push (s, film, content, decoder, i + 1, Eyes::RIGHT);
 		check (i, Eyes::LEFT, __LINE__);
 		check (i, Eyes::RIGHT, __LINE__);
 		check (i + 1, Eyes::LEFT, __LINE__);
@@ -102,19 +112,23 @@ BOOST_AUTO_TEST_CASE (shuffler_test3)
 	Shuffler s;
 	s.Video.connect (boost::bind (&receive, _1, _2));
 
-	push (s, 0, Eyes::LEFT);
+	auto film = new_test_film2 ("shuffler_test3");
+	auto content = make_shared<ImageContent>("test/data/flat_red.png");
+	auto decoder = decoder_factory (film, content, true, {});
+
+	push (s, film, content, decoder, 0, Eyes::LEFT);
 	check (0, Eyes::LEFT, __LINE__);
-	push (s, 0, Eyes::RIGHT);
+	push (s, film, content, decoder, 0, Eyes::RIGHT);
 	check (0, Eyes::RIGHT, __LINE__);
-	push (s, 1, Eyes::LEFT);
+	push (s, film, content, decoder, 1, Eyes::LEFT);
 	check (1, Eyes::LEFT, __LINE__);
-	push (s, 1, Eyes::RIGHT);
+	push (s, film, content, decoder, 1, Eyes::RIGHT);
 	check (1, Eyes::RIGHT, __LINE__);
-	push (s, 2, Eyes::RIGHT);
-	push (s, 3, Eyes::LEFT);
-	push (s, 3, Eyes::RIGHT);
-	push (s, 4, Eyes::LEFT);
-	push (s, 4, Eyes::RIGHT);
+	push (s, film, content, decoder, 2, Eyes::RIGHT);
+	push (s, film, content, decoder, 3, Eyes::LEFT);
+	push (s, film, content, decoder, 3, Eyes::RIGHT);
+	push (s, film, content, decoder, 4, Eyes::LEFT);
+	push (s, film, content, decoder, 4, Eyes::RIGHT);
 	s.flush ();
 	check (2, Eyes::RIGHT, __LINE__);
 	check (3, Eyes::LEFT, __LINE__);
@@ -129,19 +143,23 @@ BOOST_AUTO_TEST_CASE (shuffler_test4)
 	Shuffler s;
 	s.Video.connect (boost::bind (&receive, _1, _2));
 
-	push (s, 0, Eyes::LEFT);
+	auto film = new_test_film2 ("shuffler_test3");
+	auto content = make_shared<ImageContent>("test/data/flat_red.png");
+	auto decoder = decoder_factory (film, content, true, {});
+
+	push (s, film, content, decoder, 0, Eyes::LEFT);
 	check (0, Eyes::LEFT, __LINE__);
-	push (s, 0, Eyes::RIGHT);
+	push (s, film, content, decoder, 0, Eyes::RIGHT);
 	check (0, Eyes::RIGHT, __LINE__);
-	push (s, 1, Eyes::LEFT);
+	push (s, film, content, decoder, 1, Eyes::LEFT);
 	check (1, Eyes::LEFT, __LINE__);
-	push (s, 1, Eyes::RIGHT);
+	push (s, film, content, decoder, 1, Eyes::RIGHT);
 	check (1, Eyes::RIGHT, __LINE__);
-	push (s, 2, Eyes::LEFT);
-	push (s, 3, Eyes::LEFT);
-	push (s, 3, Eyes::RIGHT);
-	push (s, 4, Eyes::LEFT);
-	push (s, 4, Eyes::RIGHT);
+	push (s, film, content, decoder, 2, Eyes::LEFT);
+	push (s, film, content, decoder, 3, Eyes::LEFT);
+	push (s, film, content, decoder, 3, Eyes::RIGHT);
+	push (s, film, content, decoder, 4, Eyes::LEFT);
+	push (s, film, content, decoder, 4, Eyes::RIGHT);
 	s.flush ();
 	check (2, Eyes::LEFT, __LINE__);
 	check (3, Eyes::LEFT, __LINE__);
@@ -156,20 +174,24 @@ BOOST_AUTO_TEST_CASE (shuffler_test5)
 	Shuffler s;
 	s.Video.connect (boost::bind (&receive, _1, _2));
 
+	auto film = new_test_film2 ("shuffler_test3");
+	auto content = make_shared<ImageContent>("test/data/flat_red.png");
+	auto decoder = decoder_factory (film, content, true, {});
+
 	/* One left should come out straight away */
-	push (s, 0, Eyes::LEFT);
+	push (s, film, content, decoder, 0, Eyes::LEFT);
 	check (0, Eyes::LEFT, __LINE__);
 
 	/* More lefts should be kept in the shuffler in the hope that some rights arrive */
 	for (int i = 0; i < s._max_size; ++i) {
-		push (s, i + 1, Eyes::LEFT);
+		push (s, film, content, decoder, i + 1, Eyes::LEFT);
 	}
 	BOOST_CHECK (pending_cv.empty ());
 
 	/* If enough lefts come the shuffler should conclude that there's no rights and start
 	   giving out the lefts.
 	*/
-	push (s, s._max_size + 1, Eyes::LEFT);
+	push (s, film, content, decoder, s._max_size + 1, Eyes::LEFT);
 	check (1, Eyes::LEFT, __LINE__);
 }
 
@@ -181,18 +203,22 @@ BOOST_AUTO_TEST_CASE (shuffler_test6)
 	Shuffler s;
 	s.Video.connect (boost::bind (&receive, _1, _2));
 
-	push (s, 0, Eyes::LEFT);
+	auto film = new_test_film2 ("shuffler_test3");
+	auto content = make_shared<ImageContent>("test/data/flat_red.png");
+	auto decoder = decoder_factory (film, content, true, {});
+
+	push (s, film, content, decoder, 0, Eyes::LEFT);
 	check (0, Eyes::LEFT, __LINE__);
-	push (s, 0, Eyes::RIGHT);
+	push (s, film, content, decoder, 0, Eyes::RIGHT);
 	check (0, Eyes::RIGHT, __LINE__);
 
-	push (s, 2, Eyes::LEFT);
-	push (s, 2, Eyes::RIGHT);
+	push (s, film, content, decoder, 2, Eyes::LEFT);
+	push (s, film, content, decoder, 2, Eyes::RIGHT);
 	check (2, Eyes::LEFT, __LINE__);
 	check (2, Eyes::RIGHT, __LINE__);
 
-	push (s, 3, Eyes::LEFT);
+	push (s, film, content, decoder, 3, Eyes::LEFT);
 	check (3, Eyes::LEFT, __LINE__);
-	push (s, 3, Eyes::RIGHT);
+	push (s, film, content, decoder, 3, Eyes::RIGHT);
 	check (3, Eyes::RIGHT, __LINE__);
 }
