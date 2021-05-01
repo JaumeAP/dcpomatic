@@ -19,6 +19,14 @@
 */
 
 
+#include <memory>
+
+
+class Content;
+class Decoder;
+class Film;
+
+
 extern std::shared_ptr<Decoder> decoder_factory (
 	std::shared_ptr<const Film> film,
 	std::shared_ptr<const Content> content,
