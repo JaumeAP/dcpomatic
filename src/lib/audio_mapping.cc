@@ -285,3 +285,23 @@ AudioMapping::unmap_all ()
 		}
 	}
 }
+
+
+bool
+AudioMapping::equals (AudioMapping const& other, float epsilon) const
+{
+	if (_input_channels != other._input_channels || _output_channels != other._output_channels) {
+		return false;
+	}
+
+	for (auto i = 0; i < _input_channels; ++i) {
+		for (auto j = 0; j < _output_channels; ++j) {
+			if (fabs(_gain[i][j] - other._gain[i][j]) > epsilon) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+

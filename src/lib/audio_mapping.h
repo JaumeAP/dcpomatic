@@ -76,6 +76,8 @@ public:
 	std::list<int> mapped_output_channels () const;
 	void unmap_all ();
 
+	bool equals (AudioMapping const& other, float epsilon) const;
+
 private:
 	void setup (int input_channels, int output_channels);
 
