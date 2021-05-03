@@ -217,4 +217,7 @@ private:
 	boost::signals2::scoped_connection _playlist_content_change_connection;
 };
 
+
+std::vector<std::vector<std::shared_ptr<Content>>> collect (std::shared_ptr<const Film> film, ContentList content);
+
 #endif

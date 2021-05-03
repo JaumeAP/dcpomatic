@@ -25,32 +25,34 @@
  */
 
 
-#include "lib/film.h"
-#include "lib/ffmpeg_content.h"
-#include "lib/dcp_content_type.h"
-#include "lib/ratio.h"
 #include "lib/audio_buffers.h"
-#include "lib/player.h"
-#include "lib/video_content.h"
-#include "lib/image_content.h"
-#include "lib/string_text_file_content.h"
-#include "lib/content_factory.h"
-#include "lib/dcp_content.h"
-#include "lib/text_content.h"
+#include "lib/audio_content.h"
 #include "lib/butler.h"
 #include "lib/compose.hpp"
+#include "lib/content_factory.h"
 #include "lib/cross.h"
+#include "lib/dcp_content.h"
+#include "lib/dcp_content_type.h"
+#include "lib/ffmpeg_content.h"
+#include "lib/film.h"
+#include "lib/image_content.h"
+#include "lib/player.h"
+#include "lib/ratio.h"
+#include "lib/string_text_file_content.h"
+#include "lib/text_content.h"
+#include "lib/video_content.h"
 #include "test.h"
-#include <boost/test/unit_test.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/test/unit_test.hpp>
 #include <iostream>
 
 
 using std::cout;
 using std::list;
+using std::make_shared;
 using std::pair;
 using std::shared_ptr;
-using std::make_shared;
+using std::vector;
 using boost::bind;
 using boost::optional;
 #if BOOST_VERSION >= 106100
@@ -85,7 +87,7 @@ BOOST_AUTO_TEST_CASE (player_silence_padding_test)
 	accumulated = std::make_shared<AudioBuffers>(film->audio_channels(), 0);
 
 	auto player = std::make_shared<Player>(film);
-	player->Audio.connect (bind (&accumulate, _1, _2));
+	player->Audio.connect (bind(&accumulate, _1, _2));
 	while (!player->pass ()) {}
 	BOOST_REQUIRE (accumulated->frames() >= 48000);
 	BOOST_CHECK_EQUAL (accumulated->channels(), film->audio_channels ());
@@ -102,9 +104,9 @@ BOOST_AUTO_TEST_CASE (player_silence_padding_test)
 BOOST_AUTO_TEST_CASE (player_black_fill_test)
 {
 	auto film = new_test_film ("black_fill_test");
-	film->set_dcp_content_type (DCPContentType::from_isdcf_name ("FTR"));
+	film->set_dcp_content_type (DCPContentType::from_isdcf_name("FTR"));
 	film->set_name ("black_fill_test");
-	film->set_container (Ratio::from_id ("185"));
+	film->set_container (Ratio::from_id("185"));
 	film->set_sequence (false);
 	film->set_interop (false);
 	auto contentA = std::make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
@@ -467,3 +469,96 @@ BOOST_AUTO_TEST_CASE (player_silence_at_end_crash)
 	film2->set_video_frame_rate (24);
 	make_and_verify_dcp (film2);
 }
+
+
+BOOST_AUTO_TEST_CASE (player_collect_mono)
+{
+	vector<shared_ptr<Content>> audio = {
+		content_factory("test/data/sine_440.wav").front(),
+		content_factory("test/data/sine_440.wav").front(),
+		content_factory("test/data/sine_440.wav").front(),
+		content_factory("test/data/sine_440.wav").front()
+	};
+
+	auto film = new_test_film2 ("player_collect_mono", audio);
+	film->set_sequence (false);
+	make_and_verify_dcp (film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
+
+	/* None adjacent */
+	audio[0]->set_position(film, DCPTime(0));
+	audio[1]->set_position(film, DCPTime::from_seconds(10));
+	audio[2]->set_position(film, DCPTime::from_seconds(20));
+	audio[3]->set_position(film, DCPTime::from_seconds(30));
+	auto collection = collect (film, audio);
+	BOOST_REQUIRE_EQUAL (collection.size(), 4U);
+	BOOST_REQUIRE_EQUAL (collection[0][0], audio[0]);
+	BOOST_REQUIRE_EQUAL (collection[1][0], audio[1]);
+	BOOST_REQUIRE_EQUAL (collection[2][0], audio[2]);
+	BOOST_REQUIRE_EQUAL (collection[3][0], audio[3]);
+
+	/* Two adjacent */
+	audio[0]->set_position(film, DCPTime(0));
+	audio[1]->set_position(film, DCPTime::from_seconds(1));
+	audio[2]->set_position(film, DCPTime::from_seconds(20));
+	audio[3]->set_position(film, DCPTime::from_seconds(30));
+	collection = collect (film, audio);
+	BOOST_REQUIRE_EQUAL (collection.size(), 3U);
+	BOOST_REQUIRE_EQUAL (collection[0][0], audio[0]);
+	BOOST_REQUIRE_EQUAL (collection[0][1], audio[1]);
+	BOOST_REQUIRE_EQUAL (collection[1][0], audio[2]);
+	BOOST_REQUIRE_EQUAL (collection[2][0], audio[3]);
+
+	/* Three adjacent */
+	audio[0]->set_position(film, DCPTime(0));
+	audio[1]->set_position(film, DCPTime::from_seconds(1));
+	audio[2]->set_position(film, DCPTime::from_seconds(2));
+	audio[3]->set_position(film, DCPTime::from_seconds(30));
+	collection = collect (film, audio);
+	BOOST_REQUIRE_EQUAL (collection.size(), 2U);
+	BOOST_REQUIRE_EQUAL (collection[0][0], audio[0]);
+	BOOST_REQUIRE_EQUAL (collection[0][1], audio[1]);
+	BOOST_REQUIRE_EQUAL (collection[0][2], audio[2]);
+	BOOST_REQUIRE_EQUAL (collection[1][0], audio[3]);
+
+	/* Four adjacent */
+	audio[0]->set_position(film, DCPTime(0));
+	audio[1]->set_position(film, DCPTime::from_seconds(1));
+	audio[2]->set_position(film, DCPTime::from_seconds(2));
+	audio[3]->set_position(film, DCPTime::from_seconds(3));
+	collection = collect (film, audio);
+	BOOST_REQUIRE_EQUAL (collection.size(), 1U);
+	BOOST_REQUIRE_EQUAL (collection[0][0], audio[0]);
+	BOOST_REQUIRE_EQUAL (collection[0][1], audio[1]);
+	BOOST_REQUIRE_EQUAL (collection[0][2], audio[2]);
+	BOOST_REQUIRE_EQUAL (collection[0][3], audio[3]);
+
+	/* Four adjacent but third has different gain */
+	audio[0]->set_position(film, DCPTime(0));
+	audio[1]->set_position(film, DCPTime::from_seconds(1));
+	audio[2]->set_position(film, DCPTime::from_seconds(2));
+	audio[2]->audio->set_gain (-3);
+	audio[3]->set_position(film, DCPTime::from_seconds(3));
+	collection = collect (film, audio);
+	BOOST_REQUIRE_EQUAL (collection.size(), 3U);
+	BOOST_REQUIRE_EQUAL (collection[0][0], audio[0]);
+	BOOST_REQUIRE_EQUAL (collection[0][1], audio[1]);
+	BOOST_REQUIRE_EQUAL (collection[1][0], audio[2]);
+	BOOST_REQUIRE_EQUAL (collection[2][0], audio[3]);
+	audio[2]->audio->set_gain (0);
+
+	/* Four adjacent but second has different mapping */
+	audio[0]->set_position(film, DCPTime(0));
+	audio[1]->set_position(film, DCPTime::from_seconds(1));
+	AudioMapping map (1, MAX_DCP_AUDIO_CHANNELS);
+	map.set (0, dcp::Channel::LEFT, 1);
+	audio[1]->audio->set_mapping (map);
+	audio[2]->set_position(film, DCPTime::from_seconds(2));
+	audio[3]->set_position(film, DCPTime::from_seconds(3));
+	collection = collect (film, audio);
+	BOOST_REQUIRE_EQUAL (collection.size(), 3U);
+	BOOST_REQUIRE_EQUAL (collection[0][0], audio[0]);
+	BOOST_REQUIRE_EQUAL (collection[1][0], audio[1]);
+	BOOST_REQUIRE_EQUAL (collection[2][0], audio[2]);
+	BOOST_REQUIRE_EQUAL (collection[2][1], audio[3]);
+}
+

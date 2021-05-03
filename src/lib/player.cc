@@ -94,6 +94,10 @@ int const PlayerProperty::DCP_DECODE_REDUCTION = 704;
 int const PlayerProperty::PLAYBACK_LENGTH = 705;
 
 
+/** About 0.01dB */
+#define AUDIO_GAIN_EPSILON 0.001
+
+
 Player::Player (shared_ptr<const Film> film)
 	: _film (film)
 	, _suspended (0)
@@ -152,6 +156,66 @@ bool
 have_audio (shared_ptr<const Content> content)
 {
 	return static_cast<bool>(content->audio);
+}
+
+
+vector<vector<shared_ptr<Content>>>
+collect (shared_ptr<const Film> film, ContentList content)
+{
+	vector<shared_ptr<Content>> ungrouped;
+	vector<vector<shared_ptr<Content>>> grouped;
+
+	auto same_settings = [](shared_ptr<const Film> film, shared_ptr<const AudioContent> a, shared_ptr<const AudioContent> b) {
+
+		auto a_streams = a->streams();
+		auto b_streams = b->streams();
+
+		if (a_streams.size() != b_streams.size()) {
+			return false;
+		}
+
+		for (size_t i = 0; i < a_streams.size(); ++i) {
+			auto a_stream = a_streams[i];
+			auto b_stream = b_streams[i];
+			if (
+				!a_stream->mapping().equals(b_stream->mapping(), AUDIO_GAIN_EPSILON) ||
+				a_stream->frame_rate() != b_stream->frame_rate() ||
+				a_stream->channels() != b_stream->channels()) {
+				return false;
+			}
+		}
+
+		return (
+			fabs(a->gain() - b->gain()) < AUDIO_GAIN_EPSILON &&
+			a->delay() == b->delay() &&
+			a->language() == b->language() &&
+			a->resampled_frame_rate(film) == b->resampled_frame_rate(film) &&
+			a->channel_names() == b->channel_names()
+		       );
+	};
+
+	for (auto i: content) {
+		if (i->video || !i->audio || !i->text.empty()) {
+			ungrouped.push_back (i);
+		} else {
+			bool done = false;
+			for (auto& g: grouped) {
+				if (same_settings(film, g.front()->audio, i->audio) && i->position() == g.back()->end(film)) {
+					g.push_back (i);
+					done = true;
+				}
+			}
+			if (!done) {
+				grouped.push_back ({i});
+			}
+		}
+	}
+
+	for (auto i: ungrouped) {
+		grouped.push_back({i});
+	}
+
+	return grouped;
 }
 
 
