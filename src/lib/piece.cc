@@ -168,7 +168,7 @@ Piece::atmos (shared_ptr<const dcp::AtmosFrame> data, Frame frame, AtmosMetadata
 void
 Piece::update_pull_to (DCPTime& pull_to) const
 {
-	if (_done) {
+	if (done()) {
 		return;
 	}
 
@@ -325,7 +325,7 @@ void
 Piece::pass ()
 {
 	LOG_DEBUG_PLAYER ("Calling pass() on %1", _content->path(0));
-	_done = _decoder->pass();
+	_decoder->pass();
 }
 
 
@@ -356,14 +356,9 @@ Piece::seek (DCPTime time, bool accurate)
 		   been trimmed to a point between keyframes, or something).
 		   */
 		_decoder->seek (dcp_to_content_time(position()), true);
-		_done = false;
 	} else if (position() <= time && time < end()) {
 		/* During; seek to position */
 		_decoder->seek (dcp_to_content_time(time), accurate);
-		_done = false;
-	} else {
-		/* After; this piece is done */
-		_done = true;
 	}
 }
 
@@ -371,16 +366,10 @@ Piece::seek (DCPTime time, bool accurate)
 optional<dcpomatic::DCPTime>
 Piece::decoder_before(optional<dcpomatic::DCPTime> time)
 {
-	if (_done) {
-		return {};
-	}
-
 	auto t = content_time_to_dcp(_content, std::max(_decoder->position(), _content->trim_start()));
 	DCPOMATIC_ASSERT (t);
 
-	if (*t > end()) {
-		_done = true;
-	} else {
+	if (*t < end()) {
 		/* Given two choices at the same time, pick the one with texts so we see it before
 		   the video.
 		   */
@@ -391,6 +380,7 @@ Piece::decoder_before(optional<dcpomatic::DCPTime> time)
 
 	return {};
 }
+
 
 vector<dcpomatic::FontData>
 Piece::fonts () const
@@ -424,3 +414,13 @@ Piece::flush ()
 		}
 	}
 }
+
+
+bool
+Piece::done () const
+{
+	auto film = _film.lock();
+	DCPOMATIC_ASSERT (film);
+	return content_time_to_dcp(_content, std::max(_decoder->position(), _content->trim_start())) > _content->end(film);
+}
+

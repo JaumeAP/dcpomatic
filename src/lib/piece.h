@@ -107,13 +107,13 @@ private:
 	void atmos (std::shared_ptr<const dcp::AtmosFrame> data, Frame frame, AtmosMetadata metadata);
 
 	void flush ();
+	bool done () const;
 
 	std::weak_ptr<const Film> _film;
 	std::shared_ptr<Content> _content;
 	std::shared_ptr<Decoder> _decoder;
 	FrameRateChange _frc;
 	bool _fast = false;
-	bool _done = false;
 	boost::optional<dcpomatic::DCPTimePeriod> _ignore_video;
 	std::map<AudioStreamPtr, dcpomatic::DCPTime> _stream_last_push_end;
 
