@@ -277,7 +277,11 @@ Player::setup_pieces_unlocked ()
 			}
 		}
 
-		auto piece = make_shared<Piece>(_film, i, decoder, frc, _fast);
+		vector<Piece::Pair> content = {
+			Piece::Pair(i, decoder)
+		};
+
+		auto piece = make_shared<Piece>(_film, content, frc, _fast);
 		_pieces.push_back (piece);
 
 		if (i->video) {

@@ -41,6 +41,7 @@
 using std::dynamic_pointer_cast;
 using std::list;
 using std::make_shared;
+using std::pair;
 using std::shared_ptr;
 using std::vector;
 using std::weak_ptr;
@@ -48,43 +49,46 @@ using boost::optional;
 using namespace dcpomatic;
 
 
-Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> content, shared_ptr<Decoder> decoder, FrameRateChange frc, bool fast)
+Piece::Piece (weak_ptr<const Film> film, vector<Pair> content, FrameRateChange frc, bool fast)
 	: _film (film)
-	, _content (content)
-	, _decoder (decoder)
+	, _content (std::move(content))
 	, _frc (frc)
 	, _fast (fast)
 {
-	if (_content->audio) {
-		for (auto const& i: content->audio->streams()) {
-			_audio_streams.push_back(Stream(_content->position(), i->mapping()));
+	auto const rep = representative();
+	if (rep.content->audio) {
+		int const streams = rep.content->audio->streams().size();
+		for (int i = 0; i < streams; ++i) {
+			_audio_streams.push_back(Stream(rep.content->position(), rep.content->audio->mapping()));
 		}
 	}
 
-	if (_decoder->video) {
-		_decoder->video->Data.connect (boost::bind(&Piece::video, this, _1, _2, _3, _4));
-	}
+	for (auto const& i: _content) {
+		if (i.decoder->video) {
+			i.decoder->video->Data.connect (boost::bind(&Piece::video, this, i.content, _1, _2, _3, _4));
+		}
 
-	if (_decoder->audio) {
-		_decoder->audio->Data.connect (boost::bind(&Piece::audio, this, _1, _2, _3));
-	}
+		if (i.decoder->audio) {
+			i.decoder->audio->Data.connect (boost::bind(&Piece::audio, this, i.content, _1, _2, _3));
+		}
 
-	for (auto i: _decoder->text) {
-		i->BitmapStart.connect (boost::bind(&Piece::bitmap_start, this, content, i->content(), _1, _2, _3));
-		i->StringStart.connect (boost::bind(&Piece::string_start, this, content, i->content(), _1, _2));
-		i->Stop.connect (boost::bind(&Piece::stop, this, content, i->content(), _1));
-	}
+		for (auto j: i.decoder->text) {
+			j->BitmapStart.connect (boost::bind(&Piece::bitmap_start, this, i.content, j->content(), _1, _2, _3));
+			j->StringStart.connect (boost::bind(&Piece::string_start, this, i.content, j->content(), _1, _2));
+			j->Stop.connect (boost::bind(&Piece::stop, this, i.content, j->content(), _1));
+		}
 
-	if (_decoder->atmos) {
-		_decoder->atmos->Data.connect (boost::bind(&Piece::atmos, this, _1, _2, _3));
-	}
+		if (i.decoder->atmos) {
+			i.decoder->atmos->Data.connect (boost::bind(&Piece::atmos, this, _1, _2, _3));
+		}
 
-	_decoder->Flush.connect (boost::bind(&Piece::flush, this));
+		i.decoder->Flush.connect (boost::bind(&Piece::flush, this));
+	}
 }
 
 
 void
-Piece::video (shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part)
+Piece::video (shared_ptr<const Content> content, shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part)
 {
 	if (!use_video()) {
 		return;
@@ -94,7 +98,7 @@ Piece::video (shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part p
 		return;
 	}
 
-	auto const time = content_video_to_dcp (frame);
+	auto const time = content_video_to_dcp (content, frame);
 
 	if (_ignore_video && _ignore_video->contains(time)) {
 		return;
@@ -105,19 +109,19 @@ Piece::video (shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part p
 
 
 void
-Piece::audio (AudioStreamPtr stream_ptr, shared_ptr<const AudioBuffers> audio, Frame frame)
+Piece::audio (shared_ptr<const Content> content, AudioStreamPtr stream_ptr, shared_ptr<const AudioBuffers> audio, Frame frame)
 {
 	auto film = _film.lock ();
 	DCPOMATIC_ASSERT (film);
 
-	auto content_streams = _content->audio->streams();
+	auto content_streams = content->audio->streams();
 	auto content_stream_iter = std::find(content_streams.begin(), content_streams.end(), stream_ptr);
 	DCPOMATIC_ASSERT (content_stream_iter != content_streams.end());
 	int index = std::distance(content_streams.begin(), content_stream_iter);
 	DCPOMATIC_ASSERT (index >= 0 && index < static_cast<int>(_audio_streams.size()));
 	auto& stream = _audio_streams[index];
 
-	int const resampled_rate = _content->audio->resampled_frame_rate(film);
+	int const resampled_rate = representative().content->audio->resampled_frame_rate(film);
 
 	auto resampler = stream.resampler;
 	if (!resampler && stream_ptr->frame_rate() != resampled_rate) {
@@ -202,20 +206,8 @@ Piece::set_last_push_end (int stream, DCPTime end)
 
 
 DCPTime
-Piece::content_video_to_dcp (Frame f) const
+Piece::content_video_to_dcp (shared_ptr<const Content> content, Frame f) const
 {
-	/* See comment in resampled_audio_to_dcp */
-	auto const d = DCPTime::from_frames(f * _frc.factor(), _frc.dcp) - DCPTime(_content->trim_start(), _frc);
-	return d + _content->position();
-}
-
-
-DCPTime
-Piece::resampled_audio_to_dcp (Frame f) const
-{
-	auto film = _film.lock ();
-	DCPOMATIC_ASSERT (film);
-
 	/* It might seem more logical here to convert s to a ContentTime (using the FrameRateChange)
 	   then convert that ContentTime to frames at the content's rate.  However this fails for
 	   situations like content at 29.9978733fps, DCP at 30fps.  The accuracy of the Time type is not
@@ -223,54 +215,70 @@ Piece::resampled_audio_to_dcp (Frame f) const
 
 	   Instead we convert the DCPTime using the DCP video rate then account for any skip/repeat.
 	*/
-	return DCPTime::from_frames(f, film->audio_frame_rate())
-		- DCPTime(_content->trim_start(), _frc)
-		+ _content->position();
+	auto const d = DCPTime::from_frames(f * _frc.factor(), _frc.dcp) - DCPTime(content->trim_start(), _frc);
+	return d + content->position();
 }
 
 
-ContentTime
-Piece::dcp_to_content_time (DCPTime t) const
+/** @param f Frame offset from start of the piece */
+DCPTime
+Piece::resampled_audio_to_dcp (Frame f) const
 {
 	auto film = _film.lock ();
 	DCPOMATIC_ASSERT (film);
 
-	auto s = t - _content->position ();
-	s = min (_content->length_after_trim(film), s);
-	return max (ContentTime(), ContentTime(s, _frc) + _content->trim_start());
+	return DCPTime::from_frames(f, film->audio_frame_rate()) + position();
+}
+
+
+ContentTime
+Piece::dcp_to_content_time (shared_ptr<const Content> content, DCPTime t) const
+{
+	auto film = _film.lock ();
+	DCPOMATIC_ASSERT (film);
+
+	auto s = t - content->position ();
+	s = min (content->length_after_trim(film), s);
+	return max (ContentTime(), ContentTime(s, _frc) + content->trim_start());
 }
 
 
 optional<DCPTime>
 Piece::content_time_to_dcp (shared_ptr<const Content> content, ContentTime t) const
 {
-	if (_content != content) {
+	if (std::find_if(_content.begin(), _content.end(), [content](Pair const& p) { return p.content == content; }) == _content.end()) {
 		return {};
 	}
 
-	return max (DCPTime(), DCPTime(t - _content->trim_start(), _frc) + _content->position());
+	return max (DCPTime(), DCPTime(t - content->trim_start(), _frc) + content->position());
 }
 
 
 bool
 Piece::use_video () const
 {
-	return _content->video && _content->video->use();
+	for (auto const& i: _content) {
+		if (i.content->video && i.content->video->use()) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 
 VideoFrameType
 Piece::video_frame_type () const
 {
-	DCPOMATIC_ASSERT (_content->video);
-	return _content->video->frame_type ();
+	DCPOMATIC_ASSERT (representative().content->video);
+	return representative().content->video->frame_type();
 }
 
 
 dcpomatic::DCPTime
 Piece::position () const
 {
-	return _content->position ();
+	return _content.front().content->position();
 }
 
 
@@ -279,7 +287,7 @@ Piece::end () const
 {
 	auto film = _film.lock ();
 	DCPOMATIC_ASSERT (film);
-	return _content->end (film);
+	return _content.back().content->end(film);
 }
 
 
@@ -289,17 +297,22 @@ Piece::player_video (PieceVideo video, dcp::Size container_size) const
 	auto film = _film.lock ();
 	DCPOMATIC_ASSERT (film);
 
+	auto const rep = representative().content;
+
 	return std::make_shared<PlayerVideo>(
 		video.image,
-		_content->video->crop (),
-		_content->video->fade (film, video.frame),
-		scale_for_display(_content->video->scaled_size(film->frame_size()), container_size, film->frame_size()),
+		rep->video->crop(),
+		rep->video->fade(film, video.frame),
+		scale_for_display(rep->video->scaled_size(film->frame_size()), container_size, film->frame_size()),
 		container_size,
 		video.eyes,
 		video.part,
-		_content->video->colour_conversion(),
-		_content->video->range(),
-		_content,
+		rep->video->colour_conversion(),
+		rep->video->range(),
+		/* XXX: this isn't really right, but it's just for doing the reset_metadata() tricks so it's
+		 * OK that it won't work for sound-only content.
+		 */
+		rep,
 		video.frame,
 		false
 		);
@@ -312,24 +325,26 @@ Piece::resampled_audio_frame_rate () const
 	auto film = _film.lock ();
 	DCPOMATIC_ASSERT (film);
 
-	DCPOMATIC_ASSERT (_content->audio);
-	return _content->audio->resampled_frame_rate (film);
+	DCPOMATIC_ASSERT (representative().content->audio);
+	return representative().content->audio->resampled_frame_rate(film);
 }
 
 
 double
 Piece::audio_gain () const
 {
-	DCPOMATIC_ASSERT (_content->audio);
-	return _content->audio->gain();
+	DCPOMATIC_ASSERT (representative().content->audio);
+	return representative().content->audio->gain();
 }
 
 
 shared_ptr<Decoder>
 Piece::decoder_for (shared_ptr<Content> content) const
 {
-	if (content == _content) {
-		return _decoder;
+	for (auto const& i: _content) {
+		if (i.content == content) {
+			return i.decoder;
+		}
 	}
 
 	return {};
@@ -339,15 +354,25 @@ Piece::decoder_for (shared_ptr<Content> content) const
 void
 Piece::pass ()
 {
-	LOG_DEBUG_PLAYER ("Calling pass() on %1", _content->path(0));
-	_decoder->pass();
+	auto film = _film.lock ();
+	DCPOMATIC_ASSERT (film);
+
+	for (auto const& i: _content) {
+		auto t = content_time_to_dcp(i.content, std::max(i.decoder->position(), i.content->trim_start()));
+		DCPOMATIC_ASSERT (t);
+		if (*t < i.content->end(film)) {
+			LOG_DEBUG_PLAYER ("Calling pass() on %1", i.content->path(0));
+			i.decoder->pass();
+			return;
+		}
+	}
 }
 
 
 bool
 Piece::reference_dcp_audio () const
 {
-	auto dcp = dynamic_pointer_cast<DCPContent>(_content);
+	auto dcp = dynamic_pointer_cast<DCPContent>(representative().content);
 	return dcp && dcp->reference_audio();
 }
 
@@ -363,16 +388,18 @@ Piece::seek (DCPTime time, bool accurate)
 		i.position = 0;
 	}
 
-	if (time < position()) {
-		/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
-		   we must seek this (following) content accurately, otherwise when we come to the end of the current
-		   content we may not start right at the beginning of the next, causing a gap (if the next content has
-		   been trimmed to a point between keyframes, or something).
-		   */
-		_decoder->seek (dcp_to_content_time(position()), true);
-	} else if (position() <= time && time < end()) {
-		/* During; seek to position */
-		_decoder->seek (dcp_to_content_time(time), accurate);
+	for (auto const& i: _content) {
+		if (time < i.content->position()) {
+			/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
+			   we must seek this (following) content accurately, otherwise when we come to the end of the current
+			   content we may not start right at the beginning of the next, causing a gap (if the next content has
+			   been trimmed to a point between keyframes, or something).
+			   */
+			i.decoder->seek (i.content->trim_start(), true);
+		} else if (position() <= time && time < end()) {
+			/* During; seek to position */
+			i.decoder->seek (dcp_to_content_time(i.content, time), accurate);
+		}
 	}
 }
 
@@ -380,15 +407,22 @@ Piece::seek (DCPTime time, bool accurate)
 optional<dcpomatic::DCPTime>
 Piece::decoder_before(optional<dcpomatic::DCPTime> time)
 {
-	auto t = content_time_to_dcp(_content, std::max(_decoder->position(), _content->trim_start()));
-	DCPOMATIC_ASSERT (t);
+	auto film = _film.lock ();
+	DCPOMATIC_ASSERT (film);
 
-	if (*t < end()) {
-		/* Given two choices at the same time, pick the one with texts so we see it before
-		   the video.
-		   */
-		if (!time || t < *time || (t == *time && !_decoder->text.empty())) {
-			return t;
+	for (auto const& i: _content) {
+		auto t = content_time_to_dcp(i.content, std::max(i.decoder->position(), i.content->trim_start()));
+		DCPOMATIC_ASSERT (t);
+		if (*t < i.content->end(film)) {
+			/* This is the first unfinished decoder we have, so we'll make a decision with it.
+			   Given two choices at the same time, pick the one with texts so we see it before
+			   the video.
+			   */
+			if (!time || t < *time || (t == *time && !i.decoder->text.empty())) {
+				return t;
+			} else {
+				return {};
+			}
 		}
 	}
 
@@ -399,7 +433,12 @@ Piece::decoder_before(optional<dcpomatic::DCPTime> time)
 vector<dcpomatic::FontData>
 Piece::fonts () const
 {
-	return _decoder->fonts();
+	vector<dcpomatic::FontData> data;
+	for (auto const& i: _content) {
+		auto f = i.decoder->fonts();
+		std::copy (f.begin(), f.end(), std::back_inserter(data));
+	}
+	return data;
 }
 
 
@@ -430,6 +469,7 @@ Piece::done () const
 {
 	auto film = _film.lock();
 	DCPOMATIC_ASSERT (film);
-	return content_time_to_dcp(_content, std::max(_decoder->position(), _content->trim_start())) > _content->end(film);
+	auto const& last = _content.back();
+	return content_time_to_dcp(last.content, std::max(last.decoder->position(), last.content->trim_start())) > last.content->end(film);
 }
 

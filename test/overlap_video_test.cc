@@ -60,8 +60,8 @@ BOOST_AUTO_TEST_CASE (overlap_video_test1)
 	auto player = make_shared<Player>(film);
 	auto pieces = player->_pieces;
 	BOOST_REQUIRE_EQUAL (pieces.size(), 2U);
-	BOOST_CHECK_EQUAL (pieces.front()->_content, A);
-	BOOST_CHECK_EQUAL (pieces.back()->_content, B);
+	BOOST_CHECK_EQUAL (pieces.front()->_content.front().content, A);
+	BOOST_CHECK_EQUAL (pieces.back()->_content.front().content, B);
 	BOOST_CHECK (pieces.front()->_ignore_video);
 	BOOST_CHECK (pieces.front()->_ignore_video.get() == dcpomatic::DCPTimePeriod(dcpomatic::DCPTime::from_seconds(1), dcpomatic::DCPTime::from_seconds(1) + B->length_after_trim(film)));
 

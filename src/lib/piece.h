@@ -48,7 +48,24 @@ struct player_time_calculation_test2;
 class Piece
 {
 public:
-	Piece (std::weak_ptr<const Film> film, std::shared_ptr<Content> content, std::shared_ptr<Decoder> decoder, FrameRateChange frc, bool fast);
+	struct Pair {
+		Pair () {}
+
+		Pair (std::shared_ptr<Content> c, std::shared_ptr<Decoder> d)
+			: content(c)
+			, decoder(d)
+		{}
+
+		std::shared_ptr<Content> content;
+		std::shared_ptr<Decoder> decoder;
+	};
+
+	Piece (
+		std::weak_ptr<const Film> film,
+		std::vector<Pair> content,
+		FrameRateChange frc,
+		bool fast
+	      );
 
 	void update_pull_to (dcpomatic::DCPTime& pull_to) const;
 	void set_last_push_end (int stream, dcpomatic::DCPTime last_push_end);
@@ -96,8 +113,8 @@ private:
 	friend struct check_reuse_old_data_test;
 	friend struct player_time_calculation_test2;
 
-	void video (std::shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part);
-	void audio (std::shared_ptr<AudioStream> stream, std::shared_ptr<const AudioBuffers> audio, Frame frame);
+	void video (std::shared_ptr<const Content> content, std::shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part);
+	void audio (std::shared_ptr<const Content> content, std::shared_ptr<AudioStream> stream, std::shared_ptr<const AudioBuffers> audio, Frame frame);
 	void bitmap_start (std::weak_ptr<const Content> content, std::weak_ptr<const TextContent> text, dcpomatic::ContentTime time, std::shared_ptr<Image> image, dcpomatic::Rect<double> area);
 	void string_start (std::weak_ptr<const Content> content, std::weak_ptr<const TextContent> text, dcpomatic::ContentTime time, std::list<dcp::SubtitleString> subs);
 	void stop (std::weak_ptr<const Content> content, std::weak_ptr<const TextContent> text, dcpomatic::ContentTime time);
@@ -106,13 +123,16 @@ private:
 	void flush ();
 	bool done () const;
 
-	dcpomatic::DCPTime content_video_to_dcp (Frame f) const;
-	dcpomatic::ContentTime dcp_to_content_time (dcpomatic::DCPTime t) const;
+	dcpomatic::DCPTime content_video_to_dcp (std::shared_ptr<const Content> content, Frame f) const;
+	dcpomatic::ContentTime dcp_to_content_time (std::shared_ptr<const Content> content, dcpomatic::DCPTime t) const;
 	dcpomatic::DCPTime resampled_audio_to_dcp (Frame f) const;
 
+	Pair representative () const {
+		return _content.front();
+	};
+
 	std::weak_ptr<const Film> _film;
-	std::shared_ptr<Content> _content;
-	std::shared_ptr<Decoder> _decoder;
+	std::vector<Pair> _content;
 	FrameRateChange _frc;
 	bool _fast = false;
 	boost::optional<dcpomatic::DCPTimePeriod> _ignore_video;

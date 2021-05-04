@@ -206,10 +206,10 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	film->set_video_frame_rate (24);
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
-	shared_ptr<Piece> piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), 0);
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(12).get(), DCPTime::from_seconds(0.5).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(72).get(), DCPTime::from_seconds(3.0).get());
+	auto piece = player->_pieces.front ();
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), 0);
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 12).get(), DCPTime::from_seconds(0.5).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 72).get(), DCPTime::from_seconds(3.0).get());
 
 	/* Position 3s, no trim, content rate = DCP rate */
 	content->set_position (film, DCPTime::from_seconds(3));
@@ -219,9 +219,9 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
 	piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), DCPTime::from_seconds(3.00).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(36).get(), DCPTime::from_seconds(4.50).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(162).get(), DCPTime::from_seconds(9.75).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), DCPTime::from_seconds(3.00).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 36).get(), DCPTime::from_seconds(4.50).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 162).get(), DCPTime::from_seconds(9.75).get());
 
 	/* Position 3s, 1.5s trim, content rate = DCP rate */
 	content->set_position (film, DCPTime::from_seconds(3));
@@ -231,10 +231,10 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
 	piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), DCPTime::from_seconds(1.50).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(36).get(), DCPTime::from_seconds(3.00).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(72).get(), DCPTime::from_seconds(4.50).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(198).get(), DCPTime::from_seconds(9.75).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), DCPTime::from_seconds(1.50).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 36).get(), DCPTime::from_seconds(3.00).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 72).get(), DCPTime::from_seconds(4.50).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 198).get(), DCPTime::from_seconds(9.75).get());
 
 	/* Position 0, no trim, content rate 24, DCP rate 25.
 	   Now, for example, a DCPTime position of 3s means 3s at 25fps.  Since we run the video
@@ -247,9 +247,9 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
 	piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), 0);
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(15).get(), DCPTime::from_seconds(0.6).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(75).get(), DCPTime::from_seconds(3.0).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), 0);
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 15).get(), DCPTime::from_seconds(0.6).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 75).get(), DCPTime::from_seconds(3.0).get());
 
 	/* Position 3s, no trim, content rate 24, DCP rate 25 */
 	content->set_position (film, DCPTime::from_seconds(3));
@@ -259,9 +259,9 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
 	piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), DCPTime::from_seconds(3.00).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(40).get(), DCPTime::from_seconds(4.60).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(169).get(), DCPTime::from_seconds(9.76).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), DCPTime::from_seconds(3.00).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 40).get(), DCPTime::from_seconds(4.60).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 169).get(), DCPTime::from_seconds(9.76).get());
 
 	/* Position 3s, 1.6s trim, content rate 24, DCP rate 25, so the 1.6s trim is at 24fps */
 	content->set_position (film, DCPTime::from_seconds(3));
@@ -271,10 +271,10 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
 	piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), 142080);
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(40).get(), 295680);
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(80).get(), 449280);
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(209).get(), 944640);
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), 142080);
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 40).get(), 295680);
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 80).get(), 449280);
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 209).get(), 944640);
 
 	/* Position 0, no trim, content rate 24, DCP rate 48
 	   Now, for example, a DCPTime position of 3s means 3s at 48fps.  Since we run the video
@@ -289,9 +289,9 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
 	piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), 0);
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(12).get(), DCPTime::from_seconds(0.5).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(72).get(), DCPTime::from_seconds(3.0).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), 0);
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 12).get(), DCPTime::from_seconds(0.5).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 72).get(), DCPTime::from_seconds(3.0).get());
 
 	/* Position 3s, no trim, content rate 24, DCP rate 48 */
 	content->set_position (film, DCPTime::from_seconds(3));
@@ -301,9 +301,9 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
 	piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), DCPTime::from_seconds(3.00).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(36).get(), DCPTime::from_seconds(4.50).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(162).get(), DCPTime::from_seconds(9.75).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), DCPTime::from_seconds(3.00).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 36).get(), DCPTime::from_seconds(4.50).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 162).get(), DCPTime::from_seconds(9.75).get());
 
 	/* Position 3s, 1.5s trim, content rate 24, DCP rate 48 */
 	content->set_position (film, DCPTime::from_seconds(3));
@@ -313,10 +313,10 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
 	piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), DCPTime::from_seconds(1.50).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(36).get(), DCPTime::from_seconds(3.00).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(72).get(), DCPTime::from_seconds(4.50).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(198).get(), DCPTime::from_seconds(9.75).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), DCPTime::from_seconds(1.50).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 36).get(), DCPTime::from_seconds(3.00).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 72).get(), DCPTime::from_seconds(4.50).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 198).get(), DCPTime::from_seconds(9.75).get());
 
 	/* Position 0, no trim, content rate 48, DCP rate 24
 	   Now, for example, a DCPTime position of 3s means 3s at 24fps.  Since we run the video
@@ -330,9 +330,9 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
 	piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), 0);
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(24).get(), DCPTime::from_seconds(0.5).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(144).get(), DCPTime::from_seconds(3.0).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), 0);
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 24).get(), DCPTime::from_seconds(0.5).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 144).get(), DCPTime::from_seconds(3.0).get());
 
 	/* Position 3s, no trim, content rate 24, DCP rate 48 */
 	content->set_position (film, DCPTime::from_seconds(3));
@@ -342,9 +342,9 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
 	piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), DCPTime::from_seconds(3.00).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(72).get(), DCPTime::from_seconds(4.50).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(324).get(), DCPTime::from_seconds(9.75).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), DCPTime::from_seconds(3.00).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 72).get(), DCPTime::from_seconds(4.50).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 324).get(), DCPTime::from_seconds(9.75).get());
 
 	/* Position 3s, 1.5s trim, content rate 24, DCP rate 48 */
 	content->set_position (film, DCPTime::from_seconds(3));
@@ -354,9 +354,9 @@ BOOST_AUTO_TEST_CASE (player_time_calculation_test2)
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_pieces.size(), 1U);
 	piece = player->_pieces.front ();
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(0).get(), DCPTime::from_seconds(1.50).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(72).get(), DCPTime::from_seconds(3.00).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(144).get(), DCPTime::from_seconds(4.50).get());
-	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(396).get(), DCPTime::from_seconds(9.75).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 0).get(), DCPTime::from_seconds(1.50).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 72).get(), DCPTime::from_seconds(3.00).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 144).get(), DCPTime::from_seconds(4.50).get());
+	BOOST_CHECK_EQUAL (piece->content_video_to_dcp(content, 396).get(), DCPTime::from_seconds(9.75).get());
 }
 

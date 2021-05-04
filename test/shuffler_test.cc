@@ -41,7 +41,10 @@ using namespace boost::placeholders;
 static void
 push (Shuffler& s, shared_ptr<Film> film, shared_ptr<Content> content, shared_ptr<Decoder> decoder, int frame, Eyes eyes)
 {
-	auto piece = make_shared<Piece>(film, content, decoder, FrameRateChange(24, 24), false);
+	auto pc = {
+		Piece::Pair(content, decoder)
+	};
+	auto piece = make_shared<Piece>(film, pc, FrameRateChange(24, 24), false);
 	PieceVideo cv;
 	cv.frame = frame;
 	cv.eyes = eyes;
