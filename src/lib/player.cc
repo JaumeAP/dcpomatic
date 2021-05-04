@@ -947,12 +947,12 @@ Player::audio (weak_ptr<Piece> wp, PieceAudio audio)
 
 	/* Remap */
 
-	audio.audio = remap (audio.audio, _film->audio_channels(), audio.stream->mapping());
+	audio.audio = remap (audio.audio, _film->audio_channels(), audio.mapping);
 
 	/* Process */
 
 	if (_audio_processor) {
-		audio.audio = _audio_processor->run (audio.audio, _film->audio_channels ());
+		audio.audio = _audio_processor->run (audio.audio, _film->audio_channels());
 	}
 
 	/* Push */

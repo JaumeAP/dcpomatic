@@ -51,7 +51,7 @@ public:
 	Piece (std::weak_ptr<const Film> film, std::shared_ptr<Content> content, std::shared_ptr<Decoder> decoder, FrameRateChange frc, bool fast);
 
 	void update_pull_to (dcpomatic::DCPTime& pull_to) const;
-	void set_last_push_end (AudioStreamPtr stream, dcpomatic::DCPTime last_push_end);
+	void set_last_push_end (int stream, dcpomatic::DCPTime last_push_end);
 
 	boost::optional<dcpomatic::DCPTime> content_time_to_dcp (std::shared_ptr<const Content> content, dcpomatic::ContentTime t) const;
 
@@ -118,11 +118,21 @@ private:
 	FrameRateChange _frc;
 	bool _fast = false;
 	boost::optional<dcpomatic::DCPTimePeriod> _ignore_video;
-	std::map<AudioStreamPtr, dcpomatic::DCPTime> _stream_last_push_end;
 
-	std::map<AudioStreamPtr, std::shared_ptr<Resampler>> _resamplers;
-	std::map<AudioStreamPtr, Frame> _positions;
+	struct Stream
+	{
+		Stream (dcpomatic::DCPTime lpe, AudioMapping m)
+			: last_push_end(lpe)
+			, mapping(m)
+		{}
 
+		dcpomatic::DCPTime last_push_end;
+		std::shared_ptr<Resampler> resampler;
+		Frame position = 0;
+		AudioMapping mapping;
+	};
+
+	std::vector<Stream> _audio_streams;
 };
 
 

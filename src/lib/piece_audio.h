@@ -29,10 +29,8 @@
 
 
 #include "audio_buffers.h"
+#include "audio_mapping.h"
 #include "types.h"
-
-
-class AudioStream;
 
 
 /** @class PieceAudio
@@ -45,17 +43,19 @@ public:
 		: audio (new AudioBuffers(0, 0))
 	{}
 
-	PieceAudio (std::shared_ptr<AudioStream> s, std::shared_ptr<const AudioBuffers> a, Frame f, dcpomatic::DCPTime t)
+	PieceAudio (int s, std::shared_ptr<const AudioBuffers> a, Frame f, dcpomatic::DCPTime t, AudioMapping m)
 		: stream (s)
 		, audio (a)
 		, frame (f)
 		, time (t)
+		, mapping (m)
 	{}
 
-	std::shared_ptr<AudioStream> stream;
+	int stream; ///< index of stream within the Piece
 	std::shared_ptr<const AudioBuffers> audio;
 	Frame frame = 0;
 	dcpomatic::DCPTime time;
+	AudioMapping mapping;
 };
 
 

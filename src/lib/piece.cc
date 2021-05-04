@@ -56,9 +56,8 @@ Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> content, shared_ptr
 	, _fast (fast)
 {
 	if (_content->audio) {
-		for (auto j: _content->audio->streams()) {
-			_stream_last_push_end[j] = _content->position();
-			_positions[j] = 0;
+		for (auto const& i: content->audio->streams()) {
+			_audio_streams.push_back(Stream(_content->position(), i->mapping()));
 		}
 	}
 
@@ -92,32 +91,34 @@ Piece::video (shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part p
 
 
 void
-Piece::audio (AudioStreamPtr stream, shared_ptr<const AudioBuffers> audio, Frame frame)
+Piece::audio (AudioStreamPtr stream_ptr, shared_ptr<const AudioBuffers> audio, Frame frame)
 {
 	auto film = _film.lock ();
 	DCPOMATIC_ASSERT (film);
 
+	auto content_streams = _content->audio->streams();
+	auto content_stream_iter = std::find(content_streams.begin(), content_streams.end(), stream_ptr);
+	DCPOMATIC_ASSERT (content_stream_iter != content_streams.end());
+	int index = std::distance(content_streams.begin(), content_stream_iter);
+	DCPOMATIC_ASSERT (index >= 0 && index < static_cast<int>(_audio_streams.size()));
+	auto& stream = _audio_streams[index];
+
 	int const resampled_rate = _content->audio->resampled_frame_rate(film);
 
-	shared_ptr<Resampler> resampler;
-	auto i = _resamplers.find(stream);
-	if (i != _resamplers.end()) {
-		resampler = i->second;
-	} else {
-		if (stream->frame_rate() != resampled_rate) {
-			LOG_GENERAL (
-				"Creating new resampler from %1 to %2 with %3 channels",
-				stream->frame_rate(),
-				resampled_rate,
-				stream->channels()
-				);
+	auto resampler = stream.resampler;
+	if (!resampler && stream_ptr->frame_rate() != resampled_rate) {
+		LOG_GENERAL (
+			"Creating new resampler from %1 to %2 with %3 channels",
+			stream_ptr->frame_rate(),
+			resampled_rate,
+			stream_ptr->channels()
+			);
 
-			resampler = make_shared<Resampler>(stream->frame_rate(), resampled_rate, stream->channels());
-			if (_fast) {
-				resampler->set_fast ();
-			}
-			_resamplers[stream] = resampler;
+		resampler = make_shared<Resampler>(stream_ptr->frame_rate(), resampled_rate, stream_ptr->channels());
+		if (_fast) {
+			resampler->set_fast ();
 		}
+		stream.resampler = resampler;
 	}
 
 	if (resampler) {
@@ -128,13 +129,13 @@ Piece::audio (AudioStreamPtr stream, shared_ptr<const AudioBuffers> audio, Frame
 		audio = ro;
 	}
 
-	if (_positions[stream] == 0) {
-		_positions[stream] = frame;
+	if (stream.position == 0) {
+		stream.position = frame;
 	}
 
-	auto const pos = _positions[stream];
-	Audio (PieceAudio(stream, audio, pos, resampled_audio_to_dcp(pos)));
-	_positions[stream] += audio->frames();
+	auto const pos = stream.position;
+	Audio (PieceAudio(index, audio, pos, resampled_audio_to_dcp(pos), stream_ptr->mapping()));
+	stream.position += audio->frames();
 }
 
 
@@ -169,21 +170,21 @@ Piece::atmos (shared_ptr<const dcp::AtmosFrame> data, Frame frame, AtmosMetadata
 void
 Piece::update_pull_to (DCPTime& pull_to) const
 {
-	if (done()) {
+	if (done() || _audio_streams.empty()) {
 		return;
 	}
 
-	for (auto const& i: _stream_last_push_end) {
-		pull_to = std::min(pull_to, i.second);
+	for (auto const& i: _audio_streams) {
+		pull_to = std::min(pull_to, i.last_push_end);
 	}
 }
 
 
 void
-Piece::set_last_push_end (AudioStreamPtr stream, DCPTime end)
+Piece::set_last_push_end (int stream, DCPTime end)
 {
-	DCPOMATIC_ASSERT (_stream_last_push_end.find(stream) != _stream_last_push_end.end());
-	_stream_last_push_end[stream] = end;
+	DCPOMATIC_ASSERT (stream >= 0 && stream < static_cast<int>(_audio_streams.size()));
+	_audio_streams[stream].last_push_end = end;
 }
 
 
@@ -341,13 +342,12 @@ Piece::reference_dcp_audio () const
 void
 Piece::seek (DCPTime time, bool accurate)
 {
-	for (auto i: _resamplers) {
-		i.second->flush ();
-		i.second->reset ();
-	}
-
-	for (auto& i: _positions) {
-		i.second = 0;
+	for (auto& i: _audio_streams) {
+		if (i.resampler) {
+			i.resampler->flush ();
+			i.resampler->reset ();
+		}
+		i.position = 0;
 	}
 
 	if (time < position()) {
@@ -407,13 +407,15 @@ Piece::period () const
 void
 Piece::flush ()
 {
-	for (auto const& i: _resamplers) {
-		auto ro = i.second->flush ();
+	int index = 0;
+	for (auto& i: _audio_streams) {
+		auto ro = i.resampler->flush ();
 		if (ro->frames() > 0) {
-			auto const frame = _positions[i.first];
-			Audio (PieceAudio(i.first, ro, frame, resampled_audio_to_dcp(frame)));
-			_positions[i.first] += ro->frames();
+			auto const frame = i.position;
+			Audio (PieceAudio(index, ro, frame, resampled_audio_to_dcp(frame), i.mapping));
+			i.position += ro->frames();
 		}
+		++index;
 	}
 }
 
