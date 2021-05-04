@@ -86,7 +86,21 @@ Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> content, shared_ptr
 void
 Piece::video (shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part)
 {
-	Video (PieceVideo(image, frame, content_video_to_dcp(frame), eyes, part));
+	if (!use_video()) {
+		return;
+	}
+
+	if (_frc.skip && (frame % 2) == 1) {
+		return;
+	}
+
+	auto const time = content_video_to_dcp (frame);
+
+	if (_ignore_video && _ignore_video->contains(time)) {
+		return;
+	}
+
+	Video (PieceVideo(image, frame, time, eyes, part));
 }
 
 
@@ -386,13 +400,6 @@ vector<dcpomatic::FontData>
 Piece::fonts () const
 {
 	return _decoder->fonts();
-}
-
-
-bool
-Piece::ignore_video_at (DCPTime time) const
-{
-	return _ignore_video && _ignore_video->contains(time);
 }
 
 

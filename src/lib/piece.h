@@ -84,8 +84,6 @@ public:
 		_ignore_video = period;
 	}
 
-	bool ignore_video_at (dcpomatic::DCPTime time) const;
-
 	boost::signals2::signal<void (PieceVideo)> Video;
 	boost::signals2::signal<void (PieceAudio)> Audio;
 	boost::signals2::signal<void (PieceBitmapTextStart)> BitmapTextStart;

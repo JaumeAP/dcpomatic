@@ -812,15 +812,6 @@ Player::video (weak_ptr<Piece> wp, PieceVideo video)
 		return;
 	}
 
-	if (!piece->use_video()) {
-		return;
-	}
-
-	auto frc = piece->frame_rate_change();
-	if (frc.skip && (video.frame % 2) == 1) {
-		return;
-	}
-
 	LOG_DEBUG_PLAYER("Received video frame %1 at %2", video.frame, to_string(video.time));
 
 	/* Discard if it's before the content's period or the last accurate seek.  We can't discard
@@ -828,10 +819,6 @@ Player::video (weak_ptr<Piece> wp, PieceVideo video)
 	   `now' and the end of the content's period.
 	*/
 	if (video.time < piece->position() || (_last_video_time && video.time < *_last_video_time)) {
-		return;
-	}
-
-	if (piece->ignore_video_at(video.time)) {
 		return;
 	}
 
@@ -890,6 +877,7 @@ Player::video (weak_ptr<Piece> wp, PieceVideo video)
 	_last_video[wp] = piece->player_video (video, _video_container_size);
 
 	DCPTime t = video.time;
+	auto const frc = piece->frame_rate_change();
 	for (int i = 0; i < frc.repeat; ++i) {
 		if (t < piece->end()) {
 			emit_video (_last_video[wp], t);
