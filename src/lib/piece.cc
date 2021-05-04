@@ -132,7 +132,8 @@ Piece::audio (AudioStreamPtr stream, shared_ptr<const AudioBuffers> audio, Frame
 		_positions[stream] = frame;
 	}
 
-	Audio (PieceAudio(stream, audio, _positions[stream]));
+	auto const pos = _positions[stream];
+	Audio (PieceAudio(stream, audio, pos, resampled_audio_to_dcp(pos)));
 	_positions[stream] += audio->frames();
 }
 
@@ -409,7 +410,8 @@ Piece::flush ()
 	for (auto const& i: _resamplers) {
 		auto ro = i.second->flush ();
 		if (ro->frames() > 0) {
-			Audio (PieceAudio(i.first, ro, _positions[i.first]));
+			auto const frame = _positions[i.first];
+			Audio (PieceAudio(i.first, ro, frame, resampled_audio_to_dcp(frame)));
 			_positions[i.first] += ro->frames();
 		}
 	}

@@ -909,29 +909,26 @@ Player::audio (weak_ptr<Piece> wp, PieceAudio audio)
 		return;
 	}
 
+	LOG_DEBUG_PLAYER("Received audio frame %1 at %2", audio.frame, to_string(audio.time));
+
+	/* The end of this block in the DCP */
 	int const rfr = piece->resampled_audio_frame_rate ();
-
-	/* Compute time in the DCP */
-	auto time = piece->resampled_audio_to_dcp (audio.frame);
-	LOG_DEBUG_PLAYER("Received audio frame %1 at %2", audio.frame, to_string(time));
-
-	/* And the end of this block in the DCP */
-	auto end = time + DCPTime::from_frames(audio.audio->frames(), rfr);
+	auto end = audio.time + DCPTime::from_frames(audio.audio->frames(), rfr);
 
 	/* Remove anything that comes before the start or after the end of the content */
-	if (time < piece->position()) {
-		auto cut = discard_audio (audio.audio, time, piece->position());
+	if (audio.time < piece->position()) {
+		auto cut = discard_audio (audio.audio, audio.time, piece->position());
 		if (!cut.first) {
 			/* This audio is entirely discarded */
 			return;
 		}
 		audio.audio = cut.first;
-		time = cut.second;
-	} else if (time > piece->end()) {
+		audio.time = cut.second;
+	} else if (audio.time > piece->end()) {
 		/* Discard it all */
 		return;
 	} else if (end > piece->end()) {
-		Frame const remaining_frames = DCPTime(piece->end() - time).frames_round(rfr);
+		Frame const remaining_frames = DCPTime(piece->end() - audio.time).frames_round(rfr);
 		if (remaining_frames == 0) {
 			return;
 		}
@@ -960,8 +957,8 @@ Player::audio (weak_ptr<Piece> wp, PieceAudio audio)
 
 	/* Push */
 
-	_audio_merger.push (audio.audio, time);
-	piece->set_last_push_end (audio.stream, time + DCPTime::from_frames(audio.audio->frames(), _film->audio_frame_rate()));
+	_audio_merger.push (audio.audio, audio.time);
+	piece->set_last_push_end (audio.stream, audio.time + DCPTime::from_frames(audio.audio->frames(), _film->audio_frame_rate()));
 }
 
 

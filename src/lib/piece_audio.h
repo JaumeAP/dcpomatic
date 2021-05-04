@@ -45,15 +45,17 @@ public:
 		: audio (new AudioBuffers(0, 0))
 	{}
 
-	PieceAudio (std::shared_ptr<AudioStream> s, std::shared_ptr<const AudioBuffers> a, Frame f)
+	PieceAudio (std::shared_ptr<AudioStream> s, std::shared_ptr<const AudioBuffers> a, Frame f, dcpomatic::DCPTime t)
 		: stream (s)
 		, audio (a)
 		, frame (f)
+		, time (t)
 	{}
 
 	std::shared_ptr<AudioStream> stream;
 	std::shared_ptr<const AudioBuffers> audio;
 	Frame frame = 0;
+	dcpomatic::DCPTime time;
 };
 
 
