@@ -30,11 +30,14 @@
 #include "piece_video.h"
 #include "player_video.h"
 #include "resampler.h"
+#include "text_content.h"
+#include "text_decoder.h"
 #include "video_content.h"
 #include "video_decoder.h"
 
 
 using std::dynamic_pointer_cast;
+using std::list;
 using std::make_shared;
 using std::shared_ptr;
 using std::vector;
@@ -63,6 +66,12 @@ Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> content, shared_ptr
 
 	if (_decoder->audio) {
 		_decoder->audio->Data.connect (boost::bind(&Piece::audio, this, _1, _2, _3));
+	}
+
+	for (auto i: _decoder->text) {
+		i->BitmapStart.connect (boost::bind(&Piece::bitmap_start, this, content, i->content(), _1, _2, _3));
+		i->StringStart.connect (boost::bind(&Piece::string_start, this, content, i->content(), _1, _2));
+		i->Stop.connect (boost::bind(&Piece::stop, this, content, i->content(), _1));
 	}
 
 	_decoder->Flush.connect (boost::bind(&Piece::flush, this));
@@ -119,6 +128,27 @@ Piece::audio (AudioStreamPtr stream, shared_ptr<const AudioBuffers> audio, Frame
 
 	Audio (PieceAudio(stream, audio, _positions[stream]));
 	_positions[stream] += audio->frames();
+}
+
+
+void
+Piece::bitmap_start (weak_ptr<const Content> content, weak_ptr<const TextContent> text, dcpomatic::ContentTime time, shared_ptr<Image> image, dcpomatic::Rect<double> area)
+{
+	BitmapTextStart (PieceBitmapTextStart(content, text, time, image, area));
+}
+
+
+void
+Piece::string_start (weak_ptr<const Content> content, weak_ptr<const TextContent> text, dcpomatic::ContentTime time, list<dcp::SubtitleString> subs)
+{
+	StringTextStart (PieceStringTextStart(content, text, time, subs));
+}
+
+
+void
+Piece::stop (weak_ptr<const Content> content, weak_ptr<const TextContent> text, dcpomatic::ContentTime time)
+{
+	TextStop (PieceTextStop(content, text, time));
 }
 
 

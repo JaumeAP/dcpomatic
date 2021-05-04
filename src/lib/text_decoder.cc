@@ -62,7 +62,7 @@ TextDecoder::TextDecoder (
 void
 TextDecoder::emit_bitmap_start (ContentTime from, shared_ptr<Image> image, dcpomatic::Rect<double> rect)
 {
-	BitmapStart (ContentBitmapText (from, image, rect));
+	BitmapStart (from, image, rect);
 	_position = from;
 }
 
@@ -97,7 +97,7 @@ TextDecoder::emit_plain_start (ContentTime from, list<dcp::SubtitleString> s)
 		}
 	}
 
-	PlainStart (ContentStringText (from, s));
+	StringStart (from, s);
 	_position = from;
 }
 

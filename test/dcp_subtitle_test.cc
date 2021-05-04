@@ -25,19 +25,19 @@
  */
 
 
-#include <boost/test/unit_test.hpp>
-#include "lib/film.h"
-#include "lib/dcp_subtitle_content.h"
 #include "lib/dcp_content.h"
-#include "lib/ratio.h"
-#include "lib/dcp_decoder.h"
 #include "lib/dcp_content_type.h"
+#include "lib/dcp_decoder.h"
+#include "lib/dcp_subtitle_content.h"
 #include "lib/dcp_subtitle_decoder.h"
-#include "lib/text_content.h"
-#include "lib/content_text.h"
+#include "lib/film.h"
 #include "lib/font.h"
+#include "lib/piece_text.h"
+#include "lib/ratio.h"
+#include "lib/text_content.h"
 #include "lib/text_decoder.h"
 #include "test.h"
+#include <boost/test/unit_test.hpp>
 #include <iostream>
 
 
@@ -53,18 +53,16 @@ using namespace boost::placeholders;
 using namespace dcpomatic;
 
 
-optional<ContentStringText> stored;
+ContentTime stored_time;
+list<dcp::SubtitleString> stored;
 
 
 static void
-store (ContentStringText sub)
+store (ContentTime time, list<dcp::SubtitleString> subs)
 {
-	if (!stored) {
-		stored = sub;
-	} else {
-		for (auto i: sub.subs) {
-			stored->subs.push_back (i);
-		}
+	stored_time = time;
+	for (auto i: subs) {
+		stored.push_back (i);
 	}
 }
 
@@ -74,7 +72,7 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test)
 {
 	auto film = new_test_film ("dcp_subtitle_test");
 	film->set_container (Ratio::from_id ("185"));
-	film->set_dcp_content_type (DCPContentType::from_isdcf_name ("TLR"));
+	film->set_dcp_content_type (DCPContentType::from_isdcf_name("TLR"));
 	film->set_name ("frobozz");
 	film->set_interop (false);
 	auto content = make_shared<DCPSubtitleContent>("test/data/dcp_sub.xml");
@@ -109,15 +107,14 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_within_dcp_test)
 	BOOST_REQUIRE (!wait_for_jobs ());
 
 	shared_ptr<DCPDecoder> decoder (new DCPDecoder (film, content, false, shared_ptr<DCPDecoder>()));
-	decoder->only_text()->PlainStart.connect (bind (store, _1));
+	decoder->only_text()->StringStart.connect (bind(store, _1, _2));
 
-	stored = optional<ContentStringText> ();
-	while (!decoder->pass() && !stored) {}
+	stored.clear();
+	while (!decoder->pass() && stored.empty()) {}
 
-	BOOST_REQUIRE (stored);
-	BOOST_REQUIRE_EQUAL (stored->subs.size(), 2U);
-	BOOST_CHECK_EQUAL (stored->subs.front().text(), "Noch mal.");
-	BOOST_CHECK_EQUAL (stored->subs.back().text(), "Encore une fois.");
+	BOOST_REQUIRE_EQUAL (stored.size(), 2U);
+	BOOST_CHECK_EQUAL (stored.front().text(), "Noch mal.");
+	BOOST_CHECK_EQUAL (stored.back().text(), "Encore une fois.");
 }
 
 /** Test subtitles whose text includes things like &lt;b&gt; */
@@ -132,12 +129,12 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test2)
 	BOOST_REQUIRE (!wait_for_jobs ());
 
 	auto decoder = make_shared<DCPSubtitleDecoder>(film, content);
-	decoder->only_text()->PlainStart.connect (bind (store, _1));
+	decoder->only_text()->StringStart.connect (bind(store, _1, _2));
 
-	stored = optional<ContentStringText> ();
+	stored.clear();
 	while (!decoder->pass()) {
-		if (stored && stored->from() == ContentTime(0)) {
-			BOOST_CHECK_EQUAL (stored->subs.front().text(), "&lt;b&gt;Hello world!&lt;/b&gt;");
+		if (!stored.empty() && stored_time == ContentTime(0)) {
+			BOOST_CHECK_EQUAL (stored.front().text(), "&lt;b&gt;Hello world!&lt;/b&gt;");
 		}
 	}
 }
@@ -158,21 +155,20 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test3)
 	make_and_verify_dcp (film, { dcp::VerificationNote::Code::INVALID_STANDARD });
 
 	auto decoder = make_shared<DCPSubtitleDecoder>(film, content);
-	stored = optional<ContentStringText> ();
+	stored.clear();
 	while (!decoder->pass ()) {
-		decoder->only_text()->PlainStart.connect (bind (store, _1));
-		if (stored && stored->from() == ContentTime::from_seconds(0.08)) {
-			auto s = stored->subs;
-			auto i = s.begin ();
+		decoder->only_text()->StringStart.connect (bind (store, _1, _2));
+		if (!stored.empty() && stored_time == ContentTime::from_seconds(0.08)) {
+			auto i = stored.begin ();
 			BOOST_CHECK_EQUAL (i->text(), "This");
 			++i;
-			BOOST_REQUIRE (i != s.end ());
+			BOOST_REQUIRE (i != stored.end());
 			BOOST_CHECK_EQUAL (i->text(), " is ");
 			++i;
-			BOOST_REQUIRE (i != s.end ());
+			BOOST_REQUIRE (i != stored.end());
 			BOOST_CHECK_EQUAL (i->text(), "wrong.");
 			++i;
-			BOOST_REQUIRE (i == s.end ());
+			BOOST_REQUIRE (i == stored.end());
 		}
 	}
 }
@@ -186,8 +182,8 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test4)
 	auto film = new_test_film2 ("dcp_subtitle_test4", {content, content2});
 	film->set_interop (true);
 
-	content->only_text()->add_font (shared_ptr<Font> (new Font ("font1")));
-	content2->only_text()->add_font (shared_ptr<Font> (new Font ("font2")));
+	content->only_text()->add_font(make_shared<Font>("font1"));
+	content2->only_text()->add_font(make_shared<Font>("font2"));
 
 	make_and_verify_dcp (film, { dcp::VerificationNote::Code::INVALID_STANDARD });
 

@@ -293,21 +293,9 @@ Player::setup_pieces_unlocked ()
 			piece->Audio.connect (bind(&Player::audio, this, weak_ptr<Piece>(piece), _1));
 		}
 
-		auto j = decoder->text.begin();
-
-		while (j != decoder->text.end()) {
-			(*j)->BitmapStart.connect (
-				bind(&Player::bitmap_text_start, this, weak_ptr<Piece>(piece), i, weak_ptr<const TextContent>((*j)->content()), _1)
-				);
-			(*j)->PlainStart.connect (
-				bind(&Player::plain_text_start, this, weak_ptr<Piece>(piece), i, weak_ptr<const TextContent>((*j)->content()), _1)
-				);
-			(*j)->Stop.connect (
-				bind(&Player::subtitle_stop, this, weak_ptr<Piece>(piece), i, weak_ptr<const TextContent>((*j)->content()), _1)
-				);
-
-			++j;
-		}
+		piece->BitmapTextStart.connect (bind(&Player::bitmap_text_start, this, weak_ptr<Piece>(piece), _1));
+		piece->StringTextStart.connect (bind(&Player::string_text_start, this, weak_ptr<Piece>(piece), _1));
+		piece->TextStop.connect (bind(&Player::subtitle_stop, this, weak_ptr<Piece>(piece), _1));
 
 		if (decoder->atmos) {
 			decoder->atmos->Data.connect (bind(&Player::atmos, this, weak_ptr<Piece>(piece), _1));
@@ -983,11 +971,11 @@ Player::audio (weak_ptr<Piece> wp, PieceAudio piece_audio)
 
 
 void
-Player::bitmap_text_start (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_ptr<const TextContent> wt, ContentBitmapText subtitle)
+Player::bitmap_text_start (weak_ptr<Piece> wp, PieceBitmapTextStart subtitle)
 {
 	auto piece = wp.lock ();
-	auto content = wc.lock ();
-	auto text = wt.lock ();
+	auto content = subtitle.content().lock();
+	auto text = subtitle.text().lock();
 	if (!piece || !content || !text) {
 		return;
 	}
@@ -1016,25 +1004,25 @@ Player::bitmap_text_start (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_
 
 	dcp::Size scaled_size (width, height);
 	ps.bitmap.push_back (BitmapText(image->scale(scaled_size, dcp::YUVToRGB::REC601, image->pixel_format(), true, _fast), subtitle.sub.rectangle));
-	auto from = piece->content_time_to_dcp(content, subtitle.from());
+	auto from = piece->content_time_to_dcp(content, subtitle.time());
 	DCPOMATIC_ASSERT (from);
 
-	_active_texts[static_cast<int>(text->type())].add_from (wt, ps, *from);
+	_active_texts[static_cast<int>(text->type())].add_from(text, ps, *from);
 }
 
 
 void
-Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_ptr<const TextContent> wt, ContentStringText subtitle)
+Player::string_text_start (weak_ptr<Piece> wp, PieceStringTextStart subtitle)
 {
 	auto piece = wp.lock ();
-	auto content = wc.lock ();
-	auto text = wt.lock ();
+	auto content = subtitle.content().lock();
+	auto text = subtitle.text().lock();
 	if (!piece || !content || !text) {
 		return;
 	}
 
 	PlayerText ps;
-	auto const from = piece->content_time_to_dcp(content, subtitle.from());
+	auto const from = piece->content_time_to_dcp(content, subtitle.time());
 	DCPOMATIC_ASSERT (from);
 
 	if (from > piece->end()) {
@@ -1042,8 +1030,8 @@ Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_p
 	}
 
 	for (auto s: subtitle.subs) {
-		s.set_h_position (s.h_position() + text->x_offset ());
-		s.set_v_position (s.v_position() + text->y_offset ());
+		s.set_h_position (s.h_position() + text->x_offset());
+		s.set_v_position (s.v_position() + text->y_offset());
 		float const xs = text->x_scale();
 		float const ys = text->y_scale();
 		float size = s.size();
@@ -1066,20 +1054,20 @@ Player::plain_text_start (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_p
 		ps.add_fonts (text->fonts ());
 	}
 
-	_active_texts[static_cast<int>(text->type())].add_from (wt, ps, *from);
+	_active_texts[static_cast<int>(text->type())].add_from(text, ps, *from);
 }
 
 
 void
-Player::subtitle_stop (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_ptr<const TextContent> wt, ContentTime to)
+Player::subtitle_stop (weak_ptr<Piece> wp, PieceTextStop stop)
 {
-	auto content = wc.lock ();
-	auto text = wt.lock ();
+	auto content = stop.content().lock();
+	auto text = stop.text().lock();
 	if (!text) {
 		return;
 	}
 
-	if (!_active_texts[static_cast<int>(text->type())].have(wt)) {
+	if (!_active_texts[static_cast<int>(text->type())].have(stop.text())) {
 		return;
 	}
 
@@ -1088,14 +1076,14 @@ Player::subtitle_stop (weak_ptr<Piece> wp, weak_ptr<const Content> wc, weak_ptr<
 		return;
 	}
 
-	auto const dcp_to = piece->content_time_to_dcp(content, to);
+	auto const dcp_to = piece->content_time_to_dcp(content, stop.time());
 	DCPOMATIC_ASSERT (dcp_to);
 
 	if (*dcp_to > piece->end()) {
 		return;
 	}
 
-	auto from = _active_texts[static_cast<int>(text->type())].add_to(wt, *dcp_to);
+	auto from = _active_texts[static_cast<int>(text->type())].add_to(stop.text(), *dcp_to);
 
 	bool const always = (text->type() == TextType::OPEN_SUBTITLE && _always_burn_open_subtitles);
 	if (text->use() && !always && !text->burn()) {

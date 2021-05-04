@@ -24,10 +24,10 @@
 
 
 #include "decoder.h"
+#include "decoder_part.h"
+#include "piece_text.h"
 #include "rect.h"
 #include "types.h"
-#include "content_text.h"
-#include "decoder_part.h"
 #include <dcp/subtitle_string.h>
 #include <boost/signals2.hpp>
 
@@ -66,8 +66,8 @@ public:
 		return _content;
 	}
 
-	boost::signals2::signal<void (ContentBitmapText)> BitmapStart;
-	boost::signals2::signal<void (ContentStringText)> PlainStart;
+	boost::signals2::signal<void (dcpomatic::ContentTime, std::shared_ptr<Image>, dcpomatic::Rect<double>)> BitmapStart;
+	boost::signals2::signal<void (dcpomatic::ContentTime, std::list<dcp::SubtitleString>)> StringStart;
 	boost::signals2::signal<void (dcpomatic::ContentTime)> Stop;
 
 private:

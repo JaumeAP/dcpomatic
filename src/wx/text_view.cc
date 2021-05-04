@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2014-2018 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2014-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -18,27 +18,30 @@
 
 */
 
-#include "text_view.h"
-#include "film_viewer.h"
-#include "wx_util.h"
-#include "lib/string_text_file_decoder.h"
-#include "lib/content_text.h"
-#include "lib/video_decoder.h"
-#include "lib/audio_decoder.h"
-#include "lib/film.h"
-#include "lib/config.h"
-#include "lib/string_text_file_content.h"
-#include "lib/text_decoder.h"
 
+#include "film_viewer.h"
+#include "text_view.h"
+#include "wx_util.h"
+#include "lib/audio_decoder.h"
+#include "lib/config.h"
+#include "lib/film.h"
+#include "lib/piece_text.h"
+#include "lib/string_text_file_content.h"
+#include "lib/string_text_file_decoder.h"
+#include "lib/text_decoder.h"
+#include "lib/video_decoder.h"
+
+
+using std::dynamic_pointer_cast;
 using std::list;
 using std::shared_ptr;
 using std::weak_ptr;
 using boost::bind;
-using std::dynamic_pointer_cast;
 using namespace dcpomatic;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
+
 
 TextView::TextView (
 	wxWindow* parent, shared_ptr<Film> film, shared_ptr<Content> content, shared_ptr<TextContent> text, shared_ptr<Decoder> decoder, weak_ptr<FilmViewer> viewer
@@ -73,7 +76,7 @@ TextView::TextView (
 		_list->InsertColumn (2, ip);
 	}
 
-	wxBoxSizer* sizer = new wxBoxSizer (wxVERTICAL);
+	auto sizer = new wxBoxSizer (wxVERTICAL);
 	sizer->Add (_list, 1, wxEXPAND | wxALL, DCPOMATIC_SIZER_X_GAP);
 
 	_list->Bind (wxEVT_LIST_ITEM_SELECTED, boost::bind (&TextView::subtitle_selected, this, _1));
@@ -96,29 +99,31 @@ TextView::TextView (
 	/* Find the decoder that is being used for our TextContent and attach to it */
 	for (auto i: decoder->text) {
 		if (i->content() == text) {
-			i->PlainStart.connect (bind (&TextView::data_start, this, _1));
-			i->Stop.connect (bind (&TextView::data_stop, this, _1));
+			i->StringStart.connect (bind(&TextView::data_start, this, _1, _2));
+			i->Stop.connect (bind(&TextView::data_stop, this, _1));
 		}
 	}
 	while (!decoder->pass ()) {}
 	SetSizerAndFit (sizer);
 }
 
+
 void
-TextView::data_start (ContentStringText cts)
+TextView::data_start (ContentTime time, list<dcp::SubtitleString> subs)
 {
-	for (auto const& i: cts.subs) {
+	for (auto const& i: subs) {
 		wxListItem list_item;
 		list_item.SetId (_subs);
 		_list->InsertItem (list_item);
-		_list->SetItem (_subs, 0, std_to_wx (cts.from().timecode (_frc->source)));
-		_list->SetItem (_subs, 2, std_to_wx (i.text ()));
-		_start_times.push_back (cts.from ());
+		_list->SetItem (_subs, 0, std_to_wx(time.timecode(_frc->source)));
+		_list->SetItem (_subs, 2, std_to_wx(i.text ()));
+		_start_times.push_back (time);
 		++_subs;
 	}
 
-	_last_count = cts.subs.size ();
+	_last_count = subs.size ();
 }
+
 
 void
 TextView::data_stop (ContentTime time)
@@ -128,21 +133,22 @@ TextView::data_stop (ContentTime time)
 	}
 
 	for (int i = _subs - *_last_count; i < _subs; ++i) {
-		_list->SetItem (i, 1, std_to_wx (time.timecode (_frc->source)));
+		_list->SetItem (i, 1, std_to_wx(time.timecode(_frc->source)));
 	}
 }
+
 
 void
 TextView::subtitle_selected (wxListEvent& ev)
 {
-	if (!Config::instance()->jump_to_selected ()) {
+	if (!Config::instance()->jump_to_selected()) {
 		return;
 	}
 
 	DCPOMATIC_ASSERT (ev.GetIndex() < int(_start_times.size()));
-	shared_ptr<Content> lc = _content.lock ();
+	auto lc = _content.lock ();
 	DCPOMATIC_ASSERT (lc);
-	shared_ptr<FilmViewer> fv = _film_viewer.lock ();
+	auto fv = _film_viewer.lock ();
 	DCPOMATIC_ASSERT (fv);
 	/* Add on a frame here to work around any rounding errors and make sure land in the subtitle */
 	fv->seek (lc, _start_times[ev.GetIndex()] + ContentTime::from_frames(1, _frc->source), true);

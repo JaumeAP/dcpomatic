@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2014-2018 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2014-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -18,16 +18,19 @@
 
 */
 
-#include "lib/content_text.h"
+
+#include "lib/piece_text.h"
 #include "lib/warnings.h"
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
 #include <wx/listctrl.h>
 
+
 class Decoder;
 class FilmViewer;
 class Film;
+
 
 class TextView : public wxDialog
 {
@@ -42,7 +45,7 @@ public:
 		);
 
 private:
-	void data_start (ContentStringText cts);
+	void data_start (dcpomatic::ContentTime time, std::list<dcp::SubtitleString> subs);
 	void data_stop (dcpomatic::ContentTime time);
 	void subtitle_selected (wxListEvent &);
 

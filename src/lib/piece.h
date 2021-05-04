@@ -28,6 +28,7 @@
 #include "font_data.h"
 #include "frame_rate_change.h"
 #include "piece_audio.h"
+#include "piece_text.h"
 #include "piece_video.h"
 #include "types.h"
 #include <boost/signals2.hpp>
@@ -88,6 +89,9 @@ public:
 
 	boost::signals2::signal<void (PieceVideo)> Video;
 	boost::signals2::signal<void (PieceAudio)> Audio;
+	boost::signals2::signal<void (PieceBitmapTextStart)> BitmapTextStart;
+	boost::signals2::signal<void (PieceStringTextStart)> StringTextStart;
+	boost::signals2::signal<void (PieceTextStop)> TextStop;
 
 private:
 	friend struct overlap_video_test1;
@@ -95,6 +99,9 @@ private:
 
 	void video (std::shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part);
 	void audio (std::shared_ptr<AudioStream> stream, std::shared_ptr<const AudioBuffers> audio, Frame frame);
+	void bitmap_start (std::weak_ptr<const Content> content, std::weak_ptr<const TextContent> text, dcpomatic::ContentTime time, std::shared_ptr<Image> image, dcpomatic::Rect<double> area);
+	void string_start (std::weak_ptr<const Content> content, std::weak_ptr<const TextContent> text, dcpomatic::ContentTime time, std::list<dcp::SubtitleString> subs);
+	void stop (std::weak_ptr<const Content> content, std::weak_ptr<const TextContent> text, dcpomatic::ContentTime time);
 
 	void flush ();
 

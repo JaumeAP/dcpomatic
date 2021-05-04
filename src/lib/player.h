@@ -29,11 +29,11 @@
 #include "audio_stream.h"
 #include "content.h"
 #include "content_atmos.h"
-#include "content_text.h"
 #include "empty.h"
 #include "film.h"
 #include "piece.h"
 #include "piece_audio.h"
+#include "piece_text.h"
 #include "piece_video.h"
 #include "player_text.h"
 #include "position_image.h"
@@ -140,9 +140,9 @@ private:
 
 	void video (std::weak_ptr<Piece>, PieceVideo);
 	void audio (std::weak_ptr<Piece>, PieceAudio);
-	void bitmap_text_start (std::weak_ptr<Piece>, std::weak_ptr<const Content>, std::weak_ptr<const TextContent>, ContentBitmapText);
-	void plain_text_start (std::weak_ptr<Piece>, std::weak_ptr<const Content>, std::weak_ptr<const TextContent>, ContentStringText);
-	void subtitle_stop (std::weak_ptr<Piece>, std::weak_ptr<const Content>, std::weak_ptr<const TextContent>, dcpomatic::ContentTime);
+	void bitmap_text_start (std::weak_ptr<Piece>, PieceBitmapTextStart);
+	void string_text_start (std::weak_ptr<Piece>, PieceStringTextStart);
+	void subtitle_stop (std::weak_ptr<Piece>, PieceTextStop);
 	void atmos (std::weak_ptr<Piece>, ContentAtmos);
 
 	dcpomatic::DCPTime one_video_frame () const;
