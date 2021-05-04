@@ -909,7 +909,7 @@ Player::audio (weak_ptr<Piece> wp, PieceAudio audio)
 		return;
 	}
 
-	LOG_DEBUG_PLAYER("Received audio frame %1 at %2", audio.frame, to_string(audio.time));
+	LOG_DEBUG_PLAYER("Received audio at %1", to_string(audio.time));
 
 	/* The end of this block in the DCP */
 	int const rfr = piece->resampled_audio_frame_rate ();
