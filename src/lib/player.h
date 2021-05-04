@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2013-2020 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2013-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -28,10 +28,10 @@
 #include "audio_merger.h"
 #include "audio_stream.h"
 #include "content.h"
-#include "content_atmos.h"
 #include "empty.h"
 #include "film.h"
 #include "piece.h"
+#include "piece_atmos.h"
 #include "piece_audio.h"
 #include "piece_text.h"
 #include "piece_video.h"
@@ -143,7 +143,7 @@ private:
 	void bitmap_text_start (std::weak_ptr<Piece>, PieceBitmapTextStart);
 	void string_text_start (std::weak_ptr<Piece>, PieceStringTextStart);
 	void subtitle_stop (std::weak_ptr<Piece>, PieceTextStop);
-	void atmos (std::weak_ptr<Piece>, ContentAtmos);
+	void atmos (std::weak_ptr<Piece>, PieceAtmos);
 
 	dcpomatic::DCPTime one_video_frame () const;
 	void fill_audio (dcpomatic::DCPTimePeriod period);
@@ -219,5 +219,6 @@ private:
 
 
 std::vector<std::vector<std::shared_ptr<Content>>> collect (std::shared_ptr<const Film> film, ContentList content);
+
 
 #endif

@@ -20,8 +20,8 @@
 
 
 #include "atmos_metadata.h"
-#include "content_atmos.h"
 #include "decoder_part.h"
+#include "piece_atmos.h"
 #include <boost/signals2.hpp>
 
 
@@ -38,7 +38,7 @@ public:
 
 	void emit (std::shared_ptr<const Film> film, std::shared_ptr<const dcp::AtmosFrame> data, Frame frame, AtmosMetadata metadata);
 
-	boost::signals2::signal<void (ContentAtmos)> Data;
+	boost::signals2::signal<void (std::shared_ptr<const dcp::AtmosFrame>, Frame, AtmosMetadata)> Data;
 
 private:
 	std::shared_ptr<const Content> _content;

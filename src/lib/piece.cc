@@ -19,6 +19,8 @@
 */
 
 
+#include "atmos_decoder.h"
+#include "atmos_metadata.h"
 #include "audio_content.h"
 #include "audio_decoder.h"
 #include "content.h"
@@ -72,6 +74,10 @@ Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> content, shared_ptr
 		i->BitmapStart.connect (boost::bind(&Piece::bitmap_start, this, content, i->content(), _1, _2, _3));
 		i->StringStart.connect (boost::bind(&Piece::string_start, this, content, i->content(), _1, _2));
 		i->Stop.connect (boost::bind(&Piece::stop, this, content, i->content(), _1));
+	}
+
+	if (_decoder->atmos) {
+		_decoder->atmos->Data.connect (boost::bind(&Piece::atmos, this, _1, _2, _3));
 	}
 
 	_decoder->Flush.connect (boost::bind(&Piece::flush, this));
@@ -149,6 +155,13 @@ void
 Piece::stop (weak_ptr<const Content> content, weak_ptr<const TextContent> text, dcpomatic::ContentTime time)
 {
 	TextStop (PieceTextStop(content, text, time));
+}
+
+
+void
+Piece::atmos (shared_ptr<const dcp::AtmosFrame> data, Frame frame, AtmosMetadata metadata)
+{
+	Atmos (PieceAtmos(data, frame, metadata));
 }
 
 

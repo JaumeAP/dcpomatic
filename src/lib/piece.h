@@ -27,6 +27,7 @@
 #include "dcpomatic_time.h"
 #include "font_data.h"
 #include "frame_rate_change.h"
+#include "piece_atmos.h"
 #include "piece_audio.h"
 #include "piece_text.h"
 #include "piece_video.h"
@@ -92,6 +93,7 @@ public:
 	boost::signals2::signal<void (PieceBitmapTextStart)> BitmapTextStart;
 	boost::signals2::signal<void (PieceStringTextStart)> StringTextStart;
 	boost::signals2::signal<void (PieceTextStop)> TextStop;
+	boost::signals2::signal<void (PieceAtmos)> Atmos;
 
 private:
 	friend struct overlap_video_test1;
@@ -102,6 +104,7 @@ private:
 	void bitmap_start (std::weak_ptr<const Content> content, std::weak_ptr<const TextContent> text, dcpomatic::ContentTime time, std::shared_ptr<Image> image, dcpomatic::Rect<double> area);
 	void string_start (std::weak_ptr<const Content> content, std::weak_ptr<const TextContent> text, dcpomatic::ContentTime time, std::list<dcp::SubtitleString> subs);
 	void stop (std::weak_ptr<const Content> content, std::weak_ptr<const TextContent> text, dcpomatic::ContentTime time);
+	void atmos (std::shared_ptr<const dcp::AtmosFrame> data, Frame frame, AtmosMetadata metadata);
 
 	void flush ();
 

@@ -293,13 +293,10 @@ Player::setup_pieces_unlocked ()
 			piece->Audio.connect (bind(&Player::audio, this, weak_ptr<Piece>(piece), _1));
 		}
 
-		piece->BitmapTextStart.connect (bind(&Player::bitmap_text_start, this, weak_ptr<Piece>(piece), _1));
-		piece->StringTextStart.connect (bind(&Player::string_text_start, this, weak_ptr<Piece>(piece), _1));
-		piece->TextStop.connect (bind(&Player::subtitle_stop, this, weak_ptr<Piece>(piece), _1));
-
-		if (decoder->atmos) {
-			decoder->atmos->Data.connect (bind(&Player::atmos, this, weak_ptr<Piece>(piece), _1));
-		}
+		piece->BitmapTextStart.connect (bind(&Player::bitmap_text_start, this, piece, _1));
+		piece->StringTextStart.connect (bind(&Player::string_text_start, this, piece, _1));
+		piece->TextStop.connect (bind(&Player::subtitle_stop, this, piece, _1));
+		piece->Atmos.connect (bind(&Player::atmos, this, piece, _1));
 	}
 
 	for (auto i = _pieces.begin(); i != _pieces.end(); ++i) {
@@ -1279,7 +1276,7 @@ Player::playlist () const
 
 
 void
-Player::atmos (weak_ptr<Piece>, ContentAtmos data)
+Player::atmos (weak_ptr<Piece>, PieceAtmos data)
 {
 	Atmos (data.data, DCPTime::from_frames(data.frame, _film->video_frame_rate()), data.metadata);
 }
