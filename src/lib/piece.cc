@@ -87,7 +87,7 @@ Piece::Piece (weak_ptr<const Film> film, shared_ptr<Content> content, shared_ptr
 void
 Piece::video (shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part)
 {
-	Video (PieceVideo(image, frame, eyes, part));
+	Video (PieceVideo(image, frame, content_video_to_dcp(frame), eyes, part));
 }
 
 

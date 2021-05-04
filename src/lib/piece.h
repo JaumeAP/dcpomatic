@@ -40,8 +40,9 @@ class Content;
 class Decoder;
 class PlayerVideo;
 class Resampler;
-struct overlap_video_test1;
 struct check_reuse_old_data_test;
+struct overlap_video_test1;
+struct player_time_calculation_test2;
 
 
 class Piece
@@ -52,7 +53,6 @@ public:
 	void update_pull_to (dcpomatic::DCPTime& pull_to) const;
 	void set_last_push_end (AudioStreamPtr stream, dcpomatic::DCPTime last_push_end);
 
-	dcpomatic::DCPTime content_video_to_dcp (Frame f) const;
 	dcpomatic::DCPTime resampled_audio_to_dcp (Frame f) const;
 	boost::optional<dcpomatic::DCPTime> content_time_to_dcp (std::shared_ptr<const Content> content, dcpomatic::ContentTime t) const;
 
@@ -97,6 +97,7 @@ public:
 private:
 	friend struct overlap_video_test1;
 	friend struct check_reuse_old_data_test;
+	friend struct player_time_calculation_test2;
 
 	void video (std::shared_ptr<const ImageProxy> image, Frame frame, Eyes eyes, Part part);
 	void audio (std::shared_ptr<AudioStream> stream, std::shared_ptr<const AudioBuffers> audio, Frame frame);
@@ -108,6 +109,7 @@ private:
 	void flush ();
 	bool done () const;
 
+	dcpomatic::DCPTime content_video_to_dcp (Frame f) const;
 	dcpomatic::ContentTime dcp_to_content_time (dcpomatic::DCPTime t) const;
 
 	std::weak_ptr<const Film> _film;

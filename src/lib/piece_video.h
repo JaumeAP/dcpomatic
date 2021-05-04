@@ -23,6 +23,7 @@
 #define DCPOMATIC_PIECE_VIDEO_H
 
 
+#include "dcpomatic_time.h"
 #include "types.h"
 
 
@@ -37,15 +38,17 @@ class PieceVideo
 public:
 	PieceVideo () {}
 
-	PieceVideo (std::shared_ptr<const ImageProxy> i, Frame f, Eyes e, Part p)
+	PieceVideo (std::shared_ptr<const ImageProxy> i, Frame f, dcpomatic::DCPTime t, Eyes e, Part p)
 		: image (i)
 		, frame (f)
+		, time (t)
 		, eyes (e)
 		, part (p)
 	{}
 
 	std::shared_ptr<const ImageProxy> image;
 	Frame frame = 0;
+	dcpomatic::DCPTime time;
 	Eyes eyes = Eyes::LEFT;
 	Part part = Part::WHOLE;
 };

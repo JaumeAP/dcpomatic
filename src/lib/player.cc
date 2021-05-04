@@ -821,26 +821,24 @@ Player::video (weak_ptr<Piece> wp, PieceVideo video)
 		return;
 	}
 
-	/* Time of the first frame we will emit */
-	DCPTime const time = piece->content_video_to_dcp (video.frame);
-	LOG_DEBUG_PLAYER("Received video frame %1 at %2", video.frame, to_string(time));
+	LOG_DEBUG_PLAYER("Received video frame %1 at %2", video.frame, to_string(video.time));
 
 	/* Discard if it's before the content's period or the last accurate seek.  We can't discard
 	   if it's after the content's period here as in that case we still need to fill any gap between
 	   `now' and the end of the content's period.
 	*/
-	if (time < piece->position() || (_last_video_time && time < *_last_video_time)) {
+	if (video.time < piece->position() || (_last_video_time && video.time < *_last_video_time)) {
 		return;
 	}
 
-	if (piece->ignore_video_at(time)) {
+	if (piece->ignore_video_at(video.time)) {
 		return;
 	}
 
 	/* Fill gaps that we discover now that we have some video which needs to be emitted.
 	   This is where we need to fill to.
 	*/
-	DCPTime fill_to = min (time, piece->end());
+	DCPTime fill_to = min (video.time, piece->end());
 
 	if (_last_video_time) {
 		DCPTime fill_from = max (*_last_video_time, piece->position());
@@ -891,7 +889,7 @@ Player::video (weak_ptr<Piece> wp, PieceVideo video)
 
 	_last_video[wp] = piece->player_video (video, _video_container_size);
 
-	DCPTime t = time;
+	DCPTime t = video.time;
 	for (int i = 0; i < frc.repeat; ++i) {
 		if (t < piece->end()) {
 			emit_video (_last_video[wp], t);
