@@ -46,12 +46,12 @@ class FFmpegDecoder : public FFmpeg, public Decoder
 public:
 	FFmpegDecoder (std::shared_ptr<const Film> film, std::shared_ptr<const FFmpegContent>);
 
-	bool pass () override;
 	void seek (dcpomatic::ContentTime time, bool) override;
 
 private:
 	friend struct ::ffmpeg_pts_offset_test;
 
+	bool do_pass () override;
 	bool flush ();
 
 	static std::shared_ptr<AudioBuffers> deinterleave_audio (AVFrame* frame);

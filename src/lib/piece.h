@@ -49,8 +49,6 @@ class Piece
 {
 public:
 	struct Pair {
-		Pair () {}
-
 		Pair (std::shared_ptr<Content> c, std::shared_ptr<Decoder> d)
 			: content(c)
 			, decoder(d)

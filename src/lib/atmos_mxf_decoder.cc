@@ -45,7 +45,7 @@ AtmosMXFDecoder::AtmosMXFDecoder (std::shared_ptr<const Film> film, std::shared_
 
 
 bool
-AtmosMXFDecoder::pass ()
+AtmosMXFDecoder::do_pass ()
 {
 	auto const vfr = _content->active_video_frame_rate (film());
 	auto const frame = _next.frames_round (vfr);

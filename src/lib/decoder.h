@@ -63,10 +63,13 @@ public:
 
 	std::shared_ptr<TextDecoder> only_text () const;
 
-	/** Do some decoding and perhaps emit video, audio or subtitle data.
-	 *  @return true if this decoder will emit no more data unless a seek() happens.
-	 */
-	virtual bool pass () = 0;
+	bool done () const {
+		return _done;
+	}
+
+	/** Do some decoding and perhaps emit video, audio or subtitle data */
+	void pass ();
+
 	virtual void seek (dcpomatic::ContentTime time, bool accurate);
 
 	virtual dcpomatic::ContentTime position () const;
@@ -76,6 +79,10 @@ public:
 	}
 
 	boost::signals2::signal<void ()> Flush;
+
+private:
+	virtual bool do_pass () = 0;
+	bool _done = false;
 };
 
 

@@ -108,11 +108,27 @@ Piece::video (shared_ptr<const Content> content, shared_ptr<const ImageProxy> im
 }
 
 
+/** @param frame Frame position in the content, as if there were no trim */
 void
 Piece::audio (shared_ptr<const Content> content, AudioStreamPtr stream_ptr, shared_ptr<const AudioBuffers> audio, Frame frame)
 {
 	auto film = _film.lock ();
 	DCPOMATIC_ASSERT (film);
+
+	/* Here we have the frame index into the content, and shortly we're going to lose that information and
+	 * start thinking about frame indices into the piece.  Here's the last chance for us to apply this content's
+	 * trim, so we'll take it.
+	 */
+	auto const start_trim = content->trim_start().frames_round(stream_ptr->frame_rate());
+	auto const remove_from_start = std::max(Frame(0), start_trim - frame);
+	if (remove_from_start > 0) {
+		auto trimmed = make_shared<AudioBuffers>(audio);
+		trimmed->trim_start (remove_from_start);
+		frame += remove_from_start;
+	}
+
+	auto const end_trim = content->trim_send().frames_round(stream_ptr->frame_rate());
+
 
 	auto content_streams = content->audio->streams();
 	auto content_stream_iter = std::find(content_streams.begin(), content_streams.end(), stream_ptr);
@@ -151,6 +167,7 @@ Piece::audio (shared_ptr<const Content> content, AudioStreamPtr stream_ptr, shar
 		stream.position = frame;
 	}
 
+	std::cout << "piece sends frame " << stream.position << " " << to_string(resampled_audio_to_dcp(stream.position) << "\n";
 	Audio (PieceAudio(index, audio, resampled_audio_to_dcp(stream.position), stream_ptr->mapping()));
 	stream.position += audio->frames();
 }
@@ -357,14 +374,13 @@ Piece::pass ()
 	auto film = _film.lock ();
 	DCPOMATIC_ASSERT (film);
 
-	for (auto const& i: _content) {
-		auto t = content_time_to_dcp(i.content, std::max(i.decoder->position(), i.content->trim_start()));
-		DCPOMATIC_ASSERT (t);
-		if (*t < i.content->end(film)) {
-			LOG_DEBUG_PLAYER ("Calling pass() on %1", i.content->path(0));
-			i.decoder->pass();
-			return;
+	for (auto& i: _content) {
+		if (i.decoder->done()) {
+			continue;
 		}
+		LOG_DEBUG_PLAYER ("Calling pass() on %1", i.content->path(0));
+		i.decoder->pass();
+		return;
 	}
 }
 
@@ -388,7 +404,7 @@ Piece::seek (DCPTime time, bool accurate)
 		i.position = 0;
 	}
 
-	for (auto const& i: _content) {
+	for (auto& i: _content) {
 		if (time < i.content->position()) {
 			/* Before; seek to the start of the content.  Even if this request is for an inaccurate seek
 			   we must seek this (following) content accurately, otherwise when we come to the end of the current
@@ -411,9 +427,9 @@ Piece::decoder_before(optional<dcpomatic::DCPTime> time)
 	DCPOMATIC_ASSERT (film);
 
 	for (auto const& i: _content) {
-		auto t = content_time_to_dcp(i.content, std::max(i.decoder->position(), i.content->trim_start()));
-		DCPOMATIC_ASSERT (t);
-		if (*t < i.content->end(film)) {
+		if (!i.decoder->done()) {
+			auto t = content_time_to_dcp(i.content, std::max(i.decoder->position(), i.content->trim_start()));
+			DCPOMATIC_ASSERT (t);
 			/* This is the first unfinished decoder we have, so we'll make a decision with it.
 			   Given two choices at the same time, pick the one with texts so we see it before
 			   the video.
@@ -454,10 +470,12 @@ Piece::flush ()
 {
 	int index = 0;
 	for (auto& i: _audio_streams) {
-		auto ro = i.resampler->flush ();
-		if (ro->frames() > 0) {
-			Audio (PieceAudio(index, ro, resampled_audio_to_dcp(i.position), i.mapping));
-			i.position += ro->frames();
+		if (i.resampler) {
+			auto ro = i.resampler->flush ();
+			if (ro->frames() > 0) {
+				Audio (PieceAudio(index, ro, resampled_audio_to_dcp(i.position), i.mapping));
+				i.position += ro->frames();
+			}
 		}
 		++index;
 	}
@@ -467,9 +485,12 @@ Piece::flush ()
 bool
 Piece::done () const
 {
-	auto film = _film.lock();
-	DCPOMATIC_ASSERT (film);
-	auto const& last = _content.back();
-	return content_time_to_dcp(last.content, std::max(last.decoder->position(), last.content->trim_start())) > last.content->end(film);
+	for (auto const& i: _content) {
+		if (!i.decoder->done()) {
+			return false;
+		}
+	}
+
+	return true;
 }
 

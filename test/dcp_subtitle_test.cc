@@ -110,7 +110,9 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_within_dcp_test)
 	decoder->only_text()->StringStart.connect (bind(store, _1, _2));
 
 	stored.clear();
-	while (!decoder->pass() && stored.empty()) {}
+	while (!decoder->done() && stored.empty()) {
+		decoder->pass();
+	}
 
 	BOOST_REQUIRE_EQUAL (stored.size(), 2U);
 	BOOST_CHECK_EQUAL (stored.front().text(), "Noch mal.");
@@ -132,7 +134,8 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test2)
 	decoder->only_text()->StringStart.connect (bind(store, _1, _2));
 
 	stored.clear();
-	while (!decoder->pass()) {
+	while (!decoder->done()) {
+		decoder->pass();
 		if (!stored.empty() && stored_time == ContentTime(0)) {
 			BOOST_CHECK_EQUAL (stored.front().text(), "&lt;b&gt;Hello world!&lt;/b&gt;");
 		}
@@ -156,7 +159,8 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test3)
 
 	auto decoder = make_shared<DCPSubtitleDecoder>(film, content);
 	stored.clear();
-	while (!decoder->pass ()) {
+	while (!decoder->done()) {
+		decoder->pass();
 		decoder->only_text()->StringStart.connect (bind (store, _1, _2));
 		if (!stored.empty() && stored_time == ContentTime::from_seconds(0.08)) {
 			auto i = stored.begin ();

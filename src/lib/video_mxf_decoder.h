@@ -33,10 +33,10 @@ class VideoMXFDecoder : public Decoder
 public:
 	VideoMXFDecoder (std::shared_ptr<const Film> film, std::shared_ptr<const VideoMXFContent>);
 
-	bool pass () override;
 	void seek (dcpomatic::ContentTime t, bool accurate) override;
 
 private:
+	bool do_pass () override;
 
 	std::shared_ptr<const VideoMXFContent> _content;
 	/** Time of next thing to return from pass */

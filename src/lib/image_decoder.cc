@@ -51,7 +51,7 @@ ImageDecoder::ImageDecoder (shared_ptr<const Film> film, shared_ptr<const ImageC
 
 
 bool
-ImageDecoder::pass ()
+ImageDecoder::do_pass ()
 {
 	if (_frame_video_position >= _image_content->video->length()) {
 		return true;

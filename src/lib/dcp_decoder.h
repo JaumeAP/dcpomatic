@@ -59,7 +59,6 @@ public:
 	void set_decode_referenced (bool r);
 	void set_forced_reduction (boost::optional<int> reduction);
 
-	bool pass () override;
 	void seek (dcpomatic::ContentTime t, bool accurate) override;
 
 	std::vector<dcpomatic::FontData> fonts () const override;
@@ -73,6 +72,7 @@ public:
 private:
 	friend struct dcp_subtitle_within_dcp_test;
 
+	bool do_pass () override;
 	void next_reel ();
 	void get_readers ();
 	void pass_texts (dcpomatic::ContentTime next, dcp::Size size);

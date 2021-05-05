@@ -33,10 +33,11 @@ class AtmosMXFDecoder : public Decoder
 public:
 	AtmosMXFDecoder (std::shared_ptr<const Film> film, std::shared_ptr<const AtmosMXFContent>);
 
-	bool pass () override;
 	void seek (dcpomatic::ContentTime t, bool accurate) override;
 
 private:
+	bool do_pass () override;
+
 	std::shared_ptr<const AtmosMXFContent> _content;
 	dcpomatic::ContentTime _next;
 	std::shared_ptr<dcp::AtmosAssetReader> _reader;

@@ -71,7 +71,7 @@ StringTextFileDecoder::seek (ContentTime time, bool accurate)
 }
 
 bool
-StringTextFileDecoder::pass ()
+StringTextFileDecoder::do_pass ()
 {
 	if (_next >= _subtitles.size ()) {
 		return true;

@@ -32,11 +32,12 @@ public:
 	StringTextFileDecoder (std::shared_ptr<const Film> film, std::shared_ptr<const StringTextFileContent>);
 
 	void seek (dcpomatic::ContentTime time, bool accurate);
-	bool pass ();
 
 	std::vector<dcpomatic::FontData> fonts () const;
 
 private:
+	bool do_pass ();
+
 	dcpomatic::ContentTimePeriod content_time_period (sub::Subtitle s) const;
 
 	size_t _next;

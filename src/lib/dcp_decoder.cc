@@ -129,7 +129,7 @@ DCPDecoder::DCPDecoder (shared_ptr<const Film> film, shared_ptr<const DCPContent
 
 
 bool
-DCPDecoder::pass ()
+DCPDecoder::do_pass ()
 {
 	if (!_dcp_content->can_be_played()) {
 		return true;

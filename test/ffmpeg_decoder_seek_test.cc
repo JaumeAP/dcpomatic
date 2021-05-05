@@ -63,48 +63,38 @@ static void
 check (shared_ptr<FFmpegDecoder> decoder, int frame)
 {
 	BOOST_REQUIRE (decoder->ffmpeg_content()->video_frame_rate ());
-	decoder->seek (ContentTime::from_frames (frame, decoder->ffmpeg_content()->video_frame_rate().get()), true);
+	decoder->seek (ContentTime::from_frames(frame, decoder->ffmpeg_content()->video_frame_rate().get()), true);
 	stored_frame = {};
-	while (!decoder->pass() && !stored_frame) {}
+	while (!decoder->done() && !stored_frame) {
+		decoder->pass();
+	}
 	BOOST_CHECK (*stored_frame <= frame);
 }
 
 static void
 test (boost::filesystem::path file, vector<int> frames)
 {
-	boost::filesystem::path path = TestPaths::private_data() / file;
+	auto path = TestPaths::private_data() / file;
 	BOOST_REQUIRE (boost::filesystem::exists (path));
 
-	shared_ptr<Film> film = new_test_film ("ffmpeg_decoder_seek_test_" + file.string());
+	auto film = new_test_film ("ffmpeg_decoder_seek_test_" + file.string());
 	auto content = make_shared<FFmpegContent>(path);
 	film->examine_and_add_content (content);
 	BOOST_REQUIRE (!wait_for_jobs());
 	auto decoder = make_shared<FFmpegDecoder>(film, content);
 	decoder->video->Data.connect (bind (&store, _2));
 
-	for (vector<int>::const_iterator i = frames.begin(); i != frames.end(); ++i) {
-		check (decoder, *i);
+	for (auto i: frames) {
+		check (decoder, i);
 	}
 }
 
 BOOST_AUTO_TEST_CASE (ffmpeg_decoder_seek_test)
 {
-	vector<int> frames;
-
-	frames.clear ();
-	frames.push_back (0);
-	frames.push_back (42);
-	frames.push_back (999);
-	frames.push_back (0);
-
+	vector<int> frames = { 0, 42, 999, 0 };
 	test ("boon_telly.mkv", frames);
 	test ("Sintel_Trailer1.480p.DivX_Plus_HD.mkv", frames);
 
-	frames.clear ();
-	frames.push_back (15);
-	frames.push_back (42);
-	frames.push_back (999);
-	frames.push_back (15);
-
+	frames = { 15, 42, 999, 15 };
 	test ("prophet_long_clip.mkv", frames);
 }

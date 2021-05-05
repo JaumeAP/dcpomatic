@@ -87,6 +87,8 @@ Decoder::seek (ContentTime, bool)
 	for (auto i: text) {
 		i->seek ();
 	}
+
+	_done = false;
 }
 
 
@@ -99,3 +101,11 @@ Decoder::only_text () const
 	}
 	return text.front();
 }
+
+
+void
+Decoder::pass ()
+{
+	_done = do_pass ();
+}
+

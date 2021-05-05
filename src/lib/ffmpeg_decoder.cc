@@ -181,7 +181,7 @@ FFmpegDecoder::flush ()
 
 
 bool
-FFmpegDecoder::pass ()
+FFmpegDecoder::do_pass ()
 {
 	auto packet = av_packet_alloc();
 	DCPOMATIC_ASSERT (packet);
@@ -479,6 +479,7 @@ FFmpegDecoder::process_audio_frame (shared_ptr<FFmpegAudioStream> stream)
 		data->move (data->frames() - remove, remove, 0);
 		data->set_frames (data->frames() - remove);
 		ct += ContentTime::from_frames (remove, stream->frame_rate());
+		std::cout << "FF discarded " << remove << "\n";
 	}
 
 	if (ct < ContentTime()) {

@@ -76,7 +76,7 @@ VideoMXFDecoder::VideoMXFDecoder (shared_ptr<const Film> film, shared_ptr<const 
 
 
 bool
-VideoMXFDecoder::pass ()
+VideoMXFDecoder::do_pass ()
 {
 	auto const vfr = _content->active_video_frame_rate (film());
 	auto const frame = _next.frames_round (vfr);

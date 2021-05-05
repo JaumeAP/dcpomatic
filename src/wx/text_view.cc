@@ -103,7 +103,9 @@ TextView::TextView (
 			i->Stop.connect (bind(&TextView::data_stop, this, _1));
 		}
 	}
-	while (!decoder->pass ()) {}
+	while (!decoder->done()) {
+		decoder->pass();
+	}
 	SetSizerAndFit (sizer);
 }
 

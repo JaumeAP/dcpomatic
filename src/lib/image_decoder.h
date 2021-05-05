@@ -36,10 +36,10 @@ public:
 		return _image_content;
 	}
 
-	bool pass () override;
 	void seek (dcpomatic::ContentTime, bool) override;
 
 private:
+	bool do_pass () override;
 
 	std::shared_ptr<const ImageContent> _image_content;
 	std::shared_ptr<ImageProxy> _image;

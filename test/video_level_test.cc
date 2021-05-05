@@ -203,7 +203,8 @@ pixel_range (shared_ptr<Film> film, shared_ptr<const FFmpegContent> content)
 	decoder->video->Data.connect (bind(&video_handler, _1));
 	decoded_image = {};
 	while (!decoded_image) {
-		BOOST_REQUIRE (!decoder->pass());
+		decoder->pass();
+		BOOST_REQUIRE (!decoder->done());
 	}
 
 	return pixel_range (decoded_image->image().image);
@@ -218,7 +219,8 @@ pixel_range (shared_ptr<Film> film, shared_ptr<const ImageContent> content)
 	decoder->video->Data.connect (bind(&video_handler, _1));
 	decoded_image = {};
 	while (!decoded_image) {
-		BOOST_REQUIRE (!decoder->pass());
+		decoder->pass();
+		BOOST_REQUIRE (!decoder->done());
 	}
 
 	return pixel_range (decoded_image->image().image);
