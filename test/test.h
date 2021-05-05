@@ -79,6 +79,8 @@ extern void make_and_verify_dcp (std::shared_ptr<Film> film, std::vector<dcp::Ve
 extern void check_int_close (int a, int b, int d);
 extern void check_int_close (std::pair<int, int>, std::pair<int, int>, int d);
 
+#define CHECK_DCP_TIME_CLOSE(a, b, d) BOOST_CHECK_MESSAGE(std::abs(a.get() - b.get()) < d, to_string(a) << " != " << to_string(b));
+
 
 class LogSwitcher
 {

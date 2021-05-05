@@ -132,8 +132,21 @@ BOOST_AUTO_TEST_CASE (content_test4)
 	BOOST_REQUIRE (!wait_for_jobs());
 
 	video->set_trim_end (dcpomatic::ContentTime(3000));
-	BOOST_CHECK (video->length_after_trim(film) == DCPTime::from_frames(299, 24));
+	CHECK_DCP_TIME_CLOSE (video->length_after_trim(film), DCPTime::from_frames(299, 24), 1);
 }
+
+
+BOOST_AUTO_TEST_CASE (video_content_length_is_correct_with_speed_change)
+{
+	auto video = content_factory("test/data/count300bd24.m2ts").front();
+	auto film = new_test_film2 ("content_test4", { video });
+
+	film->set_video_frame_rate (25);
+
+	/* It's 300 frames and they will effectively be delivered at 25fps */
+	CHECK_DCP_TIME_CLOSE (video->length_after_trim(film), DCPTime::from_frames(300, 25), 1);
+}
+
 
 
 /** Content containing no video will not have its length rounded to the nearest video frame */
@@ -144,7 +157,36 @@ BOOST_AUTO_TEST_CASE (content_test5)
 
 	audio->set_trim_end (dcpomatic::ContentTime(3000));
 
-	BOOST_CHECK (audio->length_after_trim(film) == DCPTime(957000));
+	CHECK_DCP_TIME_CLOSE (audio->length_after_trim(film), DCPTime(957000), 1);
+}
+
+
+/** 44.1k audio will have its length reported correctly when it will be resampled to 48k
+ *  without any speed change.
+ */
+BOOST_AUTO_TEST_CASE (audio_content_length_is_correct_when_resampled)
+{
+	auto audio = content_factory("test/data/white.wav").front();
+	auto film = new_test_film2 ("audio_content_length_is_correct_when_resampled", { audio });
+	/* 220500 frames @ 44.1k is 5 seconds */
+	CHECK_DCP_TIME_CLOSE (audio->length_after_trim(film), DCPTime::from_seconds(5), 1);
+}
+
+
+/** 44.1k audio will have its length reported correctly when it will be resampled to 48k
+ *  without any speed change.
+ */
+BOOST_AUTO_TEST_CASE (audio_content_length_is_correct_when_resampled_with_speed_change)
+{
+	auto video = content_factory("test/data/flat_red.png").front();
+	auto audio = content_factory("test/data/white.wav").front();
+	auto film = new_test_film2 ("audio_content_length_is_correct_when_resampled_with_speed_change", { video, audio });
+
+	video->set_video_frame_rate (25);
+	film->set_video_frame_rate (24);
+
+	/* Was 5 seconds but will now be run slower so will last longer */
+	CHECK_DCP_TIME_CLOSE (audio->length_after_trim(film), DCPTime::from_seconds(5 * 25.0 / 24), 2);
 }
 
 
