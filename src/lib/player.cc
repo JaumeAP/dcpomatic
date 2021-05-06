@@ -906,7 +906,10 @@ Player::audio (weak_ptr<Piece> wp, PieceAudio audio)
 	/* The end of this block in the DCP */
 	int const rfr = piece->resampled_audio_frame_rate ();
 	auto end = audio.time + DCPTime::from_frames(audio.audio->frames(), rfr);
-	std::cout << "Player gets " << to_string(audio.time) << "\n";
+
+	/* XXX: is this still necessary? don't the checks in Piece take care of this now?
+	 * Maybe replace with some assertions & run tests.
+	 */
 
 	/* Remove anything that comes before the start or after the end of the content */
 	if (audio.time < piece->position()) {

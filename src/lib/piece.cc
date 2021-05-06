@@ -119,16 +119,20 @@ Piece::audio (shared_ptr<const Content> content, AudioStreamPtr stream_ptr, shar
 	 * start thinking about frame indices into the piece.  Here's the last chance for us to apply this content's
 	 * trim, so we'll take it.
 	 */
-	auto const start_trim = content->trim_start().frames_round(stream_ptr->frame_rate());
-	auto const remove_from_start = std::max(Frame(0), start_trim - frame);
-	if (remove_from_start > 0) {
+	auto const sfr = stream_ptr->frame_rate();
+	auto const remove_from_start = std::max(Frame(0), content->trim_start().frames_round(sfr) - frame);
+	auto const remove_from_end = std::max(Frame(0), frame + audio->frames() - ContentTime(content->full_length_content() - content->trim_end()).frames_round(sfr));
+	if ((remove_from_start + remove_from_end) >= audio->frames()) {
+		std::cout << "trim whole block.\n";
+		return;
+	}
+	if (remove_from_start || remove_from_end) {
+		std::cout << "trim " << remove_from_start << " " << remove_from_end << "\n";
 		auto trimmed = make_shared<AudioBuffers>(audio);
 		trimmed->trim_start (remove_from_start);
-		frame += remove_from_start;
+		trimmed->trim_end (remove_from_end);
+		audio = trimmed;
 	}
-
-	auto const end_trim = content->trim_send().frames_round(stream_ptr->frame_rate());
-
 
 	auto content_streams = content->audio->streams();
 	auto content_stream_iter = std::find(content_streams.begin(), content_streams.end(), stream_ptr);
@@ -167,7 +171,6 @@ Piece::audio (shared_ptr<const Content> content, AudioStreamPtr stream_ptr, shar
 		stream.position = frame;
 	}
 
-	std::cout << "piece sends frame " << stream.position << " " << to_string(resampled_audio_to_dcp(stream.position) << "\n";
 	Audio (PieceAudio(index, audio, resampled_audio_to_dcp(stream.position), stream_ptr->mapping()));
 	stream.position += audio->frames();
 }

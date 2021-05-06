@@ -19,13 +19,12 @@
 */
 
 
-#include "audio_decoder.h"
 #include "audio_buffers.h"
 #include "audio_content.h"
+#include "audio_decoder.h"
+#include "compose.hpp"
 #include "dcpomatic_log.h"
 #include "log.h"
-#include "resampler.h"
-#include "compose.hpp"
 #include <iostream>
 
 #include "i18n.h"
@@ -53,7 +52,7 @@ AudioDecoder::AudioDecoder (Decoder* parent, shared_ptr<const AudioContent> cont
 
 /** @param time_already_delayed true if the delay should not be added to time */
 void
-AudioDecoder::emit (shared_ptr<const Film> film, AudioStreamPtr stream, shared_ptr<const AudioBuffers> data, ContentTime time, bool time_already_delayed)
+AudioDecoder::emit (AudioStreamPtr stream, shared_ptr<const AudioBuffers> data, ContentTime time, bool time_already_delayed)
 {
 	if (ignore ()) {
 		return;
@@ -65,7 +64,7 @@ AudioDecoder::emit (shared_ptr<const Film> film, AudioStreamPtr stream, shared_p
 	 */
 	static Frame const slack_frames = 48000 / 24;
 
-	int const resampled_rate = _content->resampled_frame_rate(film);
+	auto const frame_rate = stream->frame_rate();
 	if (!time_already_delayed) {
 		time += ContentTime::from_seconds (_content->delay() / 1000.0);
 	}
@@ -84,18 +83,18 @@ AudioDecoder::emit (shared_ptr<const Film> film, AudioStreamPtr stream, shared_p
 			silence (_content->delay ());
 		}
 		reset = true;
-	} else if (std::abs(_positions[stream] - time.frames_round(resampled_rate)) > slack_frames) {
+	} else if (std::abs(_positions[stream] - time.frames_round(frame_rate)) > slack_frames) {
 		reset = true;
 		LOG_GENERAL (
 			"Reset audio position: was %1, new data at %2, slack: %3 frames",
 			_positions[stream],
-			time.frames_round(resampled_rate),
-			std::abs(_positions[stream] - time.frames_round(resampled_rate))
+			time.frames_round(frame_rate),
+			std::abs(_positions[stream] - time.frames_round(frame_rate))
 			);
 	}
 
 	if (reset) {
-		_positions[stream] = time.frames_round (resampled_rate);
+		_positions[stream] = time.frames_round (frame_rate);
 	}
 
 	Data(stream, data, _positions[stream]);
@@ -109,7 +108,7 @@ AudioDecoder::stream_position (shared_ptr<const Film> film, AudioStreamPtr strea
 {
 	auto i = _positions.find (stream);
 	DCPOMATIC_ASSERT (i != _positions.end ());
-	return ContentTime::from_frames (i->second, _content->resampled_frame_rate(film));
+	return ContentTime::from_frames (i->second, stream->frame_rate());
 }
 
 

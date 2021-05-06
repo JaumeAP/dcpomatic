@@ -395,3 +395,12 @@ AudioBuffers::trim_start (int32_t frames)
 	move (_frames - frames, frames, 0);
 	set_frames (_frames - frames);
 }
+
+
+void
+AudioBuffers::trim_end (int32_t frames)
+{
+	DCPOMATIC_ASSERT (frames <= _frames);
+	set_frames (_frames - frames);
+}
+

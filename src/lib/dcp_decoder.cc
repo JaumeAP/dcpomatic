@@ -217,7 +217,7 @@ DCPDecoder::do_pass ()
 			}
 		}
 
-		audio->emit (film(), _dcp_content->audio->stream(), data, ContentTime::from_frames (_offset, vfr) + _next);
+		audio->emit (_dcp_content->audio->stream(), data, ContentTime::from_frames (_offset, vfr) + _next);
 	}
 
 	if (_atmos_reader) {

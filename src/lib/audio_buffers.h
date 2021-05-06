@@ -84,6 +84,7 @@ public:
 	void accumulate_frames (AudioBuffers const * from, int32_t frames, int32_t read_offset, int32_t write_offset);
 	void append (std::shared_ptr<const AudioBuffers> other);
 	void trim_start (int32_t frames);
+	void trim_end (int32_t frames);
 
 private:
 	void allocate (int channels, int32_t frames);

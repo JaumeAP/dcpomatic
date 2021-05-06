@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE (torture_test1)
 		for (int i = 0; i < fr->samples(); ++i) {
 			for (int j = 0; j < 6; ++j) {
 				if (j == 2) {
-					BOOST_CHECK_EQUAL ((fr->get(j, i) + 128) >> 8, stair * 2);
+					BOOST_CHECK_MESSAGE (((fr->get(j, i) + 128) >> 8) == (stair * 2), "sample=" << i << " channel=" << j << " frame has " << ((fr->get(j, i) + 128) >> 8) << " instead of " << (stair * 2));
 					++stair;
 				} else {
 					BOOST_CHECK_EQUAL (fr->get(j, i), 0);

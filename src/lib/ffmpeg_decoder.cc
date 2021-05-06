@@ -164,7 +164,7 @@ FFmpegDecoder::flush ()
 				auto to_do = min (full_length - a, ContentTime::from_seconds (0.1));
 				auto silence = make_shared<AudioBuffers>(i->channels(), to_do.frames_ceil (i->frame_rate()));
 				silence->make_silent ();
-				audio->emit (film(), i, silence, a, true);
+				audio->emit (i, silence, a, true);
 				a += to_do;
 			}
 		}
@@ -479,7 +479,6 @@ FFmpegDecoder::process_audio_frame (shared_ptr<FFmpegAudioStream> stream)
 		data->move (data->frames() - remove, remove, 0);
 		data->set_frames (data->frames() - remove);
 		ct += ContentTime::from_frames (remove, stream->frame_rate());
-		std::cout << "FF discarded " << remove << "\n";
 	}
 
 	if (ct < ContentTime()) {
@@ -496,7 +495,7 @@ FFmpegDecoder::process_audio_frame (shared_ptr<FFmpegAudioStream> stream)
 
 	/* Give this data provided there is some, and its time is sane */
 	if (ct >= ContentTime() && data->frames() > 0) {
-		audio->emit (film(), stream, data, ct);
+		audio->emit (stream, data, ct);
 	}
 }
 
