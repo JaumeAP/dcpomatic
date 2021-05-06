@@ -61,7 +61,7 @@ public:
 		return std::dynamic_pointer_cast<const DCPContent> (Content::shared_from_this ());
 	}
 
-	dcpomatic::DCPTime full_length (std::shared_ptr<const Film> film) const override;
+	dcpomatic::DCPTime full_length_dcp (std::shared_ptr<const Film> film) const override;
 	dcpomatic::DCPTime approximate_length () const override;
 
 	void examine (std::shared_ptr<const Film> film, std::shared_ptr<Job>) override;

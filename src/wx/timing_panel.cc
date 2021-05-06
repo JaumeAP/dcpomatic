@@ -179,11 +179,11 @@ TimingPanel::update_full_length ()
 {
 	set<DCPTime> check;
 	for (auto i: _parent->selected()) {
-		check.insert (i->full_length(_parent->film()));
+		check.insert (i->full_length_dcp(_parent->film()));
 	}
 
 	if (check.size() == 1) {
-		_full_length->set (_parent->selected().front()->full_length(_parent->film()), _parent->film()->video_frame_rate());
+		_full_length->set (_parent->selected().front()->full_length_dcp(_parent->film()), _parent->film()->video_frame_rate());
 	} else {
 		_full_length->clear ();
 	}
@@ -404,7 +404,7 @@ TimingPanel::play_length_changed ()
 	for (auto i: _parent->selected()) {
 		FrameRateChange const frc = _parent->film()->active_frame_rate_change (i->position ());
 		i->set_trim_end (
-			ContentTime (max(DCPTime(), i->full_length(_parent->film()) - play_length), frc) - i->trim_start()
+			ContentTime (max(DCPTime(), i->full_length_dcp(_parent->film()) - play_length), frc) - i->trim_start()
 			);
 	}
 }
@@ -473,7 +473,7 @@ TimingPanel::trim_end_to_playhead_clicked ()
 	for (auto i: _parent->selected()) {
 		if (i->position() < ph && ph < i->end(film)) {
 			FrameRateChange const frc = film->active_frame_rate_change (i->position ());
-			i->set_trim_end (ContentTime(i->position() + i->full_length(film) - ph, frc) - i->trim_start());
+			i->set_trim_end (ContentTime(i->position() + i->full_length_dcp(film) - ph, frc) - i->trim_start());
 		}
 	}
 }

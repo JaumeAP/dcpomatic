@@ -102,7 +102,7 @@ StringTextFileContent::as_xml (xmlpp::Node* node, bool with_paths) const
 
 
 DCPTime
-StringTextFileContent::full_length (shared_ptr<const Film> film) const
+StringTextFileContent::full_length_dcp (shared_ptr<const Film> film) const
 {
 	FrameRateChange const frc (film, shared_from_this());
 	return DCPTime (_length, frc);

@@ -97,7 +97,7 @@ public:
 	virtual std::string technical_summary () const;
 
 	virtual void as_xml (xmlpp::Node *, bool with_paths) const;
-	virtual dcpomatic::DCPTime full_length (std::shared_ptr<const Film>) const = 0;
+	virtual dcpomatic::DCPTime full_length_dcp (std::shared_ptr<const Film>) const = 0;
 	virtual dcpomatic::DCPTime approximate_length () const = 0;
 	virtual std::string identifier () const;
 	/** @return points at which to split this content when

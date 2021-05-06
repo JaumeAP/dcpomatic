@@ -40,7 +40,7 @@ public:
 	void examine (std::shared_ptr<const Film> film, std::shared_ptr<Job> job) override;
 	std::string summary () const override;
 	void as_xml (xmlpp::Node* node, bool with_path) const override;
-	dcpomatic::DCPTime full_length (std::shared_ptr<const Film> film) const override;
+	dcpomatic::DCPTime full_length_dcp (std::shared_ptr<const Film> film) const override;
 	dcpomatic::DCPTime approximate_length () const override;
 
 	static bool valid_mxf (boost::filesystem::path path);

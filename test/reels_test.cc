@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE (reels_test1)
 	auto B = make_shared<FFmpegContent>("test/data/test.mp4");
 	film->examine_and_add_content (B);
 	BOOST_REQUIRE (!wait_for_jobs());
-	BOOST_CHECK_EQUAL (A->full_length(film).get(), 288000);
+	BOOST_CHECK_EQUAL (A->full_length_dcp(film).get(), 288000);
 
 	film->set_reel_type (ReelType::SINGLE);
 	auto r = film->reels ();
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE (reels_test3)
 	BOOST_CHECK_EQUAL (i->to.get(), 96000 * 3);
 	++i;
 	BOOST_CHECK_EQUAL (i->from.get(), 96000 * 3);
-	BOOST_CHECK_EQUAL (i->to.get(), sub->full_length(film).ceil(film->video_frame_rate()).get());
+	BOOST_CHECK_EQUAL (i->to.get(), sub->full_length_dcp(film).ceil(film->video_frame_rate()).get());
 }
 
 

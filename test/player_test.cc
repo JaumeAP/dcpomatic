@@ -159,8 +159,8 @@ BOOST_AUTO_TEST_CASE (player_subframe_test)
 	film->set_video_frame_rate (24);
 	A->video->set_length (3 * 24);
 
-	BOOST_CHECK (A->full_length(film) == DCPTime::from_frames(3 * 24, 24));
-	BOOST_CHECK (B->full_length(film) == DCPTime(289920));
+	BOOST_CHECK (A->full_length_dcp(film) == DCPTime::from_frames(3 * 24, 24));
+	BOOST_CHECK (B->full_length_dcp(film) == DCPTime(289920));
 	/* Length should be rounded up from B's length to the next video frame */
 	BOOST_CHECK (film->length() == DCPTime::from_frames(3 * 24 + 1, 24));
 

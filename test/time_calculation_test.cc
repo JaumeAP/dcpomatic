@@ -143,19 +143,19 @@ BOOST_AUTO_TEST_CASE (ffmpeg_time_calculation_test)
 
 	/* 25fps content, 25fps DCP */
 	film->set_video_frame_rate (25);
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(content->video->length() / 25.0).get());
+	BOOST_CHECK_EQUAL (content->full_length_dcp(film).get(), DCPTime::from_seconds(content->video->length() / 25.0).get());
 	/* 25fps content, 24fps DCP; length should be increased */
 	film->set_video_frame_rate (24);
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(content->video->length() / 24.0).get());
+	BOOST_CHECK_EQUAL (content->full_length_dcp(film).get(), DCPTime::from_seconds(content->video->length() / 24.0).get());
 	/* 25fps content, 30fps DCP; length should be decreased */
 	film->set_video_frame_rate (30);
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(content->video->length() / 30.0).get());
+	BOOST_CHECK_EQUAL (content->full_length_dcp(film).get(), DCPTime::from_seconds(content->video->length() / 30.0).get());
 	/* 25fps content, 50fps DCP; length should be the same */
 	film->set_video_frame_rate (50);
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(content->video->length() / 25.0).get());
+	BOOST_CHECK_EQUAL (content->full_length_dcp(film).get(), DCPTime::from_seconds(content->video->length() / 25.0).get());
 	/* 25fps content, 60fps DCP; length should be decreased */
 	film->set_video_frame_rate (60);
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(content->video->length() * (50.0 / 60) / 25.0).get());
+	BOOST_CHECK_EQUAL (content->full_length_dcp(film).get(), DCPTime::from_seconds(content->video->length() * (50.0 / 60) / 25.0).get());
 
 	/* Make the content audio-only */
 	content->video.reset ();
@@ -163,23 +163,23 @@ BOOST_AUTO_TEST_CASE (ffmpeg_time_calculation_test)
 	/* 24fps content, 24fps DCP */
 	film->set_video_frame_rate (24);
 	content->set_video_frame_rate (24);
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(1).get());
+	BOOST_CHECK_EQUAL (content->full_length_dcp(film).get(), DCPTime::from_seconds(1).get());
 	/* 25fps content, 25fps DCP */
 	film->set_video_frame_rate (25);
 	content->set_video_frame_rate (25);
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(1).get());
+	BOOST_CHECK_EQUAL (content->full_length_dcp(film).get(), DCPTime::from_seconds(1).get());
 	/* 25fps content, 24fps DCP; length should be increased */
 	film->set_video_frame_rate (24);
-	BOOST_CHECK_SMALL (labs (content->full_length(film).get() - DCPTime::from_seconds(25.0 / 24).get()), 2L);
+	BOOST_CHECK_SMALL (labs (content->full_length_dcp(film).get() - DCPTime::from_seconds(25.0 / 24).get()), 2L);
 	/* 25fps content, 30fps DCP; length should be decreased */
 	film->set_video_frame_rate (30);
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(25.0 / 30).get());
+	BOOST_CHECK_EQUAL (content->full_length_dcp(film).get(), DCPTime::from_seconds(25.0 / 30).get());
 	/* 25fps content, 50fps DCP; length should be the same */
 	film->set_video_frame_rate (50);
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(1).get());
+	BOOST_CHECK_EQUAL (content->full_length_dcp(film).get(), DCPTime::from_seconds(1).get());
 	/* 25fps content, 60fps DCP; length should be decreased */
 	film->set_video_frame_rate (60);
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(50.0 / 60).get());
+	BOOST_CHECK_EQUAL (content->full_length_dcp(film).get(), DCPTime::from_seconds(50.0 / 60).get());
 
 }
 

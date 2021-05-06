@@ -315,7 +315,7 @@ Content::technical_summary () const
 DCPTime
 Content::length_after_trim (shared_ptr<const Film> film) const
 {
-	auto length = max(DCPTime(), full_length(film) - DCPTime(trim_start() + trim_end(), film->active_frame_rate_change(position())));
+	auto length = max(DCPTime(), full_length_dcp(film) - DCPTime(trim_start() + trim_end(), film->active_frame_rate_change(position())));
 	if (video) {
 		length = length.round(film->video_frame_rate());
 	}

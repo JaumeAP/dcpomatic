@@ -410,7 +410,7 @@ DCPContent::as_xml (xmlpp::Node* node, bool with_paths) const
 }
 
 DCPTime
-DCPContent::full_length (shared_ptr<const Film> film) const
+DCPContent::full_length_dcp (shared_ptr<const Film> film) const
 {
 	if (!video) {
 		return {};

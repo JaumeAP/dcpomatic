@@ -141,7 +141,7 @@ FFmpegDecoder::flush ()
 	/* Make sure all streams are the same length and round up to the next video frame */
 
 	auto const frc = film()->active_frame_rate_change(_ffmpeg_content->position());
-	ContentTime full_length (_ffmpeg_content->full_length(film()), frc);
+	ContentTime full_length (_ffmpeg_content->full_length_dcp(film()), frc);
 	full_length = full_length.ceil (frc.source);
 	if (video) {
 		double const vfr = _ffmpeg_content->video_frame_rate().get();

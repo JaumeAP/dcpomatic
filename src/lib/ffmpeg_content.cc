@@ -411,7 +411,7 @@ operator!= (FFmpegStream const & a, FFmpegStream const & b)
 
 
 DCPTime
-FFmpegContent::full_length (shared_ptr<const Film> film) const
+FFmpegContent::full_length_dcp (shared_ptr<const Film> film) const
 {
 	FrameRateChange const frc (film, shared_from_this());
 	if (video) {

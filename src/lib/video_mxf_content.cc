@@ -130,7 +130,7 @@ VideoMXFContent::as_xml (xmlpp::Node* node, bool with_paths) const
 
 
 DCPTime
-VideoMXFContent::full_length (shared_ptr<const Film> film) const
+VideoMXFContent::full_length_dcp (shared_ptr<const Film> film) const
 {
 	FrameRateChange const frc (film, shared_from_this());
 	return DCPTime::from_frames (llrint(video->length_after_3d_combine() * frc.factor()), film->video_frame_rate());

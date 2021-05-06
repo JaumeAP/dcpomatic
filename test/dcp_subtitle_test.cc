@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test)
 	film->examine_and_add_content (content);
 	BOOST_REQUIRE (!wait_for_jobs ());
 
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(2).get());
+	BOOST_CHECK_EQUAL (content->full_length_dcp(film).get(), DCPTime::from_seconds(2).get());
 
 	content->only_text()->set_use (true);
 	content->only_text()->set_burn (false);

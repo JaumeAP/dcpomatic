@@ -48,5 +48,5 @@ BOOST_AUTO_TEST_CASE (subtitle_charset_test2)
 	auto ts = dynamic_pointer_cast<StringTextFileContent> (content);
 	BOOST_REQUIRE (ts);
 	/* Make sure we got the subtitle data from the file */
-	BOOST_REQUIRE_EQUAL (content->full_length(film).get(), 6052032);
+	BOOST_REQUIRE_EQUAL (content->full_length_dcp(film).get(), 6052032);
 }
