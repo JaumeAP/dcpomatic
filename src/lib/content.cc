@@ -541,3 +541,11 @@ Content::add_path (boost::filesystem::path p)
 	auto last_write = boost::filesystem::last_write_time(p, ec);
 	_last_write_times.push_back (ec ? 0 : last_write);
 }
+
+
+DCPTime
+Content::full_length_dcp (shared_ptr<const Film> film) const
+{
+	return DCPTime (full_length_content(), FrameRateChange(film, shared_from_this()));
+}
+

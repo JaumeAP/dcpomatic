@@ -106,11 +106,10 @@ AtmosMXFContent::as_xml (xmlpp::Node* node, bool with_paths) const
 }
 
 
-DCPTime
-AtmosMXFContent::full_length_dcp (shared_ptr<const Film> film) const
+ContentTime
+AtmosMXFContent::full_length_content () const
 {
-	FrameRateChange const frc (film, shared_from_this());
-	return DCPTime::from_frames (llrint(atmos->length() * frc.factor()), film->video_frame_rate());
+	return ContentTime::from_frames (atmos->length(), atmos->edit_rate().as_float());
 }
 
 

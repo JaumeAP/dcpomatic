@@ -132,12 +132,21 @@ ImageContent::examine (shared_ptr<const Film> film, shared_ptr<Job> job)
 	set_default_colour_conversion ();
 }
 
+
 DCPTime
 ImageContent::full_length_dcp (shared_ptr<const Film> film) const
 {
-	FrameRateChange const frc (film, shared_from_this());
-	return DCPTime::from_frames (llrint(video->length_after_3d_combine() * frc.factor()), film->video_frame_rate());
+        FrameRateChange const frc (film, shared_from_this());
+        return DCPTime::from_frames (llrint(video->length_after_3d_combine() * frc.factor()), film->video_frame_rate());
 }
+
+
+ContentTime
+ImageContent::full_length_content () const
+{
+	return ContentTime::from_frames (video->length_after_3d_combine(), video_frame_rate().get_value_or(24));
+}
+
 
 DCPTime
 ImageContent::approximate_length () const

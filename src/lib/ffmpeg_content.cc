@@ -43,6 +43,7 @@ extern "C" {
 }
 #include <libxml++/libxml++.h>
 #include <iostream>
+#include <numeric>
 
 #include "i18n.h"
 
@@ -410,20 +411,18 @@ operator!= (FFmpegStream const & a, FFmpegStream const & b)
 }
 
 
-DCPTime
-FFmpegContent::full_length_dcp (shared_ptr<const Film> film) const
+ContentTime
+FFmpegContent::full_length_content () const
 {
-	FrameRateChange const frc (film, shared_from_this());
 	if (video) {
-		return DCPTime::from_frames (llrint (video->length_after_3d_combine() * frc.factor()), film->video_frame_rate());
+		return ContentTime::from_frames(video->length_after_3d_combine(), video_frame_rate().get());
 	}
 
 	if (audio) {
-		DCPTime longest;
-		for (auto i: audio->streams()) {
-			longest = max (longest, DCPTime::from_frames(llrint(i->length() / frc.speed_up), i->frame_rate()));
-		}
-		return longest;
+		auto streams = audio->streams();
+		return std::accumulate (streams.begin(), streams.end(), ContentTime(), [](ContentTime const& a, shared_ptr<AudioStream> const& b) {
+			return std::max(a, ContentTime::from_frames(b->length(), b->frame_rate()));
+		});
 	}
 
 	/* XXX: subtitle content? */

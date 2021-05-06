@@ -78,12 +78,6 @@ DCPSubtitleContent::examine (shared_ptr<const Film> film, shared_ptr<Job> job)
 	}
 }
 
-DCPTime
-DCPSubtitleContent::full_length_dcp (shared_ptr<const Film> film) const
-{
-	FrameRateChange const frc (film, shared_from_this());
-	return DCPTime (_length, frc);
-}
 
 DCPTime
 DCPSubtitleContent::approximate_length () const

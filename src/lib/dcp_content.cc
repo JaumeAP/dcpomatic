@@ -409,15 +409,18 @@ DCPContent::as_xml (xmlpp::Node* node, bool with_paths) const
 	}
 }
 
-DCPTime
-DCPContent::full_length_dcp (shared_ptr<const Film> film) const
+
+ContentTime
+DCPContent::full_length_content () const
 {
 	if (!video) {
 		return {};
 	}
-	FrameRateChange const frc (film, shared_from_this());
-	return DCPTime::from_frames (llrint(video->length() * frc.factor()), film->video_frame_rate());
+	auto vfr = video_frame_rate();
+        DCPOMATIC_ASSERT (vfr);
+        return ContentTime::from_frames (video->length(), *vfr);
 }
+
 
 DCPTime
 DCPContent::approximate_length () const
