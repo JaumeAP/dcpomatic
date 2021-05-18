@@ -49,13 +49,9 @@ function copy {
 			if [ -h $f ]; then
 				ln -s $(readlink $f) "$3/`basename $f`"
 			else
-				if [ "$ARCH2" == "" ]; then
-					cp $f "$3/`basename $f`"
-				else:
-					g=`echo $f | sed -e "s@/$ARCH1/@/$ARCH2/@g"`
-					mkdir -p "$3"
-					lipo -create $f $g -output "$3/`basename $f`"
-				fi
+				g=`echo $f | sed -e "s@/$ARCH1/@/$ARCH2/@g"`
+				mkdir -p "$3"
+				lipo -create $f $g -output "$3/`basename $f`"
 			fi
 		done
 	fi
