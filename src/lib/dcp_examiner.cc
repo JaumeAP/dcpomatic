@@ -20,6 +20,7 @@
 
 #include "dcp_examiner.h"
 #include "dcp_content.h"
+#include "dcpomatic_log.h"
 #include "exceptions.h"
 #include "image.h"
 #include "config.h"
@@ -119,6 +120,8 @@ DCPExaminer::DCPExaminer (shared_ptr<const DCPContent> content, bool tolerant)
 		} catch (...) {}
 		return boost::none;
 	};
+
+	LOG_GENERAL("Examining DCP with CPL %1", _cpl);
 
 	for (auto i: cpl->reels()) {
 
@@ -232,9 +235,11 @@ DCPExaminer::DCPExaminer (shared_ptr<const DCPContent> content, bool tolerant)
 	 * asset in each reel.  This checks that when we do have a key it's the right one.
 	 */
 	try {
+		LOG_GENERAL("Checking that everything in %1 reels has keys", cpl->reels().size());
 		for (auto i: cpl->reels()) {
 			auto pic = i->main_picture()->asset();
 			if (pic->encrypted() && !pic->key()) {
+				LOG_WARNING("KDM is invalid because picture asset %1 is encrypted and there is no key", pic->id());
 				_kdm_valid = false;
 			}
 			auto mono = dynamic_pointer_cast<dcp::MonoPictureAsset>(pic);
@@ -249,6 +254,7 @@ DCPExaminer::DCPExaminer (shared_ptr<const DCPContent> content, bool tolerant)
 			if (i->main_sound()) {
 				auto sound = i->main_sound()->asset ();
 				if (sound->encrypted() && !sound->key()) {
+					LOG_WARNING("KDM is invalid because sound asset %1 is encrypted and there is no key", sound->id());
 					_kdm_valid = false;
 				}
 				i->main_sound()->asset()->start_read()->get_frame(0);
@@ -258,6 +264,7 @@ DCPExaminer::DCPExaminer (shared_ptr<const DCPContent> content, bool tolerant)
 				auto sub = i->main_subtitle()->asset();
 				auto mxf_sub = dynamic_pointer_cast<dcp::MXF>(sub);
 				if (mxf_sub && mxf_sub->encrypted() && !mxf_sub->key()) {
+					LOG_WARNING("KDM is invalid because subtitle asset %1 is encrypted and there is no key", sub->id());
 					_kdm_valid = false;
 				}
 				sub->subtitles ();
@@ -266,15 +273,22 @@ DCPExaminer::DCPExaminer (shared_ptr<const DCPContent> content, bool tolerant)
 			if (i->atmos()) {
 				auto atmos = i->atmos()->asset();
 				if (atmos->encrypted() && !atmos->key()) {
+					LOG_WARNING("KDM is invalid because ATMOS asset %1 is encrypted and there is no key", atmos->id());
 					_kdm_valid = false;
 				}
 				atmos->start_read()->get_frame(0);
 			}
 		}
 	} catch (dcp::ReadError& e) {
+		LOG_WARNING("KDM is invalid because ReadError %1 occurred.", e.what());
 		_kdm_valid = false;
 	} catch (dcp::MiscError& e) {
+		LOG_WARNING("KDM is invalid because MiscError %1 occurred.", e.what());
 		_kdm_valid = false;
+	}
+
+	if (_kdm_valid) {
+		LOG_GENERAL_NC("KDM seems OK!");
 	}
 
 	_standard = cpl->standard();
