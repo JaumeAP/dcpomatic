@@ -23,6 +23,7 @@
 #include "exceptions.h"
 #include "image.h"
 #include "config.h"
+#include "dcpomatic_log.h"
 #include <dcp/dcp.h>
 #include <dcp/decrypted_kdm.h>
 #include <dcp/cpl.h>
@@ -199,30 +200,38 @@ DCPExaminer::DCPExaminer (shared_ptr<const DCPContent> content)
 	_kdm_valid = true;
 
 	/* Check that we can read the first picture, sound and subtitle frames of each reel */
+	LOG_GENERAL("DCP examiner checks %1 for readability", cpl->id());
 	try {
 		BOOST_FOREACH (shared_ptr<dcp::Reel> i, cpl->reels()) {
+			LOG_GENERAL("Checking reel %1", i->id());
 			shared_ptr<dcp::PictureAsset> pic = i->main_picture()->asset ();
 			shared_ptr<dcp::MonoPictureAsset> mono = dynamic_pointer_cast<dcp::MonoPictureAsset> (pic);
 			shared_ptr<dcp::StereoPictureAsset> stereo = dynamic_pointer_cast<dcp::StereoPictureAsset> (pic);
 
 			if (mono) {
+				LOG_GENERAL_NC("Trying to read frame 0 of mono picture asset.");
 				mono->start_read()->get_frame(0)->xyz_image ();
 			} else {
+				LOG_GENERAL_NC("Trying to read frame 0L of stereo picture asset.");
 				stereo->start_read()->get_frame(0)->xyz_image (dcp::EYE_LEFT);
 			}
 
 			if (i->main_sound()) {
+				LOG_GENERAL_NC("Trying to read frame 0 of sound asset.");
 				shared_ptr<dcp::SoundAsset> sound = i->main_sound()->asset ();
 				i->main_sound()->asset()->start_read()->get_frame(0);
 			}
 
 			if (i->main_subtitle()) {
+				LOG_GENERAL_NC("Trying to read subtitles.");
 				i->main_subtitle()->asset()->subtitles ();
 			}
 		}
 	} catch (dcp::DCPReadError& e) {
+		LOG_GENERAL ("DCPReadError %1 occurred", e.what());
 		_kdm_valid = false;
 	} catch (dcp::MiscError& e) {
+		LOG_GENERAL ("DCPMiscError %1 occurred", e.what());
 		_kdm_valid = false;
 	}
 
