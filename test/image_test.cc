@@ -26,12 +26,12 @@
  */
 
 
-#include "lib/compose.hpp"
 #include "lib/image.h"
 #include "lib/image_content.h"
 #include "lib/image_decoder.h"
 #include "lib/ffmpeg_image_proxy.h"
 #include "test.h"
+#include <dcp/compose.h>
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE (crop_scale_window_test7)
 			true,
 			false
 			);
-		path file = String::compose("crop_scale_window_test7-%1.png", left_crop);
+		path file = dcp::compose("crop_scale_window_test7-%1.png", left_crop);
 		write_image(cropped, path("build") / "test" / file);
 		check_image(path("test") / "data" / file, path("build") / "test" / file, 10);
 	}

@@ -27,11 +27,11 @@
 #include "dcpomatic_button.h"
 #include "lib/job.h"
 #include "lib/job_manager.h"
-#include "lib/compose.hpp"
 #include "lib/config.h"
 #include "lib/send_notification_email_job.h"
 #include "lib/transcode_job.h"
 #include "lib/analyse_audio_job.h"
+#include <dcp/compose.h>
 #include <wx/wx.h>
 #include <boost/algorithm/string.hpp>
 

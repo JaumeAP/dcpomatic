@@ -20,7 +20,7 @@
 
 
 #include "dcp_text_track.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 #include <string>
 
 #include "i18n.h"
@@ -50,7 +50,7 @@ DCPTextTrack::DCPTextTrack (string name_, optional<dcp::LanguageTag> language_)
 string
 DCPTextTrack::summary () const
 {
-	return String::compose("%1 (%2)", name, language ? language->to_string() : _("Unknown"));
+	return dcp::compose("%1 (%2)", name, language ? language->to_string() : _("Unknown"));
 }
 
 void

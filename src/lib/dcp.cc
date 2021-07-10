@@ -19,12 +19,12 @@
 */
 
 
-#include "compose.hpp"
 #include "dcp.h"
 #include "dcp_content.h"
 #include "dcpomatic_log.h"
 #include "log.h"
 #include "util.h"
+#include <dcp/compose.h>
 #include <dcp/dcp.h>
 #include <dcp/decrypted_kdm.h>
 #include <dcp/exceptions.h>

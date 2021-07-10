@@ -36,7 +36,6 @@
 #include "digester.h"
 #include "audio_processor.h"
 #include "crypto.h"
-#include "compose.hpp"
 #include "audio_buffers.h"
 #include "string_text.h"
 #include "font.h"
@@ -46,6 +45,7 @@
 #include "text_decoder.h"
 #include "job_manager.h"
 #include "warnings.h"
+#include <dcp/compose.h>
 #include <dcp/decrypted_kdm.h>
 #include <dcp/locale_convert.h>
 #include <dcp/util.h>
@@ -385,7 +385,7 @@ DCPOMATIC_ENABLE_WARNINGS
 
 #ifdef DCPOMATIC_WINDOWS
 	putenv ("PANGOCAIRO_BACKEND=fontconfig");
-	putenv (String::compose("FONTCONFIG_PATH=%1", resources_path().string()).c_str());
+	putenv (dcp::compose("FONTCONFIG_PATH=%1", resources_path().string()).c_str());
 #endif
 
 #ifdef DCPOMATIC_OSX
@@ -452,11 +452,11 @@ dcpomatic_setup_gettext_i18n (string lang)
 		/* Override our environment language.  Note that the caller must not
 		   free the string passed into putenv().
 		*/
-		string s = String::compose ("LANGUAGE=%1", lang);
+		string s = dcp::compose ("LANGUAGE=%1", lang);
 		putenv (strdup (s.c_str ()));
-		s = String::compose ("LANG=%1", lang);
+		s = dcp::compose ("LANG=%1", lang);
 		putenv (strdup (s.c_str ()));
-		s = String::compose ("LC_ALL=%1", lang);
+		s = dcp::compose ("LC_ALL=%1", lang);
 		putenv (strdup (s.c_str ()));
 	}
 
@@ -881,7 +881,7 @@ checked_fwrite (void const * ptr, size_t size, FILE* stream, boost::filesystem::
 	if (N != size) {
 		if (ferror(stream)) {
 			fclose (stream);
-			throw FileError (String::compose("fwrite error %1", errno), path);
+			throw FileError (dcp::compose("fwrite error %1", errno), path);
 		} else {
 			fclose (stream);
 			throw FileError ("Unexpected short write", path);
@@ -896,7 +896,7 @@ checked_fread (void* ptr, size_t size, FILE* stream, boost::filesystem::path pat
 	if (N != size) {
 		if (ferror(stream)) {
 			fclose (stream);
-			throw FileError (String::compose("fread error %1", errno), path);
+			throw FileError (dcp::compose("fread error %1", errno), path);
 		} else {
 			fclose (stream);
 			throw FileError ("Unexpected short read", path);

@@ -20,7 +20,6 @@
 
 
 #include "writer.h"
-#include "compose.hpp"
 #include "film.h"
 #include "ratio.h"
 #include "log.h"
@@ -37,6 +36,7 @@
 #include "util.h"
 #include "reel_writer.h"
 #include "text_content.h"
+#include <dcp/compose.h>
 #include <dcp/cpl.h>
 #include <dcp/locale_convert.h>
 #include <dcp/reel_file_asset.h>
@@ -616,12 +616,12 @@ Writer::finish (boost::filesystem::path output_dcp)
 
 	auto creator = Config::instance()->dcp_creator();
 	if (creator.empty()) {
-		creator = String::compose("DCP-o-matic %1 %2", dcpomatic_version, dcpomatic_git_commit);
+		creator = dcp::compose("DCP-o-matic %1 %2", dcpomatic_version, dcpomatic_git_commit);
 	}
 
 	auto issuer = Config::instance()->dcp_issuer();
 	if (issuer.empty()) {
-		issuer = String::compose("DCP-o-matic %1 %2", dcpomatic_version, dcpomatic_git_commit);
+		issuer = dcp::compose("DCP-o-matic %1 %2", dcpomatic_version, dcpomatic_git_commit);
 	}
 
 	cpl->set_creator (creator);
@@ -746,13 +746,13 @@ Writer::write_cover_sheet (boost::filesystem::path output_dcp)
 	}
 
 	if (size > (1000000000L)) {
-		boost::algorithm::replace_all (text, "$SIZE", String::compose("%1GB", dcp::locale_convert<string>(size / 1000000000.0, 1, true)));
+		boost::algorithm::replace_all (text, "$SIZE", dcp::compose("%1GB", dcp::locale_convert<string>(size / 1000000000.0, 1, true)));
 	} else {
-		boost::algorithm::replace_all (text, "$SIZE", String::compose("%1MB", dcp::locale_convert<string>(size / 1000000.0, 1, true)));
+		boost::algorithm::replace_all (text, "$SIZE", dcp::compose("%1MB", dcp::locale_convert<string>(size / 1000000.0, 1, true)));
 	}
 
 	auto ch = audio_channel_types (film()->mapped_audio_channels(), film()->audio_channels());
-	auto description = String::compose("%1.%2", ch.first, ch.second);
+	auto description = dcp::compose("%1.%2", ch.first, ch.second);
 
 	if (description == "0.0") {
 		description = _("None");
@@ -766,11 +766,11 @@ Writer::write_cover_sheet (boost::filesystem::path output_dcp)
 	auto const hmsf = film()->length().split(film()->video_frame_rate());
 	string length;
 	if (hmsf.h == 0 && hmsf.m == 0) {
-		length = String::compose("%1s", hmsf.s);
+		length = dcp::compose("%1s", hmsf.s);
 	} else if (hmsf.h == 0 && hmsf.m > 0) {
-		length = String::compose("%1m%2s", hmsf.m, hmsf.s);
+		length = dcp::compose("%1m%2s", hmsf.m, hmsf.s);
 	} else if (hmsf.h > 0 && hmsf.m > 0) {
-		length = String::compose("%1h%2m%3s", hmsf.h, hmsf.m, hmsf.s);
+		length = dcp::compose("%1h%2m%3s", hmsf.h, hmsf.m, hmsf.s);
 	}
 
 	boost::algorithm::replace_all (text, "$LENGTH", length);

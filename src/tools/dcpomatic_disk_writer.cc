@@ -19,7 +19,6 @@
 */
 
 
-#include "lib/compose.hpp"
 #include "lib/cross.h"
 #include "lib/dcpomatic_log.h"
 #include "lib/digester.h"
@@ -30,6 +29,7 @@
 #include "lib/nanomsg.h"
 #include "lib/version.h"
 #include "lib/warnings.h"
+#include <dcp/compose.h>
 
 #ifdef DCPOMATIC_POSIX
 #include <sys/ioctl.h>

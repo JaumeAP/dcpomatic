@@ -25,7 +25,6 @@
  */
 
 
-#include "lib/compose.hpp"
 #include "lib/config.h"
 #include "lib/cross.h"
 #include "lib/dcp_content_type.h"
@@ -42,6 +41,7 @@
 #include "lib/signal_manager.h"
 #include "lib/util.h"
 #include "test.h"
+#include <dcp/compose.h>
 #include <dcp/cpl.h>
 #include <dcp/dcp.h>
 #include <dcp/mono_picture_asset.h>
@@ -754,7 +754,7 @@ write_image (shared_ptr<const Image> image, boost::filesystem::path file)
 void
 check_ffmpeg (boost::filesystem::path ref, boost::filesystem::path check, int audio_tolerance)
 {
-	int const r = system (String::compose("ffcmp -t %1 %2 %3", audio_tolerance, ref.string(), check.string()).c_str());
+	int const r = system (dcp::compose("ffcmp -t %1 %2 %3", audio_tolerance, ref.string(), check.string()).c_str());
 	BOOST_REQUIRE_EQUAL (WEXITSTATUS(r), 0);
 }
 

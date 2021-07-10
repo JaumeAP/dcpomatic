@@ -44,7 +44,6 @@
 #include "environment_info.h"
 #include "audio_processor.h"
 #include "digester.h"
-#include "compose.hpp"
 #include "screen.h"
 #include "audio_content.h"
 #include "video_content.h"
@@ -58,6 +57,7 @@
 #include "ffmpeg_subtitle_stream.h"
 #include "font.h"
 #include <libcxml/cxml.h>
+#include <dcp/compose.h>
 #include <dcp/cpl.h>
 #include <dcp/certificate_chain.h>
 #include <dcp/util.h>
@@ -564,7 +564,7 @@ Film::read_metadata (optional<boost::filesystem::path> path)
 		throw runtime_error (_("This film was created with a newer version of DCP-o-matic, and it cannot be loaded into this version.  Sorry!"));
 	} else if (_state_version < current_state_version) {
 		/* This is an older version; save a copy (if we haven't already) */
-		auto const older = path->parent_path() / String::compose("metadata.%1.xml", _state_version);
+		auto const older = path->parent_path() / dcp::compose("metadata.%1.xml", _state_version);
 		if (!boost::filesystem::is_regular_file(older)) {
 			try {
 				boost::filesystem::copy_file(*path, older);
@@ -887,7 +887,7 @@ Film::isdcf_name (bool if_created_now) const
 		auto fl = _luminance->value_in_foot_lamberts();
 		char buffer[64];
 		snprintf (buffer, sizeof(buffer), "%.1f", fl);
-		d += String::compose("-%1fl", buffer);
+		d += dcp::compose("-%1fl", buffer);
 	}
 
 	if (video_frame_rate() != 24) {
@@ -969,7 +969,7 @@ Film::isdcf_name (bool if_created_now) const
 	if (!ch.first && !ch.second) {
 		d += "_MOS";
 	} else if (ch.first) {
-		d += String::compose("_%1%2", ch.first, ch.second);
+		d += dcp::compose("_%1%2", ch.first, ch.second);
 	}
 
 	if (audio_channels() > static_cast<int>(dcp::Channel::HI) && find(mapped.begin(), mapped.end(), static_cast<int>(dcp::Channel::HI)) != mapped.end()) {

@@ -33,7 +33,7 @@
 #include "lib/job.h"
 #include "lib/util.h"
 #include "lib/exceptions.h"
-#include "lib/compose.hpp"
+#include <dcp/compose.h>
 #include <iostream>
 
 

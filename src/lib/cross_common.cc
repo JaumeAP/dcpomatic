@@ -20,9 +20,9 @@
 
 
 #include "cross.h"
-#include "compose.hpp"
 #include "dcpomatic_log.h"
 #include "warnings.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 DCPOMATIC_DISABLE_WARNINGS
 #include <libxml++/libxml++.h>
@@ -91,7 +91,7 @@ Drive::description () const
 		name = _("Unknown");
 	}
 
-	return String::compose(_("%1 (%2 GB) [%3]"), name, gb, _device);
+	return dcp::compose(_("%1 (%2 GB) [%3]"), name, gb, _device);
 }
 
 
@@ -108,7 +108,7 @@ Drive::log_summary () const
 		mp = mp.substr (0, mp.length() - 1);
 	}
 
-	return String::compose(
+	return dcp::compose(
 		"Device %1 mounted on %2 size %3 vendor %4 model %5",
 		_device, mp, _size, _vendor.get_value_or("[none]"), _model.get_value_or("[none]")
 			);

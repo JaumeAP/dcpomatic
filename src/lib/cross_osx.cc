@@ -20,12 +20,12 @@
 
 
 #include "cross.h"
-#include "compose.hpp"
 #include "log.h"
 #include "dcpomatic_log.h"
 #include "config.h"
 #include "exceptions.h"
 #include "warnings.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <glib.h>
 extern "C" {

@@ -26,7 +26,7 @@
 
 
 #include "lib/image_filename_sorter.h"
-#include "lib/compose.hpp"
+#include <dcp/compose.h>
 #include <boost/test/unit_test.hpp>
 
 
@@ -67,11 +67,11 @@ BOOST_AUTO_TEST_CASE (image_filename_sorter_test2)
 {
 	vector<boost::filesystem::path> paths;
 	for (int i = 0; i < 100000; ++i) {
-		paths.push_back(String::compose("some.filename.with.%1.number.tiff", i));
+		paths.push_back(dcp::compose("some.filename.with.%1.number.tiff", i));
 	}
 	random_shuffle (paths.begin(), paths.end());
 	sort (paths.begin(), paths.end(), ImageFilenameSorter());
 	for (int i = 0; i < 100000; ++i) {
-		BOOST_CHECK_EQUAL(paths[i].string(), String::compose("some.filename.with.%1.number.tiff", i));
+		BOOST_CHECK_EQUAL(paths[i].string(), dcp::compose("some.filename.with.%1.number.tiff", i));
 	}
 }

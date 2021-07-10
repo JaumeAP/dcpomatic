@@ -20,9 +20,9 @@
 
 #include "disk_writer_messages.h"
 #include "copy_to_drive_job.h"
-#include "compose.hpp"
 #include "exceptions.h"
 #include "dcpomatic_log.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <nanomsg/nn.h>
 #include <unistd.h>
@@ -53,7 +53,7 @@ CopyToDriveJob::CopyToDriveJob (boost::filesystem::path dcp, Drive drive, Nanoms
 string
 CopyToDriveJob::name () const
 {
-	return String::compose (_("Copying %1\nto %2"), _dcp.filename().string(), _drive.description());
+	return dcp::compose (_("Copying %1\nto %2"), _dcp.filename().string(), _drive.description());
 }
 
 string
@@ -66,7 +66,7 @@ void
 CopyToDriveJob::run ()
 {
 	LOG_DISK("Sending write request to disk writer for %1 %2", _dcp.string(), _drive.device());
-	if (!_nanomsg.send(String::compose(DISK_WRITER_WRITE "\n%1\n%2\n", _dcp.string(), _drive.device()), 2000)) {
+	if (!_nanomsg.send(dcp::compose(DISK_WRITER_WRITE "\n%1\n%2\n", _dcp.string(), _drive.device()), 2000)) {
 		LOG_DISK_NC("Failed to send write request.");
 		throw CommunicationFailedError ();
 	}

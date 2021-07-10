@@ -48,12 +48,12 @@
 #include "lib/butler.h"
 #include "lib/log.h"
 #include "lib/config.h"
-#include "lib/compose.hpp"
 #include "lib/dcpomatic_log.h"
 #include "lib/text_content.h"
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
+#include <dcp/compose.h>
 #include <dcp/exceptions.h>
 #include <wx/tglbtn.h>
 #include <iostream>

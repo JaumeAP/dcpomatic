@@ -241,7 +241,7 @@ public:
 #else
 		string const colour = gui_is_dark() ? "white" : "black";
 		wxBitmap bitmap (
-			bitmap_path(String::compose("dcpomatic_small_%1", colour)),
+			bitmap_path(dcp::compose("dcpomatic_small_%1", colour)),
 			wxBITMAP_TYPE_PNG
 			);
 		wxIcon icon;

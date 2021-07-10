@@ -20,9 +20,9 @@
 
 
 #include "send_kdm_email_job.h"
-#include "compose.hpp"
 #include "kdm_with_metadata.h"
 #include "film.h"
+#include <dcp/compose.h>
 #include <list>
 
 #include "i18n.h"
@@ -89,7 +89,7 @@ SendKDMEmailJob::name () const
 		return _("Email KDMs");
 	}
 
-	return String::compose (_("Email KDMs for %2"), *f);
+	return dcp::compose (_("Email KDMs for %2"), *f);
 }
 
 

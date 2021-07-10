@@ -26,13 +26,13 @@
 #include "dcpomatic_log.h"
 #include "digester.h"
 #include "font_data.h"
-#include "compose.hpp"
 #include "config.h"
 #include "audio_buffers.h"
 #include "image.h"
 #include <dcp/atmos_asset.h>
 #include <dcp/atmos_asset_writer.h>
 #include <dcp/certificate_chain.h>
+#include <dcp/compose.h>
 #include <dcp/cpl.h>
 #include <dcp/dcp.h>
 #include <dcp/interop_subtitle_asset.h>
@@ -415,7 +415,7 @@ ReelWriter::finish (boost::filesystem::path output_dcp)
 		boost::filesystem::rename (film()->file(aaf), audio_to, ec);
 		if (ec) {
 			throw FileError (
-				String::compose (_("could not move audio asset into the DCP (%1)"), ec.value ()), aaf
+				dcp::compose (_("could not move audio asset into the DCP (%1)"), ec.value ()), aaf
 				);
 		}
 
@@ -432,7 +432,7 @@ ReelWriter::finish (boost::filesystem::path output_dcp)
 		boost::filesystem::rename (film()->file(aaf), atmos_to, ec);
 		if (ec) {
 			throw FileError (
-				String::compose (_("could not move atmos asset into the DCP (%1)"), ec.value ()), aaf
+				dcp::compose (_("could not move atmos asset into the DCP (%1)"), ec.value ()), aaf
 				);
 		}
 
@@ -511,7 +511,7 @@ maybe_add_text (
 		if (!text_only && reel_asset->actual_duration() != period_duration) {
 			throw ProgrammingError (
 				__FILE__, __LINE__,
-				String::compose ("%1 vs %2", reel_asset->actual_duration(), period_duration)
+				dcp::compose ("%1 vs %2", reel_asset->actual_duration(), period_duration)
 				);
 		}
 		reel->add (reel_asset);
@@ -557,7 +557,7 @@ ReelWriter::create_reel_picture (shared_ptr<dcp::Reel> reel, list<ReferencedReel
 	if (reel_asset->duration() != period_duration) {
 		throw ProgrammingError (
 			__FILE__, __LINE__,
-			String::compose ("%1 vs %2", reel_asset->actual_duration(), period_duration)
+			dcp::compose ("%1 vs %2", reel_asset->actual_duration(), period_duration)
 			);
 	}
 	reel->add (reel_asset);
@@ -609,7 +609,7 @@ ReelWriter::create_reel_sound (shared_ptr<dcp::Reel> reel, list<ReferencedReelAs
 		if (reel_asset->actual_duration() != period_duration) {
 			throw ProgrammingError (
 				__FILE__, __LINE__,
-				String::compose ("%1 vs %2", reel_asset->actual_duration(), period_duration)
+				dcp::compose ("%1 vs %2", reel_asset->actual_duration(), period_duration)
 				);
 		}
 

@@ -23,9 +23,9 @@
 #include "film_editor.h"
 #include "timeline_dialog.h"
 #include "wx_util.h"
-#include "lib/compose.hpp"
 #include "lib/cross.h"
 #include "lib/playlist.h"
+#include <dcp/compose.h>
 #include <wx/graphics.h>
 #include <iostream>
 #include <list>

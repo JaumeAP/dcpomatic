@@ -33,10 +33,10 @@
 #include "player.h"
 #include "job.h"
 #include "writer.h"
-#include "compose.hpp"
 #include "referenced_reel_asset.h"
 #include "text_content.h"
 #include "player_video.h"
+#include <dcp/compose.h>
 #include <boost/signals2.hpp>
 #include <iostream>
 

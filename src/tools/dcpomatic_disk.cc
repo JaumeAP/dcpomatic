@@ -202,7 +202,7 @@ private:
 #ifdef DCPOMATIC_OSX
 	void uninstall()
 	{
-		system(String::compose("osascript \"%1/uninstall_disk.applescript\"", resources_path().string()).c_str());
+		system(dcp::compose("osascript \"%1/uninstall_disk.applescript\"", resources_path().string()).c_str());
 	}
 #endif
 

@@ -22,9 +22,9 @@
 #include "download_certificate_dialog.h"
 #include "download_certificate_panel.h"
 #include "wx_util.h"
-#include "lib/compose.hpp"
 #include "lib/signal_manager.h"
 #include <dcp/certificate_chain.h>
+#include <dcp/compose.h>
 #include <dcp/exceptions.h>
 #include <dcp/util.h>
 #include <boost/bind/bind.hpp>
@@ -63,7 +63,7 @@ DownloadCertificatePanel::load_certificate (boost::filesystem::path file)
 	try {
 		_certificate = dcp::Certificate (dcp::file_to_string(file));
 	} catch (dcp::MiscError& e) {
-		return String::compose(wx_to_std(_("Could not read certificate file (%1)")), e.what());
+		return dcp::compose(wx_to_std(_("Could not read certificate file (%1)")), e.what());
 	}
 	return {};
 }
@@ -75,7 +75,7 @@ DownloadCertificatePanel::load_certificate_from_chain (boost::filesystem::path f
 	try {
 		_certificate = dcp::CertificateChain (dcp::file_to_string(file)).leaf();
 	} catch (dcp::MiscError& e) {
-		return String::compose(wx_to_std(_("Could not read certificate file (%1)")), e.what());
+		return dcp::compose(wx_to_std(_("Could not read certificate file (%1)")), e.what());
 	}
 	return {};
 }

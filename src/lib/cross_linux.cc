@@ -19,7 +19,6 @@
 */
 
 
-#include "compose.hpp"
 #include "config.h"
 #include "cross.h"
 #include "dcpomatic_log.h"
@@ -27,6 +26,7 @@
 #include "exceptions.h"
 #include "log.h"
 #include "warnings.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <glib.h>
 DCPOMATIC_DISABLE_WARNINGS

@@ -24,11 +24,11 @@
  */
 
 
-#include "compose.hpp"
 #include "cross.h"
 #include "dcpomatic_assert.h"
 #include "exceptions.h"
 #include "file_group.h"
+#include <dcp/compose.h>
 #include <sndfile.h>
 #include <cstdio>
 
@@ -182,7 +182,7 @@ FileGroup::read (uint8_t* buffer, int amount) const
 		}
 
 		if (ferror(_current_file)) {
-			throw FileError (String::compose("fread error %1", errno), _paths[_current_path]);
+			throw FileError (dcp::compose("fread error %1", errno), _paths[_current_path]);
 		}
 
 		if (eof) {

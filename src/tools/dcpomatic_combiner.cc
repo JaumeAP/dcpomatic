@@ -152,7 +152,7 @@ private:
 			if (!confirm_dialog (
 				    this,
 				    std_to_wx (
-					    String::compose(wx_to_std(_("The directory %1 already exists and is not empty.  "
+					    dcp::compose(wx_to_std(_("The directory %1 already exists and is not empty.  "
 									"Are you sure you want to use it?")),
 							    output.string())
 					    )
@@ -162,7 +162,7 @@ private:
 		} else if (is_regular_file(output)) {
 			error_dialog (
 				this,
-				String::compose (wx_to_std(_("%1 already exists as a file, so you cannot use it for a DCP.")), output.string())
+				dcp::compose (wx_to_std(_("%1 already exists as a file, so you cannot use it for a DCP.")), output.string())
 				);
 			return;
 		}

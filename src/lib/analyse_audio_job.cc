@@ -21,13 +21,13 @@
 
 #include "analyse_audio_job.h"
 #include "audio_analysis.h"
-#include "compose.hpp"
 #include "dcpomatic_log.h"
 #include "film.h"
 #include "filter.h"
 #include "player.h"
 #include "playlist.h"
 #include "config.h"
+#include <dcp/compose.h>
 #include <iostream>
 
 #include "i18n.h"

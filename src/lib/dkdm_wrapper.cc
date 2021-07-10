@@ -19,10 +19,10 @@
 */
 
 
-#include "compose.hpp"
 #include "dkdm_wrapper.h"
 #include "dcpomatic_assert.h"
 #include "warnings.h"
+#include <dcp/compose.h>
 DCPOMATIC_DISABLE_WARNINGS
 #include <libxml++/libxml++.h>
 DCPOMATIC_ENABLE_WARNINGS
@@ -57,7 +57,7 @@ DKDMBase::read (cxml::ConstNodePtr node)
 string
 DKDM::name () const
 {
-	return String::compose ("%1 (%2)", _dkdm.content_title_text(), _dkdm.cpl_id());
+	return dcp::compose ("%1 (%2)", _dkdm.content_title_text(), _dkdm.cpl_id());
 }
 
 

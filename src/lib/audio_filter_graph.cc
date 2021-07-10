@@ -20,7 +20,7 @@
 
 #include "audio_filter_graph.h"
 #include "audio_buffers.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 extern "C" {
 #include <libavfilter/buffersink.h>
 #include <libavfilter/buffersrc.h>
@@ -149,7 +149,7 @@ AudioFilterGraph::process (shared_ptr<const AudioBuffers> buffers)
 	if (r < 0) {
 		char buffer[256];
 		av_strerror (r, buffer, sizeof(buffer));
-		throw DecodeError (String::compose (N_("could not push buffer into filter chain (%1)"), &buffer[0]));
+		throw DecodeError (dcp::compose (N_("could not push buffer into filter chain (%1)"), &buffer[0]));
 	}
 
 	while (true) {

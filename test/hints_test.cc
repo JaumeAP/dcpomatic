@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE (hint_closed_caption_too_long)
 	check (
 		TextType::CLOSED_CAPTION,
 		"hint_closed_caption_too_long",
-		String::compose("At least one of your closed caption lines has more than %1 characters.  It is advisable to make each line %1 characters at most in length.", MAX_CLOSED_CAPTION_LENGTH, MAX_CLOSED_CAPTION_LENGTH)
+		dcp::compose("At least one of your closed caption lines has more than %1 characters.  It is advisable to make each line %1 characters at most in length.", MAX_CLOSED_CAPTION_LENGTH, MAX_CLOSED_CAPTION_LENGTH)
 	      );
 }
 
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE (hint_many_closed_caption_lines)
 	check (
 		TextType::CLOSED_CAPTION,
 		"hint_many_closed_caption_lines",
-		String::compose("Some of your closed captions span more than %1 lines, so they will be truncated.", MAX_CLOSED_CAPTION_LINES)
+		dcp::compose("Some of your closed captions span more than %1 lines, so they will be truncated.", MAX_CLOSED_CAPTION_LINES)
 	      );
 }
 
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE (hint_subtitle_mxf_too_big)
 	content->text.front()->set_type (TextType::OPEN_SUBTITLE);
 	content->text.front()->set_language (dcp::LanguageTag("en-US"));
 	for (int i = 1; i < 512; ++i) {
-		auto font = make_shared<dcpomatic::Font>(String::compose("font_%1", i));
+		auto font = make_shared<dcpomatic::Font>(dcp::compose("font_%1", i));
 		font->set_file ("test/data/LiberationSans-Regular.ttf");
 		content->text.front()->add_font(font);
 	}
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE (hint_closed_caption_xml_too_big)
 
 	auto film = new_test_film2 (name);
 
-	auto ccap = fopen_boost (String::compose("build/test/%1.srt", name), "w");
+	auto ccap = fopen_boost (dcp::compose("build/test/%1.srt", name), "w");
 	BOOST_REQUIRE (ccap);
 	for (int i = 0; i < 2048; ++i) {
 		fprintf(ccap, "%d\n", i + 1);

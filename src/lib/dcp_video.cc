@@ -30,7 +30,6 @@
  */
 
 
-#include "compose.hpp"
 #include "config.h"
 #include "cross.h"
 #include "dcp_video.h"
@@ -44,6 +43,7 @@
 #include "rng.h"
 #include "warnings.h"
 #include <libcxml/cxml.h>
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <dcp/openjpeg_image.h>
 #include <dcp/rgb_xyz.h>

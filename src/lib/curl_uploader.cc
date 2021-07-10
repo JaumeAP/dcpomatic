@@ -23,7 +23,7 @@
 #include "exceptions.h"
 #include "config.h"
 #include "cross.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 #include <iostream>
 
 #include "i18n.h"
@@ -82,19 +82,19 @@ CurlUploader::upload_file (boost::filesystem::path from, boost::filesystem::path
 	curl_easy_setopt (
 		_curl, CURLOPT_URL,
 		/* Use generic_string so that we get forward-slashes in the path, even on Windows */
-		String::compose ("ftp://%1/%2/%3", Config::instance()->tms_ip(), Config::instance()->tms_path(), to.generic_string ()).c_str ()
+		dcp::compose ("ftp://%1/%2/%3", Config::instance()->tms_ip(), Config::instance()->tms_path(), to.generic_string ()).c_str ()
 		);
 
 	_file = fopen_boost (from, "rb");
 	if (!_file) {
-		throw NetworkError (String::compose (_("Could not open %1 to send"), from));
+		throw NetworkError (dcp::compose (_("Could not open %1 to send"), from));
 	}
 	_transferred = &transferred;
 	_total_size = total_size;
 
 	auto const r = curl_easy_perform (_curl);
 	if (r != CURLE_OK) {
-		throw NetworkError (String::compose (_("Could not write to remote file (%1)"), curl_easy_strerror (r)));
+		throw NetworkError (dcp::compose (_("Could not write to remote file (%1)"), curl_easy_strerror (r)));
 	}
 
 	fclose (_file);

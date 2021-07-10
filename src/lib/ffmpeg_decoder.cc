@@ -39,10 +39,10 @@
 #include "video_decoder.h"
 #include "film.h"
 #include "audio_decoder.h"
-#include "compose.hpp"
 #include "text_content.h"
 #include "audio_content.h"
 #include "frame_interval_checker.h"
+#include <dcp/compose.h>
 #include <dcp/subtitle_string.h>
 #include <sub/ssa_reader.h>
 #include <sub/subtitle.h>
@@ -340,7 +340,7 @@ FFmpegDecoder::deinterleave_audio (AVFrame* frame)
 	break;
 
 	default:
-		throw DecodeError (String::compose(_("Unrecognised audio sample format (%1)"), static_cast<int>(format)));
+		throw DecodeError (dcp::compose(_("Unrecognised audio sample format (%1)"), static_cast<int>(format)));
 	}
 
 	return audio;

@@ -36,7 +36,6 @@
 #include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
 #include "lib/cinema.h"
-#include "lib/compose.hpp"
 #include "lib/config.h"
 #include "lib/cross.h"
 #include "lib/dkdm_wrapper.h"
@@ -46,6 +45,7 @@
 #include "lib/screen.h"
 #include "lib/send_kdm_email_job.h"
 #include "lib/util.h"
+#include <dcp/compose.h>
 #include <dcp/encrypted_kdm.h>
 #include <dcp/decrypted_kdm.h>
 #include <dcp/exceptions.h>

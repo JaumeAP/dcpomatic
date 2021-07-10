@@ -25,7 +25,6 @@
 #include "ffmpeg_examiner.h"
 #include "ffmpeg_subtitle_stream.h"
 #include "ffmpeg_audio_stream.h"
-#include "compose.hpp"
 #include "job.h"
 #include "util.h"
 #include "filter.h"
@@ -35,6 +34,7 @@
 #include "exceptions.h"
 #include "frame_rate_change.h"
 #include "text_content.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <libcxml/cxml.h>
 extern "C" {
@@ -115,7 +115,7 @@ FFmpegContent::FFmpegContent (cxml::ConstNodePtr node, int version, list<string>
 		if (f) {
 			_filters.push_back (f);
 		} else {
-			notes.push_back (String::compose (_("DCP-o-matic no longer supports the `%1' filter, so it has been turned off."), i->content()));
+			notes.push_back (dcp::compose (_("DCP-o-matic no longer supports the `%1' filter, so it has been turned off."), i->content()));
 		}
 	}
 
@@ -338,11 +338,11 @@ string
 FFmpegContent::summary () const
 {
 	if (video && audio) {
-		return String::compose (_("%1 [movie]"), path_summary());
+		return dcp::compose (_("%1 [movie]"), path_summary());
 	} else if (video) {
-		return String::compose (_("%1 [video]"), path_summary());
+		return dcp::compose (_("%1 [video]"), path_summary());
 	} else if (audio) {
-		return String::compose (_("%1 [audio]"), path_summary());
+		return dcp::compose (_("%1 [audio]"), path_summary());
 	}
 
 	return path_summary ();
@@ -378,7 +378,7 @@ FFmpegContent::technical_summary () const
 		s += " - " + audio->technical_summary ();
 	}
 
-	return s + String::compose (
+	return s + dcp::compose (
 		"ffmpeg: audio %1 subtitle %2 filters %3", as, ss, filt
 		);
 }
@@ -550,14 +550,14 @@ FFmpegContent::add_properties (shared_ptr<const Film> film, list<UserProperty>& 
 				/// file is limited, so that not all possible values are valid.
 				p.push_back (
 					UserProperty (
-						UserProperty::VIDEO, _("Colour range"), String::compose(_("Limited (%1-%2)"), lim_start, lim_end)
+						UserProperty::VIDEO, _("Colour range"), dcp::compose(_("Limited (%1-%2)"), lim_start, lim_end)
 						)
 					);
 				break;
 			case AVCOL_RANGE_JPEG:
 				/// TRANSLATORS: this means that the range of pixel values used in this
 				/// file is full, so that all possible pixel values are valid.
-				p.push_back (UserProperty (UserProperty::VIDEO, _("Colour range"), String::compose (_("Full (0-%1)"), total)));
+				p.push_back (UserProperty (UserProperty::VIDEO, _("Colour range"), dcp::compose (_("Full (0-%1)"), total)));
 				break;
 			default:
 				DCPOMATIC_ASSERT (false);

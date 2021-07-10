@@ -22,8 +22,8 @@
 #include "resampler.h"
 #include "audio_buffers.h"
 #include "exceptions.h"
-#include "compose.hpp"
 #include "dcpomatic_assert.h"
+#include <dcp/compose.h>
 #include <samplerate.h>
 #include <iostream>
 #include <cmath>
@@ -51,7 +51,7 @@ Resampler::Resampler (int in, int out, int channels)
 	int error;
 	_src = src_new (SRC_SINC_BEST_QUALITY, _channels, &error);
 	if (!_src) {
-		throw runtime_error (String::compose(N_("could not create sample-rate converter (%1)"), error));
+		throw runtime_error (dcp::compose(N_("could not create sample-rate converter (%1)"), error));
 	}
 }
 
@@ -73,7 +73,7 @@ Resampler::set_fast ()
 	int error;
 	_src = src_new (SRC_LINEAR, _channels, &error);
 	if (!_src) {
-		throw runtime_error (String::compose(N_("could not create sample-rate converter (%1)"), error));
+		throw runtime_error (dcp::compose(N_("could not create sample-rate converter (%1)"), error));
 	}
 }
 
@@ -117,7 +117,7 @@ Resampler::run (shared_ptr<const AudioBuffers> in)
 		int const r = src_process (_src, &data);
 		if (r) {
 			throw EncodeError (
-				String::compose (
+				dcp::compose (
 					N_("could not run sample-rate converter (%1) [processing %2 to %3, %4 channels]"),
 					src_strerror (r),
 					in_frames,
@@ -173,7 +173,7 @@ Resampler::flush ()
 
 	int const r = src_process (_src, &data);
 	if (r) {
-		throw EncodeError (String::compose(N_("could not run sample-rate converter (%1)"), src_strerror(r)));
+		throw EncodeError (dcp::compose(N_("could not run sample-rate converter (%1)"), src_strerror(r)));
 	}
 
 	out->ensure_size (out_offset + data.output_frames_gen);

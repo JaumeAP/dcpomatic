@@ -24,9 +24,9 @@
  */
 
 
-#include "compose.hpp"
 #include "timer.h"
 #include "util.h"
+#include <dcp/compose.h>
 #include <sys/time.h>
 #include <iostream>
 
@@ -130,7 +130,7 @@ StateTimer::~StateTimer ()
 		char buffer[64];
 		snprintf (buffer, 64, "%.4f", i.second.total_time);
 		string total_time (buffer);
-		sorted.push_back (make_pair(i.second.total_time, String::compose("\t%1%2 %3 %4", name, total_time, i.second.number, (i.second.total_time / i.second.number))));
+		sorted.push_back (make_pair(i.second.total_time, dcp::compose("\t%1%2 %3 %4", name, total_time, i.second.number, (i.second.total_time / i.second.number))));
 	}
 
 	sorted.sort ([](pair<double, string> const& a, pair<double, string> const& b) {

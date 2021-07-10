@@ -30,7 +30,7 @@
 #include "lib/scoped_temporary.h"
 #include "lib/internet.h"
 #include "lib/ffmpeg_content.h"
-#include "lib/compose.hpp"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <dcp/exceptions.h>
 #include <wx/listctrl.h>

@@ -38,7 +38,6 @@
 #include "lib/util.h"
 #include "lib/internet.h"
 #include "lib/update_checker.h"
-#include "lib/compose.hpp"
 #include "lib/dcp_content.h"
 #include "lib/job_manager.h"
 #include "lib/job.h"
@@ -56,6 +55,7 @@
 #include "lib/ffmpeg_content.h"
 #include "lib/dcpomatic_log.h"
 #include "lib/file_log.h"
+#include <dcp/compose.h>
 #include <dcp/cpl.h>
 #include <dcp/dcp.h>
 #include <dcp/raw_convert.h>
@@ -694,7 +694,7 @@ private:
 			try {
 				load_dcp (history[n]);
 			} catch (exception& e) {
-				error_dialog (0, std_to_wx(String::compose(wx_to_std(_("Could not load DCP %1.")), history[n])), std_to_wx(e.what()));
+				error_dialog (0, std_to_wx(dcp::compose(wx_to_std(_("Could not load DCP %1.")), history[n])), std_to_wx(e.what()));
 			}
 		}
 	}
@@ -955,7 +955,7 @@ private:
 		for (size_t i = 0; i < history.size(); ++i) {
 			string s;
 			if (i < 9) {
-				s = String::compose ("&%1 %2", i + 1, history[i].string());
+				s = dcp::compose ("&%1 %2", i + 1, history[i].string());
 			} else {
 				s = history[i].string();
 			}
@@ -1164,7 +1164,7 @@ private:
 				try {
 					_frame->load_dcp (_dcp_to_load);
 				} catch (exception& e) {
-					error_dialog (0, std_to_wx (String::compose (wx_to_std (_("Could not load DCP %1.")), _dcp_to_load)), std_to_wx(e.what()));
+					error_dialog (0, std_to_wx (dcp::compose (wx_to_std (_("Could not load DCP %1.")), _dcp_to_load)), std_to_wx(e.what()));
 				}
 			}
 

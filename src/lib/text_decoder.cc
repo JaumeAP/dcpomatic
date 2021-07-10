@@ -23,7 +23,7 @@
 #include "text_content.h"
 #include "util.h"
 #include "log.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 #include <sub/subtitle.h>
 #include <boost/algorithm/string.hpp>
 #include <iostream>

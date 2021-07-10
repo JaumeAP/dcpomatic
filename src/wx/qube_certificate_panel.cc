@@ -23,8 +23,8 @@
 #include "download_certificate_dialog.h"
 #include "wx_util.h"
 #include "lib/internet.h"
-#include "lib/compose.hpp"
 #include "lib/config.h"
+#include <dcp/compose.h>
 #include <boost/algorithm/string/predicate.hpp>
 
 
@@ -50,7 +50,7 @@ QubeCertificatePanel::QubeCertificatePanel (DownloadCertificateDialog* dialog, s
 void
 QubeCertificatePanel::do_download ()
 {
-	auto files = ls_url(String::compose("%1SMPTE-%2/", base, _type));
+	auto files = ls_url(dcp::compose("%1SMPTE-%2/", base, _type));
 	if (files.empty()) {
 		error_dialog (this, _("Could not read certificates from Qube server."));
 		return;
@@ -59,7 +59,7 @@ QubeCertificatePanel::do_download ()
 	auto const serial = wx_to_std(_serial->GetValue());
 	optional<string> name;
 	for (auto i: files) {
-		if (boost::algorithm::starts_with(i, String::compose("%1-%2-", _type, serial))) {
+		if (boost::algorithm::starts_with(i, dcp::compose("%1-%2-", _type, serial))) {
 			name = i;
 			break;
 		}
@@ -71,7 +71,7 @@ QubeCertificatePanel::do_download ()
 		return;
 	}
 
-	auto error = get_from_url (String::compose("%1SMPTE-%2/%3", base, _type, *name), true, false, boost::bind(&DownloadCertificatePanel::load_certificate, this, _1));
+	auto error = get_from_url (dcp::compose("%1SMPTE-%2/%3", base, _type, *name), true, false, boost::bind(&DownloadCertificatePanel::load_certificate, this, _1));
 
 	if (error) {
 		_dialog->message()->SetLabel(wxT(""));

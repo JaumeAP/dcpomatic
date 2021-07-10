@@ -34,7 +34,7 @@
 #include "exceptions.h"
 #include "film.h"
 #include "job.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 #include <dcp/locale_convert.h>
 #include <dcp/raw_convert.h>
 #include <libcxml/cxml.h>
@@ -304,9 +304,9 @@ Content::clone () const
 string
 Content::technical_summary () const
 {
-	auto s = String::compose ("%1 %2 %3", path_summary(), digest(), position().seconds());
+	auto s = dcp::compose ("%1 %2 %3", path_summary(), digest(), position().seconds());
 	if (_video_frame_rate) {
-		s += String::compose(" %1", *_video_frame_rate);
+		s += dcp::compose(" %1", *_video_frame_rate);
 	}
 	return s;
 }

@@ -27,7 +27,7 @@
 #include "image.h"
 #include "cross.h"
 #include "butler.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 #include <iostream>
 
 #include "i18n.h"
@@ -136,7 +136,7 @@ FFmpegEncoder::go ()
 		if (files > 1) {
 			/// TRANSLATORS: _reel%1 here is to be added to an export filename to indicate
 			/// which reel it is.  Preserve the %1; it will be replaced with the reel number.
-			filename = filename.string() + String::compose(_("_reel%1"), i + 1);
+			filename = filename.string() + dcp::compose(_("_reel%1"), i + 1);
 		}
 
 		file_encoders.push_back (
@@ -179,7 +179,7 @@ FFmpegEncoder::go ()
 			auto v = _butler->get_video (true, &e);
 			_butler->rethrow ();
 			if (!v.first) {
-				throw DecodeError(String::compose("Error during decoding: %1", e.summary()));
+				throw DecodeError(dcp::compose("Error during decoding: %1", e.summary()));
 			}
 			auto fe = encoder->get (v.first->eyes());
 			if (fe) {
@@ -248,17 +248,17 @@ FFmpegEncoder::FileEncoderSet::FileEncoderSet (
 		/// TRANSLATORS: L here is an abbreviation for "left", to indicate the left-eye part of a 3D export
 		_encoders[Eyes::LEFT] = make_shared<FFmpegFileEncoder>(
 			video_frame_size, video_frame_rate, audio_frame_rate, channels, format,
-			audio_stream_per_channel, x264_crf, String::compose("%1_%2%3", output.string(), _("L"), extension)
+			audio_stream_per_channel, x264_crf, dcp::compose("%1_%2%3", output.string(), _("L"), extension)
 			);
 		/// TRANSLATORS: R here is an abbreviation for "right", to indicate the right-eye part of a 3D export
 		_encoders[Eyes::RIGHT] = make_shared<FFmpegFileEncoder>(
 			video_frame_size, video_frame_rate, audio_frame_rate, channels, format,
-			audio_stream_per_channel, x264_crf, String::compose("%1_%2%3", output.string(), _("R"), extension)
+			audio_stream_per_channel, x264_crf, dcp::compose("%1_%2%3", output.string(), _("R"), extension)
 			);
 	} else {
 		_encoders[Eyes::BOTH] = make_shared<FFmpegFileEncoder>(
 			video_frame_size, video_frame_rate, audio_frame_rate, channels, format,
-			audio_stream_per_channel, x264_crf, String::compose("%1%2", output.string(), extension)
+			audio_stream_per_channel, x264_crf, dcp::compose("%1%2", output.string(), extension)
 			);
 	}
 }

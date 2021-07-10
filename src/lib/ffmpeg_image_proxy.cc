@@ -19,7 +19,6 @@
 */
 
 
-#include "compose.hpp"
 #include "cross.h"
 #include "dcpomatic_socket.h"
 #include "exceptions.h"
@@ -27,6 +26,7 @@
 #include "image.h"
 #include "util.h"
 #include "warnings.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 DCPOMATIC_DISABLE_WARNINGS
 extern "C" {
@@ -160,7 +160,7 @@ FFmpegImageProxy::image (optional<dcp::Size>) const
 		if (_path) {
 			throw OpenFileError (_path->string(), e, OpenFileError::READ);
 		} else {
-			boost::throw_exception(DecodeError(String::compose(_("Could not decode image (%1)"), e)));
+			boost::throw_exception(DecodeError(dcp::compose(_("Could not decode image (%1)"), e)));
 		}
 	}
 

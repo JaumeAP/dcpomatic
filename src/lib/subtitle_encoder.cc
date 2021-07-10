@@ -19,11 +19,11 @@
 */
 
 
-#include "compose.hpp"
 #include "font_data.h"
 #include "job.h"
 #include "player.h"
 #include "subtitle_encoder.h"
+#include <dcp/compose.h>
 #include <dcp/interop_subtitle_asset.h>
 #include <dcp/raw_convert.h>
 #include <dcp/smpte_subtitle_asset.h>
@@ -72,7 +72,7 @@ SubtitleEncoder::SubtitleEncoder (shared_ptr<const Film> film, shared_ptr<Job> j
 			if (files > 1) {
 				/// TRANSLATORS: _reel%1 here is to be added to an export filename to indicate
 				/// which reel it is.  Preserve the %1; it will be replaced with the reel number.
-				filename /= String::compose("%1_reel%2", initial_name, i + 1);
+				filename /= dcp::compose("%1_reel%2", initial_name, i + 1);
 			} else {
 				filename /= initial_name;
 			}

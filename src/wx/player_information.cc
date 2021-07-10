@@ -22,11 +22,11 @@
 #include "wx_util.h"
 #include "film_viewer.h"
 #include "lib/playlist.h"
-#include "lib/compose.hpp"
 #include "lib/video_content.h"
 #include "lib/audio_content.h"
 #include "lib/dcp_content.h"
 #include "lib/film.h"
+#include <dcp/compose.h>
 
 using std::cout;
 using std::string;
@@ -157,7 +157,7 @@ PlayerInformation::triggered_update ()
 	vfr = dcp->video_frame_rate ();
 	DCPOMATIC_ASSERT (vfr);
 
-	string const len = String::compose(
+	string const len = dcp::compose(
 		wx_to_std(_("Length: %1 (%2 frames)")),
 		time_to_hmsf(dcp->full_length(fv->film()), lrint(*vfr)),
 		dcp->full_length(fv->film()).frames_round(*vfr)

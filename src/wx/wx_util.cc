@@ -646,7 +646,7 @@ bitmap_path (string name)
 	base = resources_path();
 #endif
 
-	auto p = base / String::compose("%1.png", name);
+	auto p = base / dcp::compose("%1.png", name);
 	return std_to_wx (p.string());
 }
 

@@ -19,10 +19,10 @@
 */
 
 #include "types.h"
-#include "compose.hpp"
 #include "dcpomatic_assert.h"
 #include "warnings.h"
 #include <dcp/raw_convert.h>
+#include <dcp/compose.h>
 #include <dcp/cpl.h>
 #include <dcp/dcp.h>
 #include <dcp/reel_file_asset.h>
@@ -112,7 +112,7 @@ string_to_text_type (string s)
 	} else if (s == "closed-caption") {
 		return TextType::CLOSED_CAPTION;
 	} else {
-		throw MetadataError (String::compose ("Unknown text type %1", s));
+		throw MetadataError (dcp::compose ("Unknown text type %1", s));
 	}
 }
 

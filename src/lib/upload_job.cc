@@ -24,7 +24,6 @@
  */
 
 
-#include "compose.hpp"
 #include "config.h"
 #include "curl_uploader.h"
 #include "dcpomatic_log.h"
@@ -32,6 +31,7 @@
 #include "log.h"
 #include "scp_uploader.h"
 #include "upload_job.h"
+#include <dcp/compose.h>
 #include <iostream>
 
 #include "i18n.h"

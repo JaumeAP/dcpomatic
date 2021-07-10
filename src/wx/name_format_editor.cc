@@ -44,7 +44,7 @@ NameFormatEditor::NameFormatEditor (wxWindow* parent, dcp::NameFormat name, dcp:
 	_panel->SetSizer (_sizer);
 
 	for (auto const& i: titles) {
-		auto t = new StaticText (_panel, std_to_wx (String::compose ("%%%1 %2", i.first, i.second)));
+		auto t = new StaticText (_panel, std_to_wx (dcp::compose ("%%%1 %2", i.first, i.second)));
 		_sizer->Add (t);
 		auto font = t->GetFont();
 		font.SetStyle (wxFONTSTYLE_ITALIC);

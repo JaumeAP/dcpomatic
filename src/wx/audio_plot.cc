@@ -24,7 +24,7 @@
 #include "film_viewer.h"
 #include "lib/audio_decoder.h"
 #include "lib/audio_analysis.h"
-#include "lib/compose.hpp"
+#include <dcp/compose.h>
 #include <wx/graphics.h>
 #include <boost/bind/bind.hpp>
 #include <iostream>
@@ -190,7 +190,7 @@ AudioPlot::paint ()
 		int const y = (metrics.height - (i - _minimum) * metrics.y_scale) - metrics.y_origin;
 		h_grid.MoveToPoint (metrics.db_label_width - 4, y);
 		h_grid.AddLineToPoint (metrics.db_label_width + data_width, y);
-		gc->DrawText (std_to_wx (String::compose ("%1dB", i)), 0, y - (db_label_height / 2));
+		gc->DrawText (std_to_wx (dcp::compose ("%1dB", i)), 0, y - (db_label_height / 2));
 	}
 
 	gc->SetPen (wxPen (wxColour (200, 200, 200)));

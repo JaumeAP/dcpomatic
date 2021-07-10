@@ -22,7 +22,6 @@
 #include "audio_analysis.h"
 #include "audio_content.h"
 #include "audio_processor.h"
-#include "compose.hpp"
 #include "content.h"
 #include "cross.h"
 #include "dcp_content_type.h"
@@ -37,6 +36,7 @@
 #include "util.h"
 #include "video_content.h"
 #include "writer.h"
+#include <dcp/compose.h>
 #include <dcp/cpl.h>
 #include <dcp/raw_convert.h>
 #include <dcp/reel.h>
@@ -182,7 +182,7 @@ Hints::check_frame_rate ()
 	case 25:
 	{
 		/* You might want to go to 24 */
-		string base = String::compose(_("You are set up for a DCP at a frame rate of %1 fps.  This frame rate is not supported by all projectors.  You may want to consider changing your frame rate to %2 fps."), 25, 24);
+		string base = dcp::compose(_("You are set up for a DCP at a frame rate of %1 fps.  This frame rate is not supported by all projectors.  You may want to consider changing your frame rate to %2 fps."), 25, 24);
 		if (f->interop()) {
 			base += "  ";
 			base += _("If you do use 25fps you should change your DCP standard to SMPTE.");
@@ -198,7 +198,7 @@ Hints::check_frame_rate ()
 	case 50:
 	case 60:
 		/* You almost certainly want to go to half frame rate */
-		hint (String::compose(_("You are set up for a DCP at a frame rate of %1 fps.  This frame rate is not supported by all projectors.  You are advised to change the DCP frame rate to %2 fps."), f->video_frame_rate(), f->video_frame_rate() / 2));
+		hint (dcp::compose(_("You are set up for a DCP at a frame rate of %1 fps.  This frame rate is not supported by all projectors.  You are advised to change the DCP frame rate to %2 fps."), f->video_frame_rate(), f->video_frame_rate() / 2));
 		break;
 	}
 }
@@ -287,7 +287,7 @@ Hints::check_vob ()
 	}
 
 	if (vob > 1) {
-		hint (String::compose (_("You have %1 files that look like they are VOB files from DVD. You should join them to ensure smooth joins between the files."), vob));
+		hint (dcp::compose (_("You have %1 files that look like they are VOB files from DVD. You should join them to ensure smooth joins between the files."), vob));
 	}
 }
 
@@ -336,7 +336,7 @@ Hints::check_loudness ()
 		ch = ch.substr (0, ch.length() - 2);
 
 		if (!ch.empty()) {
-			hint(String::compose(
+			hint(dcp::compose(
 					_("Your audio level is very high (on %1).  You should reduce the gain of your audio content."),
 					ch
 					)
@@ -540,7 +540,7 @@ Hints::closed_caption (PlayerText text, DCPTimePeriod period)
 			if (!_long_ccap) {
 				_long_ccap = true;
 				hint (
-					String::compose(
+					dcp::compose(
 						"At least one of your closed caption lines has more than %1 characters.  "
 						"It is advisable to make each line %1 characters at most in length.",
 						MAX_CLOSED_CAPTION_LENGTH,
@@ -551,7 +551,7 @@ Hints::closed_caption (PlayerText text, DCPTimePeriod period)
 	}
 
 	if (!_too_many_ccap_lines && lines > MAX_CLOSED_CAPTION_LINES) {
-		hint (String::compose(_("Some of your closed captions span more than %1 lines, so they will be truncated."), MAX_CLOSED_CAPTION_LINES));
+		hint (dcp::compose(_("Some of your closed captions span more than %1 lines, so they will be truncated."), MAX_CLOSED_CAPTION_LINES));
 		_too_many_ccap_lines = true;
 	}
 

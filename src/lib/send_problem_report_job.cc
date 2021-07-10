@@ -20,7 +20,6 @@
 
 
 #include "send_problem_report_job.h"
-#include "compose.hpp"
 #include "film.h"
 #include "cross.h"
 #include "film.h"
@@ -28,6 +27,7 @@
 #include "version.h"
 #include "emailer.h"
 #include "environment_info.h"
+#include <dcp/compose.h>
 #include <libxml++/libxml++.h>
 
 #include "i18n.h"
@@ -68,7 +68,7 @@ SendProblemReportJob::name () const
 		return _("Email problem report");
 	}
 
-	return String::compose (_("Email problem report for %1"), _film->name());
+	return dcp::compose (_("Email problem report for %1"), _film->name());
 }
 
 

@@ -19,7 +19,6 @@
 */
 
 
-#include "compose.hpp"
 #include "cross.h"
 #include "dcpomatic_log.h"
 #include "digester.h"
@@ -27,6 +26,7 @@
 #include "exceptions.h"
 #include "ext.h"
 #include "nanomsg.h"
+#include <dcp/compose.h>
 
 #ifdef DCPOMATIC_LINUX
 #include <linux/fs.h>
@@ -97,13 +97,13 @@ write (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total
 	ext4_file out;
 	int r = ext4_fopen(&out, to.generic_string().c_str(), "wb");
 	if (r != EOK) {
-		throw CopyError (String::compose("Failed to open file %1", to.generic_string()), r);
+		throw CopyError (dcp::compose("Failed to open file %1", to.generic_string()), r);
 	}
 
 	FILE* in = fopen_boost (from, "rb");
 	if (!in) {
 		ext4_fclose (&out);
-		throw CopyError (String::compose("Failed to open file %1", from.string()), 0);
+		throw CopyError (dcp::compose("Failed to open file %1", from.string()), 0);
 	}
 
 	uint8_t* buffer = new uint8_t[block_size];
@@ -119,7 +119,7 @@ write (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total
 			fclose (in);
 			ext4_fclose (&out);
 			delete[] buffer;
-			throw CopyError (String::compose("Short read; expected %1 but read %2", this_time, read), 0);
+			throw CopyError (dcp::compose("Short read; expected %1 but read %2", this_time, read), 0);
 		}
 
 		digester.add (buffer, this_time);
@@ -136,14 +136,14 @@ write (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total
 			fclose (in);
 			ext4_fclose (&out);
 			delete[] buffer;
-			throw CopyError (String::compose("Short write; expected %1 but wrote %2", this_time, written), 0);
+			throw CopyError (dcp::compose("Short write; expected %1 but wrote %2", this_time, written), 0);
 		}
 		remaining -= this_time;
 		total_remaining -= this_time;
 
 		++progress_count;
 		if ((progress_count % progress_frequency) == 0 && nanomsg) {
-			nanomsg->send(String::compose(DISK_WRITER_COPY_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)), SHORT_TIMEOUT);
+			nanomsg->send(dcp::compose(DISK_WRITER_COPY_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)), SHORT_TIMEOUT);
 		}
 	}
 
@@ -163,7 +163,7 @@ read (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_
 	LOG_DISK("Opening %1 for read", to.generic_string());
 	int r = ext4_fopen(&in, to.generic_string().c_str(), "rb");
 	if (r != EOK) {
-		throw VerifyError (String::compose("Failed to open file %1", to.generic_string()), r);
+		throw VerifyError (dcp::compose("Failed to open file %1", to.generic_string()), r);
 	}
 	LOG_DISK("Opened %1 for read", to.generic_string());
 
@@ -178,14 +178,14 @@ read (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_
 		if (read != this_time) {
 			ext4_fclose (&in);
 			delete[] buffer;
-			throw VerifyError (String::compose("Short read; expected %1 but read %2", this_time, read), 0);
+			throw VerifyError (dcp::compose("Short read; expected %1 but read %2", this_time, read), 0);
 		}
 
 		digester.add (buffer, this_time);
 		remaining -= this_time;
 		total_remaining -= this_time;
 		if (nanomsg) {
-			nanomsg->send(String::compose(DISK_WRITER_VERIFY_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)), SHORT_TIMEOUT);
+			nanomsg->send(dcp::compose(DISK_WRITER_VERIFY_PROGRESS "\n%1\n", (1 - float(total_remaining) / total)), SHORT_TIMEOUT);
 		}
 	}
 
@@ -229,7 +229,7 @@ copy (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_
 	if (is_directory(from)) {
 		int r = ext4_dir_mk (cr.generic_string().c_str());
 		if (r != EOK) {
-			throw CopyError (String::compose("Failed to create directory %1", cr.generic_string()), r);
+			throw CopyError (dcp::compose("Failed to create directory %1", cr.generic_string()), r);
 		}
 
 		for (directory_iterator i = directory_iterator(from); i != directory_iterator(); ++i) {
@@ -263,7 +263,7 @@ void
 format_progress (void* context, float progress)
 {
 	if (context) {
-		reinterpret_cast<Nanomsg*>(context)->send(String::compose(DISK_WRITER_FORMAT_PROGRESS "\n%1\n", progress), SHORT_TIMEOUT);
+		reinterpret_cast<Nanomsg*>(context)->send(dcp::compose(DISK_WRITER_FORMAT_PROGRESS "\n%1\n", progress), SHORT_TIMEOUT);
 	}
 }
 
@@ -402,17 +402,17 @@ try
 } catch (CopyError& e) {
 	LOG_DISK("CopyError (from write): %1 %2", e.message(), e.number().get_value_or(0));
 	if (nanomsg) {
-		nanomsg->send(String::compose(DISK_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number().get_value_or(0)), LONG_TIMEOUT);
+		nanomsg->send(dcp::compose(DISK_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number().get_value_or(0)), LONG_TIMEOUT);
 	}
 } catch (VerifyError& e) {
 	LOG_DISK("VerifyError (from write): %1 %2", e.message(), e.number());
 	if (nanomsg) {
-		nanomsg->send(String::compose(DISK_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()), LONG_TIMEOUT);
+		nanomsg->send(dcp::compose(DISK_WRITER_ERROR "\n%1\n%2\n", e.message(), e.number()), LONG_TIMEOUT);
 	}
 } catch (exception& e) {
 	LOG_DISK("Exception (from write): %1", e.what());
 	if (nanomsg) {
-		nanomsg->send(String::compose(DISK_WRITER_ERROR "\n%1\n0\n", e.what()), LONG_TIMEOUT);
+		nanomsg->send(dcp::compose(DISK_WRITER_ERROR "\n%1\n0\n", e.what()), LONG_TIMEOUT);
 	}
 }
 

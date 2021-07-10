@@ -24,8 +24,8 @@
 #include "video_content.h"
 #include "job.h"
 #include "film.h"
-#include "compose.hpp"
 #include <asdcp/KM_log.h>
+#include <dcp/compose.h>
 #include <dcp/mono_picture_asset.h>
 #include <dcp/stereo_picture_asset.h>
 #include <dcp/exceptions.h>
@@ -102,7 +102,7 @@ VideoMXFContent::examine (shared_ptr<const Film> film, shared_ptr<Job> job)
 string
 VideoMXFContent::summary () const
 {
-	return String::compose (_("%1 [video]"), path_summary());
+	return dcp::compose (_("%1 [video]"), path_summary());
 }
 
 

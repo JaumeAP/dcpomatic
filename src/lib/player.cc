@@ -49,9 +49,9 @@
 #include "audio_content.h"
 #include "dcp_decoder.h"
 #include "image_decoder.h"
-#include "compose.hpp"
 #include "shuffler.h"
 #include "timer.h"
+#include <dcp/compose.h>
 #include <dcp/reel.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/reel_subtitle_asset.h>
@@ -723,7 +723,7 @@ Player::pass ()
 			/* Let's not worry about less than a frame at 24fps */
 			int64_t const too_much_error = DCPTime::from_frames(1, 24).get();
 			if (error >= too_much_error) {
-				_film->log()->log(String::compose("Silence starting before or after last audio by %1", error), LogEntry::TYPE_ERROR);
+				_film->log()->log(dcp::compose("Silence starting before or after last audio by %1", error), LogEntry::TYPE_ERROR);
 			}
 			DCPOMATIC_ASSERT (error < too_much_error);
 			period.from = *_last_audio_time;
@@ -1265,7 +1265,7 @@ Player::emit_audio (shared_ptr<AudioBuffers> data, DCPTime time)
 {
 	/* Log if the assert below is about to fail */
 	if (_last_audio_time && labs(time.get() - _last_audio_time->get()) > 1) {
-		_film->log()->log(String::compose("Out-of-sequence emit %1 vs %2", to_string(time), to_string(*_last_audio_time)), LogEntry::TYPE_WARNING);
+		_film->log()->log(dcp::compose("Out-of-sequence emit %1 vs %2", to_string(time), to_string(*_last_audio_time)), LogEntry::TYPE_WARNING);
 	}
 
 	/* This audio must follow on from the previous, allowing for half a sample (at 48kHz) leeway */

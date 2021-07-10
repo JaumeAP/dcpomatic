@@ -20,10 +20,10 @@
 
 
 #include "scoped_temporary.h"
-#include "compose.hpp"
 #include "exceptions.h"
 #include "cross.h"
 #include "util.h"
+#include <dcp/compose.h>
 #include <curl/curl.h>
 #include <zip.h>
 #include <boost/optional.hpp>
@@ -118,7 +118,7 @@ get_from_url (string url, bool pasv, bool skip_pasv_ip, ScopedTemporary& temp)
 	temp.close ();
 	curl_easy_cleanup (curl);
 	if (cr != CURLE_OK) {
-		return String::compose (_("Download failed (%1 error %2)"), url, (int) cr);
+		return dcp::compose (_("Download failed (%1 error %2)"), url, (int) cr);
 	}
 
 	return optional<string>();
@@ -173,7 +173,7 @@ get_from_zip_url (string url, string file, bool pasv, bool skip_pasv_ip, functio
 	zip_error_init (&error);
 	auto zip = zip_open_from_source (zip_source, ZIP_RDONLY, &error);
 	if (!zip) {
-		return String::compose (_("Could not open downloaded ZIP file (%1:%2: %3)"), error.zip_err, error.sys_err, error.str ? error.str : "");
+		return dcp::compose (_("Could not open downloaded ZIP file (%1:%2: %3)"), error.zip_err, error.sys_err, error.str ? error.str : "");
 	}
 
 #else

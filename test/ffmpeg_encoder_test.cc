@@ -20,7 +20,6 @@
 
 
 #include "lib/audio_content.h"
-#include "lib/compose.hpp"
 #include "lib/content_factory.h"
 #include "lib/dcp_content.h"
 #include "lib/ffmpeg_content.h"
@@ -34,6 +33,7 @@
 #include "lib/transcode_job.h"
 #include "lib/video_content.h"
 #include "test.h"
+#include <dcp/compose.h>
 #include <boost/test/unit_test.hpp>
 
 
@@ -65,7 +65,7 @@ ffmpeg_content_test (int number, boost::filesystem::path content, ExportFormat f
 		BOOST_REQUIRE (false);
 	}
 
-	name = String::compose("%1_test%2", name, number);
+	name = dcp::compose("%1_test%2", name, number);
 
 	auto c = make_shared<FFmpegContent>(content);
 	shared_ptr<Film> film = new_test_film2 (name, {c}, &cl);
@@ -74,7 +74,7 @@ ffmpeg_content_test (int number, boost::filesystem::path content, ExportFormat f
 
 	film->write_metadata ();
 	auto job = make_shared<TranscodeJob>(film);
-	auto file = boost::filesystem::path("build") / "test" / String::compose("%1.%2", name, extension);
+	auto file = boost::filesystem::path("build") / "test" / dcp::compose("%1.%2", name, extension);
 	cl.add (file);
 	FFmpegEncoder encoder (film, job, file, format, false, false, false, 23);
 	encoder.go ();

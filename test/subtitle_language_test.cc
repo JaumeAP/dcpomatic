@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE (subtitle_language_interop_test)
 			dcp::VerificationNote::Code::INVALID_SUBTITLE_DURATION
 		});
 
-	check_dcp (String::compose("test/data/%1", name), String::compose("build/test/%1/%2", name, film->dcp_name()));
+	check_dcp (dcp::compose("test/data/%1", name), dcp::compose("build/test/%1/%2", name, film->dcp_name()));
 }
 
 
@@ -79,6 +79,6 @@ BOOST_AUTO_TEST_CASE (subtitle_language_smpte_test)
 			dcp::VerificationNote::Code::MISSING_CPL_METADATA
 		});
 
-	check_dcp (String::compose("test/data/%1", name), String::compose("build/test/%1/%2", name, film->dcp_name()));
+	check_dcp (dcp::compose("test/data/%1", name), dcp::compose("build/test/%1/%2", name, film->dcp_name()));
 }
 

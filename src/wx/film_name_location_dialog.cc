@@ -26,7 +26,7 @@
 #include "dir_picker_ctrl.h"
 #endif
 #include "lib/config.h"
-#include "lib/compose.hpp"
+#include <dcp/compose.h>
 #include <wx/stdpaths.h>
 #include <boost/filesystem.hpp>
 
@@ -139,7 +139,7 @@ FilmNameLocationDialog::check_path ()
 		if (!confirm_dialog (
 			    this,
 			    std_to_wx (
-				    String::compose(wx_to_std(_("The directory %1 already exists and is not empty.  "
+				    dcp::compose(wx_to_std(_("The directory %1 already exists and is not empty.  "
 								  "Are you sure you want to use it?")),
 						    path().string().c_str())
 				    )
@@ -149,7 +149,7 @@ FilmNameLocationDialog::check_path ()
 	} else if (boost::filesystem::is_regular_file(path())) {
 		error_dialog (
 			this,
-			String::compose (wx_to_std(_("%1 already exists as a file, so you cannot use it for a film.")), path().c_str())
+			dcp::compose (wx_to_std(_("%1 already exists as a file, so you cannot use it for a film.")), path().c_str())
 			);
 		return false;
 	}

@@ -74,7 +74,6 @@
 #include "lib/update_checker.h"
 #include "lib/cross.h"
 #include "lib/content_factory.h"
-#include "lib/compose.hpp"
 #include "lib/dcpomatic_socket.h"
 #include "lib/hints.h"
 #include "lib/dcp_content.h"
@@ -87,6 +86,7 @@
 #include "lib/dcpomatic_log.h"
 #include "lib/subtitle_encoder.h"
 #include "lib/warnings.h"
+#include <dcp/compose.h>
 #include <dcp/exceptions.h>
 #include <dcp/raw_convert.h>
 DCPOMATIC_DISABLE_WARNINGS
@@ -1030,14 +1030,14 @@ private:
 #ifdef DCPOMATIC_LINUX
 		int r = system ("which nautilus");
 		if (WEXITSTATUS (r) == 0) {
-			r = system (String::compose("nautilus \"%1\"", _film->directory()->string()).c_str());
+			r = system (dcp::compose("nautilus \"%1\"", _film->directory()->string()).c_str());
 			if (WEXITSTATUS (r)) {
 				error_dialog (this, _("Could not show DCP."), _("Could not run nautilus"));
 			}
 		} else {
 			int r = system ("which konqueror");
 			if (WEXITSTATUS (r) == 0) {
-				r = system (String::compose ("konqueror \"%1\"", _film->directory()->string()).c_str());
+				r = system (dcp::compose ("konqueror \"%1\"", _film->directory()->string()).c_str());
 				if (WEXITSTATUS (r)) {
 					error_dialog (this, _("Could not show DCP"), _("Could not run konqueror"));
 				}
@@ -1046,7 +1046,7 @@ private:
 #endif
 
 #ifdef DCPOMATIC_OSX
-		int r = system (String::compose ("open -R \"%1\"", _film->dir (_film->dcp_name(false)).string()).c_str());
+		int r = system (dcp::compose ("open -R \"%1\"", _film->dir (_film->dcp_name(false)).string()).c_str());
 		if (WEXITSTATUS (r)) {
 			error_dialog (this, _("Could not show DCP"));
 		}
@@ -1444,7 +1444,7 @@ private:
 		for (size_t i = 0; i < history.size(); ++i) {
 			string s;
 			if (i < 9) {
-				s = String::compose ("&%1 %2", i + 1, history[i].string());
+				s = dcp::compose ("&%1 %2", i + 1, history[i].string());
 			} else {
 				s = history[i].string();
 			}
@@ -1638,7 +1638,7 @@ private:
 				try {
 					_frame->load_film (_film_to_load);
 				} catch (exception& e) {
-					error_dialog (nullptr, std_to_wx(String::compose(wx_to_std(_("Could not load film %1 (%2)")), _film_to_load)), std_to_wx(e.what()));
+					error_dialog (nullptr, std_to_wx(dcp::compose(wx_to_std(_("Could not load film %1 (%2)")), _film_to_load)), std_to_wx(e.what()));
 				}
 			}
 

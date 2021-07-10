@@ -25,8 +25,8 @@
 #include "download_certificate_dialog.h"
 #include "table_dialog.h"
 #include "dcpomatic_button.h"
-#include "lib/compose.hpp"
 #include "lib/util.h"
+#include <dcp/compose.h>
 #include <dcp/exceptions.h>
 #include <dcp/certificate_chain.h>
 #include "lib/warnings.h"

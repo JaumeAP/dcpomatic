@@ -29,7 +29,7 @@
 #include "film.h"
 #include "log.h"
 #include "dcpomatic_log.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 #include <dcp/exceptions.h>
 #include <sub/exceptions.h>
 #include <boost/thread.hpp>
@@ -95,7 +95,7 @@ Job::start ()
 void
 Job::run_wrapper ()
 {
-	start_of_thread (String::compose("Job-%1", json_name()));
+	start_of_thread (dcp::compose("Job-%1", json_name()));
 
 	try {
 
@@ -103,7 +103,7 @@ Job::run_wrapper ()
 
 	} catch (dcp::FileError& e) {
 
-		string m = String::compose (_("An error occurred whilst handling the file %1."), boost::filesystem::path (e.filename()).leaf());
+		string m = dcp::compose (_("An error occurred whilst handling the file %1."), boost::filesystem::path (e.filename()).leaf());
 
 		try {
 			auto const s = boost::filesystem::space (e.filename());
@@ -158,8 +158,8 @@ Job::run_wrapper ()
 	} catch (OpenFileError& e) {
 
 		set_error (
-			String::compose (_("Could not open %1"), e.file().string()),
-			String::compose (
+			dcp::compose (_("Could not open %1"), e.file().string()),
+			dcp::compose (
 				_("DCP-o-matic could not open the file %1 (%2).  Perhaps it does not exist or is in an unexpected format."),
 				boost::filesystem::absolute (e.file()).string(),
 				e.what()
@@ -173,8 +173,8 @@ Job::run_wrapper ()
 
 		if (e.code() == boost::system::errc::no_such_file_or_directory) {
 			set_error (
-				String::compose (_("Could not open %1"), e.path1().string ()),
-				String::compose (
+				dcp::compose (_("Could not open %1"), e.path1().string ()),
+				dcp::compose (
 					_("DCP-o-matic could not open the file %1 (%2).  Perhaps it does not exist or is in an unexpected format."),
 					boost::filesystem::absolute (e.path1()).string(),
 					e.what()
@@ -443,7 +443,7 @@ void
 Job::set_error (string s, string d)
 {
 	if (_film) {
-		_film->log()->log (String::compose ("Error in job: %1 (%2)", s, d), LogEntry::TYPE_ERROR);
+		_film->log()->log (dcp::compose ("Error in job: %1 (%2)", s, d), LogEntry::TYPE_ERROR);
 	}
 
 	boost::mutex::scoped_lock lm (_state_mutex);
@@ -488,19 +488,19 @@ Job::status () const
 			if (now.date() != finish.date()) {
 				/// TRANSLATORS: the %1 in this string will be filled in with a day of the week
 				/// to say what day a job will finish.
-				day = String::compose (_(" on %1"), day_of_week_to_string(finish.date().day_of_week()));
+				day = dcp::compose (_(" on %1"), day_of_week_to_string(finish.date().day_of_week()));
 			}
 			/// TRANSLATORS: "remaining; finishing at" here follows an amount of time that is remaining
 			/// on an operation; after it is an estimated wall-clock completion time.
-			s += String::compose(
+			s += dcp::compose(
 				_("; %1 remaining; finishing at %2%3"),
 				seconds_to_approximate_hms(r), finish_string, day
 				);
 		}
 	} else if (finished_ok ()) {
-		s = String::compose (_("OK (ran for %1)"), seconds_to_hms (_ran_for));
+		s = dcp::compose (_("OK (ran for %1)"), seconds_to_hms (_ran_for));
 	} else if (finished_in_error ()) {
-		s = String::compose (_("Error: %1"), error_summary ());
+		s = dcp::compose (_("Error: %1"), error_summary ());
 	} else if (finished_cancelled ()) {
 		s = _("Cancelled");
 	}

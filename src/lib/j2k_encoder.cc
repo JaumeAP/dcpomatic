@@ -37,7 +37,7 @@
 #include "player.h"
 #include "player_video.h"
 #include "encode_server_description.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 #include <libcxml/cxml.h>
 #include <iostream>
 

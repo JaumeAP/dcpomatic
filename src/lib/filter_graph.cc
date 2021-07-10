@@ -28,7 +28,7 @@
 #include "filter.h"
 #include "exceptions.h"
 #include "image.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 extern "C" {
 #include <libavfilter/buffersrc.h>
 #include <libavfilter/buffersink.h>
@@ -104,7 +104,7 @@ FilterGraph::setup (vector<Filter const *> filters)
 
 	int e = avfilter_graph_config (_graph, 0);
 	if (e < 0) {
-		throw DecodeError (String::compose(N_("could not configure filter graph (%1)"), e));
+		throw DecodeError (dcp::compose(N_("could not configure filter graph (%1)"), e));
 	}
 }
 

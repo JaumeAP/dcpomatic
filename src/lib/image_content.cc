@@ -21,12 +21,12 @@
 #include "image_content.h"
 #include "video_content.h"
 #include "image_examiner.h"
-#include "compose.hpp"
 #include "film.h"
 #include "job.h"
 #include "frame_rate_change.h"
 #include "exceptions.h"
 #include "image_filename_sorter.h"
+#include <dcp/compose.h>
 #include <libcxml/cxml.h>
 #include <libxml++/libxml++.h>
 #include <iostream>

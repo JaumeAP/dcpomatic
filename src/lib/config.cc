@@ -30,9 +30,9 @@
 #include "cross.h"
 #include "film.h"
 #include "dkdm_wrapper.h"
-#include "compose.hpp"
 #include "crypto.h"
 #include "dkdm_recipient.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <dcp/name_format.h>
 #include <dcp/certificate_chain.h>
@@ -217,13 +217,13 @@ Config::backup ()
 	/* Make a copy of the configuration */
 	try {
 		int n = 1;
-		while (n < 100 && boost::filesystem::exists(path(String::compose("config.xml.%1", n)))) {
+		while (n < 100 && boost::filesystem::exists(path(dcp::compose("config.xml.%1", n)))) {
 			++n;
 		}
 
-		boost::filesystem::copy_file(path("config.xml", false), path(String::compose("config.xml.%1", n), false));
-		boost::filesystem::copy_file(path("cinemas.xml", false), path(String::compose("cinemas.xml.%1", n), false));
-		boost::filesystem::copy_file(path("dkdm_recipients.xml", false), path(String::compose("dkdm_recipients.xml.%1", n), false));
+		boost::filesystem::copy_file(path("config.xml", false), path(dcp::compose("config.xml.%1", n), false));
+		boost::filesystem::copy_file(path("cinemas.xml", false), path(dcp::compose("cinemas.xml.%1", n), false));
+		boost::filesystem::copy_file(path("dkdm_recipients.xml", false), path(dcp::compose("dkdm_recipients.xml.%1", n), false));
 	} catch (...) {}
 }
 

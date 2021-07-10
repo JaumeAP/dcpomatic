@@ -31,7 +31,6 @@
 #include "wx_util.h"
 #include "lib/audio_content.h"
 #include "lib/case_insensitive_sorter.h"
-#include "lib/compose.hpp"
 #include "lib/config.h"
 #include "lib/content_factory.h"
 #include "lib/cross.h"
@@ -45,6 +44,7 @@
 #include "lib/string_text_file_content.h"
 #include "lib/text_content.h"
 #include "lib/video_content.h"
+#include <dcp/compose.h>
 #include <wx/wx.h>
 #include <wx/notebook.h>
 #include <wx/listctrl.h>

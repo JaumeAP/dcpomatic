@@ -20,9 +20,9 @@
 
 
 #include "analytics.h"
-#include "compose.hpp"
 #include "exceptions.h"
 #include "warnings.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <libcxml/cxml.h>
 DCPOMATIC_DISABLE_WARNINGS
@@ -60,7 +60,7 @@ Analytics::successful_dcp_encode ()
 			boost::bind(
 				boost::ref(Message),
 				_("Congratulations!"),
-				String::compose (_(
+				dcp::compose (_(
 					"<h2>You have made %1 DCPs with DCP-o-matic!</h2>"
 					"<img width=\"20%%\" src=\"memory:me.jpg\" align=\"center\">"
                                         "<p>Hello. I'm Carl and I'm the "

@@ -22,8 +22,8 @@
 #include "download_certificate_dialog.h"
 #include "wx_util.h"
 #include "lib/internet.h"
-#include "lib/compose.hpp"
 #include "lib/config.h"
+#include <dcp/compose.h>
 
 using std::string;
 using boost::optional;
@@ -55,7 +55,7 @@ void
 BarcoAlchemyCertificatePanel::do_download ()
 {
 	string const serial = wx_to_std (_serial->GetValue());
-	string const url = String::compose (
+	string const url = dcp::compose (
 		"ftp://%1:%2@certificates.barco.com/%3xxx/%4/Barco-ICMP.%5_cert.pem",
 		Config::instance()->barco_username().get(),
 		Config::instance()->barco_password().get(),

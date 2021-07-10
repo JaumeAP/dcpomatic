@@ -22,8 +22,8 @@
 #include "download_certificate_dialog.h"
 #include "wx_util.h"
 #include "lib/internet.h"
-#include "lib/compose.hpp"
 #include "lib/config.h"
+#include <dcp/compose.h>
 
 using std::string;
 using boost::optional;
@@ -54,7 +54,7 @@ GDCCertificatePanel::do_download ()
 		/* We're adding the A ourselves */
 		serial = serial.substr(1);
 	}
-	string const url = String::compose(
+	string const url = dcp::compose(
 		"ftp://%1:%2@ftp.gdc-tech.com/SHA256/A%3.crt.pem",
 		Config::instance()->gdc_username().get(),
 		Config::instance()->gdc_password().get(),

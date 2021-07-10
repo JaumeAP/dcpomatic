@@ -19,10 +19,10 @@
 */
 
 
-#include "compose.hpp"
 #include "config.h"
 #include "emailer.h"
 #include "exceptions.h"
+#include <dcp/compose.h>
 #include <curl/curl.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time/c_local_time_adjustor.hpp>
@@ -189,9 +189,9 @@ Emailer::send (string server, int port, EmailProtocol protocol, string user, str
 
 	if ((protocol == EmailProtocol::AUTO && port == 465) || protocol == EmailProtocol::SSL) {
 		/* "SSL" or "Implicit TLS"; I think curl wants us to use smtps here */
-		curl_easy_setopt (curl, CURLOPT_URL, String::compose("smtps://%1:%2", server, port).c_str());
+		curl_easy_setopt (curl, CURLOPT_URL, dcp::compose("smtps://%1:%2", server, port).c_str());
 	} else {
-		curl_easy_setopt (curl, CURLOPT_URL, String::compose("smtp://%1:%2", server, port).c_str());
+		curl_easy_setopt (curl, CURLOPT_URL, dcp::compose("smtp://%1:%2", server, port).c_str());
 	}
 
 	if (!user.empty ()) {

@@ -27,11 +27,11 @@
 #include "film.h"
 #include "config.h"
 #include "overlaps.h"
-#include "compose.hpp"
 #include "dcp_decoder.h"
 #include "log.h"
 #include "dcpomatic_log.h"
 #include "text_content.h"
+#include <dcp/compose.h>
 #include <dcp/dcp.h>
 #include <dcp/raw_convert.h>
 #include <dcp/exceptions.h>
@@ -315,7 +315,7 @@ string
 DCPContent::summary () const
 {
 	boost::mutex::scoped_lock lm (_mutex);
-	return String::compose (_("%1 [DCP]"), _name);
+	return dcp::compose (_("%1 [DCP]"), _name);
 }
 
 string

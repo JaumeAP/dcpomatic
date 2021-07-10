@@ -28,7 +28,7 @@
 #include "log.h"
 #include "image.h"
 #include "cross.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 #include <iostream>
 
 #include "i18n.h"
@@ -62,7 +62,7 @@ public:
 	{
 		_codec = avcodec_find_encoder_by_name (codec_name.c_str());
 		if (!_codec) {
-			throw EncodeError (String::compose("avcodec_find_encoder_by_name failed for %1", codec_name));
+			throw EncodeError (dcp::compose("avcodec_find_encoder_by_name failed for %1", codec_name));
 		}
 
 		_codec_context = avcodec_alloc_context3 (_codec);
@@ -263,7 +263,7 @@ FFmpegFileEncoder::FFmpegFileEncoder (
 
 	r = avio_open_boost (&_format_context->pb, _output, AVIO_FLAG_WRITE);
 	if (r < 0) {
-		throw EncodeError (String::compose(_("Could not open output file %1 (%2)"), _output.string(), r));
+		throw EncodeError (dcp::compose(_("Could not open output file %1 (%2)"), _output.string(), r));
 	}
 
 	AVDictionary* options = nullptr;
@@ -307,7 +307,7 @@ FFmpegFileEncoder::setup_video ()
 {
 	_video_codec = avcodec_find_encoder_by_name (_video_codec_name.c_str());
 	if (!_video_codec) {
-		throw EncodeError (String::compose("avcodec_find_encoder_by_name failed for %1", _video_codec_name));
+		throw EncodeError (dcp::compose("avcodec_find_encoder_by_name failed for %1", _video_codec_name));
 	}
 
 	_video_codec_context = avcodec_alloc_context3 (_video_codec);

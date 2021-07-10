@@ -19,11 +19,11 @@
 */
 
 
-#include "compose.hpp"
 #include "cross.h"
 #include "log.h"
 #include "version.h"
 #include "warnings.h"
+#include <dcp/compose.h>
 #include <dcp/version.h>
 #include <libssh/libssh.h>
 DCPOMATIC_DISABLE_WARNINGS
@@ -85,12 +85,12 @@ environment_info ()
 {
 	list<string> info;
 
-	info.push_back (String::compose ("DCP-o-matic %1 git %2 using %3", dcpomatic_version, dcpomatic_git_commit, dependency_version_summary()));
+	info.push_back (dcp::compose ("DCP-o-matic %1 git %2 using %3", dcpomatic_version, dcpomatic_git_commit, dependency_version_summary()));
 
 	{
 		char buffer[128];
 		gethostname (buffer, sizeof (buffer));
-		info.push_back (String::compose ("Host name %1", &buffer[0]));
+		info.push_back (dcp::compose ("Host name %1", &buffer[0]));
 	}
 
 #ifdef DCPOMATIC_DEBUG
@@ -109,7 +109,7 @@ environment_info ()
 	os_info.dwOSVersionInfoSize = sizeof (os_info);
 	GetVersionEx (&os_info);
 	info.push_back (
-		String::compose (
+		dcp::compose (
 			"Windows version %1.%2.%3",
 			(int) os_info.dwMajorVersion, (int) os_info.dwMinorVersion, (int) os_info.dwBuildNumber
 			)
@@ -141,9 +141,9 @@ environment_info ()
 #endif
 #endif
 
-	info.push_back (String::compose ("CPU: %1, %2 processors", cpu_info(), boost::thread::hardware_concurrency()));
+	info.push_back (dcp::compose ("CPU: %1, %2 processors", cpu_info(), boost::thread::hardware_concurrency()));
 	for (auto const& i: mount_info()) {
-		info.push_back (String::compose("Mount: %1 %2", i.first, i.second));
+		info.push_back (dcp::compose("Mount: %1 %2", i.first, i.second));
 	}
 
 	return info;

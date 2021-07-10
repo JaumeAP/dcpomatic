@@ -23,7 +23,7 @@
 #include "exceptions.h"
 #include "config.h"
 #include "emailer.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 #include <list>
 
 #include "i18n.h"

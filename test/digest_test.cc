@@ -28,9 +28,9 @@
 #include "lib/film.h"
 #include "lib/image_content.h"
 #include "lib/dcp_content_type.h"
-#include "lib/compose.hpp"
 #include "lib/config.h"
 #include "test.h"
+#include <dcp/compose.h>
 #include <dcp/cpl.h>
 #include <dcp/reel.h>
 #include <dcp/reel_picture_asset.h>
@@ -46,7 +46,7 @@ using std::make_shared;
 static string
 openssl_hash (boost::filesystem::path file)
 {
-	auto pipe = popen (String::compose ("openssl sha1 -binary %1 | openssl base64 -e", file.string()).c_str (), "r");
+	auto pipe = popen (dcp::compose ("openssl sha1 -binary %1 | openssl base64 -e", file.string()).c_str (), "r");
 	BOOST_REQUIRE (pipe);
 	char buffer[128];
 	string output;

@@ -23,7 +23,7 @@
 #include "types.h"
 #include "content.h"
 #include "film.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 #include <cmath>
 
 #include "i18n.h"
@@ -94,7 +94,7 @@ FrameRateChange::description () const
 		} else if (repeat == 2) {
 			description = _("Each content frame will be doubled in the DCP.\n");
 		} else if (repeat > 2) {
-			description = String::compose (_("Each content frame will be repeated %1 more times in the DCP.\n"), repeat - 1);
+			description = dcp::compose (_("Each content frame will be repeated %1 more times in the DCP.\n"), repeat - 1);
 		}
 
 		if (change_speed) {

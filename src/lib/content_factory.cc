@@ -38,7 +38,7 @@
 #include "log_entry.h"
 #include "dcpomatic_log.h"
 #include "log.h"
-#include "compose.hpp"
+#include <dcp/compose.h>
 #include <libcxml/cxml.h>
 #include <dcp/smpte_subtitle_asset.h>
 #include <boost/algorithm/string.hpp>

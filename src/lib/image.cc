@@ -24,7 +24,6 @@
  */
 
 
-#include "compose.hpp"
 #include "dcpomatic_socket.h"
 #include "exceptions.h"
 #include "image.h"
@@ -32,6 +31,7 @@
 #include "timer.h"
 #include "util.h"
 #include "warnings.h"
+#include <dcp/compose.h>
 #include <dcp/rgb_xyz.h>
 #include <dcp/transfer_function.h>
 DCPOMATIC_DISABLE_WARNINGS
@@ -1384,7 +1384,7 @@ png_error_fn (png_structp png_ptr, char const * message)
 void
 Image::png_error (char const * message)
 {
-	throw EncodeError (String::compose ("Error during PNG write: %1", message));
+	throw EncodeError (dcp::compose ("Error during PNG write: %1", message));
 }
 
 dcp::ArrayData

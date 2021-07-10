@@ -20,11 +20,11 @@
 
 
 #include "audio_content.h"
-#include "compose.hpp"
 #include "config.h"
 #include "exceptions.h"
 #include "film.h"
 #include "frame_rate_change.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <libcxml/cxml.h>
 #include <libxml++/libxml++.h>
@@ -148,7 +148,7 @@ AudioContent::technical_summary () const
 {
 	string s = "audio: ";
 	for (auto i: streams()) {
-		s += String::compose ("stream channels %1 rate %2 ", i->channels(), i->frame_rate());
+		s += dcp::compose ("stream channels %1 rate %2 ", i->channels(), i->frame_rate());
 	}
 
 	return s;
@@ -263,14 +263,14 @@ AudioContent::processing_description (shared_ptr<const Film> film) const
 	}
 
 	if (not_resampled && resampled) {
-		return String::compose (_("Some audio will be resampled to %1Hz"), resampled_frame_rate(film));
+		return dcp::compose (_("Some audio will be resampled to %1Hz"), resampled_frame_rate(film));
 	}
 
 	if (!not_resampled && resampled) {
 		if (same) {
-			return String::compose (_("Audio will be resampled from %1Hz to %2Hz"), common_frame_rate.get(), resampled_frame_rate(film));
+			return dcp::compose (_("Audio will be resampled from %1Hz to %2Hz"), common_frame_rate.get(), resampled_frame_rate(film));
 		} else {
-			return String::compose (_("Audio will be resampled to %1Hz"), resampled_frame_rate(film));
+			return dcp::compose (_("Audio will be resampled to %1Hz"), resampled_frame_rate(film));
 		}
 	}
 
@@ -288,7 +288,7 @@ AudioContent::channel_names () const
 	int stream = 1;
 	for (auto i: streams()) {
 		for (int j = 0; j < i->channels(); ++j) {
-			n.push_back (NamedChannel(String::compose ("%1:%2", stream, j + 1), index++));
+			n.push_back (NamedChannel(dcp::compose ("%1:%2", stream, j + 1), index++));
 		}
 		++stream;
 	}

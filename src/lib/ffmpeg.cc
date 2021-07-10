@@ -29,8 +29,8 @@
 #include "ffmpeg_subtitle_stream.h"
 #include "ffmpeg_audio_stream.h"
 #include "digester.h"
-#include "compose.hpp"
 #include "config.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -103,7 +103,7 @@ FFmpeg::ffmpeg_log_callback (void* ptr, int level, const char* fmt, va_list vl)
 	av_log_format_line (ptr, level, fmt, vl, line, sizeof (line), &prefix);
 	string str (line);
 	boost::algorithm::trim (str);
-	dcpomatic_log->log (String::compose ("FFmpeg: %1", str), LogEntry::TYPE_GENERAL);
+	dcpomatic_log->log (dcp::compose ("FFmpeg: %1", str), LogEntry::TYPE_GENERAL);
 }
 
 
@@ -236,7 +236,7 @@ FFmpeg::setup_decoders ()
 				throw DecodeError (N_("avcodec_open2"), N_("FFmpeg::setup_decoders"), r);
 			}
 		} else {
-			dcpomatic_log->log (String::compose ("No codec found for stream %1", i), LogEntry::TYPE_WARNING);
+			dcpomatic_log->log (dcp::compose ("No codec found for stream %1", i), LogEntry::TYPE_WARNING);
 		}
 	}
 }

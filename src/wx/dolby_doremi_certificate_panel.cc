@@ -22,10 +22,10 @@
 #include "dolby_doremi_certificate_panel.h"
 #include "download_certificate_dialog.h"
 #include "wx_util.h"
-#include "lib/compose.hpp"
 #include "lib/internet.h"
 #include "lib/signal_manager.h"
 #include "lib/util.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <curl/curl.h>
 #include <zip.h>
@@ -53,30 +53,30 @@ DolbyDoremiCertificatePanel::DolbyDoremiCertificatePanel (DownloadCertificateDia
 static void
 try_dcp2000 (list<string>& urls, list<string>& files, string prefix, string serial)
 {
-	urls.push_back (String::compose("%1%2xxx/dcp2000-%3.dcicerts.zip", prefix, serial.substr(0, 3), serial));
-	files.push_back (String::compose("dcp2000-%1.cert.sha256.pem", serial));
+	urls.push_back (dcp::compose("%1%2xxx/dcp2000-%3.dcicerts.zip", prefix, serial.substr(0, 3), serial));
+	files.push_back (dcp::compose("dcp2000-%1.cert.sha256.pem", serial));
 
-	urls.push_back (String::compose("%1%2xxx/dcp2000-%3.dcicerts.zip", prefix, serial.substr(0, 3), serial));
-	files.push_back (String::compose("dcp2000-%1.cert.sha256.pem", serial));
+	urls.push_back (dcp::compose("%1%2xxx/dcp2000-%3.dcicerts.zip", prefix, serial.substr(0, 3), serial));
+	files.push_back (dcp::compose("dcp2000-%1.cert.sha256.pem", serial));
 
-	urls.push_back (String::compose("%1%2xxx/dcp2000-%3.certs.zip", prefix, serial.substr(0, 3), serial));
-	files.push_back (String::compose("dcp2000-%1.cert.sha256.pem", serial));
+	urls.push_back (dcp::compose("%1%2xxx/dcp2000-%3.certs.zip", prefix, serial.substr(0, 3), serial));
+	files.push_back (dcp::compose("dcp2000-%1.cert.sha256.pem", serial));
 }
 
 
 static void
 try_imb (list<string>& urls, list<string>& files, string prefix, string serial)
 {
-	urls.push_back (String::compose("%1%2xxx/imb-%3.dcicerts.zip", prefix, serial.substr(0, 3), serial));
-	files.push_back (String::compose("imb-%1.cert.sha256.pem", serial));
+	urls.push_back (dcp::compose("%1%2xxx/imb-%3.dcicerts.zip", prefix, serial.substr(0, 3), serial));
+	files.push_back (dcp::compose("imb-%1.cert.sha256.pem", serial));
 }
 
 
 static void
 try_ims (list<string>& urls, list<string>& files, string prefix, string serial)
 {
-	urls.push_back (String::compose("%1%2xxx/ims-%3.dcicerts.zip", prefix, serial.substr(0, 3), serial));
-	files.push_back (String::compose("ims-%1.cert.sha256.pem", serial));
+	urls.push_back (dcp::compose("%1%2xxx/ims-%3.dcicerts.zip", prefix, serial.substr(0, 3), serial));
+	files.push_back (dcp::compose("ims-%1.cert.sha256.pem", serial));
 }
 
 
@@ -92,11 +92,11 @@ try_cat862 (list<string>& urls, list<string>& files, string prefix, string seria
 		cat862 = "CAT862_617000_and_higher";
 	} else {
 		int const lower = serial_int - (serial_int % 1000);
-		cat862 = String::compose ("CAT862_%1-%2", lower, lower + 999);
+		cat862 = dcp::compose ("CAT862_%1-%2", lower, lower + 999);
 	}
 
-	urls.push_back (String::compose("%1%2/cert_Dolby256-CAT862-%3.zip", prefix, cat862, serial_int));
-	files.push_back (String::compose("cert_Dolby256-CAT862-%1.pem.crt", serial_int));
+	urls.push_back (dcp::compose("%1%2/cert_Dolby256-CAT862-%3.zip", prefix, cat862, serial_int));
+	files.push_back (dcp::compose("cert_Dolby256-CAT862-%1.pem.crt", serial_int));
 }
 
 
@@ -112,11 +112,11 @@ try_dsp100 (list<string>& urls, list<string>& files, string prefix, string seria
 		dsp100 = "DSP100_3000_and_higher";
 	} else {
 		int const lower = serial_int - (serial_int % 1000);
-		dsp100 = String::compose ("DSP100_%1_thru_%2", lower, lower + 999);
+		dsp100 = dcp::compose ("DSP100_%1_thru_%2", lower, lower + 999);
 	}
 
-	urls.push_back (String::compose("%1%2/cert_Dolby256-DSP100-%3.zip", prefix, dsp100, serial_int));
-	files.push_back (String::compose("cert_Dolby256-DSP100-%1.pem.crt", serial_int));
+	urls.push_back (dcp::compose("%1%2/cert_Dolby256-DSP100-%3.zip", prefix, dsp100, serial_int));
+	files.push_back (dcp::compose("cert_Dolby256-DSP100-%1.pem.crt", serial_int));
 }
 
 
@@ -132,11 +132,11 @@ try_cat745 (list<string>& urls, list<string>& files, string prefix, string seria
 		cat745 = "CAT745_6000_and_higher";
 	} else {
 		int const lower = serial_int - (serial_int % 1000);
-		cat745 = String::compose("CAT745_%1_thru_%2", lower, lower + 999);
+		cat745 = dcp::compose("CAT745_%1_thru_%2", lower, lower + 999);
 	}
 
-	urls.push_back (String::compose("%1%2/cert_Dolby-CAT745-%3.zip", prefix, cat745, serial_int));
-	files.push_back (String::compose("cert_Dolby-CAT745-%1.pem.crt", serial_int));
+	urls.push_back (dcp::compose("%1%2/cert_Dolby-CAT745-%3.zip", prefix, cat745, serial_int));
+	files.push_back (dcp::compose("cert_Dolby-CAT745-%1.pem.crt", serial_int));
 }
 
 
@@ -146,16 +146,16 @@ try_cp850 (list<string>& urls, list<string>& files, string prefix, string serial
 	int const serial_int = raw_convert<int> (serial.substr (1));
 
 	int const lower = serial_int - (serial_int % 1000);
-	urls.push_back (String::compose ("%1CP850_CAT1600_F%2-F%3/cert_RMB_SPB_MDE_FMA.Dolby-CP850-F%4.zip", prefix, lower, lower + 999, serial_int));
-	files.push_back (String::compose ("cert_RMB_SPB_MDE_FMA.Dolby-CP850-F%1.pem.crt", serial_int));
+	urls.push_back (dcp::compose ("%1CP850_CAT1600_F%2-F%3/cert_RMB_SPB_MDE_FMA.Dolby-CP850-F%4.zip", prefix, lower, lower + 999, serial_int));
+	files.push_back (dcp::compose ("cert_RMB_SPB_MDE_FMA.Dolby-CP850-F%1.pem.crt", serial_int));
 }
 
 
 static void
 try_ims3000 (list<string>& urls, list<string>& files, string prefix, string serial)
 {
-	urls.push_back (String::compose ("%1%2xxx/cert_Dolby-IMS3000-%3-SMPTE.zip", prefix, serial.substr(0, 3), serial));
-	files.push_back (String::compose("cert_Dolby-IMS3000-%1-SMPTE.pem", serial));
+	urls.push_back (dcp::compose ("%1%2xxx/cert_Dolby-IMS3000-%3-SMPTE.zip", prefix, serial.substr(0, 3), serial));
+	files.push_back (dcp::compose("cert_Dolby-IMS3000-%1-SMPTE.pem", serial));
 }
 
 

@@ -21,7 +21,6 @@
 #include "video_content.h"
 #include "content.h"
 #include "video_examiner.h"
-#include "compose.hpp"
 #include "ratio.h"
 #include "config.h"
 #include "colour_conversion.h"
@@ -31,6 +30,7 @@
 #include "frame_rate_change.h"
 #include "log.h"
 #include "dcpomatic_log.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <libcxml/cxml.h>
 #include <libxml++/libxml++.h>
@@ -354,7 +354,7 @@ VideoContent::identifier () const
 string
 VideoContent::technical_summary () const
 {
-	string s = String::compose (
+	string s = dcp::compose (
 		N_("video: length %1 frames, size %2x%3"),
 		length_after_3d_combine(),
 		size().width,
@@ -362,7 +362,7 @@ VideoContent::technical_summary () const
 		);
 
 	if (sample_aspect_ratio ()) {
-		s += String::compose (N_(", sample aspect ratio %1"), (sample_aspect_ratio().get ()));
+		s += dcp::compose (N_(", sample aspect ratio %1"), (sample_aspect_ratio().get ()));
 	}
 
 	return s;
@@ -426,7 +426,7 @@ VideoContent::processing_description (shared_ptr<const Film> film)
 	char buffer[256];
 
 	if (size().width && size().height) {
-		d += String::compose (
+		d += dcp::compose (
 			_("Content video is %1x%2"),
 			size_after_3d_split().width,
 			size_after_3d_split().height
@@ -447,7 +447,7 @@ VideoContent::processing_description (shared_ptr<const Film> film)
 
 	if ((crop().left || crop().right || crop().top || crop().bottom) && size() != dcp::Size (0, 0)) {
 		dcp::Size cropped = size_after_crop ();
-		d += String::compose (
+		d += dcp::compose (
 			_("\nCropped to %1x%2"),
 			cropped.width, cropped.height
 			);
@@ -460,7 +460,7 @@ VideoContent::processing_description (shared_ptr<const Film> film)
 	auto const scaled = scaled_size (container_size);
 
 	if (scaled != size_after_crop ()) {
-		d += String::compose (
+		d += dcp::compose (
 			_("\nScaled to %1x%2"),
 			scaled.width, scaled.height
 			);
@@ -470,7 +470,7 @@ VideoContent::processing_description (shared_ptr<const Film> film)
 	}
 
 	if (scaled != container_size) {
-		d += String::compose (
+		d += dcp::compose (
 			_("\nPadded with black to fit container %1 (%2x%3)"),
 			film->container()->container_nickname (),
 			container_size.width, container_size.height
@@ -497,7 +497,7 @@ void
 VideoContent::add_properties (list<UserProperty>& p) const
 {
 	p.push_back (UserProperty (UserProperty::VIDEO, _("Length"), length (), _("video frames")));
-	p.push_back (UserProperty (UserProperty::VIDEO, _("Size"), String::compose ("%1x%2", size().width, size().height)));
+	p.push_back (UserProperty (UserProperty::VIDEO, _("Size"), dcp::compose ("%1x%2", size().width, size().height)));
 }
 
 void

@@ -20,9 +20,9 @@
 
 
 #include "combine_dcp_job.h"
-#include "compose.hpp"
 #include "config.h"
 #include <dcp/combine.h>
+#include <dcp/compose.h>
 #include <dcp/exceptions.h>
 
 #include "i18n.h"
@@ -64,8 +64,8 @@ CombineDCPJob::run ()
 		dcp::combine (
 			_inputs,
 			_output,
-			String::compose("libdcp %1", dcp::version),
-			String::compose("libdcp %1", dcp::version),
+			dcp::compose("libdcp %1", dcp::version),
+			dcp::compose("libdcp %1", dcp::version),
 			dcp::LocalTime().as_string(),
 			_annotation_text,
 			Config::instance()->signer_chain()

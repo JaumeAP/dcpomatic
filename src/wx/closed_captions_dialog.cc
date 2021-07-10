@@ -24,7 +24,7 @@
 #include "lib/string_text.h"
 #include "lib/butler.h"
 #include "lib/text_content.h"
-#include "lib/compose.hpp"
+#include <dcp/compose.h>
 #include <boost/bind/bind.hpp>
 
 using std::list;
@@ -249,7 +249,7 @@ ClosedCaptionsDialog::update_tracks (shared_ptr<const Film> film)
 
 	_track->Clear ();
 	for (auto const& i: _tracks) {
-		_track->Append (std_to_wx(String::compose("%1 (%2)", i.name, i.language ? i.language->to_string() : wx_to_std(_("Unknown")))));
+		_track->Append (std_to_wx(dcp::compose("%1 (%2)", i.name, i.language ? i.language->to_string() : wx_to_std(_("Unknown")))));
 	}
 
 	if (_track->GetCount() > 0) {

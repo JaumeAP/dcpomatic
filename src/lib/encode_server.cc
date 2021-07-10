@@ -33,12 +33,12 @@
 #include "config.h"
 #include "cross.h"
 #include "player_video.h"
-#include "compose.hpp"
 #include "log.h"
 #include "dcpomatic_log.h"
 #include "encoded_log_entry.h"
 #include "version.h"
 #include "warnings.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <libcxml/cxml.h>
 DCPOMATIC_DISABLE_WARNINGS

@@ -19,11 +19,11 @@
 */
 
 
-#include "compose.hpp"
 #include "config.h"
 #include "create_cli.h"
 #include "dcp_content_type.h"
 #include "ratio.h"
+#include <dcp/compose.h>
 #include <dcp/raw_convert.h>
 #include <iostream>
 #include <string>
@@ -67,7 +67,7 @@ argument_option (int& n, int argc, char* argv[], string short_name, string long_
 	}
 
 	if ((n + 1) >= argc) {
-		**error = String::compose("%1: option %2 requires an argument", argv[0], long_name);
+		**error = dcp::compose("%1: option %2 requires an argument", argv[0], long_name);
 		return;
 	}
 
@@ -108,7 +108,7 @@ CreateCLI::CreateCLI (int argc, char* argv[])
 		} else if (a == "-h" || a == "--help") {
 			error = "Create a film directory (ready for making a DCP) or metadata file from some content files.\n"
 				"A film directory will be created if -o or --output is specified, otherwise a metadata file\n"
-				"will be written to stdout.\n" + String::compose(_help, argv[0]);
+				"will be written to stdout.\n" + dcp::compose(_help, argv[0]);
 			return;
 		}
 
@@ -142,7 +142,7 @@ CreateCLI::CreateCLI (int argc, char* argv[])
 
 		if (!claimed) {
 			if (a.length() > 2 && a.substr(0, 2) == "--") {
-				error = String::compose("%1: unrecognised option '%2'", argv[0], a) + String::compose(_help, argv[0]);
+				error = dcp::compose("%1: unrecognised option '%2'", argv[0], a) + dcp::compose(_help, argv[0]);
 				return;
 			} else {
 				Content c;
@@ -178,20 +178,20 @@ CreateCLI::CreateCLI (int argc, char* argv[])
 
 	dcp_content_type = DCPContentType::from_isdcf_name(dcp_content_type_string);
 	if (!dcp_content_type) {
-		error = String::compose("%1: unrecognised DCP content type '%2'", argv[0], dcp_content_type_string);
+		error = dcp::compose("%1: unrecognised DCP content type '%2'", argv[0], dcp_content_type_string);
 		return;
 	}
 
 	if (!container_ratio_string.empty()) {
 		container_ratio = Ratio::from_id (container_ratio_string);
 		if (!container_ratio) {
-			error = String::compose("%1: unrecognised container ratio %2", argv[0], container_ratio_string);
+			error = dcp::compose("%1: unrecognised container ratio %2", argv[0], container_ratio_string);
 			return;
 		}
 	}
 
 	if (standard_string != "SMPTE" && standard_string != "interop") {
-		error = String::compose("%1: standard must be SMPTE or interop", argv[0]);
+		error = dcp::compose("%1: standard must be SMPTE or interop", argv[0]);
 		return;
 	}
 
@@ -200,7 +200,7 @@ CreateCLI::CreateCLI (int argc, char* argv[])
 	}
 
 	if (content.empty()) {
-		error = String::compose("%1: no content specified", argv[0]);
+		error = dcp::compose("%1: no content specified", argv[0]);
 		return;
 	}
 
@@ -209,7 +209,7 @@ CreateCLI::CreateCLI (int argc, char* argv[])
 	}
 
 	if (j2k_bandwidth && (*j2k_bandwidth < 10000000 || *j2k_bandwidth > Config::instance()->maximum_j2k_bandwidth())) {
-		error = String::compose("%1: j2k-bandwidth must be between 10 and %2 Mbit/s", argv[0], (Config::instance()->maximum_j2k_bandwidth() / 1000000));
+		error = dcp::compose("%1: j2k-bandwidth must be between 10 and %2 Mbit/s", argv[0], (Config::instance()->maximum_j2k_bandwidth() / 1000000));
 		return;
 	}
 }

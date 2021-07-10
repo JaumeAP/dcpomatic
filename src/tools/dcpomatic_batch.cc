@@ -26,7 +26,6 @@
 #include "wx/servers_list_dialog.h"
 #include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
-#include "lib/compose.hpp"
 #include "lib/config.h"
 #include "lib/dcpomatic_socket.h"
 #include "lib/film.h"
@@ -35,6 +34,7 @@
 #include "lib/transcode_job.h"
 #include "lib/util.h"
 #include "lib/version.h"
+#include <dcp/compose.h>
 #include <wx/aboutdlg.h>
 #include <wx/cmdline.h>
 #include <wx/preferences.h>
@@ -454,7 +454,7 @@ class App : public wxApp
 				} catch (exception& e) {
 					error_dialog (
 						0,
-						std_to_wx(String::compose(wx_to_std(_("Could not load film %1")), i.string())),
+						std_to_wx(dcp::compose(wx_to_std(_("Could not load film %1")), i.string())),
 						std_to_wx(e.what())
 						);
 				}

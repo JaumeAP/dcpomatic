@@ -24,8 +24,8 @@
 #include "job.h"
 #include "config.h"
 #include "cross.h"
-#include "compose.hpp"
 #include "warnings.h"
+#include <dcp/compose.h>
 #include <sys/stat.h>
 
 #include "i18n.h"
@@ -42,7 +42,7 @@ SCPUploader::SCPUploader (function<void (string)> set_status, function<void (flo
 {
 	_session = ssh_new ();
 	if (!_session) {
-		throw NetworkError (String::compose(_("SSH error [%1]"), "ssh_new"));
+		throw NetworkError (dcp::compose(_("SSH error [%1]"), "ssh_new"));
 	}
 
 	ssh_options_set (_session, SSH_OPTIONS_HOST, Config::instance()->tms_ip().c_str());
@@ -52,29 +52,29 @@ SCPUploader::SCPUploader (function<void (string)> set_status, function<void (flo
 
 	int r = ssh_connect (_session);
 	if (r != SSH_OK) {
-		throw NetworkError (String::compose(_("Could not connect to server %1 (%2)"), Config::instance()->tms_ip(), ssh_get_error(_session)));
+		throw NetworkError (dcp::compose(_("Could not connect to server %1 (%2)"), Config::instance()->tms_ip(), ssh_get_error(_session)));
 	}
 
 DCPOMATIC_DISABLE_WARNINGS
 	r = ssh_is_server_known (_session);
 	if (r == SSH_SERVER_ERROR) {
-		throw NetworkError (String::compose(_("SSH error [%1] (%2)"), "ssh_is_server_known", ssh_get_error(_session)));
+		throw NetworkError (dcp::compose(_("SSH error [%1] (%2)"), "ssh_is_server_known", ssh_get_error(_session)));
 	}
 DCPOMATIC_ENABLE_WARNINGS
 
 	r = ssh_userauth_password (_session, 0, Config::instance()->tms_password().c_str ());
 	if (r != SSH_AUTH_SUCCESS) {
-		throw NetworkError (String::compose(_("Failed to authenticate with server (%1)"), ssh_get_error(_session)));
+		throw NetworkError (dcp::compose(_("Failed to authenticate with server (%1)"), ssh_get_error(_session)));
 	}
 
 	_scp = ssh_scp_new (_session, SSH_SCP_WRITE | SSH_SCP_RECURSIVE, Config::instance()->tms_path().c_str());
 	if (!_scp) {
-		throw NetworkError (String::compose(_("SSH error [%1] (%2)"), "ssh_scp_new", ssh_get_error(_session)));
+		throw NetworkError (dcp::compose(_("SSH error [%1] (%2)"), "ssh_scp_new", ssh_get_error(_session)));
 	}
 
 	r = ssh_scp_init (_scp);
 	if (r != SSH_OK) {
-		throw NetworkError (String::compose(_("SSH error [%1] (%2)"), "ssh_scp_init", ssh_get_error(_session)));
+		throw NetworkError (dcp::compose(_("SSH error [%1] (%2)"), "ssh_scp_init", ssh_get_error(_session)));
 	}
 }
 
@@ -93,7 +93,7 @@ SCPUploader::create_directory (boost::filesystem::path directory)
 	/* Use generic_string so that we get forward-slashes in the path, even on Windows */
 	int const r = ssh_scp_push_directory (_scp, directory.generic_string().c_str(), S_IRWXU);
 	if (r != SSH_OK) {
-		throw NetworkError (String::compose(_("Could not create remote directory %1 (%2)"), directory, ssh_get_error(_session)));
+		throw NetworkError (dcp::compose(_("Could not create remote directory %1 (%2)"), directory, ssh_get_error(_session)));
 	}
 }
 
@@ -107,7 +107,7 @@ SCPUploader::upload_file (boost::filesystem::path from, boost::filesystem::path 
 
 	auto f = fopen_boost (from, "rb");
 	if (f == nullptr) {
-		throw NetworkError (String::compose(_("Could not open %1 to send"), from));
+		throw NetworkError (dcp::compose(_("Could not open %1 to send"), from));
 	}
 
 	boost::uintmax_t buffer_size = 64 * 1024;
@@ -124,7 +124,7 @@ SCPUploader::upload_file (boost::filesystem::path from, boost::filesystem::path 
 		int const r = ssh_scp_write (_scp, buffer, t);
 		if (r != SSH_OK) {
 			fclose (f);
-			throw NetworkError (String::compose(_("Could not write to remote file (%1)"), ssh_get_error(_session)));
+			throw NetworkError (dcp::compose(_("Could not write to remote file (%1)"), ssh_get_error(_session)));
 		}
 		to_do -= t;
 		transferred += t;

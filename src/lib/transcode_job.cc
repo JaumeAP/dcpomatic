@@ -25,7 +25,6 @@
 
 
 #include "analytics.h"
-#include "compose.hpp"
 #include "config.h"
 #include "dcp_encoder.h"
 #include "dcpomatic_log.h"
@@ -35,6 +34,7 @@
 #include "log.h"
 #include "transcode_job.h"
 #include "upload_job.h"
+#include <dcp/compose.h>
 #include <iomanip>
 #include <iostream>
 
@@ -68,7 +68,7 @@ TranscodeJob::~TranscodeJob ()
 string
 TranscodeJob::name () const
 {
-	return String::compose (_("Transcoding %1"), _film->name());
+	return dcp::compose (_("Transcoding %1"), _film->name());
 }
 
 
