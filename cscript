@@ -266,7 +266,8 @@ def make_control(debian_version, bits, filename, debug, gui):
     print('Standards-Version: 3.9.3', file=f)
     print('Homepage: https://dcpomatic.com/', file=f)
     print('', file=f)
-    print('Package: dcpomatic', file=f)
+    suffix = '' if gui else '-cli'
+    print(f'Package: dcpomatic{suffix}', file=f)
     if bits == 32:
         print('Architecture: i386', file=f)
     else:
@@ -282,10 +283,12 @@ def make_control(debian_version, bits, filename, debug, gui):
     print('  DCP-o-matic generates Digital Cinema Packages (DCPs) from videos, images,', file=f)
     print('  sound and subtitle files.  You can use it to make content for playback on DCI-compliant', file=f)
     print('  cinema projectors.', file=f)
+    if not gui:
+        print('  This package contains the command-line tools only.', file=f)
 
     if debug:
         print('', file=f)
-        print('Package: dcpomatic-dbg', file=f)
+        print(f'Package: dcpomatic{suffix}-dbg', file=f)
         if bits == 32:
             print('Architecture: i386', file=f)
         else:
