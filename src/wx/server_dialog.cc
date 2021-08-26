@@ -18,9 +18,9 @@
 
 */
 
-#include "lib/encode_server.h"
 #include "server_dialog.h"
 #include "wx_util.h"
+#include "lib/encode_server.h"
 
 using std::string;
 using std::shared_ptr;

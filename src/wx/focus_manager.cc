@@ -18,17 +18,22 @@
 
 */
 
-#include "focus_manager.h"
+
 #include "lib/warnings.h"
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/textctrl.h>
 DCPOMATIC_ENABLE_WARNINGS
 
+#include "focus_manager.h"
+
+
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
 
+
 FocusManager* FocusManager::_instance;
+
 
 FocusManager *
 FocusManager::instance()

@@ -18,6 +18,7 @@
 
 */
 
+
 #include "rgba_colour_picker.h"
 #include "wx_util.h"
 #include "static_text.h"
@@ -26,10 +27,11 @@ DCPOMATIC_DISABLE_WARNINGS
 #include <wx/clrpicker.h>
 DCPOMATIC_ENABLE_WARNINGS
 
+
 RGBAColourPicker::RGBAColourPicker (wxWindow* parent, RGBA colour)
 	: wxPanel (parent, wxID_ANY)
 {
-	wxBoxSizer* sizer = new wxBoxSizer (wxHORIZONTAL);
+	auto sizer = new wxBoxSizer (wxHORIZONTAL);
 
 	_picker = new wxColourPickerCtrl (this, wxID_ANY);
 	_picker->SetColour (wxColour (colour.r, colour.g, colour.b));
@@ -42,12 +44,14 @@ RGBAColourPicker::RGBAColourPicker (wxWindow* parent, RGBA colour)
 	SetSizer (sizer);
 }
 
+
 RGBA
 RGBAColourPicker::colour () const
 {
-	wxColour const c = _picker->GetColour ();
+	auto const c = _picker->GetColour ();
 	return RGBA (c.Red(), c.Green(), c.Blue(), _alpha->GetValue());
 }
+
 
 void
 RGBAColourPicker::set (RGBA colour)

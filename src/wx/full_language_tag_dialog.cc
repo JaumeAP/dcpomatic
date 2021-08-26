@@ -19,12 +19,13 @@
 */
 
 
-#include "lib/dcpomatic_assert.h"
-#include "full_language_tag_dialog.h"
-#include <dcp/language_tag.h>
 #include <wx/listctrl.h>
 #include <wx/srchctrl.h>
 #include <wx/wx.h>
+
+#include "lib/dcpomatic_assert.h"
+#include "full_language_tag_dialog.h"
+#include <dcp/language_tag.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/optional.hpp>

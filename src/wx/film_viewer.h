@@ -24,17 +24,18 @@
  */
 
 
+#include "lib/warnings.h"
+DCPOMATIC_DISABLE_WARNINGS
+#include <wx/wx.h>
+DCPOMATIC_ENABLE_WARNINGS
+
 #include "video_view.h"
 #include "lib/film.h"
 #include "lib/config.h"
 #include "lib/player_text.h"
 #include "lib/timer.h"
 #include "lib/signaller.h"
-#include "lib/warnings.h"
 #include <RtAudio.h>
-DCPOMATIC_DISABLE_WARNINGS
-#include <wx/wx.h>
-DCPOMATIC_ENABLE_WARNINGS
 #include <vector>
 
 

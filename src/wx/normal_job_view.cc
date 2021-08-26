@@ -19,10 +19,11 @@
 */
 
 
+#include <wx/wx.h>
+
 #include "normal_job_view.h"
 #include "dcpomatic_button.h"
 #include "lib/job.h"
-#include <wx/wx.h>
 
 
 using std::shared_ptr;

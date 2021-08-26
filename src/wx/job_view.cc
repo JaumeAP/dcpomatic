@@ -19,6 +19,8 @@
 */
 
 
+#include <wx/wx.h>
+
 #include "job_view.h"
 #include "wx_util.h"
 #include "message_dialog.h"
@@ -32,7 +34,6 @@
 #include "lib/send_notification_email_job.h"
 #include "lib/transcode_job.h"
 #include "lib/analyse_audio_job.h"
-#include <wx/wx.h>
 #include <boost/algorithm/string.hpp>
 
 

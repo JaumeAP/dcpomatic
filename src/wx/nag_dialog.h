@@ -19,11 +19,12 @@
 */
 
 
-#include "lib/config.h"
 #include "lib/warnings.h"
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
+
+#include "lib/config.h"
 
 
 class NagDialog : public wxDialog

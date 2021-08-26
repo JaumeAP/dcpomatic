@@ -24,11 +24,12 @@
  */
 
 
-#include "lib/film.h"
 #include "lib/warnings.h"
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
+
+#include "lib/film.h"
 #include <boost/signals2.hpp>
 
 

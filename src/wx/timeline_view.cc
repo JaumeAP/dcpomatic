@@ -19,8 +19,8 @@
 */
 
 
-#include "timeline_view.h"
 #include "timeline.h"
+#include "timeline_view.h"
 
 
 using std::list;

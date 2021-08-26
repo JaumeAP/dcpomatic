@@ -19,11 +19,12 @@
 */
 
 
+#include <wx/sizer.h>
+#include <wx/button.h>
+
 #include "batch_job_view.h"
 #include "dcpomatic_button.h"
 #include "lib/job_manager.h"
-#include <wx/sizer.h>
-#include <wx/button.h>
 
 
 using std::list;

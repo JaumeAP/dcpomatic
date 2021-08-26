@@ -18,6 +18,7 @@
 
 */
 
+
 #include "closed_captions_dialog.h"
 #include "wx_util.h"
 #include "film_viewer.h"
@@ -26,6 +27,7 @@
 #include "lib/text_content.h"
 #include "lib/compose.hpp"
 #include <boost/bind/bind.hpp>
+
 
 using std::list;
 using std::max;

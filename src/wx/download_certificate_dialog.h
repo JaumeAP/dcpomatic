@@ -19,11 +19,12 @@
 */
 
 #include "lib/warnings.h"
-#include <dcp/certificate.h>
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 #include <wx/notebook.h>
 DCPOMATIC_ENABLE_WARNINGS
+
+#include <dcp/certificate.h>
 
 class DownloadCertificatePanel;
 

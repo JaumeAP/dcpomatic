@@ -18,15 +18,19 @@
 
 */
 
+
+#include <wx/wx.h>
+#include <wx/graphics.h>
+
 #include "timeline_time_axis_view.h"
 #include "timeline.h"
 #include "wx_util.h"
-#include <wx/wx.h>
-#include <wx/graphics.h>
+
 
 using std::list;
 using std::cout;
 using namespace dcpomatic;
+
 
 TimelineTimeAxisView::TimelineTimeAxisView (Timeline& tl, int y)
 	: TimelineView (tl)

@@ -18,16 +18,17 @@
 
 */
 
+
+#include "check_box.h"
+#include "confirm_kdm_email_dialog.h"
+#include "dcpomatic_button.h"
+#include "dkdm_output_panel.h"
+#include "kdm_timing_panel.h"
+#include "name_format_editor.h"
+#include "wx_util.h"
 #include "lib/config.h"
 #include "lib/send_kdm_email_job.h"
 #include "lib/warnings.h"
-#include "dkdm_output_panel.h"
-#include "kdm_timing_panel.h"
-#include "confirm_kdm_email_dialog.h"
-#include "wx_util.h"
-#include "name_format_editor.h"
-#include "check_box.h"
-#include "dcpomatic_button.h"
 #include <dcp/exceptions.h>
 #include <dcp/types.h>
 #ifdef DCPOMATIC_USE_OWN_PICKER
@@ -38,6 +39,7 @@ DCPOMATIC_DISABLE_WARNINGS
 DCPOMATIC_ENABLE_WARNINGS
 #endif
 #include <wx/stdpaths.h>
+
 
 using std::pair;
 using std::string;

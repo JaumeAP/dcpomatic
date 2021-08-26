@@ -18,14 +18,17 @@
 
 */
 
-#include "lib/rgba.h"
 #include "lib/warnings.h"
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
 
+#include "lib/rgba.h"
+
+
 class wxColourPickerCtrl;
 class wxSlider;
+
 
 class RGBAColourPicker : public wxPanel
 {

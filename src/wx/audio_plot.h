@@ -18,12 +18,13 @@
 
 */
 
-#include "lib/util.h"
-#include "lib/audio_analysis.h"
 #include "lib/warnings.h"
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
+
+#include "lib/util.h"
+#include "lib/audio_analysis.h"
 #include <boost/signals2.hpp>
 #include <vector>
 

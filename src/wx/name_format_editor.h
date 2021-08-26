@@ -23,12 +23,13 @@
 #define DCPOMATIC_NAME_FORMAT_EDITOR_H
 
 
-#include "lib/compose.hpp"
 #include "lib/warnings.h"
-#include <dcp/name_format.h>
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
+
+#include "lib/compose.hpp"
+#include <dcp/name_format.h>
 #include <boost/signals2.hpp>
 
 

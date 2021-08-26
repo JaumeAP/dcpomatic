@@ -19,9 +19,10 @@
 */
 
 
-#include "lib/audio_mapping.h"
 #include "content_sub_panel.h"
 #include "content_widget.h"
+
+#include "lib/audio_mapping.h"
 
 
 class wxSpinCtrlDouble;

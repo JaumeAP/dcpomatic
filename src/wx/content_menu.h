@@ -18,17 +18,22 @@
 
 */
 
+
 #ifndef DCPOMATIC_CONTENT_MENU_H
 #define DCPOMATIC_CONTENT_MENU_H
 
+
+#include <wx/wx.h>
+
 #include "timeline_content_view.h"
 #include "lib/types.h"
-#include <wx/wx.h>
 #include <memory>
+
 
 class Film;
 class Job;
 class DCPContent;
+
 
 class ContentMenu
 {

@@ -25,12 +25,13 @@
  */
 
 
-#include "lib/audio_mapping.h"
-#include "lib/types.h"
 #include "lib/warnings.h"
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
+
+#include "lib/audio_mapping.h"
+#include "lib/types.h"
 #include <boost/signals2.hpp>
 
 

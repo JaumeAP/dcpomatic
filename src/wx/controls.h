@@ -23,13 +23,14 @@
 #define DCPOMATIC_CONTROLS_H
 
 
-#include "lib/dcpomatic_time.h"
-#include "lib/types.h"
-#include "lib/film.h"
 #include "lib/warnings.h"
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
+
+#include "lib/dcpomatic_time.h"
+#include "lib/types.h"
+#include "lib/film.h"
 #include <boost/signals2.hpp>
 
 

@@ -18,16 +18,20 @@
 
 */
 
-#include "lib/dcpomatic_time.h"
-#include "lib/player.h"
-#include "lib/text_ring_buffers.h"
+
 #include "lib/warnings.h"
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
 
+#include "lib/dcpomatic_time.h"
+#include "lib/player.h"
+#include "lib/text_ring_buffers.h"
+
+
 class Butler;
 class FilmViewer;
+
 
 class ClosedCaptionsDialog : public wxDialog
 {

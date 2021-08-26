@@ -18,13 +18,15 @@
 
 */
 
+#include <wx/wx.h>
+
 #include "content_menu.h"
 #include "timeline_content_view.h"
 #include "lib/util.h"
 #include "lib/rect.h"
 #include "lib/film.h"
-#include <wx/wx.h>
 #include <boost/signals2.hpp>
+
 
 class Film;
 class ContentPanel;
@@ -33,6 +35,7 @@ class TimelineTimeAxisView;
 class TimelineReelsView;
 class TimelineLabelsView;
 class FilmViewer;
+
 
 class Timeline : public wxPanel
 {

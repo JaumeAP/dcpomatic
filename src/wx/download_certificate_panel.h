@@ -24,10 +24,11 @@
 
 
 #include "lib/warnings.h"
-#include <dcp/certificate.h>
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
+
+#include <dcp/certificate.h>
 #include <boost/optional.hpp>
 
 

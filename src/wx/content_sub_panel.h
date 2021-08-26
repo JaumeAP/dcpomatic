@@ -18,19 +18,23 @@
 
 */
 
+
 #ifndef DCPOMATIC_CONTENT_SUB_PANEL_H
 #define DCPOMATIC_CONTENT_SUB_PANEL_H
 
-#include "lib/film.h"
+
 #include "lib/warnings.h"
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
+#include "lib/film.h"
+
 
 class ContentPanel;
 class Content;
 class DCPContent;
 class wxGridBagSizer;
+
 
 class ContentSubPanel : public wxScrolledWindow
 {

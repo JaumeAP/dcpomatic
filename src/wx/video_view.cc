@@ -19,8 +19,9 @@
 */
 
 
-#include "video_view.h"
 #include "wx_util.h"
+
+#include "video_view.h"
 #include "film_viewer.h"
 #include "lib/butler.h"
 #include "lib/dcpomatic_log.h"

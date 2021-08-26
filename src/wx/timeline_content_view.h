@@ -23,13 +23,14 @@
 #define DCPOMATIC_TIMELINE_CONTENT_VIEW_H
 
 
-#include "lib/change_signaller.h"
-#include "lib/types.h"
 #include "lib/warnings.h"
-#include "timeline_view.h"
 DCPOMATIC_DISABLE_WARNINGS
 #include <wx/wx.h>
 DCPOMATIC_ENABLE_WARNINGS
+
+#include "lib/change_signaller.h"
+#include "lib/types.h"
+#include "timeline_view.h"
 #include <boost/signals2.hpp>
 
 class Content;

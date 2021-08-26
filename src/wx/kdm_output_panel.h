@@ -18,11 +18,12 @@
 
 */
 
-#include "lib/kdm_with_metadata.h"
 #include "wx_util.h"
+#include <wx/wx.h>
+
+#include "lib/kdm_with_metadata.h"
 #include "name_format_editor.h"
 #include <dcp/types.h>
-#include <wx/wx.h>
 #include <boost/filesystem.hpp>
 
 class wxRadioButton;
