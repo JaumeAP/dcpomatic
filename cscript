@@ -43,6 +43,8 @@ deb_build_depends['9'] = copy.deepcopy(deb_build_depends_base)
 deb_build_depends['9'].extend(['libssh-gcrypt-dev'])
 deb_build_depends['10'] = copy.deepcopy(deb_build_depends_base)
 deb_build_depends['10'].extend(['libssh-gcrypt-dev'])
+deb_build_depends['11'] = copy.deepcopy(deb_build_depends_base)
+deb_build_depends['11'].extend(['libssh-gcrypt-dev'])
 deb_build_depends['unstable'] = copy.deepcopy(deb_build_depends_base)
 
 deb_depends = dict()
