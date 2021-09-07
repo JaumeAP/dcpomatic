@@ -204,7 +204,7 @@ deb_depends['11'].extend(['libboost-filesystem1.74.0',
                           'libxerces-c3.2',
                           'libnanomsg5'])
 
-deb_depends_gui['11'] = [ 'libwxgtk3.0-0v5',
+deb_depends_gui['11'] = [ 'libwxgtk3.0-gtk3-0v5',
                           'libxcb-xfixes0',
                           'libxcb-shape0',
                           'libasound2',
