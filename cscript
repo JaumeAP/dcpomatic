@@ -27,15 +27,19 @@ import json
 
 deb_build_depends = dict()
 
-deb_build_depends_base = ['debhelper', 'python', 'g++', 'pkg-config', 'libsndfile1-dev', 'libgtk2.0-dev', 'libx264-dev']
+deb_build_depends_base = ['debhelper', 'g++', 'pkg-config', 'libsndfile1-dev', 'libgtk2.0-dev', 'libx264-dev']
 
 for v in ['16.04', '18.04', '20.04', '20.10', '21.04']: 
     deb_build_depends[v] = copy.deepcopy(deb_build_depends_base)
-    deb_build_depends[v].extend(['libssh-dev'])
-for v in ['9', '10', '11']:
+    deb_build_depends[v].extend(['libssh-dev', 'python'])
+for v in ['9', '10']:
     deb_build_depends[v] = copy.deepcopy(deb_build_depends_base)
-    deb_build_depends[v].extend(['libssh-gcrypt-dev'])
+    deb_build_depends[v].extend(['libssh-gcrypt-dev', 'python'])
+for v in ['11']:
+    deb_build_depends[v] = copy.deepcopy(deb_build_depends_base)
+    deb_build_depends[v].extend(['libssh-gcrypt-dev', 'python3.9'])
 deb_build_depends['unstable'] = copy.deepcopy(deb_build_depends_base)
+deb_build_depends['unstable'].extend(['python'])
 
 deb_depends = dict()
 deb_depends_gui = dict()
