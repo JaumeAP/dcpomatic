@@ -637,8 +637,9 @@ def package_debian(target, cpu, version, options):
     target.set('CDIST_DIRECTORY', target.directory)
 
     target.set('CDIST_CONFIGURE', '"' + configure_options(target, options) + '"')
+    target.set('CDIST_PACKAGE', f'dcpomatic{suffix}')
     if target.debug:
-        target.set('CDIST_DEBUG_PACKAGE', '--dbg-package=dcpomatic-dbg')
+        target.set('CDIST_DEBUG_PACKAGE_FLAG', f'--dbg-package=dcpomatic{suffix}-dbg')
 
     target.command('dpkg-buildpackage -uc -us')
 
