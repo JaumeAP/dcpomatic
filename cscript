@@ -620,7 +620,8 @@ def package_debian(target, cpu, version, options):
             print('setcap "cap_dac_override+ep cap_sys_admin+ep" /usr/bin/dcpomatic2_disk_writer', file=f)
     target.command('./waf dist')
     f = open('debian/files', 'w')
-    print('dcpomatic_%s-1_%s.deb video extra' % (version, cpu), file=f)
+    suffix = '' if gui else '-cli'
+    print(f'dcpomatic{suffix}_{version}-1_{cpu}.deb video extra', file=f)
     shutil.rmtree('build/deb', ignore_errors=True)
 
     os.makedirs('build/deb')
