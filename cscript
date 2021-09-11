@@ -613,7 +613,7 @@ def package_windows(target):
 
 def package_debian(target, cpu, version, options):
     make_control(target.version, target.bits, 'debian/control', target.debug, options['gui'])
-    if target.version != '9' and target.version != '16.04':
+    if target.version != '9' and target.version != '16.04' and options['gui']:
         with open('debian/postinst', 'w') as f:
             print('#!/bin/sh', file=f)
             # Get the required capability to write to disks
