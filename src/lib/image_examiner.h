@@ -39,6 +39,8 @@ public:
 	VideoRange range () const {
 		return VideoRange::FULL;
 	}
+	int log2_chroma_width () const;
+	int log2_chroma_height () const;
 
 private:
 	std::weak_ptr<const Film> _film;

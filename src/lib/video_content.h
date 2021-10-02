@@ -240,6 +240,8 @@ private:
 	/** Sample aspect ratio obtained from the content file's header, if there is one */
 	boost::optional<double> _sample_aspect_ratio;
 	bool _yuv;
+	int _log2_chroma_width = 0;
+	int _log2_chroma_height = 0;
 	/** fade in time in content frames */
 	Frame _fade_in;
 	/** fade out time in content frames */

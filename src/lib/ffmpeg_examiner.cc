@@ -480,3 +480,18 @@ FFmpegExaminer::range () const
 		return VideoRange::FULL;
 	}
 }
+
+
+int
+FFmpegExaminer::log2_chroma_width () const
+{
+       return av_pix_fmt_desc_get(video_codec_context()->pix_fmt)->log2_chroma_w;
+}
+
+
+int
+FFmpegExaminer::log2_chroma_height () const
+{
+       return av_pix_fmt_desc_get(video_codec_context()->pix_fmt)->log2_chroma_h;
+}
+

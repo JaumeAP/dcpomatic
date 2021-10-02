@@ -49,4 +49,14 @@ public:
 	/** @return true if this video is in YUV; must not be called if has_video() == false */
 	virtual bool yuv () const = 0;
 	virtual VideoRange range () const = 0;
+	/** @return Amount by which the luminance width must be shifted right to find the chroma width.
+	 *  e.g. for YUV420 or YUV422 this is 1, for YUV444 this is 0
+	 *  Must not be called if has_video() == false.
+	 */
+	virtual int log2_chroma_width () const = 0;
+	/** @return Amount by which the luminance height must be shifted right to find the chroma height.
+	 *  e.g. for YUV420 this is 1, for YUV444 this is 0
+	 *  Must not be called if has_video() == false.
+	 */
+	virtual int log2_chroma_height () const = 0;
 };

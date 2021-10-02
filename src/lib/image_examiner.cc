@@ -107,3 +107,19 @@ ImageExaminer::yuv () const
 	*/
 	return false;
 }
+
+
+int
+ImageExaminer::log2_chroma_width () const
+{
+	/* See ::yuv() - we're assuming the image is not YUV and so not subsampled */
+	return 0;
+}
+
+
+int
+ImageExaminer::log2_chroma_height () const
+{
+	/* See ::yuv() - we're assuming the image is not YUV and so not subsampled */
+	return 0;
+}

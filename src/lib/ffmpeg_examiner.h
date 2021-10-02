@@ -42,6 +42,8 @@ public:
 	Frame video_length () const;
 	boost::optional<double> sample_aspect_ratio () const;
 	bool yuv () const;
+	int log2_chroma_width () const;
+	int log2_chroma_height () const;
 
 	std::vector<std::shared_ptr<FFmpegSubtitleStream>> subtitle_streams () const {
 		return _subtitle_streams;

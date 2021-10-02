@@ -184,6 +184,14 @@ VideoContent::VideoContent (Content* parent, cxml::ConstNodePtr node, int versio
 		_range = VideoRange::VIDEO;
 	}
 
+	if (auto cw = node->optional_number_child<int>("Log2ChromaWidth")) {
+		_log2_chroma_width = *cw;
+	}
+
+	if (auto ch = node->optional_number_child<int>("Log2ChromaHeight")) {
+		_log2_chroma_height = *ch;
+	}
+
 	auto burnt = node->optional_string_child("BurntSubtitleLanguage");
 	if (burnt) {
 		_burnt_subtitle_language = dcp::LanguageTag (*burnt);
@@ -192,7 +200,7 @@ VideoContent::VideoContent (Content* parent, cxml::ConstNodePtr node, int versio
 }
 
 
-VideoContent::VideoContent (Content* parent, vector<shared_ptr<Content> > c)
+VideoContent::VideoContent (Content* parent, vector<shared_ptr<Content>> c)
 	: ContentPart (parent)
 	, _length (0)
 	, _yuv (false)
@@ -243,6 +251,9 @@ VideoContent::VideoContent (Content* parent, vector<shared_ptr<Content> > c)
 		if (c[i]->video->yuv ()) {
 			_yuv = true;
 		}
+
+		_log2_chroma_width = std::max(_log2_chroma_width, c[i]->video->_log2_chroma_width);
+		_log2_chroma_height = std::max(_log2_chroma_height, c[i]->video->_log2_chroma_height);
 	}
 
 	_use = ref->use ();
@@ -285,6 +296,8 @@ VideoContent::as_xml (xmlpp::Node* node) const
 	node->add_child("FadeIn")->add_child_text (raw_convert<string> (_fade_in));
 	node->add_child("FadeOut")->add_child_text (raw_convert<string> (_fade_out));
 	node->add_child("Range")->add_child_text(_range == VideoRange::FULL ? "full" : "video");
+	node->add_child("Log2ChromaWidth")->add_child_text(raw_convert<string>(_log2_chroma_width));
+	node->add_child("Log2ChromaHeight")->add_child_text(raw_convert<string>(_log2_chroma_height));
 	if (_burnt_subtitle_language) {
 		node->add_child("BurntSubtitleLanguage")->add_child_text(_burnt_subtitle_language->to_string());
 	}
@@ -299,6 +312,8 @@ VideoContent::take_from_examiner (shared_ptr<VideoExaminer> d)
 	auto const ar = d->sample_aspect_ratio ();
 	auto const yuv = d->yuv ();
 	auto const range = d->range ();
+	auto const cw = d->log2_chroma_width ();
+	auto const ch = d->log2_chroma_height ();
 
 	ContentChangeSignaller cc1 (_parent, VideoContentProperty::SIZE);
 	ContentChangeSignaller cc2 (_parent, ContentProperty::LENGTH);
@@ -311,6 +326,8 @@ VideoContent::take_from_examiner (shared_ptr<VideoExaminer> d)
 		_sample_aspect_ratio = ar;
 		_yuv = yuv;
 		_range = range;
+		_log2_chroma_width = cw;
+		_log2_chroma_height = ch;
 	}
 
 	LOG_GENERAL ("Video length obtained from header as %1 frames", _length);

@@ -42,6 +42,12 @@ public:
 	VideoRange range () const {
 		return VideoRange::FULL;
 	}
+	int log2_chroma_width () const {
+		return 0;
+	}
+	int log2_chroma_height () const {
+		return 0;
+	}
 
 private:
 	std::shared_ptr<dcp::PictureAsset> _asset;
