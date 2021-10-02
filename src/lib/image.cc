@@ -144,7 +144,7 @@ static
 int
 round_width_for_subsampling (int p, AVPixFmtDescriptor const * desc)
 {
-	return p & ~ ((1 << desc->log2_chroma_w) - 1);
+	return round_to_log_2 (p, desc->log2_chroma_w);
 }
 
 
@@ -152,7 +152,7 @@ static
 int
 round_height_for_subsampling (int p, AVPixFmtDescriptor const * desc)
 {
-	return p & ~ ((1 << desc->log2_chroma_h) - 1);
+	return round_to_log_2 (p, desc->log2_chroma_h);
 }
 
 

@@ -1183,6 +1183,13 @@ to_upper (string s)
 }
 
 
+int
+round_to_log_2 (int x, int b)
+{
+	return x & ~ ((1 << b) - 1);
+}
+
+
 /* Set to 1 to print the IDs of some of our threads to stdout on creation */
 #define DCPOMATIC_DEBUG_THREADS 0
 

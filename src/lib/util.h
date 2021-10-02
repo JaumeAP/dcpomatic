@@ -124,6 +124,7 @@ extern dcp::DecryptedKDM decrypt_kdm_with_helpful_error (dcp::EncryptedKDM kdm);
 extern boost::filesystem::path default_font_file ();
 extern std::string to_upper (std::string s);
 extern void start_of_thread (std::string name);
+extern int round_to_log_2 (int x, int b);
 
 template <class T>
 std::list<T>
