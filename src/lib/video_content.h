@@ -112,27 +112,29 @@ public:
 		return _frame_type;
 	}
 
-	Crop crop () const {
+	Crop actual_crop () const;
+
+	Crop requested_crop () const {
 		boost::mutex::scoped_lock lm (_mutex);
 		return _crop;
 	}
 
-	int left_crop () const {
+	int requested_left_crop () const {
 		boost::mutex::scoped_lock lm (_mutex);
 		return _crop.left;
 	}
 
-	int right_crop () const {
+	int requested_right_crop () const {
 		boost::mutex::scoped_lock lm (_mutex);
 		return _crop.right;
 	}
 
-	int top_crop () const {
+	int requested_top_crop () const {
 		boost::mutex::scoped_lock lm (_mutex);
 		return _crop.top;
 	}
 
-	int bottom_crop () const {
+	int requested_bottom_crop () const {
 		boost::mutex::scoped_lock lm (_mutex);
 		return _crop.bottom;
 	}
@@ -227,6 +229,7 @@ private:
 	boost::optional<ColourConversion> _colour_conversion;
 	dcp::Size _size;
 	VideoFrameType _frame_type;
+	/** crop that the user has asked for; it may be rounded if we are cropping a subsampled source */
 	Crop _crop;
 	/** ratio to scale cropped image to (or none to guess); i.e. if set, scale to _custom_ratio:1 */
 	boost::optional<float> _custom_ratio;
