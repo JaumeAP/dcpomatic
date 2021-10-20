@@ -130,28 +130,6 @@ extern boost::filesystem::path default_font_file ();
 extern std::string to_upper (std::string s);
 extern void start_of_thread (std::string name);
 
-template <class T>
-std::list<T>
-vector_to_list (std::vector<T> v)
-{
-	std::list<T> l;
-	for (auto& i: v) {
-		l.push_back (i);
-	}
-	return l;
-}
-
-template <class T>
-std::vector<T>
-list_to_vector (std::list<T> v)
-{
-	std::vector<T> l;
-	for (auto& i: v) {
-		l.push_back (i);
-	}
-	return l;
-}
-
 extern double db_to_linear (double db);
 extern double linear_to_db (double linear);
 
