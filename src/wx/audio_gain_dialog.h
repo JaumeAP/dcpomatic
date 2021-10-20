@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2014 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2014-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -18,9 +18,12 @@
 
 */
 
+
 #include "table_dialog.h"
 
+
 class wxSpinCtrlDouble;
+
 
 class AudioGainDialog : public TableDialog
 {

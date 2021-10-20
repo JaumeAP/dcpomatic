@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2019-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -18,17 +18,20 @@
 
 */
 
-#include "password_entry.h"
+
 #include "check_box.h"
+#include "password_entry.h"
 #include "wx_util.h"
+
 
 using std::string;
 using boost::bind;
 
+
 PasswordEntry::PasswordEntry (wxWindow* parent)
 {
 	_panel = new wxPanel (parent, wxID_ANY);
-	wxBoxSizer* sizer = new wxBoxSizer (wxHORIZONTAL);
+	auto sizer = new wxBoxSizer (wxHORIZONTAL);
 	_text = new wxTextCtrl (_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
 	sizer->Add (_text, 1, wxRIGHT, DCPOMATIC_SIZER_GAP);
 	_show = new CheckBox (_panel, _("Show"));
@@ -39,18 +42,20 @@ PasswordEntry::PasswordEntry (wxWindow* parent)
 	_text->Bind (wxEVT_TEXT, bind(boost::ref(Changed)));
 }
 
+
 wxPanel *
 PasswordEntry::get_panel () const
 {
 	return _panel;
 }
 
+
 void
 PasswordEntry::show_clicked ()
 {
 	_panel->Freeze ();
-	wxString const pass = _text->GetValue ();
-	wxSizer* sizer = _text->GetContainingSizer ();
+	auto const pass = _text->GetValue ();
+	auto sizer = _text->GetContainingSizer ();
 	long from, to;
 	_text->GetSelection (&from, &to);
 	sizer->Detach (_text);
@@ -63,11 +68,13 @@ PasswordEntry::show_clicked ()
 	_panel->Thaw ();
 }
 
+
 string
 PasswordEntry::get () const
 {
 	return wx_to_std (_text->GetValue());
 }
+
 
 void
 PasswordEntry::set (string s)

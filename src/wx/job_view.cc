@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2019 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -19,28 +19,28 @@
 */
 
 
-#include "job_view.h"
-#include "wx_util.h"
-#include "message_dialog.h"
-#include "static_text.h"
 #include "check_box.h"
 #include "dcpomatic_button.h"
-#include "lib/job.h"
-#include "lib/job_manager.h"
+#include "job_view.h"
+#include "message_dialog.h"
+#include "static_text.h"
+#include "wx_util.h"
+#include "lib/analyse_audio_job.h"
 #include "lib/compose.hpp"
 #include "lib/config.h"
+#include "lib/job.h"
+#include "lib/job_manager.h"
 #include "lib/send_notification_email_job.h"
 #include "lib/transcode_job.h"
-#include "lib/analyse_audio_job.h"
 #include <wx/wx.h>
 #include <boost/algorithm/string.hpp>
 
 
-using std::string;
+using std::dynamic_pointer_cast;
 using std::min;
 using std::shared_ptr;
+using std::string;
 using boost::bind;
-using std::dynamic_pointer_cast;
 
 
 JobView::JobView (shared_ptr<Job> job, wxWindow* parent, wxWindow* container, wxFlexGridSizer* table)

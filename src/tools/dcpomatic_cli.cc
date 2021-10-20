@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2017 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -18,37 +18,41 @@
 
 */
 
+
+#include "lib/audio_content.h"
+#include "lib/config.h"
+#include "lib/cross.h"
+#include "lib/dcpomatic_log.h"
+#include "lib/encode_server_finder.h"
 #include "lib/film.h"
 #include "lib/filter.h"
-#include "lib/transcode_job.h"
 #include "lib/job_manager.h"
+#include "lib/json_server.h"
+#include "lib/log.h"
+#include "lib/ratio.h"
+#include "lib/signal_manager.h"
+#include "lib/transcode_job.h"
 #include "lib/util.h"
 #include "lib/version.h"
-#include "lib/cross.h"
-#include "lib/config.h"
-#include "lib/log.h"
-#include "lib/signal_manager.h"
-#include "lib/encode_server_finder.h"
-#include "lib/json_server.h"
-#include "lib/ratio.h"
 #include "lib/video_content.h"
-#include "lib/audio_content.h"
-#include "lib/dcpomatic_log.h"
 #include <dcp/version.h>
 #include <getopt.h>
 #include <iostream>
 #include <iomanip>
 
-using std::string;
+
 using std::cerr;
 using std::cout;
-using std::vector;
+using std::dynamic_pointer_cast;
+using std::list;
+using std::make_shared;
 using std::pair;
 using std::setw;
-using std::list;
 using std::shared_ptr;
+using std::string;
+using std::vector;
 using boost::optional;
-using std::dynamic_pointer_cast;
+
 
 static void
 help (string n)
@@ -71,6 +75,7 @@ help (string n)
 	     << "\n"
 	     << "<FILM> is the film directory.\n";
 }
+
 
 static void
 print_dump (shared_ptr<Film> film)
@@ -119,6 +124,7 @@ print_dump (shared_ptr<Film> film)
 		}
 	}
 }
+
 
 static void
 list_servers ()
@@ -327,7 +333,7 @@ main (int argc, char* argv[])
 
 	shared_ptr<Film> film;
 	try {
-		film.reset (new Film (film_dir));
+		film = make_shared<Film>(film_dir);
 		film->read_metadata ();
 	} catch (std::exception& e) {
 		cerr << argv[0] << ": error reading film `" << film_dir.string() << "' (" << e.what() << ")\n";

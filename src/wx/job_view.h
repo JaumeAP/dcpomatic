@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2017 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -18,22 +18,26 @@
 
 */
 
+
 #ifndef DCPOMATIC_JOB_VIEW_H
 #define DCPOMATIC_JOB_VIEW_H
 
+
 #include <boost/signals2.hpp>
 
+
 class Job;
-class wxScrolledWindow;
-class wxWindow;
-class wxFlexGridSizer;
-class wxCommandEvent;
 class wxBoxSizer;
-class wxGauge;
-class wxStaticText;
 class wxButton;
-class wxSizer;
 class wxCheckBox;
+class wxCommandEvent;
+class wxFlexGridSizer;
+class wxGauge;
+class wxScrolledWindow;
+class wxSizer;
+class wxStaticText;
+class wxWindow;
+
 
 class JobView
 {
@@ -67,7 +71,6 @@ protected:
 	wxBoxSizer* _gauge_message;
 
 private:
-
 	virtual void finish_setup (wxWindow *, wxSizer *) {}
 
 	void progress ();
@@ -89,5 +92,6 @@ private:
 	boost::signals2::scoped_connection _progress_connection;
 	boost::signals2::scoped_connection _finished_connection;
 };
+
 
 #endif

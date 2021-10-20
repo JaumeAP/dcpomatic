@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2014-2020 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2014-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -18,11 +18,13 @@
 
 */
 
+
 #include "audio_gain_dialog.h"
 #include "wx_util.h"
 #include "lib/util.h"
-#include <cmath>
 #include <wx/spinctrl.h>
+#include <cmath>
+
 
 AudioGainDialog::AudioGainDialog (wxWindow* parent, int c, int d, float v)
 	: TableDialog (parent, _("Channel gain"), 3, 1, true)
@@ -41,6 +43,7 @@ AudioGainDialog::AudioGainDialog (wxWindow* parent, int c, int d, float v)
 
 	_gain->SetFocus ();
 }
+
 
 float
 AudioGainDialog::value () const
