@@ -30,12 +30,13 @@
 
 #include "film_viewer.h"
 #include "wx_util.h"
-#include "lib/image.h"
-#include "lib/dcpomatic_assert.h"
-#include "lib/exceptions.h"
-#include "lib/cross.h"
-#include "lib/player_video.h"
 #include "lib/butler.h"
+#include "lib/cross.h"
+#include "lib/dcpomatic_assert.h"
+#include "lib/dcpomatic_log.h"
+#include "lib/exceptions.h"
+#include "lib/image.h"
+#include "lib/player_video.h"
 #include <boost/bind/bind.hpp>
 #include <iostream>
 
@@ -104,6 +105,7 @@ void
 GLVideoView::size_changed (wxSizeEvent const& ev)
 {
 	_canvas_size = ev.GetSize ();
+	LOG_GENERAL("GLVideoView canvas size changed to %1x%2", ev.GetSize().GetWidth(), ev.GetSize().GetHeight());
 	Sized ();
 }
 
@@ -534,6 +536,7 @@ GLVideoView::set_image (shared_ptr<const PlayerVideo> pv)
 	int const canvas_height = canvas_size.GetHeight();
 	auto const inter_position = player_video().first->inter_position();
 	auto const inter_size = player_video().first->inter_size();
+	LOG_GENERAL("Image inter_size is %1x%2", inter_size.width, inter_size.height);
 	auto const out_size = player_video().first->out_size();
 
 	auto x_offset = std::max(0, (canvas_width - out_size.width) / 2);
