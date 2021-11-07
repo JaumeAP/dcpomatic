@@ -41,7 +41,6 @@
 using std::cerr;
 using std::cout;
 using std::make_shared;
-using std::pair;
 using std::shared_ptr;
 using std::string;
 using boost::optional;
@@ -50,6 +49,7 @@ using boost::bind;
 using namespace boost::placeholders;
 #endif
 using dcp::ArrayData;
+using namespace dcpomatic;
 
 
 static shared_ptr<Film> film;

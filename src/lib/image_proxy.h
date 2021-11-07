@@ -37,7 +37,9 @@ extern "C" {
 #include <boost/utility.hpp>
 
 
-class Image;
+namespace dcpomatic {
+	class Image;
+}
 class Socket;
 
 namespace xmlpp {
@@ -70,19 +72,19 @@ public:
 	ImageProxy& operator= (ImageProxy const&) = delete;
 
 	struct Result {
-		Result (std::shared_ptr<const Image> image_, int log2_scaling_)
+		Result (std::shared_ptr<const dcpomatic::Image> image_, int log2_scaling_)
 			: image (image_)
 			, log2_scaling (log2_scaling_)
 			, error (false)
 		{}
 
-		Result (std::shared_ptr<Image> image_, int log2_scaling_, bool error_)
+		Result (std::shared_ptr<dcpomatic::Image> image_, int log2_scaling_, bool error_)
 			: image (image_)
 			, log2_scaling (log2_scaling_)
 			, error (error_)
 		{}
 
-		std::shared_ptr<const Image> image;
+		std::shared_ptr<const dcpomatic::Image> image;
 		/** log2 of any scaling down that has already been applied to the image;
 		 *  e.g. if the image is already half the size of the original, this value
 		 *  will be 1.
@@ -97,7 +99,7 @@ public:
 	 *  can be used as an optimisation.
 	 */
 	virtual Result image (
-		Image::Alignment alignment,
+		dcpomatic::Image::Alignment alignment,
 		boost::optional<dcp::Size> size = boost::optional<dcp::Size> ()
 		) const = 0;
 
@@ -109,7 +111,7 @@ public:
 	 *  This method may be called in a different thread to image().
 	 *  @return log2 of any scaling down that will be applied to the image.
 	 */
-	virtual int prepare (Image::Alignment, boost::optional<dcp::Size> = boost::optional<dcp::Size>()) const { return 0; }
+	virtual int prepare (dcpomatic::Image::Alignment, boost::optional<dcp::Size> = boost::optional<dcp::Size>()) const { return 0; }
 	virtual size_t memory_used () const = 0;
 };
 

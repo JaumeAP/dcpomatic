@@ -51,6 +51,7 @@ using std::weak_ptr;
 using boost::thread;
 using boost::optional;
 using dcp::ArrayData;
+using namespace dcpomatic;
 
 
 void

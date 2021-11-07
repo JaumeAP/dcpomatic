@@ -49,6 +49,7 @@ using std::string;
 using boost::optional;
 using dcp::ArrayData;
 using dcp::raw_convert;
+using namespace dcpomatic;
 
 
 /** Construct a J2KImageProxy from a JPEG2000 file */

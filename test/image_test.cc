@@ -40,6 +40,7 @@ using std::cout;
 using std::list;
 using std::make_shared;
 using std::string;
+using namespace dcpomatic;
 
 
 BOOST_AUTO_TEST_CASE (aligned_image_test)

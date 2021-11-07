@@ -40,7 +40,6 @@ DCPOMATIC_ENABLE_WARNINGS
 
 class wxToggleButton;
 class FFmpegPlayer;
-class Image;
 class RGBPlusAlphaImage;
 class PlayerVideo;
 class Player;

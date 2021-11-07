@@ -36,6 +36,11 @@ extern "C" {
 
 struct AVFrame;
 class Socket;
+struct make_part_black_test;
+
+
+namespace dcpomatic {
+
 
 class Image : public std::enable_shared_from_this<Image>
 {
@@ -103,7 +108,7 @@ public:
 
 private:
 	friend struct pixel_formats_test;
-	friend struct make_part_black_test;
+	friend struct ::make_part_black_test;
 
 	void allocate ();
 	void swap (Image &);
@@ -120,7 +125,12 @@ private:
 	Alignment _alignment;
 };
 
+
 extern PositionImage merge (std::list<PositionImage> images, Image::Alignment alignment);
 extern bool operator== (Image const & a, Image const & b);
+
+
+}
+
 
 #endif

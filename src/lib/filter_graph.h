@@ -39,7 +39,6 @@ DCPOMATIC_ENABLE_WARNINGS
 
 struct AVFilterContext;
 struct AVFrame;
-class Image;
 class Filter;
 
 

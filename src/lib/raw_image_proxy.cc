@@ -36,13 +36,12 @@ DCPOMATIC_ENABLE_WARNINGS
 
 
 using std::dynamic_pointer_cast;
-using std::make_pair;
 using std::make_shared;
-using std::pair;
 using std::shared_ptr;
 using std::string;
 using boost::optional;
 using dcp::raw_convert;
+using namespace dcpomatic;
 
 
 RawImageProxy::RawImageProxy (shared_ptr<Image> image)

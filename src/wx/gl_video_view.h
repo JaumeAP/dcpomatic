@@ -56,7 +56,7 @@ public:
 	Texture& operator= (Texture const&) = delete;
 
 	void bind ();
-	void set (std::shared_ptr<const Image> image);
+	void set (std::shared_ptr<const dcpomatic::Image> image);
 
 private:
 	GLuint _name;

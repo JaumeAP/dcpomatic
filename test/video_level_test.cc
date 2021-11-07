@@ -53,17 +53,18 @@
 #include <boost/test/unit_test.hpp>
 
 
-using std::min;
-using std::max;
-using std::pair;
-using std::string;
 using std::dynamic_pointer_cast;
 using std::make_shared;
+using std::max;
+using std::min;
+using std::pair;
+using std::shared_ptr;
+using std::string;
 using boost::optional;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
-using std::shared_ptr;
+using namespace dcpomatic;
 
 
 static

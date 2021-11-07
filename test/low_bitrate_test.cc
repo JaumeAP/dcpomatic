@@ -31,6 +31,7 @@ extern "C" {
 
 
 using std::make_shared;
+using namespace dcpomatic;
 
 
 BOOST_AUTO_TEST_CASE (low_bitrate_test)

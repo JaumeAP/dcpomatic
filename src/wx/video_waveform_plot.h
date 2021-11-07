@@ -31,7 +31,9 @@ namespace dcp {
 }
 
 class PlayerVideo;
-class Image;
+namespace dcpomatic {
+	class Image;
+}
 class Film;
 class FilmViewer;
 
@@ -61,7 +63,7 @@ private:
 
 	std::weak_ptr<const Film> _film;
 	std::shared_ptr<dcp::OpenJPEGImage> _image;
-	std::shared_ptr<const Image> _waveform;
+	std::shared_ptr<const dcpomatic::Image> _waveform;
 	bool _dirty = true;
 	bool _enabled = false;
 	int _component = 0;

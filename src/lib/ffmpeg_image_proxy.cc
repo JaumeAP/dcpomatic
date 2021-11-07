@@ -42,15 +42,14 @@ DCPOMATIC_ENABLE_WARNINGS
 
 
 using std::cout;
-using std::make_pair;
 using std::make_shared;
 using std::min;
-using std::pair;
 using std::shared_ptr;
 using std::string;
-using boost::optional;
 using std::dynamic_pointer_cast;
+using boost::optional;
 using dcp::raw_convert;
+using namespace dcpomatic;
 
 
 FFmpegImageProxy::FFmpegImageProxy (boost::filesystem::path path)

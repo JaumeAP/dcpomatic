@@ -77,7 +77,7 @@ public:
 class Player : public std::enable_shared_from_this<Player>
 {
 public:
-	Player (std::shared_ptr<const Film>, Image::Alignment subtitle_alignment);
+	Player (std::shared_ptr<const Film>, dcpomatic::Image::Alignment subtitle_alignment);
 	Player (std::shared_ptr<const Film>, std::shared_ptr<const Playlist> playlist);
 
 	Player (Player const& Player) = delete;
@@ -180,7 +180,7 @@ private:
 	 *  the size of preview in a window.
 	 */
 	dcp::Size _video_container_size;
-	std::shared_ptr<Image> _black_image;
+	std::shared_ptr<dcpomatic::Image> _black_image;
 
 	/** true if the player should ignore all video; i.e. never produce any */
 	bool _ignore_video = false;
@@ -234,7 +234,7 @@ private:
 	dcpomatic::DCPTime _playback_length;
 
 	/** Alignment for subtitle images that we create */
-	Image::Alignment _subtitle_alignment = Image::Alignment::PADDED;
+	dcpomatic::Image::Alignment _subtitle_alignment = dcpomatic::Image::Alignment::PADDED;
 
 	boost::signals2::scoped_connection _film_changed_connection;
 	boost::signals2::scoped_connection _playlist_change_connection;

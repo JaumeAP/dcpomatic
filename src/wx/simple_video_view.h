@@ -47,7 +47,7 @@ private:
 	void timer ();
 
 	wxPanel* _panel;
-	std::shared_ptr<const Image> _image;
+	std::shared_ptr<const dcpomatic::Image> _image;
 	wxTimer _timer;
 	Position<int> _inter_position;
 	dcp::Size _inter_size;

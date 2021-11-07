@@ -32,7 +32,7 @@ public:
 	FFmpegImageProxy (std::shared_ptr<Socket> socket);
 
 	Result image (
-		Image::Alignment alignment,
+		dcpomatic::Image::Alignment alignment,
 		boost::optional<dcp::Size> size = boost::optional<dcp::Size> ()
 		) const;
 
@@ -51,6 +51,6 @@ private:
 	    failed-decode errors can give more detail.
 	*/
 	boost::optional<boost::filesystem::path> _path;
-	mutable std::shared_ptr<Image> _image;
+	mutable std::shared_ptr<dcpomatic::Image> _image;
 	mutable boost::mutex _mutex;
 };

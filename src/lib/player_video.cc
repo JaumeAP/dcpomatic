@@ -18,6 +18,7 @@
 
 */
 
+
 #include "content.h"
 #include "film.h"
 #include "image.h"
@@ -33,16 +34,19 @@ extern "C" {
 #include <libxml++/libxml++.h>
 #include <iostream>
 
+
 using std::cout;
 using std::dynamic_pointer_cast;
+using std::function;
 using std::make_shared;
 using std::shared_ptr;
 using std::string;
 using std::weak_ptr;
 using boost::optional;
-using std::function;
 using dcp::Data;
 using dcp::raw_convert;
+using namespace dcpomatic;
+
 
 PlayerVideo::PlayerVideo (
 	shared_ptr<const ImageProxy> in,
@@ -297,7 +301,7 @@ PlayerVideo::keep_xyz_or_rgb (AVPixelFormat p)
 }
 
 void
-PlayerVideo::prepare (function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, Image::Alignment alignment, bool fast, bool proxy_only)
+PlayerVideo::prepare (function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, dcpomatic::Image::Alignment alignment, bool fast, bool proxy_only)
 {
 	_in->prepare (alignment, _inter_size);
 	boost::mutex::scoped_lock lm (_mutex);

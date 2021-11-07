@@ -38,6 +38,7 @@ using std::make_shared;
 using std::pair;
 using std::shared_ptr;
 using std::string;
+using namespace dcpomatic;
 
 
 VideoFilterGraph::VideoFilterGraph (dcp::Size s, AVPixelFormat p, dcp::Fraction r)

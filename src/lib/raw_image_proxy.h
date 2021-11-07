@@ -29,11 +29,11 @@
 class RawImageProxy : public ImageProxy
 {
 public:
-	explicit RawImageProxy (std::shared_ptr<Image>);
+	explicit RawImageProxy (std::shared_ptr<dcpomatic::Image>);
 	RawImageProxy (std::shared_ptr<cxml::Node> xml, std::shared_ptr<Socket> socket);
 
 	Result image (
-		Image::Alignment alignment,
+		dcpomatic::Image::Alignment alignment,
 		boost::optional<dcp::Size> size = boost::optional<dcp::Size> ()
 		) const;
 
@@ -43,7 +43,7 @@ public:
 	size_t memory_used () const;
 
 private:
-	std::shared_ptr<Image> _image;
+	std::shared_ptr<dcpomatic::Image> _image;
 };
 
 

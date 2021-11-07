@@ -33,7 +33,9 @@
 #include <boost/thread.hpp>
 
 
-class Image;
+namespace dcpomatic {
+	class Image;
+}
 class wxWindow;
 class FilmViewer;
 class Player;

@@ -27,7 +27,9 @@
 #include <memory>
 
 
-class Image;
+namespace dcpomatic {
+	class Image;
+}
 
 
 class PositionImage
@@ -35,12 +37,12 @@ class PositionImage
 public:
 	PositionImage () {}
 
-	PositionImage (std::shared_ptr<const Image> i, Position<int> p)
+	PositionImage (std::shared_ptr<const dcpomatic::Image> i, Position<int> p)
 		: image (i)
 		, position (p)
 	{}
 
-	std::shared_ptr<const Image> image;
+	std::shared_ptr<const dcpomatic::Image> image;
 	Position<int> position;
 
 	bool same (PositionImage const & other) const;

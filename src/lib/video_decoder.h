@@ -38,7 +38,6 @@
 
 class VideoContent;
 class ImageProxy;
-class Image;
 class Log;
 class FrameIntervalChecker;
 

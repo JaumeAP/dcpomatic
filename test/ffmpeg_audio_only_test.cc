@@ -45,6 +45,7 @@ using std::make_shared;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
+using namespace dcpomatic;
 
 
 static SNDFILE* ref = nullptr;

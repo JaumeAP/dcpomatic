@@ -47,6 +47,7 @@
 using std::make_shared;
 using std::string;
 using std::shared_ptr;
+using namespace dcpomatic;
 
 
 BOOST_AUTO_TEST_CASE (ffmpeg_audio_test)

@@ -45,6 +45,7 @@ using std::weak_ptr;
 using namespace boost::placeholders;
 #endif
 using dcp::locale_convert;
+using namespace dcpomatic;
 
 
 int const VideoWaveformPlot::_vertical_margin = 8;

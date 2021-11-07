@@ -35,7 +35,9 @@ class Log;
 class VideoFilterGraph;
 class FFmpegAudioStream;
 class AudioBuffers;
-class Image;
+namespace dcpomatic {
+	class Image;
+}
 struct ffmpeg_pts_offset_test;
 
 /** @class FFmpegDecoder
@@ -79,7 +81,7 @@ private:
 	/** true if we have a subtitle which has not had emit_stop called for it yet */
 	bool _have_current_subtitle = false;
 
-	std::shared_ptr<Image> _black_image;
+	std::shared_ptr<dcpomatic::Image> _black_image;
 
 	std::map<std::shared_ptr<FFmpegAudioStream>, boost::optional<dcpomatic::ContentTime>> _next_time;
 };

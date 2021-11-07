@@ -40,11 +40,10 @@
 #include <iostream>
 
 
-using std::list;
 using std::string;
 using std::vector;
 using std::make_shared;
-using std::shared_ptr;
+using namespace dcpomatic;
 
 
 /* Check that DCPDecoder reuses old data when it should */

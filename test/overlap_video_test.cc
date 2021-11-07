@@ -40,6 +40,7 @@
 
 using std::dynamic_pointer_cast;
 using std::make_shared;
+using namespace dcpomatic;
 
 
 BOOST_AUTO_TEST_CASE (overlap_video_test1)

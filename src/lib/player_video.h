@@ -35,7 +35,9 @@ extern "C" {
 #include <boost/thread/mutex.hpp>
 
 
-class Image;
+namespace dcpomatic {
+	class Image;
+}
 class ImageProxy;
 class Film;
 class Socket;
@@ -75,9 +77,9 @@ public:
 		return _text;
 	}
 
-	void prepare (std::function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, Image::Alignment alignment, bool fast, bool proxy_only);
-	std::shared_ptr<Image> image (std::function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, bool fast) const;
-	std::shared_ptr<const Image> raw_image () const;
+	void prepare (std::function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, dcpomatic::Image::Alignment alignment, bool fast, bool proxy_only);
+	std::shared_ptr<dcpomatic::Image> image (std::function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, bool fast) const;
+	std::shared_ptr<const dcpomatic::Image> raw_image () const;
 
 	static AVPixelFormat force (AVPixelFormat, AVPixelFormat);
 	static AVPixelFormat keep_xyz_or_rgb (AVPixelFormat);
@@ -145,7 +147,7 @@ private:
 	boost::optional<Frame> _video_frame;
 
 	mutable boost::mutex _mutex;
-	mutable std::shared_ptr<Image> _image;
+	mutable std::shared_ptr<dcpomatic::Image> _image;
 	/** _crop that was used to make _image */
 	mutable Crop _image_crop;
 	/** _inter_size that was used to make _image */

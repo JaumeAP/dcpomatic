@@ -27,7 +27,9 @@
 
 
 class Film;
-class Image;
+namespace dcpomatic {
+	class Image;
+}
 class Log;
 
 
@@ -69,7 +71,7 @@ extern void check_xml (boost::filesystem::path, boost::filesystem::path, std::li
 extern void check_ffmpeg (boost::filesystem::path, boost::filesystem::path, int audio_tolerance);
 extern void check_image (boost::filesystem::path, boost::filesystem::path, double threshold = 4);
 extern boost::filesystem::path test_film_dir (std::string);
-extern void write_image (std::shared_ptr<const Image> image, boost::filesystem::path file);
+extern void write_image (std::shared_ptr<const dcpomatic::Image> image, boost::filesystem::path file);
 boost::filesystem::path dcp_file (std::shared_ptr<const Film> film, std::string prefix);
 void check_one_frame (boost::filesystem::path dcp, int64_t index, boost::filesystem::path ref);
 extern boost::filesystem::path subtitle_file (std::shared_ptr<Film> film);
