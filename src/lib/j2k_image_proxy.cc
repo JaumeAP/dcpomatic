@@ -142,7 +142,7 @@ J2KImageProxy::prepare (Image::Alignment alignment, optional<dcp::Size> target_s
 
 	try {
 		/* XXX: should check that potentially trashing _data here doesn't matter */
-		auto decompressed = dcp::decompress_j2k (const_cast<uint8_t*>(_data->data()), _data->size(), reduce);
+		auto decompressed = dcp::decompress_j2k (_data, reduce);
 		_image = make_shared<Image>(_pixel_format, decompressed->size(), alignment);
 
 		int const shift = 16 - decompressed->precision (0);
