@@ -35,12 +35,12 @@ extern "C" {
 
 using std::cout;
 using std::dynamic_pointer_cast;
+using std::function;
 using std::make_shared;
 using std::shared_ptr;
 using std::string;
 using std::weak_ptr;
 using boost::optional;
-using std::function;
 using dcp::Data;
 using dcp::raw_convert;
 
