@@ -153,15 +153,15 @@ EncodeServer::process (shared_ptr<Socket> socket, struct timeval& after_read, st
 	gettimeofday (&after_read, 0);
 
 	J2KEncoderCPUBackend cpu;
-	auto encoded = cpu.encode (dcp_video_frame);
-	DCPOMATIC_ASSERT (encoded);
+	auto encoded = cpu.encode ({dcp_video_frame});
+	DCPOMATIC_ASSERT (!encoded.empty());
 
 	gettimeofday (&after_encode, 0);
 
 	try {
 		Socket::WriteDigestScope ds (socket);
-		socket->write (encoded->size());
-		socket->write (encoded->data(), encoded->size());
+		socket->write (encoded[0].size());
+		socket->write (encoded[0].data(), encoded[0].size());
 	} catch (std::exception& e) {
 		cerr << "Send failed; frame " << dcp_video_frame.index() << "\n";
 		LOG_ERROR ("Send failed; frame %1", dcp_video_frame.index());

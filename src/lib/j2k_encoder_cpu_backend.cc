@@ -32,15 +32,19 @@
 
 
 using std::shared_ptr;
+using std::vector;
 using boost::optional;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
 
 
-optional<dcp::ArrayData>
-J2KEncoderCPUBackend::encode (DCPVideo video)
+vector<dcp::ArrayData>
+J2KEncoderCPUBackend::encode (vector<DCPVideo> const& all_video)
 {
+	DCPOMATIC_ASSERT (all_video.size() == 1);
+	auto video = all_video.front();
+
 	try {
 		auto const comment = Config::instance()->dcp_j2k_comment();
 
@@ -63,7 +67,7 @@ J2KEncoderCPUBackend::encode (DCPVideo video)
 
 			if (enc.size() >= minimum_size) {
 				LOG_GENERAL (N_("Frame %1 encoded size was OK (%2)"), video.index(), enc.size());
-				return enc;
+				return { enc };
 			}
 
 			LOG_GENERAL (N_("Frame %1 encoded size was small (%2); adding noise at level %3 with pixel skip %4"), video.index(), enc.size(), noise_amount, pixel_skip);

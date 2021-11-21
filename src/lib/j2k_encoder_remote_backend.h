@@ -37,7 +37,7 @@ public:
 
 	J2KEncoderRemoteBackend (J2KEncoderRemoteBackend&& other);
 
-	boost::optional<dcp::ArrayData> encode (DCPVideo video) override;
+	std::vector<dcp::ArrayData> encode (std::vector<DCPVideo> const& video) override;
 
 private:
 	EncodeServerDescription _server;

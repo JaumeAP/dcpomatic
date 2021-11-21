@@ -41,6 +41,7 @@ using std::make_shared;
 using std::shared_ptr;
 using std::string;
 using std::unique_ptr;
+using std::vector;
 using boost::optional;
 using dcp::raw_convert;
 
@@ -53,9 +54,12 @@ J2KEncoderRemoteBackend::J2KEncoderRemoteBackend (J2KEncoderRemoteBackend&& othe
 }
 
 
-optional<dcp::ArrayData>
-J2KEncoderRemoteBackend::encode (DCPVideo video)
+vector<dcp::ArrayData>
+J2KEncoderRemoteBackend::encode (vector<DCPVideo> const& all_video)
 {
+	DCPOMATIC_ASSERT (all_video.size() == 1);
+	auto video = all_video.front();
+
 	try {
 		boost::asio::io_service io_service;
 		boost::asio::ip::tcp::resolver resolver (io_service);
@@ -103,7 +107,7 @@ J2KEncoderRemoteBackend::encode (DCPVideo video)
 		LOG_DEBUG_ENCODE (N_("Finished remotely-encoded frame %1"), video.index());
 
 		_backoff = 0;
-		return enc;
+		return { enc };
 
 	} catch (std::exception& e) {
 		if (_backoff < 60) {

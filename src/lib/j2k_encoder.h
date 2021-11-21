@@ -98,6 +98,8 @@ private:
 	boost::mutex _threads_mutex;
 	std::shared_ptr<boost::thread_group> _threads;
 
+	int _frames_in_parallel = 0;
+
 	mutable boost::mutex _queue_mutex;
 	std::list<DCPVideo> _queue;
 	/** condition to manage thread wakeups when we have nothing to do */

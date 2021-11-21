@@ -32,7 +32,7 @@ public:
 	J2KEncoderCPUBackend () = default;
 	J2KEncoderCPUBackend (J2KEncoderCPUBackend&& other) = default;
 
-	boost::optional<dcp::ArrayData> encode (DCPVideo video) override;
+	std::vector<dcp::ArrayData> encode (std::vector<DCPVideo> const& video) override;
 };
 
 

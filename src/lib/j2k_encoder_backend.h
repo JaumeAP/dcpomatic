@@ -38,7 +38,10 @@ public:
 	J2KEncoderBackend (J2KEncoderBackend const&) = delete;
 	J2KEncoderBackend& operator= (J2KEncoderBackend const&) = delete;
 
-	virtual boost::optional<dcp::ArrayData> encode (DCPVideo video) = 0;
+	virtual std::vector<dcp::ArrayData> encode (std::vector<DCPVideo> const& video) = 0;
+	virtual int quantity () const {
+		return 1;
+	}
 };
 
 

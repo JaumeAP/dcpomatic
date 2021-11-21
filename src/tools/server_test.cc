@@ -45,6 +45,7 @@ using std::cout;
 using std::make_shared;
 using std::shared_ptr;
 using std::string;
+using std::vector;
 using boost::optional;
 using boost::bind;
 #if BOOST_VERSION >= 106100
@@ -71,32 +72,33 @@ process_video (shared_ptr<PlayerVideo> pvf)
 	++frame_count;
 
 	J2KEncoderCPUBackend cpu_backend;
-	auto local_encoded = cpu_backend.encode(local);
-	optional<ArrayData> remote_encoded;
+	auto local_encoded = cpu_backend.encode({local});
+	vector<ArrayData> remote_encoded;
 
 	string remote_error;
 	J2KEncoderRemoteBackend remote_backend(*server);
 	try {
-		remote_encoded = remote_backend.encode(remote);
+		remote_encoded = remote_backend.encode({remote});
 	} catch (NetworkError& e) {
 		remote_error = e.what ();
 	}
 
-	DCPOMATIC_ASSERT (remote_encoded);
+	DCPOMATIC_ASSERT (!local_encoded.empty());
+	DCPOMATIC_ASSERT (!remote_encoded.empty());
 
 	if (!remote_error.empty()) {
 		cout << "\033[0;31mnetwork problem: " << remote_error << "\033[0m\n";
 		return;
 	}
 
-	if (local_encoded->size() != remote_encoded->size()) {
+	if (local_encoded[0].size() != remote_encoded[0].size()) {
 		cout << "\033[0;31msizes differ\033[0m\n";
 		return;
 	}
 
-	auto p = local_encoded->data();
-	auto q = remote_encoded->data();
-	for (int i = 0; i < local_encoded->size(); ++i) {
+	auto p = local_encoded[0].data();
+	auto q = remote_encoded[0].data();
+	for (int i = 0; i < local_encoded[0].size(); ++i) {
 		if (*p++ != *q++) {
 			cout << "\033[0;31mdata differ\033[0m at byte " << i << "\n";
 			return;

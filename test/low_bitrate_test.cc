@@ -59,9 +59,9 @@ BOOST_AUTO_TEST_CASE (low_bitrate_test)
 
 	DCPVideo dcp_video(frame, 0, 24, 100000000, Resolution::TWO_K);
 	J2KEncoderCPUBackend cpu;
-	auto j2k = cpu.encode(dcp_video);
-	BOOST_REQUIRE (static_cast<bool>(j2k));
-	BOOST_REQUIRE (j2k->size() >= 16536);
+	auto j2k = cpu.encode({dcp_video});
+	BOOST_REQUIRE (!j2k.empty());
+	BOOST_REQUIRE (j2k[0].size() >= 16536);
 }
 
 
