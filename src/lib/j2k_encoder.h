@@ -28,17 +28,15 @@
  */
 
 
-#include "util.h"
 #include "cross.h"
 #include "event_history.h"
 #include "exception_store.h"
-#include "j2k_encoder_cpu_backend.h"
-#include "j2k_encoder_remote_backend.h"
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition.hpp>
-#include <boost/thread.hpp>
+#include "util.h"
 #include <boost/optional.hpp>
 #include <boost/signals2.hpp>
+#include <boost/thread.hpp>
+#include <boost/thread/condition.hpp>
+#include <boost/thread/mutex.hpp>
 #include <list>
 #include <stdint.h>
 

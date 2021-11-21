@@ -46,14 +46,12 @@
 #include "i18n.h"
 
 
-using std::list;
 using std::cout;
 using std::exception;
 using std::shared_ptr;
 using std::weak_ptr;
 using std::make_shared;
 using boost::optional;
-using dcp::Data;
 using namespace dcpomatic;
 
 
