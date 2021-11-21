@@ -29,6 +29,8 @@
 #include "lib/filter.h"
 #include "lib/player.h"
 #include "lib/player_video.h"
+#include "lib/j2k_encoder_cpu_backend.h"
+#include "lib/j2k_encoder_remote_backend.h"
 #include "lib/ratio.h"
 #include "lib/util.h"
 #include "lib/video_decoder.h"
@@ -60,37 +62,41 @@ static int frame_count = 0;
 void
 process_video (shared_ptr<PlayerVideo> pvf)
 {
-	auto local = make_shared<DCPVideo>(pvf, frame_count, film->video_frame_rate(), 250000000, Resolution::TWO_K);
-	auto remote = make_shared<DCPVideo>(pvf, frame_count, film->video_frame_rate(), 250000000, Resolution::TWO_K);
+	DCPVideo local(pvf, frame_count, film->video_frame_rate(), 250000000, Resolution::TWO_K);
+	DCPVideo remote(pvf, frame_count, film->video_frame_rate(), 250000000, Resolution::TWO_K);
 
 	cout << "Frame " << frame_count << ": ";
 	cout.flush ();
 
 	++frame_count;
 
-	auto local_encoded = local->encode_locally ();
-	ArrayData remote_encoded;
+	J2KEncoderCPUBackend cpu_backend;
+	auto local_encoded = cpu_backend.encode(local);
+	optional<ArrayData> remote_encoded;
 
 	string remote_error;
+	J2KEncoderRemoteBackend remote_backend(*server);
 	try {
-		remote_encoded = remote->encode_remotely (*server);
+		remote_encoded = remote_backend.encode(remote);
 	} catch (NetworkError& e) {
 		remote_error = e.what ();
 	}
+
+	DCPOMATIC_ASSERT (remote_encoded);
 
 	if (!remote_error.empty()) {
 		cout << "\033[0;31mnetwork problem: " << remote_error << "\033[0m\n";
 		return;
 	}
 
-	if (local_encoded.size() != remote_encoded.size()) {
+	if (local_encoded->size() != remote_encoded->size()) {
 		cout << "\033[0;31msizes differ\033[0m\n";
 		return;
 	}
 
-	auto p = local_encoded.data();
-	auto q = remote_encoded.data();
-	for (int i = 0; i < local_encoded.size(); ++i) {
+	auto p = local_encoded->data();
+	auto q = remote_encoded->data();
+	for (int i = 0; i < local_encoded->size(); ++i) {
 		if (*p++ != *q++) {
 			cout << "\033[0;31mdata differ\033[0m at byte " << i << "\n";
 			return;

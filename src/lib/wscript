@@ -122,6 +122,8 @@ sources = """
           image_examiner.cc
           image_filename_sorter.cc
           image_proxy.cc
+          j2k_encoder_cpu_backend.cc
+          j2k_encoder_remote_backend.cc
           j2k_image_proxy.cc
           job.cc
           job_manager.cc

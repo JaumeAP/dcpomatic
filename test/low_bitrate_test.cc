@@ -22,6 +22,7 @@
 #include "lib/dcp_video.h"
 #include "lib/image.h"
 #include "lib/player_video.h"
+#include "lib/j2k_encoder_cpu_backend.h"
 #include "lib/raw_image_proxy.h"
 extern "C" {
 #include <libavutil/pixfmt.h>
@@ -56,9 +57,11 @@ BOOST_AUTO_TEST_CASE (low_bitrate_test)
 		false
 		);
 
-	auto dcp_video = make_shared<DCPVideo>(frame, 0, 24, 100000000, Resolution::TWO_K);
-	auto j2k = dcp_video->encode_locally();
-	BOOST_REQUIRE (j2k.size() >= 16536);
+	DCPVideo dcp_video(frame, 0, 24, 100000000, Resolution::TWO_K);
+	J2KEncoderCPUBackend cpu;
+	auto j2k = cpu.encode(dcp_video);
+	BOOST_REQUIRE (static_cast<bool>(j2k));
+	BOOST_REQUIRE (j2k->size() >= 16536);
 }
 
 

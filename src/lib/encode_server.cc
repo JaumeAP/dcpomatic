@@ -25,18 +25,19 @@
  */
 
 
-#include "encode_server.h"
-#include "util.h"
-#include "dcpomatic_socket.h"
-#include "image.h"
-#include "dcp_video.h"
+#include "compose.hpp"
 #include "config.h"
 #include "cross.h"
-#include "player_video.h"
-#include "compose.hpp"
-#include "log.h"
+#include "dcp_video.h"
 #include "dcpomatic_log.h"
+#include "dcpomatic_socket.h"
+#include "encode_server.h"
 #include "encoded_log_entry.h"
+#include "image.h"
+#include "j2k_encoder_cpu_backend.h"
+#include "log.h"
+#include "player_video.h"
+#include "util.h"
 #include "version.h"
 #include "warnings.h"
 #include <dcp/raw_convert.h>
@@ -151,14 +152,16 @@ EncodeServer::process (shared_ptr<Socket> socket, struct timeval& after_read, st
 
 	gettimeofday (&after_read, 0);
 
-	auto encoded = dcp_video_frame.encode_locally ();
+	J2KEncoderCPUBackend cpu;
+	auto encoded = cpu.encode (dcp_video_frame);
+	DCPOMATIC_ASSERT (encoded);
 
 	gettimeofday (&after_encode, 0);
 
 	try {
 		Socket::WriteDigestScope ds (socket);
-		socket->write (encoded.size());
-		socket->write (encoded.data(), encoded.size());
+		socket->write (encoded->size());
+		socket->write (encoded->data(), encoded->size());
 	} catch (std::exception& e) {
 		cerr << "Send failed; frame " << dcp_video_frame.index() << "\n";
 		LOG_ERROR ("Send failed; frame %1", dcp_video_frame.index());

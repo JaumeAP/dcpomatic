@@ -75,15 +75,14 @@ BOOST_AUTO_TEST_CASE (interrupt_writer)
 	}
 
 	/* Write some data */
-	auto video = dcp::compress_j2k(image, 100000000, 24, false, false);
-	auto video_ptr = make_shared<dcp::ArrayData>(video.data(), video.size());
+	auto video = make_shared<dcp::ArrayData>(dcp::compress_j2k(image, 100000000, 24, false, false));
 	auto audio = make_shared<AudioBuffers>(6, 48000 / 24);
 
 	auto writer = make_shared<Writer>(film, shared_ptr<Job>());
 	writer->start ();
 
 	for (int i = 0; i < frames; ++i) {
-		writer->write (video_ptr, i, Eyes::BOTH);
+		writer->write (video, i, Eyes::BOTH);
 		writer->write (audio, dcpomatic::DCPTime::from_frames(i, 24));
 	}
 

@@ -32,6 +32,8 @@
 #include "cross.h"
 #include "event_history.h"
 #include "exception_store.h"
+#include "j2k_encoder_cpu_backend.h"
+#include "j2k_encoder_remote_backend.h"
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread.hpp>
@@ -45,6 +47,7 @@ class Film;
 class EncodeServerDescription;
 class DCPVideo;
 class Writer;
+class J2KEncoderBackend;
 class Job;
 class PlayerVideo;
 
@@ -84,11 +87,11 @@ private:
 
 	void frame_done ();
 
-	void encoder_thread (boost::optional<EncodeServerDescription>);
+	void encoder_thread (std::shared_ptr<J2KEncoderBackend> backend);
 	void terminate_threads ();
 
-	/** Film that we are encoding */
 	std::shared_ptr<const Film> _film;
+
 
 	EventHistory _history;
 

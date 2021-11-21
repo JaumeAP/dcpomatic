@@ -437,7 +437,7 @@ try
 			case QueueItem::Type::FULL:
 				LOG_DEBUG_ENCODE (N_("Writer FULL-writes %1 (%2)"), qi.frame, (int) qi.eyes);
 				if (!qi.encoded) {
-					qi.encoded.reset (new ArrayData(film()->j2c_path(qi.reel, qi.frame, qi.eyes, false)));
+					qi.encoded = make_shared<ArrayData>(film()->j2c_path(qi.reel, qi.frame, qi.eyes, false));
 				}
 				reel.write (qi.encoded, qi.frame, qi.eyes);
 				++_full_written;

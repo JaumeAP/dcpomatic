@@ -24,6 +24,8 @@
  */
 
 
+#include "j2k_encoder_cpu_backend.h"
+#include "j2k_encoder_remote_backend.h"
 #include "j2k_encoder.h"
 #include "util.h"
 #include "film.h"
@@ -135,14 +137,13 @@ J2KEncoder::end ()
 	     So just mop up anything left in the queue here.
 	*/
 
+	J2KEncoderCPUBackend cpu;
 	for (auto const& i: _queue) {
 		LOG_GENERAL(N_("Encode left-over frame %1"), i.index());
 		try {
-			_writer->write (
-				make_shared<dcp::ArrayData>(i.encode_locally()),
-				i.index(),
-				i.eyes()
-				);
+			auto enc = cpu.encode(i);
+			DCPOMATIC_ASSERT (enc);
+			_writer->write (make_shared<dcp::ArrayData>(*enc), i.index(), i.eyes());
 			frame_done ();
 		} catch (std::exception& e) {
 			LOG_ERROR (N_("Local encode failed (%1)"), e.what ());
@@ -280,22 +281,12 @@ J2KEncoder::terminate_threads ()
 
 
 void
-J2KEncoder::encoder_thread (optional<EncodeServerDescription> server)
+J2KEncoder::encoder_thread (shared_ptr<J2KEncoderBackend> backend)
 try
 {
 	start_of_thread ("J2KEncoder");
 
-	if (server) {
-		LOG_TIMING ("start-encoder-thread thread=%1 server=%2", thread_id (), server->host_name ());
-	} else {
-		LOG_TIMING ("start-encoder-thread thread=%1 server=localhost", thread_id ());
-	}
-
-	/* Number of seconds that we currently wait between attempts
-	   to connect to the server; not relevant for localhost
-	   encodings.
-	*/
-	int remote_backoff = 0;
+	LOG_TIMING ("start-encoder-thread thread=%1", thread_id());
 
 	while (true) {
 
@@ -320,45 +311,10 @@ try
 
 			lock.unlock ();
 
-			shared_ptr<Data> encoded;
-
-			/* We need to encode this input */
-			if (server) {
-				try {
-					encoded = make_shared<dcp::ArrayData>(vf.encode_remotely(server.get()));
-
-					if (remote_backoff > 0) {
-						LOG_GENERAL ("%1 was lost, but now she is found; removing backoff", server->host_name ());
-					}
-
-					/* This job succeeded, so remove any backoff */
-					remote_backoff = 0;
-
-				} catch (std::exception& e) {
-					if (remote_backoff < 60) {
-						/* back off more */
-						remote_backoff += 10;
-					}
-					LOG_ERROR (
-						N_("Remote encode of %1 on %2 failed (%3); thread sleeping for %4s"),
-						vf.index(), server->host_name(), e.what(), remote_backoff
-						);
-				}
-
-			} else {
-				try {
-					LOG_TIMING ("start-local-encode thread=%1 frame=%2", thread_id(), vf.index());
-					encoded = make_shared<dcp::ArrayData>(vf.encode_locally());
-					LOG_TIMING ("finish-local-encode thread=%1 frame=%2", thread_id(), vf.index());
-				} catch (std::exception& e) {
-					/* This is very bad, so don't cope with it, just pass it on */
-					LOG_ERROR (N_("Local encode failed (%1)"), e.what ());
-					throw;
-				}
-			}
+			auto encoded = backend->encode(vf);
 
 			if (encoded) {
-				_writer->write (encoded, vf.index(), vf.eyes());
+				_writer->write (make_shared<dcp::ArrayData>(*encoded), vf.index(), vf.eyes());
 				frame_done ();
 			} else {
 				lock.lock ();
@@ -366,10 +322,6 @@ try
 				_queue.push_front (vf);
 				lock.unlock ();
 			}
-		}
-
-		if (remote_backoff > 0) {
-			boost::this_thread::sleep (boost::posix_time::seconds (remote_backoff));
 		}
 
 		/* The queue might not be full any more, so notify anything that is waiting on that */
@@ -400,12 +352,13 @@ J2KEncoder::servers_list_changed ()
 	/* XXX: could re-use threads */
 
 	if (!Config::instance()->only_servers_encode ()) {
+		auto backend = std::make_shared<J2KEncoderCPUBackend>();
 		for (int i = 0; i < Config::instance()->master_encoding_threads (); ++i) {
 #ifdef DCPOMATIC_LINUX
-			auto t = _threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, optional<EncodeServerDescription>()));
+			auto t = _threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, backend));
 			pthread_setname_np (t->native_handle(), "encode-worker");
 #else
-			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, optional<EncodeServerDescription>()));
+			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, backend));
 #endif
 		}
 	}
@@ -415,11 +368,14 @@ J2KEncoder::servers_list_changed ()
 			continue;
 		}
 
-		LOG_GENERAL (N_("Adding %1 worker threads for remote %2"), i.threads(), i.host_name ());
+		auto backend = std::make_shared<J2KEncoderRemoteBackend>(i);
+
+		LOG_GENERAL (N_("Adding %1 worker threads for remote %2"), i.threads(), i.host_name());
 		for (int j = 0; j < i.threads(); ++j) {
-			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, i));
+			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, backend));
 		}
 	}
 
 	_writer->set_encoder_threads (_threads->size());
 }
+
