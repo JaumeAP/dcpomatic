@@ -345,6 +345,7 @@ catch (...)
 
 void
 J2KEncoder::servers_list_changed ()
+try
 {
 	boost::mutex::scoped_lock lm (_threads_mutex);
 
@@ -384,4 +385,9 @@ J2KEncoder::servers_list_changed ()
 
 	_writer->set_encoder_threads (_threads->size());
 }
+catch (...) {
+	terminate_threads ();
+	throw;
+}
+
 
