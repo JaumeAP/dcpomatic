@@ -218,13 +218,16 @@ J2KEncoder::encode (shared_ptr<PlayerVideo> pv, DCPTime time)
 		LOG_TIMING ("decoder-sleep queue=%1 threads=%2", _queue.size(), threads);
 		_full_condition.wait (queue_lock);
 		LOG_TIMING ("decoder-wake queue=%1 threads=%2", _queue.size(), threads);
+		_writer->rethrow ();
+		/* Re-throw any exception raised by one of our threads.  If more
+		   than one has thrown an exception, only one will be rethrown, I think;
+		   but then, if that happens something has gone badly wrong.
+		*/
+		rethrow ();
 	}
 
+	/* Do it again in case an exception was thrown with an emptier queue */
 	_writer->rethrow ();
-	/* Re-throw any exception raised by one of our threads.  If more
-	   than one has thrown an exception, only one will be rethrown, I think;
-	   but then, if that happens something has gone badly wrong.
-	*/
 	rethrow ();
 
 	auto const position = time.frames_floor(_film->video_frame_rate());
