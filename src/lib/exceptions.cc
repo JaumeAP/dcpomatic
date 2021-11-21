@@ -163,3 +163,12 @@ VerifyError::VerifyError (string m, int n)
 
 }
 
+
+#ifdef DCPOMATIC_FASTVIDEO
+FastvideoError::FastvideoError (string s, string message)
+        : runtime_error (String::compose("Fastvideo error in %1 (%2)", s, message))
+{
+
+}
+#endif
+

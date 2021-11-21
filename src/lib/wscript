@@ -44,6 +44,7 @@ sources = """
           audio_processor.cc
           audio_ring_buffers.cc
           audio_stream.cc
+          barrier.cc
           butler.cc
           text_content.cc
           text_decoder.cc
@@ -226,6 +227,9 @@ def build(bld):
         obj.source += ' cross_linux.cc'
     if bld.env.STATIC_DCPOMATIC:
         obj.uselib += ' XMLPP'
+    if bld.env.ENABLE_FASTVIDEO:
+        obj.uselib += ' FASTVIDEO'
+        obj.source += ' j2k_encoder_fastvideo_backend.cc'
 
     obj.target = 'dcpomatic2'
 

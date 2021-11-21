@@ -38,20 +38,9 @@ DCPOMATIC_ENABLE_WARNINGS
 
 
 using std::make_shared;
-using std::shared_ptr;
 using std::string;
-using std::unique_ptr;
 using std::vector;
-using boost::optional;
 using dcp::raw_convert;
-
-
-J2KEncoderRemoteBackend::J2KEncoderRemoteBackend (J2KEncoderRemoteBackend&& other)
-	: _server (other._server)
-	, _backoff (other._backoff)
-{
-
-}
 
 
 vector<dcp::ArrayData>

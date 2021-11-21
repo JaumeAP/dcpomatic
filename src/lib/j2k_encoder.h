@@ -28,6 +28,7 @@
  */
 
 
+#include "barrier.h"
 #include "cross.h"
 #include "event_history.h"
 #include "exception_store.h"
@@ -86,10 +87,15 @@ private:
 	void frame_done ();
 
 	void encoder_thread (std::shared_ptr<J2KEncoderBackend> backend);
+	int create_cpu_threads ();
 	void terminate_threads ();
 
 	std::shared_ptr<const Film> _film;
 
+#ifdef DCPOMATIC_FASTVIDEO
+	int create_fastvideo_threads ();
+	Barrier _gpu_barrier;
+#endif
 
 	EventHistory _history;
 

@@ -29,9 +29,6 @@
 class J2KEncoderCPUBackend : public J2KEncoderBackend
 {
 public:
-	J2KEncoderCPUBackend () = default;
-	J2KEncoderCPUBackend (J2KEncoderCPUBackend&& other) = default;
-
 	std::vector<dcp::ArrayData> encode (std::vector<DCPVideo> const& video) override;
 };
 

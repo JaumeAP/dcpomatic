@@ -2,7 +2,7 @@
 
 cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/..
 
-export LD_LIBRARY_PATH=build/src/lib:build/src:/home/c.hetherington/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=build/src/lib:build/src:/home/carl/fastvideo/current/fastvideo_sdk/lib:/home/carl/fastvideo/current/bin:$LD_LIBRARY_PATH
 if [ "$1" == "--debug" ]; then
     shift
     gdb --args build/src/tools/dcpomatic2_cli "$@"

@@ -77,6 +77,7 @@ def options(opt):
     opt.add_option('--enable-disk',       action='store_true', default=False, help='build dcpomatic2_disk tool; requires Boost process, lwext4 and nanomsg libraries')
     opt.add_option('--warnings-are-errors', action='store_true', default=False, help='build with -Werror')
     opt.add_option('--wx-config',         help='path to wx-config')
+    opt.add_option('--fastvideo-sdk',     help='path to fastvideo SDK (containing fastvideo_sdk directory)')
 
 def configure(conf):
     conf.load('compiler_cxx')
@@ -94,6 +95,7 @@ def configure(conf):
     conf.env.DEBUG = conf.options.enable_debug
     conf.env.STATIC_DCPOMATIC = conf.options.static_dcpomatic
     conf.env.ENABLE_DISK = conf.options.enable_disk
+    conf.env.ENABLE_FASTVIDEO = conf.options.fastvideo_sdk is not None
     if conf.options.destdir == '':
         conf.env.INSTALL_PREFIX = conf.options.prefix
     else:
@@ -541,6 +543,17 @@ def configure(conf):
                            msg='Checking for boost process library',
                            lib=deps,
                            uselib_store='BOOST_PROCESS')
+
+    # fastvideo
+    if conf.options.fastvideo_sdk is not None:
+        conf.env.INCLUDES_FASTVIDEO = [
+            os.path.join(conf.options.fastvideo_sdk),
+            os.path.join(conf.options.fastvideo_sdk, "core_samples"),
+            os.path.join(conf.options.fastvideo_sdk, "fastvideo_sdk", "inc")]
+        conf.env.LIBPATH_FASTVIDEO = [ os.path.join(conf.options.fastvideo_sdk, "fastvideo_sdk", "lib") ]
+        conf.env.LIB_FASTVIDEO = [ 'fastvideo_sdk', 'fastvideo_decoder_j2k', 'fastvideo_encoder_j2k', 'cuda', 'cudart', 'omp5' ]
+        conf.env.append_value('CXXFLAGS', '-DDCPOMATIC_FASTVIDEO')
+
 
     # Other stuff
 

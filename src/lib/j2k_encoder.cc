@@ -26,6 +26,9 @@
 
 #include "j2k_encoder_cpu_backend.h"
 #include "j2k_encoder_remote_backend.h"
+#ifdef DCPOMATIC_FASTVIDEO
+#include "j2k_encoder_fastvideo_backend.h"
+#endif
 #include "j2k_encoder.h"
 #include "util.h"
 #include "film.h"
@@ -60,6 +63,9 @@ using namespace dcpomatic;
  */
 J2KEncoder::J2KEncoder (shared_ptr<const Film> film, shared_ptr<Writer> writer)
 	: _film (film)
+#ifdef DCPOMATIC_FASTVIDEO
+	, _gpu_barrier (Config::instance()->master_encoding_threads())
+#endif
 	, _history (200)
 	, _writer (writer)
 {
@@ -104,6 +110,10 @@ J2KEncoder::end ()
 	boost::mutex::scoped_lock lock (_queue_mutex);
 
 	LOG_GENERAL (N_("Clearing queue of %1"), _queue.size ());
+
+#ifdef DCPOMATIC_FASTVIDEO
+	_gpu_barrier.lower();
+#endif
 
 	/* Keep waking workers until the queue is empty */
 	while (!_queue.empty ()) {
@@ -341,20 +351,12 @@ catch (...)
 }
 
 
-void
-J2KEncoder::servers_list_changed ()
-try
+int
+J2KEncoder::create_cpu_threads ()
 {
-	boost::mutex::scoped_lock lm (_threads_mutex);
+	int parallel = 0;
 
-	terminate_threads ();
-	_threads = make_shared<boost::thread_group>();
-
-	_frames_in_parallel = 0;
-
-	/* XXX: could re-use threads */
-
-	if (!Config::instance()->only_servers_encode ()) {
+	if (!Config::instance()->only_servers_encode()) {
 		auto backend = std::make_shared<J2KEncoderCPUBackend>();
 		for (int i = 0; i < Config::instance()->master_encoding_threads (); ++i) {
 #ifdef DCPOMATIC_LINUX
@@ -363,7 +365,7 @@ try
 #else
 			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, backend));
 #endif
-			_frames_in_parallel += backend->quantity();
+			parallel += backend->quantity();
 		}
 	}
 
@@ -377,11 +379,54 @@ try
 		LOG_GENERAL (N_("Adding %1 worker threads for remote %2"), i.threads(), i.host_name());
 		for (int j = 0; j < i.threads(); ++j) {
 			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, backend));
-			_frames_in_parallel += backend->quantity();
+			parallel += backend->quantity();
 		}
 	}
 
-	_writer->set_encoder_threads (_threads->size());
+	return parallel;
+}
+
+
+#ifdef DCPOMATIC_FASTVIDEO
+int
+J2KEncoder::create_fastvideo_threads ()
+{
+	int parallel = 0;
+	for (int i = 0; i < Config::instance()->master_encoding_threads(); ++i) {
+		auto backend = std::make_shared<J2KEncoderFastvideoBackend>(_gpu_barrier);
+		_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, backend));
+		parallel += backend->quantity();
+	}
+	return parallel;
+}
+#endif
+
+
+void
+J2KEncoder::servers_list_changed ()
+try
+{
+	boost::mutex::scoped_lock lm (_threads_mutex);
+
+	terminate_threads ();
+	_threads = make_shared<boost::thread_group>();
+
+	/* XXX: could re-use threads */
+
+#ifdef DCPOMATIC_FASTVIDEO
+	switch (Config::instance()->encoding_backend()) {
+		case Config::EncodingBackend::CPU:
+			_frames_in_parallel = create_cpu_threads();
+			break;
+		case Config::EncodingBackend::FASTVIDEO:
+			_frames_in_parallel = create_fastvideo_threads();
+			break;
+	}
+#else
+	_frames_in_parallel = create_cpu_threads();
+#endif
+
+	_writer->set_encoder_threads (_frames_in_parallel);
 }
 catch (...) {
 	terminate_threads ();

@@ -50,6 +50,15 @@ class DKDMRecipient;
 class Config : public State
 {
 public:
+	enum class EncodingBackend {
+		CPU,
+		FASTVIDEO
+	};
+
+	EncodingBackend encoding_backend() const {
+		return _encoding_backend;
+	}
+
 	/** @return number of threads which a master DoM should use for J2K encoding on the local machine */
 	int master_encoding_threads () const {
 		return _master_encoding_threads;
@@ -544,6 +553,10 @@ public:
 	}
 
 	/* SET (mostly) */
+
+	void set_encoding_backend (EncodingBackend backend) {
+		maybe_set (_encoding_backend, backend);
+	}
 
 	void set_master_encoding_threads (int n) {
 		maybe_set (_master_encoding_threads, n);
@@ -1122,6 +1135,7 @@ private:
 		changed (prop);
 	}
 
+	EncodingBackend _encoding_backend;
 	/** number of threads which a master DoM should use for J2K encoding on the local machine */
 	int _master_encoding_threads;
 	/** number of threads which a server should use for J2K encoding on the local machine */

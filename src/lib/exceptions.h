@@ -32,6 +32,9 @@
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
+#ifdef DCPOMATIC_FASTVIDEO
+#include <common/EnumToStringSdk.h>
+#endif
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <cstring>
@@ -445,6 +448,20 @@ public:
 			: std::runtime_error (s)
 		{}
 };
+
+
+#ifdef DCPOMATIC_FASTVIDEO
+class FastvideoError : public std::runtime_error
+{
+public:
+	template <class T>
+        FastvideoError (std::string s, T code)
+		: std::runtime_error (String::compose("Fastvideo error in %1 (%2)", s, EnumToString(code)))
+	{}
+
+        FastvideoError (std::string s, std::string message);
+};
+#endif
 
 
 #endif

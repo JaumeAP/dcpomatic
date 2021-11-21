@@ -316,6 +316,8 @@ def build(bld):
         obj.uselib += 'WINSOCK2 OLE32 DSOUND WINMM KSUSER GL GLU GLEW '
     if bld.env.TARGET_OSX:
         obj.framework = ['CoreAudio', 'OpenGL']
+    if bld.env.ENABLE_FASTVIDEO:
+        obj.uselib += ' FASTVIDEO'
     obj.use = 'libdcpomatic2'
     obj.source = sources
     obj.target = 'dcpomatic2-wx'

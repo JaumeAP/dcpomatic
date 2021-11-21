@@ -35,8 +35,6 @@ public:
 		, _timeout (timeout)
 	{}
 
-	J2KEncoderRemoteBackend (J2KEncoderRemoteBackend&& other);
-
 	std::vector<dcp::ArrayData> encode (std::vector<DCPVideo> const& video) override;
 
 private:

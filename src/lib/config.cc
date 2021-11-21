@@ -80,6 +80,7 @@ Config::Config ()
 void
 Config::set_defaults ()
 {
+	_encoding_backend = EncodingBackend::CPU;
 	_master_encoding_threads = max (2U, boost::thread::hardware_concurrency ());
 	_server_encoding_threads = max (2U, boost::thread::hardware_concurrency ());
 	_server_port_base = 6192;
@@ -236,6 +237,10 @@ try
 	if (version && *version < _current_version) {
 		/* Back up the old config before we re-write it in a back-incompatible way */
 		backup ();
+	}
+
+	if (auto encoding_backend = f.optional_string_child("EncodingBackend")) {
+		_encoding_backend = *encoding_backend == "cpu" ? EncodingBackend::CPU : EncodingBackend::FASTVIDEO;
 	}
 
 	if (f.optional_number_child<int>("NumLocalEncodingThreads")) {
@@ -609,6 +614,7 @@ Config::write_config () const
 
 	/* [XML] Version The version number of the configuration file format. */
 	root->add_child("Version")->add_child_text (raw_convert<string>(_current_version));
+	root->add_child("EncodingBackend")->add_child_text(_encoding_backend == EncodingBackend::CPU ? "cpu" : "fastvideo");
 	/* [XML] MasterEncodingThreads Number of encoding threads to use when running as master. */
 	root->add_child("MasterEncodingThreads")->add_child_text (raw_convert<string> (_master_encoding_threads));
 	/* [XML] ServerEncodingThreads Number of encoding threads to use when running as server. */

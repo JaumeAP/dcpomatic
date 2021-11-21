@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export LD_LIBRARY_PATH=build/src/lib:build/src/wx:build/src/asdcplib/src:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=build/src/lib:build/src:/home/carl/fastvideo/current/fastvideo_sdk/lib:/home/carl/fastvideo/current/bin:$LD_LIBRARY_PATH
 export DYLD_LIBRARY_PATH=$build/src/lib:$build/src/wx:$build/src/asdcplib/src:/Users/ci/osx-environment/x86_64/10.10/lib
 export DCPOMATIC_GRAPHICS=graphics
 if [ "$1" == "--debug" ]; then

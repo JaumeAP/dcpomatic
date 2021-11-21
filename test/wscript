@@ -40,6 +40,8 @@ def build(bld):
         obj.uselib += 'WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE '
     if bld.env.TARGET_LINUX:
         obj.uselib += 'DL '
+    if bld.env.ENABLE_FASTVIDEO:
+        obj.uselib += ' FASTVIDEO'
     obj.use    = 'libdcpomatic2'
     obj.source = """
                  4k_test.cc
@@ -53,6 +55,7 @@ def build(bld):
                  audio_processor_test.cc
                  audio_processor_delay_test.cc
                  audio_ring_buffers_test.cc
+                 barrier_test.cc
                  butler_test.cc
                  cinema_sound_processor_test.cc
                  client_server_test.cc
@@ -151,6 +154,9 @@ def build(bld):
     if bld.env.TARGET_LINUX and bld.env.ENABLE_DISK:
         obj.source += " disk_writer_test.cc"
         obj.uselib += "LWEXT4 NANOMSG "
+
+    if bld.env.ENABLE_FASTVIDEO:
+        obj.source += " fastvideo_test.cc"
 
     # Some difference in font rendering between the test machine and others...
     # burnt_subtitle_test.cc

@@ -41,6 +41,8 @@ def build(bld):
         uselib += 'WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE WINSOCK2 OLE32 DSOUND WINMM KSUSER SETUPAPI '
     if bld.env.TARGET_LINUX:
         uselib += 'DL '
+    if bld.env.ENABLE_FASTVIDEO:
+        uselib += ' FASTVIDEO'
 
     cli_tools = ['dcpomatic_cli', 'dcpomatic_server_cli', 'server_test', 'dcpomatic_kdm_cli', 'dcpomatic_create']
     if bld.env.ENABLE_DISK and not bld.env.DISABLE_GUI:

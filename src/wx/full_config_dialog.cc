@@ -94,6 +94,13 @@ private:
 		int r = 0;
 		add_language_controls (table, r);
 
+#ifdef DCPOMATIC_FASTVIDEO
+		add_label_to_sizer (table, _panel, _("Encode using"), true, wxGBPosition(r, 0));
+		_encoding_backend = new wxChoice (_panel, wxID_ANY);
+		table->Add (_encoding_backend, wxGBPosition(r, 1));
+		++r;
+#endif
+
 		add_label_to_sizer (table, _panel, _("Number of threads DCP-o-matic should use"), true, wxGBPosition (r, 0));
 		_master_encoding_threads = new wxSpinCtrl (_panel);
 		table->Add (_master_encoding_threads, wxGBPosition (r, 1));
@@ -128,6 +135,11 @@ private:
 
 		add_update_controls (table, r);
 
+#ifdef DCPOMATIC_FASTVIDEO
+		_encoding_backend->Append ("CPU");
+		_encoding_backend->Append ("GPU");
+		_encoding_backend->Bind (wxEVT_CHOICE, boost::bind(&FullGeneralPage::encoding_backend_changed, this));
+#endif
 		_config_file->Bind  (wxEVT_FILEPICKER_CHANGED, boost::bind(&FullGeneralPage::config_file_changed,  this));
 		_cinemas_file->Bind (wxEVT_FILEPICKER_CHANGED, boost::bind(&FullGeneralPage::cinemas_file_changed, this));
 
@@ -147,6 +159,10 @@ private:
 	{
 		auto config = Config::instance ();
 
+#ifdef DCPOMATIC_FASTVIDEO
+		checked_set (_encoding_backend, Config::instance()->encoding_backend() == Config::EncodingBackend::CPU ? 0 : 1);
+#endif
+
 		checked_set (_master_encoding_threads, config->master_encoding_threads ());
 		checked_set (_server_encoding_threads, config->server_encoding_threads ());
 #ifdef DCPOMATIC_HAVE_EBUR128_PATCHED_FFMPEG
@@ -157,6 +173,11 @@ private:
 		checked_set (_cinemas_file, config->cinemas_file());
 
 		GeneralPage::config_changed ();
+	}
+
+	void encoding_backend_changed ()
+	{
+		Config::instance()->set_encoding_backend(_encoding_backend->GetSelection() == 0 ? Config::EncodingBackend::CPU : Config::EncodingBackend::FASTVIDEO);
 	}
 
 	void export_cinemas_file ()
@@ -225,6 +246,9 @@ private:
 		Config::instance()->set_cinemas_file (wx_to_std (_cinemas_file->GetPath ()));
 	}
 
+#ifdef DCPOMATIC_FASTVIDEO
+	wxChoice* _encoding_backend;
+#endif
 	wxSpinCtrl* _master_encoding_threads;
 	wxSpinCtrl* _server_encoding_threads;
 	FilePickerCtrl* _config_file;
