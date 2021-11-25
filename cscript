@@ -461,7 +461,7 @@ def configure_options(target, options):
     if target.debug:
         opt += ' --enable-debug'
     if target.platform == 'windows':
-        opt += ' --target-windows'
+        opt += ' --target-windows --fastvideo-sdk /opt/fastvideo'
     elif target.platform == 'linux':
         opt += ' --static-dcpomatic --static-wxwidgets --static-ffmpeg --static-dcp --static-sub --static-cxml'
         if target.distro == 'centos':
