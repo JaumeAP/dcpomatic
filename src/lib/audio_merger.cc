@@ -155,7 +155,7 @@ AudioMerger::push (std::shared_ptr<const AudioBuffers> audio, DCPTime time)
 		} else if (before != _buffers.end() && after == _buffers.end()) {
 			/* We have an existing buffer before this one; append new data to it */
 			before->audio->append (part);
-		} else if (before ==_buffers.end() && after != _buffers.end()) {
+		} else if (before == _buffers.end() && after != _buffers.end()) {
 			/* We have an existing buffer after this one; append it to the new data and replace */
 			part->append (after->audio);
 			after->audio = part;
