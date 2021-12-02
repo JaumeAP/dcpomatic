@@ -70,8 +70,8 @@ DCP::cpls () const
 		}
 		dcps.push_back (dcp);
 		LOG_GENERAL ("Reading DCP %1: %2 CPLs", i.string(), dcp->cpls().size());
-		for (auto i: dcp->cpls()) {
-			cpls.push_back (i);
+		for (auto j: dcp->cpls()) {
+			cpls.push_back (j);
 		}
 	}
 
