@@ -57,20 +57,20 @@ private:
 	void add_to_grid () override;
 	boost::optional<float> peak () const;
 
-	wxCheckBox* _reference;
-	wxStaticText* _reference_note;
-	wxButton* _show;
-	wxStaticText* _gain_label;
-	wxStaticText* _gain_db_label;
-	ContentSpinCtrlDouble<AudioContent>* _gain;
-	wxButton* _gain_calculate_button;
-	wxStaticText* _peak;
-	wxStaticText* _delay_label;
-	wxStaticText* _delay_ms_label;
-	ContentSpinCtrl<AudioContent>* _delay;
-	AudioMappingView* _mapping;
-	wxStaticText* _description;
-	AudioDialog* _audio_dialog;
+	wxCheckBox* _reference = nullptr;
+	wxStaticText* _reference_note = nullptr;
+	wxButton* _show = nullptr;
+	wxStaticText* _gain_label = nullptr;
+	wxStaticText* _gain_db_label = nullptr;
+	ContentSpinCtrlDouble<AudioContent>* _gain = nullptr;
+	wxButton* _gain_calculate_button = nullptr;
+	wxStaticText* _peak = nullptr;
+	wxStaticText* _delay_label = nullptr;
+	wxStaticText* _delay_ms_label = nullptr;
+	ContentSpinCtrl<AudioContent>* _delay = nullptr;
+	AudioMappingView* _mapping = nullptr;
+	wxStaticText* _description = nullptr;
+	AudioDialog* _audio_dialog = nullptr;
 
 	boost::signals2::scoped_connection _mapping_connection;
 	boost::signals2::scoped_connection _active_jobs_connection;

@@ -50,24 +50,24 @@ private:
 
 	std::weak_ptr<FilmViewer> _viewer;
 
-	wxStaticText* _h_label;
-	wxStaticText* _m_label;
-	wxStaticText* _s_label;
-	wxStaticText* _f_label;
-	wxStaticText* _colon[3];
-	wxStaticText* _position_label;
-	Timecode<dcpomatic::DCPTime>* _position;
-	wxButton* _move_to_start_of_reel;
-	wxStaticText* _full_length_label;
-	Timecode<dcpomatic::DCPTime>* _full_length;
-	wxStaticText* _trim_start_label;
-	Timecode<dcpomatic::ContentTime>* _trim_start;
-	wxButton* _trim_start_to_playhead;
-	wxButton* _trim_end_to_playhead;
-	wxStaticText* _trim_end_label;
-	Timecode<dcpomatic::ContentTime>* _trim_end;
-	wxStaticText* _play_length_label;
-	Timecode<dcpomatic::DCPTime>* _play_length;
+	wxStaticText* _h_label = nullptr;
+	wxStaticText* _m_label = nullptr;
+	wxStaticText* _s_label = nullptr;
+	wxStaticText* _f_label = nullptr;
+	wxStaticText* _colon[3] = { nullptr, nullptr, nullptr };
+	wxStaticText* _position_label = nullptr;
+	Timecode<dcpomatic::DCPTime>* _position = nullptr;
+	wxButton* _move_to_start_of_reel = nullptr;
+	wxStaticText* _full_length_label = nullptr;
+	Timecode<dcpomatic::DCPTime>* _full_length = nullptr;
+	wxStaticText* _trim_start_label = nullptr;
+	Timecode<dcpomatic::ContentTime>* _trim_start = nullptr;
+	wxButton* _trim_start_to_playhead = nullptr;
+	wxButton* _trim_end_to_playhead = nullptr;
+	wxStaticText* _trim_end_label = nullptr;
+	Timecode<dcpomatic::ContentTime>* _trim_end = nullptr;
+	wxStaticText* _play_length_label = nullptr;
+	Timecode<dcpomatic::DCPTime>* _play_length = nullptr;
 
 	Suspender _film_content_changed_suspender;
 };
