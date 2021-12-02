@@ -1200,11 +1200,6 @@ operator== (Image const & a, Image const & b)
 void
 Image::fade (float f)
 {
-	/* U/V black value for 8-bit colour */
-	static int const eight_bit_uv =    (1 << 7) - 1;
-	/* U/V black value for 10-bit colour */
-	static uint16_t const ten_bit_uv = (1 << 9) - 1;
-
 	switch (_pixel_format) {
 	case AV_PIX_FMT_YUV420P:
 	{

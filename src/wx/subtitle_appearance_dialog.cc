@@ -333,7 +333,6 @@ SubtitleAppearanceDialog::active_jobs_changed (optional<string> last)
 void
 SubtitleAppearanceDialog::add_colours ()
 {
-	auto colours = _stream->colours ();
 	for (auto const& i: _stream->colours()) {
 		auto from = new wxPanel(_colours_panel, wxID_ANY);
 		from->SetBackgroundColour(wxColour(i.first.r, i.first.g, i.first.b, i.first.a));

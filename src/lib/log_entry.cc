@@ -62,7 +62,6 @@ LogEntry::get () const
 		time_t const sec = _time.tv_sec;
 		struct tm* t = localtime (&sec);
 		strftime (buffer, 64, "%c", t);
-		string a (buffer);
 		s += string(buffer) + N_(": ");
 	}
 

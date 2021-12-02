@@ -59,7 +59,6 @@ DCPSubtitleContent::examine (shared_ptr<const Film> film, shared_ptr<Job> job)
 
 	auto sc = load (path(0));
 
-	auto iop = dynamic_pointer_cast<dcp::InteropSubtitleAsset>(sc);
 	auto smpte = dynamic_pointer_cast<dcp::SMPTESubtitleAsset>(sc);
 	if (smpte) {
 		set_video_frame_rate (smpte->edit_rate().numerator);

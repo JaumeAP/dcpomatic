@@ -557,7 +557,6 @@ void
 Film::write_template (boost::filesystem::path path) const
 {
 	boost::filesystem::create_directories (path.parent_path());
-	shared_ptr<xmlpp::Document> doc = metadata (false);
 	metadata(false)->write_to_file_formatted(path.string());
 }
 
@@ -1101,7 +1100,6 @@ Film::isdcf_name (bool if_created_now) const
 string
 Film::dcp_name (bool if_created_now) const
 {
-	string unfiltered;
 	if (use_isdcf_name()) {
 		return careful_string_filter (isdcf_name (if_created_now));
 	}
