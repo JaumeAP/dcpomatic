@@ -260,10 +260,10 @@ AudioDialog::try_to_load_analysis ()
 			mapped = film->mapped_audio_channels ();
 		}
 
-		for (auto i: mapped) {
-			if (_channel_checkbox[i]) {
-				_channel_checkbox[i]->SetValue (true);
-				_plot->set_channel_visible (i, true);
+		for (auto channel: mapped) {
+			if (_channel_checkbox[channel]) {
+				_channel_checkbox[channel]->SetValue (true);
+				_plot->set_channel_visible (channel, true);
 			}
 		}
 	}
@@ -274,9 +274,9 @@ AudioDialog::try_to_load_analysis ()
 	}
 
 	if (i == AudioPoint::COUNT) {
-		for (int i = 0; i < AudioPoint::COUNT; ++i) {
-			_type_checkbox[i]->SetValue (true);
-			_plot->set_type_visible (i, true);
+		for (int j = 0; j < AudioPoint::COUNT; ++j) {
+			_type_checkbox[j]->SetValue (true);
+			_plot->set_type_visible (j, true);
 		}
 	}
 
@@ -403,12 +403,12 @@ AudioDialog::setup_statistics ()
 	}
 
 	if (_analysis->overall_true_peak()) {
-		float const peak = _analysis->overall_true_peak().get();
-		float const peak_dB = linear_to_db(peak) + _analysis->gain_correction(_playlist);
+		float const true_peak = _analysis->overall_true_peak().get();
+		float const true_peak_dB = linear_to_db(true_peak) + _analysis->gain_correction(_playlist);
 
-		_true_peak->SetLabel (wxString::Format (_("True peak is %.2fdB"), peak_dB));
+		_true_peak->SetLabel (wxString::Format (_("True peak is %.2fdB"), true_peak_dB));
 
-		if (peak_dB > -3) {
+		if (true_peak_dB > -3) {
 			_true_peak->SetForegroundColour (wxColour (255, 0, 0));
 		} else {
 			_true_peak->SetForegroundColour (wxColour (0, 0, 0));

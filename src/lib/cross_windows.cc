@@ -625,8 +625,8 @@ Drive::get ()
 
 		LOG_DISK("Having a look through %1 locked volumes", locked_volumes.size());
 		bool locked = false;
-		for (auto const& i: locked_volumes) {
-			if (i.second == physical_drive) {
+		for (auto const& j: locked_volumes) {
+			if (j.second == physical_drive) {
 				locked = true;
 			}
 		}

@@ -569,12 +569,12 @@ FFmpegDecoder::decode_and_process_video_packet (AVPacket* packet)
 
 	auto images = graph->process (_frame);
 
-	for (auto const& i: images) {
+	for (auto const& j: images) {
 
-		auto image = i.first;
+		auto image = j.first;
 
-		if (i.second != AV_NOPTS_VALUE) {
-			double const pts = i.second * av_q2d(_format_context->streams[_video_stream.get()]->time_base) + _pts_offset.seconds();
+		if (j.second != AV_NOPTS_VALUE) {
+			double const pts = j.second * av_q2d(_format_context->streams[_video_stream.get()]->time_base) + _pts_offset.seconds();
 
 			video->emit (
 				film(),

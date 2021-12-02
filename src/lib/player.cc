@@ -200,8 +200,8 @@ Player::setup_pieces_unlocked ()
 		}
 
 		if (_ignore_text) {
-			for (auto i: decoder->text) {
-				i->set_ignore (true);
+			for (auto text: decoder->text) {
+				text->set_ignore (true);
 			}
 		}
 

@@ -173,8 +173,8 @@ FFmpegContent::FFmpegContent (vector<shared_ptr<Content>> c)
 	auto ref = dynamic_pointer_cast<FFmpegContent> (c[0]);
 	DCPOMATIC_ASSERT (ref);
 
-	for (size_t i = 0; i < c.size(); ++i) {
-		auto fc = dynamic_pointer_cast<FFmpegContent>(c[i]);
+	for (size_t j = 0; j < c.size(); ++j) {
+		auto fc = dynamic_pointer_cast<FFmpegContent>(c[j]);
 		if (fc->only_text() && fc->only_text()->use() && *(fc->_subtitle_stream.get()) != *(ref->_subtitle_stream.get())) {
 			throw JoinError (_("Content to be joined must use the same subtitle stream."));
 		}

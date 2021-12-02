@@ -730,9 +730,9 @@ Film::read_metadata (optional<boost::filesystem::path> path)
 				/* Invalid region subtag; just ignore it */
 			}
 		}
-		if (auto audio_language = isdcf->optional_string_child("AudioLanguage")) {
+		if (auto isdcf_audio_language = isdcf->optional_string_child("AudioLanguage")) {
 			try {
-				_audio_language = dcp::LanguageTag(*audio_language);
+				_audio_language = dcp::LanguageTag(*isdcf_audio_language);
 			} catch (...) {
 				/* Invalid language tag; just ignore it */
 			}
@@ -1077,8 +1077,8 @@ Film::isdcf_name (bool if_created_now) const
 		}
 
 		bool any_text = false;
-		for (int i = 0; i < static_cast<int>(TextType::COUNT); ++i) {
-			if (dc->reference_text(static_cast<TextType>(i))) {
+		for (int j = 0; j < static_cast<int>(TextType::COUNT); ++j) {
+			if (dc->reference_text(static_cast<TextType>(j))) {
 				any_text = true;
 			}
 		}
@@ -1397,11 +1397,11 @@ Film::maybe_add_content (weak_ptr<Job> j, weak_ptr<Content> c, bool disable_audi
 	if (Config::instance()->automatic_audio_analysis() && content->audio && !disable_audio_analysis) {
 		auto playlist = make_shared<Playlist>();
 		playlist->add (shared_from_this(), content);
-		boost::signals2::connection c;
+		boost::signals2::connection connection;
 		JobManager::instance()->analyse_audio (
-			shared_from_this(), playlist, false, c, bind (&Film::audio_analysis_finished, this)
+			shared_from_this(), playlist, false, connection, bind (&Film::audio_analysis_finished, this)
 			);
-		_audio_analysis_connections.push_back (c);
+		_audio_analysis_connections.push_back (connection);
 	}
 }
 

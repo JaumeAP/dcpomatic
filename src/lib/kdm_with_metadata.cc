@@ -240,33 +240,33 @@ email (
 		}
 		boost::algorithm::replace_all (body, "$SCREENS", screens.substr (0, screens.length() - 2));
 
-		Emailer email (config->kdm_from(), i.front()->emails(), subject, body);
+		Emailer emailer (config->kdm_from(), i.front()->emails(), subject, body);
 
-		for (auto i: config->kdm_cc()) {
-			email.add_cc (i);
+		for (auto cc: config->kdm_cc()) {
+			emailer.add_cc (cc);
 		}
 		if (!config->kdm_bcc().empty()) {
-			email.add_bcc (config->kdm_bcc());
+			emailer.add_bcc (config->kdm_bcc());
 		}
 
-		email.add_attachment (zip_file, container_name_format.get(i.front()->name_values(), ".zip"), "application/zip");
+		emailer.add_attachment (zip_file, container_name_format.get(i.front()->name_values(), ".zip"), "application/zip");
 
 		try {
-			email.send (config->mail_server(), config->mail_port(), config->mail_protocol(), config->mail_user(), config->mail_password());
+			emailer.send (config->mail_server(), config->mail_port(), config->mail_protocol(), config->mail_user(), config->mail_password());
 		} catch (...) {
 			boost::filesystem::remove (zip_file);
 			dcpomatic_log->log ("Email content follows", LogEntry::TYPE_DEBUG_EMAIL);
-			dcpomatic_log->log (email.email(), LogEntry::TYPE_DEBUG_EMAIL);
+			dcpomatic_log->log (emailer.email(), LogEntry::TYPE_DEBUG_EMAIL);
 			dcpomatic_log->log ("Email session follows", LogEntry::TYPE_DEBUG_EMAIL);
-			dcpomatic_log->log (email.notes(), LogEntry::TYPE_DEBUG_EMAIL);
+			dcpomatic_log->log (emailer.notes(), LogEntry::TYPE_DEBUG_EMAIL);
 			throw;
 		}
 
 		boost::filesystem::remove (zip_file);
 
 		dcpomatic_log->log ("Email content follows", LogEntry::TYPE_DEBUG_EMAIL);
-		dcpomatic_log->log (email.email(), LogEntry::TYPE_DEBUG_EMAIL);
+		dcpomatic_log->log (emailer.email(), LogEntry::TYPE_DEBUG_EMAIL);
 		dcpomatic_log->log ("Email session follows", LogEntry::TYPE_DEBUG_EMAIL);
-		dcpomatic_log->log (email.notes(), LogEntry::TYPE_DEBUG_EMAIL);
+		dcpomatic_log->log (emailer.notes(), LogEntry::TYPE_DEBUG_EMAIL);
 	}
 }
