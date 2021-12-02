@@ -1,2 +1,2 @@
 #!/bin/bash
-cppcheck --enable=all --quiet -U check . > log 2>&1
+cppcheck --enable=all --quiet -U check --suppress=passedByValue --suppress=useStlAlgorithm --suppress=syntaxError src test > log 2>&1
