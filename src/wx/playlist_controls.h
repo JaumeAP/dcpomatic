@@ -36,8 +36,8 @@ public:
 	*/
 	boost::signals2::signal<void (std::weak_ptr<Film>)> ResetFilm;
 
-	void play ();
-	void stop ();
+	void play () override;
+	void stop () override;
 
 private:
 	void play_clicked ();

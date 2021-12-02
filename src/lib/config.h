@@ -1066,7 +1066,7 @@ public:
 
 	static boost::signals2::signal<bool (BadReason)> Bad;
 
-	void write () const;
+	void write () const override;
 	void write_config () const;
 	void write_cinemas () const;
 	void write_dkdm_recipients () const;
@@ -1091,7 +1091,7 @@ public:
 
 private:
 	Config ();
-	void read ();
+	void read () override;
 	void set_defaults ();
 	void set_kdm_email_to_default ();
 	void set_notification_email_to_default ();

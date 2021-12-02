@@ -54,9 +54,9 @@ public:
 	AnalyseAudioJob (std::shared_ptr<const Film>, std::shared_ptr<const Playlist>, bool from_zero);
 	~AnalyseAudioJob ();
 
-	std::string name () const;
-	std::string json_name () const;
-	void run ();
+	std::string name () const override;
+	std::string json_name () const override;
+	void run () override;
 
 	boost::filesystem::path path () const {
 		return _path;

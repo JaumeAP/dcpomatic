@@ -29,7 +29,7 @@ public:
 
 private:
 	int insert_position () const;
-	void job_list_changed ();
+	void job_list_changed () override;
 
 	void finish_setup (wxWindow* parent, wxSizer* sizer);
 	void higher_priority_clicked ();
