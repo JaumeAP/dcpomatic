@@ -53,7 +53,7 @@ public:
 	class ReadDigestScope
 	{
 	public:
-		ReadDigestScope (std::shared_ptr<Socket> socket);
+		explicit ReadDigestScope (std::shared_ptr<Socket> socket);
 		bool check ();
 	private:
 		std::weak_ptr<Socket> _socket;
@@ -66,7 +66,7 @@ public:
 	class WriteDigestScope
 	{
 	public:
-		WriteDigestScope (std::shared_ptr<Socket> socket);
+		explicit WriteDigestScope (std::shared_ptr<Socket> socket);
 		~WriteDigestScope ();
 	private:
 		std::weak_ptr<Socket> _socket;

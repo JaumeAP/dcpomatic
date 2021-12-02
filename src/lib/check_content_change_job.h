@@ -27,7 +27,7 @@
 class CheckContentChangeJob : public Job
 {
 public:
-	CheckContentChangeJob (std::shared_ptr<const Film>);
+	explicit CheckContentChangeJob (std::shared_ptr<const Film>);
 	~CheckContentChangeJob ();
 
 	std::string name () const override;

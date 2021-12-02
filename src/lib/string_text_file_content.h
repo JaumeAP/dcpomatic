@@ -31,7 +31,7 @@ class Job;
 class StringTextFileContent : public Content
 {
 public:
-	StringTextFileContent (boost::filesystem::path);
+	explicit StringTextFileContent (boost::filesystem::path);
 	StringTextFileContent (cxml::ConstNodePtr, int, std::list<std::string>&);
 
 	std::shared_ptr<StringTextFileContent> shared_from_this () {

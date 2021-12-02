@@ -50,7 +50,7 @@ class ContentPart;
 class DCPContent : public Content
 {
 public:
-	DCPContent (boost::filesystem::path p);
+	explicit DCPContent (boost::filesystem::path p);
 	DCPContent (cxml::ConstNodePtr, int version);
 
 	std::shared_ptr<DCPContent> shared_from_this () {

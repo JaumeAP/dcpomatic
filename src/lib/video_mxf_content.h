@@ -25,7 +25,7 @@
 class VideoMXFContent : public Content
 {
 public:
-	VideoMXFContent (boost::filesystem::path path);
+	explicit VideoMXFContent (boost::filesystem::path path);
 	VideoMXFContent (cxml::ConstNodePtr node, int version);
 
 	std::shared_ptr<VideoMXFContent> shared_from_this () {

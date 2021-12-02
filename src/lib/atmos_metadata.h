@@ -26,7 +26,7 @@
 class AtmosMetadata
 {
 public:
-	AtmosMetadata (std::shared_ptr<const dcp::AtmosAsset> asset);
+	explicit AtmosMetadata (std::shared_ptr<const dcp::AtmosAsset> asset);
 	std::shared_ptr<dcp::AtmosAsset> create (dcp::Fraction edit_rate) const;
 
 private:

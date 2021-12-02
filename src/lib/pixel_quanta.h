@@ -49,7 +49,7 @@ public:
 		, y(y_)
 	{}
 
-	PixelQuanta (cxml::ConstNodePtr node);
+	explicit PixelQuanta (cxml::ConstNodePtr node);
 
 	void as_xml (xmlpp::Element* node) const;
 

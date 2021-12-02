@@ -35,7 +35,7 @@ class DCPTextTrack
 {
 public:
 	DCPTextTrack () {}
-	DCPTextTrack (cxml::ConstNodePtr node);
+	explicit DCPTextTrack (cxml::ConstNodePtr node);
 	DCPTextTrack (std::string name_, boost::optional<dcp::LanguageTag> language_);
 
 	std::string name;

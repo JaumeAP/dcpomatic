@@ -47,9 +47,9 @@ public:
 class FFmpegContent : public Content
 {
 public:
-	FFmpegContent (boost::filesystem::path);
+	explicit FFmpegContent (boost::filesystem::path);
 	FFmpegContent (cxml::ConstNodePtr, int version, std::list<std::string> &);
-	FFmpegContent (std::vector<std::shared_ptr<Content>>);
+	explicit FFmpegContent (std::vector<std::shared_ptr<Content>>);
 
 	std::shared_ptr<FFmpegContent> shared_from_this () {
 		return std::dynamic_pointer_cast<FFmpegContent> (Content::shared_from_this ());

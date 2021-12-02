@@ -26,7 +26,7 @@
 class ImageContent : public Content
 {
 public:
-	ImageContent (boost::filesystem::path);
+	explicit ImageContent (boost::filesystem::path);
 	ImageContent (cxml::ConstNodePtr, int);
 
 	std::shared_ptr<ImageContent> shared_from_this () {

@@ -155,7 +155,7 @@ public:
 class FileNotFoundError : public std::runtime_error
 {
 public:
-	FileNotFoundError (boost::filesystem::path f);
+	explicit FileNotFoundError (boost::filesystem::path f);
 	virtual ~FileNotFoundError () throw () {}
 
 	/** @return name of the file that this exception concerns */
@@ -178,7 +178,7 @@ public:
 	/** @param f File that we were trying to read from.
 	 *  @param e errno value, or 0.
 	 */
-	ReadFileError (boost::filesystem::path f, int e = 0);
+	explicit ReadFileError (boost::filesystem::path f, int e = 0);
 };
 
 
@@ -378,7 +378,7 @@ class GLError : public std::runtime_error
 {
 public:
 	GLError (char const* last, int e);
-	GLError (char const* message);
+	explicit GLError (char const* message);
 };
 
 
@@ -388,7 +388,7 @@ public:
 class CopyError : public std::runtime_error
 {
 public:
-	CopyError (std::string s, boost::optional<int> n = boost::optional<int>());
+	explicit CopyError (std::string s, boost::optional<int> n = boost::optional<int>());
 	virtual ~CopyError () throw () {}
 
 	std::string message () const {

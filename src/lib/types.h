@@ -216,7 +216,7 @@ extern bool operator!= (Crop const & a, Crop const & b);
 
 struct CPLSummary
 {
-	CPLSummary (boost::filesystem::path p);
+	explicit CPLSummary (boost::filesystem::path p);
 
 	CPLSummary (std::string d, std::string i, std::string a, boost::filesystem::path f, bool e, time_t t)
 		: dcp_directory (d)

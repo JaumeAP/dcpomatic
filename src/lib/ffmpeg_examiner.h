@@ -33,7 +33,7 @@ class Job;
 class FFmpegExaminer : public FFmpeg, public VideoExaminer
 {
 public:
-	FFmpegExaminer (std::shared_ptr<const FFmpegContent>, std::shared_ptr<Job> job = std::shared_ptr<Job>());
+	explicit FFmpegExaminer (std::shared_ptr<const FFmpegContent>, std::shared_ptr<Job> job = std::shared_ptr<Job>());
 
 	bool has_video () const override;
 
