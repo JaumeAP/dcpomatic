@@ -156,7 +156,7 @@ AudioContent::technical_summary () const
 
 
 void
-AudioContent::set_mapping (AudioMapping mapping)
+AudioContent::set_mapping (AudioMapping const& mapping)
 {
 	ContentChangeSignaller cc (_parent, AudioContentProperty::STREAMS);
 
@@ -343,7 +343,7 @@ AudioContent::add_properties (shared_ptr<const Film> film, list<UserProperty>& p
 
 
 void
-AudioContent::set_streams (vector<AudioStreamPtr> streams)
+AudioContent::set_streams (vector<AudioStreamPtr> const& streams)
 {
 	ContentChangeSignaller cc (_parent, AudioContentProperty::STREAMS);
 

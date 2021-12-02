@@ -846,7 +846,7 @@ audio_channel_types (list<int> mapped, int channels)
 }
 
 shared_ptr<AudioBuffers>
-remap (shared_ptr<const AudioBuffers> input, int output_channels, AudioMapping map)
+remap (shared_ptr<const AudioBuffers> input, int output_channels, AudioMapping const& map)
 {
 	auto mapped = make_shared<AudioBuffers>(output_channels, input->frames());
 	mapped->make_silent ();

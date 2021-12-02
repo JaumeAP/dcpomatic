@@ -57,11 +57,11 @@ public:
 		dcpomatic::DCPTime time;
 	};
 
-	void set_sample_peak (std::vector<PeakTime> peak) {
+	void set_sample_peak (std::vector<PeakTime> const& peak) {
 		_sample_peak = peak;
 	}
 
-	void set_true_peak (std::vector<float> peak) {
+	void set_true_peak (std::vector<float> const& peak) {
 		_true_peak = peak;
 	}
 

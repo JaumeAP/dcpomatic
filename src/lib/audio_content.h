@@ -57,7 +57,7 @@ public:
 	void take_settings_from (std::shared_ptr<const AudioContent> c);
 
 	AudioMapping mapping () const;
-	void set_mapping (AudioMapping);
+	void set_mapping (AudioMapping const&);
 	int resampled_frame_rate (std::shared_ptr<const Film> film) const;
 	std::vector<NamedChannel> channel_names () const;
 
@@ -86,7 +86,7 @@ public:
 
 	void add_stream (AudioStreamPtr stream);
 	void set_stream (AudioStreamPtr stream);
-	void set_streams (std::vector<AudioStreamPtr> streams);
+	void set_streams (std::vector<AudioStreamPtr> const& streams);
 	AudioStreamPtr stream () const;
 
 	void add_properties (std::shared_ptr<const Film> film, std::list<UserProperty> &) const;

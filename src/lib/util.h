@@ -115,7 +115,7 @@ extern std::string atmos_asset_filename (std::shared_ptr<dcp::AtmosAsset> asset,
 extern float relaxed_string_to_float (std::string);
 extern std::string careful_string_filter (std::string);
 extern std::pair<int, int> audio_channel_types (std::list<int> mapped, int channels);
-extern std::shared_ptr<AudioBuffers> remap (std::shared_ptr<const AudioBuffers> input, int output_channels, AudioMapping map);
+extern std::shared_ptr<AudioBuffers> remap (std::shared_ptr<const AudioBuffers> input, int output_channels, AudioMapping const& map);
 extern Eyes increment_eyes (Eyes e);
 extern void checked_fread (void* ptr, size_t size, FILE* stream, boost::filesystem::path path);
 extern void checked_fwrite (void const * ptr, size_t size, FILE* stream, boost::filesystem::path path);

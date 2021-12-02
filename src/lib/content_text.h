@@ -64,7 +64,7 @@ public:
 class ContentStringText : public ContentText
 {
 public:
-	ContentStringText (dcpomatic::ContentTime f, std::list<dcp::SubtitleString> s)
+	ContentStringText (dcpomatic::ContentTime f, std::list<dcp::SubtitleString> const& s)
 		: ContentText (f)
 		, subs (s)
 	{}
