@@ -64,7 +64,7 @@ TimelineTimeAxisView::do_paint (wxGraphicsContext* gc, list<dcpomatic::Rect<int>
 
 	int y = _y * _timeline.pixels_per_track() + 32;
 
-	wxGraphicsPath path = gc->CreatePath ();
+	auto path = gc->CreatePath ();
 	path.MoveToPoint (0, y);
 	path.AddLineToPoint (_timeline.width(), y);
 	gc->StrokePath (path);
