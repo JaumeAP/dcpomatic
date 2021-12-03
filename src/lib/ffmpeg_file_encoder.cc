@@ -501,7 +501,5 @@ void
 FFmpegFileEncoder::buffer_free2 (uint8_t* data)
 {
 	boost::mutex::scoped_lock lm (_pending_images_mutex);
-	if (_pending_images.find(data) != _pending_images.end()) {
-		_pending_images.erase (data);
-	}
+	_pending_images.erase (data);
 }
