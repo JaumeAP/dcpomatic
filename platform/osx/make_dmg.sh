@@ -11,7 +11,7 @@ SYNTAX="make_dmg.sh <environment> <builddir> <apple-id> <apple-password> <arch1>
 version=$(git describe --tags --abbrev=0 --match=v2.*.* --exact-match $1 2> /dev/null)
 if [ "$?" != "0" ]; then
 	# Otherwise use <branch>-<commit>
-    version="$(git name-rev --name-only HEAD)-$(git rev-parse --short HEAD)"
+	version="$(basename $(git name-rev --name-only HEAD))-$(git rev-parse --short HEAD)"
 fi
 
 # DMG size in megabytes
