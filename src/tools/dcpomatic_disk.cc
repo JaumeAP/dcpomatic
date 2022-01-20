@@ -167,7 +167,21 @@ public:
 
 #ifdef DCPOMATIC_OSX
 		LOG_DISK_NC("Sending notification to writer daemon");
-		notify_post ("com.dcpomatic.disk.writer.start");
+		auto result = notify_post ("com.dcpomatic.disk.writer.start");
+		if (result != NOTIFY_STATUS_OK ) {
+			LOG_DISK_NC("Notification did not return OK: %1", result);
+			switch (result) {
+			case NOTIFY_STATUS_INVALID_NAME:
+				LOG_DISK_NC("i.e. INVALID_NAME");
+				break;
+			case NOTIFY_STATUS_FAILED:
+				LOG_DISK_NC("i.e. FAILED");
+				break;
+			case NOTIFY_STATUS_NOT_AUTHORIZED:
+				LOG_DISK_NC("i.e. NOT_AUTHORIZED");
+				break;
+			}
+		}
 #endif
 	}
 
