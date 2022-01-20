@@ -320,10 +320,15 @@ analyse_media_path (CFDictionaryRef& description)
 		return {};
 	}
 
+	char buffer[256];
 	auto path_key_cstr = CFStringGetCStringPtr((CFStringRef) str, kCFStringEncodingUTF8);
 	if (!path_key_cstr) {
-		LOG_DISK_NC("There is no MediaPathKey (no cstring)");
-		return {};
+		if (CFStringGetCString((CFStringRef) str, buffer, 256, kCFStringEncodingUTF8)) {
+			path_key_cstr = buffer;
+		} else {
+			LOG_DISK_NC("There is no MediaPathKey (no cstring)");
+			return {};
+		}
 	}
 
 	string path(path_key_cstr);
