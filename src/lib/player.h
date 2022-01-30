@@ -151,7 +151,7 @@ private:
 	std::pair<std::shared_ptr<AudioBuffers>, dcpomatic::DCPTime> discard_audio (
 		std::shared_ptr<const AudioBuffers> audio, dcpomatic::DCPTime time, dcpomatic::DCPTime discard_to
 		) const;
-	boost::optional<PositionImage> open_subtitles_for_frame (dcpomatic::DCPTime time) const;
+	boost::optional<PositionImage> open_subtitles_for_frame (dcpomatic::DCPTime time, Eyes eyes) const;
 	void emit_video (std::shared_ptr<PlayerVideo> pv, dcpomatic::DCPTime time);
 	void do_emit_video (std::shared_ptr<PlayerVideo> pv, dcpomatic::DCPTime time);
 	void emit_audio (std::shared_ptr<AudioBuffers> data, dcpomatic::DCPTime time);

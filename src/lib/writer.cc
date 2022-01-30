@@ -154,7 +154,9 @@ Writer::write (shared_ptr<const Data> encoded, Frame frame, Eyes eyes)
 	qi.frame = frame - _reels[qi.reel].start ();
 
 	if (film()->three_d() && eyes == Eyes::BOTH) {
-		/* 2D material in a 3D DCP; fake the 3D */
+		/* 2D material in a 3D DCP; fake the 3D.
+		 * XXX: this shouldn't really be necessary any more but something is still sending BOTH
+		 */
 		qi.eyes = Eyes::LEFT;
 		_queue.push_back (qi);
 		++_queued_full_in_memory;

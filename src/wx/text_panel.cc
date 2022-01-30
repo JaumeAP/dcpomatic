@@ -113,6 +113,9 @@ TextPanel::create ()
 	_line_spacing = new SpinCtrl (this, DCPOMATIC_SPIN_CTRL_WIDTH);
 	_line_spacing_pc_label = new StaticText (this, _("%"));
 
+	_z_position_label = create_label (this, _("Z position"), true);
+	_z_position = new SpinCtrl (this, DCPOMATIC_SPIN_CTRL_WIDTH);
+
 	_stream_label = create_label (this, _("Stream"), true);
 	_stream = new wxChoice (this, wxID_ANY);
 
@@ -135,6 +138,7 @@ TextPanel::create ()
 	_x_scale->Bind                  (wxEVT_SPINCTRL, boost::bind (&TextPanel::x_scale_changed, this));
 	_y_scale->Bind                  (wxEVT_SPINCTRL, boost::bind (&TextPanel::y_scale_changed, this));
 	_line_spacing->Bind             (wxEVT_SPINCTRL, boost::bind (&TextPanel::line_spacing_changed, this));
+	_z_position->Bind               (wxEVT_SPINCTRL, boost::bind (&TextPanel::z_position_changed, this));
 	_stream->Bind                   (wxEVT_CHOICE,   boost::bind (&TextPanel::stream_changed, this));
 	_text_view_button->Bind         (wxEVT_BUTTON,   boost::bind (&TextPanel::text_view_clicked, this));
 	_fonts_dialog_button->Bind      (wxEVT_BUTTON,   boost::bind (&TextPanel::fonts_dialog_clicked, this));
@@ -284,6 +288,10 @@ TextPanel::add_to_grid ()
 		_grid->Add (s, wxGBPosition (r, 1));
 		++r;
 	}
+
+	add_label_to_sizer (_grid, _z_position_label, true, wxGBPosition(r, 0));
+	_grid->Add (_z_position, wxGBPosition(r, 1));
+	++r;
 
 	_ccap_track_or_language_row = r;
 	++r;
@@ -479,6 +487,8 @@ TextPanel::film_content_changed (int property)
 	} else if (property == TextContentProperty::LINE_SPACING) {
 		checked_set (_line_spacing, text ? lrint (text->line_spacing() * 100) : 100);
 		clear_outline_subtitles ();
+	} else if (property == TextContentProperty::Z_POSITION) {
+		checked_set (_z_position, text ? text->z_position() : 0);
 	} else if (property == TextContentProperty::DCP_TRACK) {
 		if (_dcp_track) {
 			update_dcp_track_selection ();
@@ -635,6 +645,7 @@ TextPanel::setup_sensitivity ()
 	_x_scale->Enable (!reference && any_subs > 0 && use && type == TextType::OPEN_SUBTITLE);
 	_y_scale->Enable (!reference && any_subs > 0 && use && type == TextType::OPEN_SUBTITLE);
 	_line_spacing->Enable (!reference && use && type == TextType::OPEN_SUBTITLE && dcp_subs < any_subs);
+	_z_position->Enable (!reference && use && type == TextType::OPEN_SUBTITLE);
 	_stream->Enable (!reference && ffmpeg_subs == 1);
 	/* Ideally we would check here to see if the FFmpeg content has "string" subs (i.e. not bitmaps) */
 	_text_view_button->Enable (!reference && any_subs > 0 && ffmpeg_subs == 0);
@@ -712,6 +723,15 @@ TextPanel::line_spacing_changed ()
 
 
 void
+TextPanel::z_position_changed ()
+{
+	for (auto i: _parent->selected_text()) {
+		i->text_of_original_type(_original_type)->set_z_position (_z_position->GetValue());
+	}
+}
+
+
+void
 TextPanel::content_selection_changed ()
 {
 	film_content_changed (FFmpegContentProperty::SUBTITLE_STREAMS);
@@ -722,6 +742,7 @@ TextPanel::content_selection_changed ()
 	film_content_changed (TextContentProperty::X_SCALE);
 	film_content_changed (TextContentProperty::Y_SCALE);
 	film_content_changed (TextContentProperty::LINE_SPACING);
+	film_content_changed (TextContentProperty::Z_POSITION);
 	film_content_changed (TextContentProperty::FONTS);
 	film_content_changed (TextContentProperty::TYPE);
 	film_content_changed (TextContentProperty::DCP_TRACK);

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2013-2021 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2013-2022 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -19,11 +19,11 @@
 */
 
 
-#include "text_content.h"
-#include "util.h"
+#include "content.h"
 #include "exceptions.h"
 #include "font.h"
-#include "content.h"
+#include "text_content.h"
+#include "util.h"
 #include <dcp/raw_convert.h>
 #include <libcxml/cxml.h>
 #include <libxml++/libxml++.h>
@@ -55,13 +55,14 @@ int const TextContentProperty::COLOUR = 507;
 int const TextContentProperty::EFFECT = 508;
 int const TextContentProperty::EFFECT_COLOUR = 509;
 int const TextContentProperty::LINE_SPACING = 510;
-int const TextContentProperty::FADE_IN = 511;
-int const TextContentProperty::FADE_OUT = 512;
-int const TextContentProperty::OUTLINE_WIDTH = 513;
-int const TextContentProperty::TYPE = 514;
-int const TextContentProperty::DCP_TRACK = 515;
-int const TextContentProperty::LANGUAGE = 516;
-int const TextContentProperty::LANGUAGE_IS_ADDITIONAL = 517;
+int const TextContentProperty::Z_POSITION = 511;
+int const TextContentProperty::FADE_IN = 512;
+int const TextContentProperty::FADE_OUT = 513;
+int const TextContentProperty::OUTLINE_WIDTH = 514;
+int const TextContentProperty::TYPE = 515;
+int const TextContentProperty::DCP_TRACK = 516;
+int const TextContentProperty::LANGUAGE = 517;
+int const TextContentProperty::LANGUAGE_IS_ADDITIONAL = 518;
 
 
 TextContent::TextContent (Content* parent, TextType type, TextType original_type)
@@ -121,6 +122,7 @@ TextContent::TextContent (Content* parent, cxml::ConstNodePtr node, int version,
 	, _x_scale (1)
 	, _y_scale (1)
 	, _line_spacing (node->optional_number_child<double>("LineSpacing").get_value_or(1))
+	, _z_position (node->optional_number_child<int>("ZPosition").get_value_or(0))
 	, _outline_width (node->optional_number_child<int>("OutlineWidth").get_value_or(4))
 	, _type (TextType::OPEN_SUBTITLE)
 	, _original_type (TextType::OPEN_SUBTITLE)
@@ -295,6 +297,10 @@ TextContent::TextContent (Content* parent, vector<shared_ptr<Content>> c)
 			throw JoinError (_("Content to be joined must have the same subtitle line spacing."));
 		}
 
+		if (c[i]->only_text()->z_position() != ref->z_position()) {
+			throw JoinError (_("Content to be joined must have the same subtitle Z position."));
+		}
+
 		if ((c[i]->only_text()->fade_in() != ref->fade_in()) || (c[i]->only_text()->fade_out() != ref->fade_out())) {
 			throw JoinError (_("Content to be joined must have the same subtitle fades."));
 		}
@@ -340,6 +346,7 @@ TextContent::TextContent (Content* parent, vector<shared_ptr<Content>> c)
 	_y_scale = ref->y_scale ();
 	_fonts = ref_fonts;
 	_line_spacing = ref->line_spacing ();
+	_z_position = ref->z_position ();
 	_fade_in = ref->fade_in ();
 	_fade_out = ref->fade_out ();
 	_outline_width = ref->outline_width ();
@@ -390,6 +397,7 @@ TextContent::as_xml (xmlpp::Node* root) const
 		text->add_child("EffectBlue")->add_child_text (raw_convert<string> (_effect_colour->b));
 	}
 	text->add_child("LineSpacing")->add_child_text (raw_convert<string> (_line_spacing));
+	text->add_child("ZPosition")->add_child_text(raw_convert<string>(_z_position));
 	if (_fade_in) {
 		text->add_child("FadeIn")->add_child_text (raw_convert<string> (_fade_in->get()));
 	}
@@ -422,6 +430,7 @@ TextContent::identifier () const
 		+ "_" + raw_convert<string> (x_offset())
 		+ "_" + raw_convert<string> (y_offset())
 		+ "_" + raw_convert<string> (line_spacing())
+		+ "_" + raw_convert<string> (z_position())
 		+ "_" + raw_convert<string> (fade_in().get_value_or(ContentTime()).get())
 		+ "_" + raw_convert<string> (fade_out().get_value_or(ContentTime()).get())
 		+ "_" + raw_convert<string> (outline_width())
@@ -552,6 +561,13 @@ TextContent::set_line_spacing (double s)
 }
 
 void
+TextContent::set_z_position (int z)
+{
+	maybe_set (_z_position, z, TextContentProperty::Z_POSITION);
+}
+
+
+void
 TextContent::set_fade_in (ContentTime t)
 {
 	maybe_set (_fade_in, t, TextContentProperty::FADE_IN);
@@ -635,6 +651,7 @@ TextContent::take_settings_from (shared_ptr<const TextContent> c)
 		unset_effect_colour ();
 	}
 	set_line_spacing (c->_line_spacing);
+	set_z_position (c->_z_position);
 	if (c->_fade_in) {
 		set_fade_in (*c->_fade_in);
 	}

@@ -39,6 +39,9 @@ public:
 	/** BitmapTexts, with their rectangles transformed as specified by their content */
 	std::list<BitmapText> bitmap;
 	std::list<StringText> string;
+
+	/* XXX: this should probably be somewhere else */
+	int z_position = 0;
 };
 
 

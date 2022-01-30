@@ -847,18 +847,18 @@ Player::pass ()
 
 /** @return Open subtitles for the frame at the given time, converted to images */
 optional<PositionImage>
-Player::open_subtitles_for_frame (DCPTime time) const
+Player::open_subtitles_for_frame (DCPTime time, Eyes eyes) const
 {
 	list<PositionImage> captions;
 	int const vfr = _film->video_frame_rate();
 
 	for (
-		auto j:
+		auto burnt:
 		_active_texts[static_cast<int>(TextType::OPEN_SUBTITLE)].get_burnt(DCPTimePeriod(time, time + DCPTime::from_frames(1, vfr)), _always_burn_open_subtitles)
 		) {
 
 		/* Bitmap subtitles */
-		for (auto i: j.bitmap) {
+		for (auto i: burnt.bitmap) {
 			if (!i.image) {
 				continue;
 			}
@@ -878,9 +878,17 @@ Player::open_subtitles_for_frame (DCPTime time) const
 		}
 
 		/* String subtitles (rendered to an image) */
-		if (!j.string.empty()) {
-			auto s = render_text(j.string, _video_container_size, time, vfr);
-			copy (s.begin(), s.end(), back_inserter (captions));
+		if (!burnt.string.empty()) {
+			int stereo_offset = 0;
+			if (eyes == Eyes::LEFT) {
+				stereo_offset = -burnt.z_position;
+			} else if (eyes == Eyes::RIGHT) {
+				stereo_offset = burnt.z_position;
+			}
+			for (auto subtitle: render_text(burnt.string, _video_container_size, time, vfr)) {
+				subtitle.position.x += stereo_offset;
+				captions.push_back (subtitle);
+			}
 		}
 	}
 
@@ -1193,6 +1201,7 @@ Player::plain_text_start (weak_ptr<Piece> weak_piece, weak_ptr<const TextContent
 		ps.string.push_back (s);
 	}
 
+	ps.z_position = text->z_position();
 	_active_texts[static_cast<int>(content->type())].add_from(weak_content, ps, from);
 }
 
@@ -1324,7 +1333,19 @@ Player::emit_video (shared_ptr<PlayerVideo> pv, DCPTime time)
 
 	auto to_do = _delay.front();
 	_delay.pop_front();
-	do_emit_video (to_do.first, to_do.second);
+	if (_film->three_d() && to_do.first->eyes() == Eyes::BOTH) {
+		/* Duplicate BOTH to LEFT and RIGHT here so that we can to 3D
+		 * subtitles over 2D content.
+		 */
+		auto left = to_do.first->shallow_copy();
+		left->set_eyes (Eyes::LEFT);
+		do_emit_video (left, to_do.second);
+		auto right = to_do.first->shallow_copy();
+		right->set_eyes (Eyes::RIGHT);
+		do_emit_video (right, to_do.second);
+	} else {
+		do_emit_video (to_do.first, to_do.second);
+	}
 }
 
 
@@ -1337,7 +1358,7 @@ Player::do_emit_video (shared_ptr<PlayerVideo> pv, DCPTime time)
 		}
 	}
 
-	auto subtitles = open_subtitles_for_frame (time);
+	auto subtitles = open_subtitles_for_frame (time, pv->eyes());
 	if (subtitles) {
 		pv->set_text (subtitles.get ());
 	}

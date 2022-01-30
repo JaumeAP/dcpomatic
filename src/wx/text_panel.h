@@ -50,6 +50,7 @@ private:
 	void x_scale_changed ();
 	void y_scale_changed ();
 	void line_spacing_changed ();
+	void z_position_changed ();
 	void dcp_track_changed ();
 	void stream_changed ();
 	void text_view_clicked ();
@@ -95,6 +96,8 @@ private:
 	wxStaticText* _line_spacing_label;
 	wxStaticText* _line_spacing_pc_label;
 	SpinCtrl* _line_spacing;
+	wxStaticText* _z_position_label;
+	SpinCtrl* _z_position;
 	wxStaticText* _dcp_track_label = nullptr;
 	wxChoice* _dcp_track = nullptr;
 	wxStaticText* _stream_label;

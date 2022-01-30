@@ -469,6 +469,7 @@ FilmViewer::film_change (ChangeType type, Film::Property p)
 		_video_view->set_video_frame_rate (_film->video_frame_rate());
 	} else if (p == Film::Property::THREE_D) {
 		_video_view->set_three_d (_film->three_d());
+		slow_refresh ();
 	} else if (p == Film::Property::CONTENT) {
 		_closed_captions_dialog->update_tracks (_film);
 	}

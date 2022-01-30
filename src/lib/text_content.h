@@ -49,6 +49,7 @@ public:
 	static int const EFFECT;
 	static int const EFFECT_COLOUR;
 	static int const LINE_SPACING;
+	static int const Z_POSITION;
 	static int const FADE_IN;
 	static int const FADE_OUT;
 	static int const OUTLINE_WIDTH;
@@ -93,6 +94,7 @@ public:
 	void set_effect_colour (dcp::Colour);
 	void unset_effect_colour ();
 	void set_line_spacing (double s);
+	void set_z_position (int z);
 	void set_fade_in (dcpomatic::ContentTime);
 	void unset_fade_in ();
 	void set_fade_out (dcpomatic::ContentTime);
@@ -157,6 +159,11 @@ public:
 	double line_spacing () const {
 		boost::mutex::scoped_lock lm (_mutex);
 		return _line_spacing;
+	}
+
+	int z_position () const {
+		boost::mutex::scoped_lock lm (_mutex);
+		return _z_position;
 	}
 
 	boost::optional<dcpomatic::ContentTime> fade_in () const {
@@ -230,6 +237,7 @@ private:
 	boost::optional<dcp::Colour> _effect_colour;
 	/** scaling factor for line spacing; 1 is "standard", < 1 is closer together, > 1 is further apart */
 	double _line_spacing;
+	int _z_position = 0;
 	boost::optional<dcpomatic::ContentTime> _fade_in;
 	boost::optional<dcpomatic::ContentTime> _fade_out;
 	int _outline_width;
