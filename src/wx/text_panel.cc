@@ -128,6 +128,7 @@ TextPanel::create ()
 	_x_scale->SetRange (0, 1000);
 	_y_scale->SetRange (0, 1000);
 	_line_spacing->SetRange (0, 1000);
+	_z_position->SetRange (-100, 100);
 
 	_reference->Bind                (wxEVT_CHECKBOX, boost::bind (&TextPanel::reference_clicked, this));
 	_use->Bind                      (wxEVT_CHECKBOX, boost::bind (&TextPanel::use_toggled, this));
