@@ -151,7 +151,8 @@ mount_info ()
 boost::filesystem::path
 openssl_path ()
 {
-	return directory_containing_executable() / "openssl";
+	/* Assume it's on the path */
+	return "openssl";
 }
 
 
