@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-01-20 09:40+0100\n"
-"PO-Revision-Date: 2022-02-09 19:43+0500\n"
+"PO-Revision-Date: 2022-02-11 19:45+0500\n"
 "Last-Translator: Mikhail Epshteyn <virus-2006@yandex.ru>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -389,7 +389,7 @@ msgstr "Адрес"
 
 #: src/wx/colour_conversion_editor.cc:185
 msgid "Adjust white point to"
-msgstr "Отрегулировать белую точку по"
+msgstr "Настроить точку белого"
 
 #: src/wx/full_config_dialog.cc:1306 src/wx/metadata_dialog.cc:63
 #: src/wx/player_config_dialog.cc:233
@@ -881,15 +881,15 @@ msgstr "Кадрирование"
 #: src/wx/audio_dialog.cc:465
 #, c-format
 msgid "Cursor: %.1fdB at %s"
-msgstr "Указатель: %.1f дБ на %s"
+msgstr "Курсор: %.1f дБ на %s"
 
 #: src/wx/audio_dialog.cc:459
 msgid "Cursor: none"
-msgstr "Указатель: ничего"
+msgstr "Курсор: нет"
 
 #: src/wx/custom_scale_dialog.cc:39
 msgid "Custom scale"
-msgstr "Масштаб указателя"
+msgstr "Пользовательский масштаб"
 
 # Main
 #: src/wx/audio_panel.cc:104 src/wx/config_dialog.cc:899
@@ -1087,7 +1087,7 @@ msgstr "Скачать сертификат"
 
 #: src/wx/screen_dialog.cc:140
 msgid "Download..."
-msgstr "Загрузка..."
+msgstr "Загрузить..."
 
 #: src/wx/download_certificate_panel.cc:94
 msgid "Downloading certificate"
@@ -1113,11 +1113,11 @@ msgstr "Выше"
 
 #: src/wx/screens_panel.cc:73
 msgid "Edit Cinema..."
-msgstr "Изменить Кинотеатр..."
+msgstr "Изменить кинотеатр..."
 
 #: src/wx/screens_panel.cc:79
 msgid "Edit Screen..."
-msgstr "Изменить Экран..."
+msgstr "Изменить экран..."
 
 #: src/wx/screens_panel.cc:197
 msgid "Edit cinema"
@@ -1161,7 +1161,7 @@ msgstr "Email адреса для доставки KDM"
 
 #: src/wx/servers_list_dialog.cc:32
 msgid "Encoding Servers"
-msgstr "Сервера кодирования"
+msgstr "Серверы кодирования"
 
 #: src/wx/dcp_panel.cc:105
 msgid "Encrypted"
@@ -1534,7 +1534,7 @@ msgstr "Импортировать все настройки расшифров�
 
 #: src/wx/config_dialog.cc:313
 msgid "Import..."
-msgstr "Импортировать…"
+msgstr "Импорт…"
 
 #: src/wx/disk_warning_dialog.cc:26 src/wx/drive_wipe_warning_dialog.cc:26
 #: src/wx/nag_dialog.cc:38
@@ -1564,7 +1564,7 @@ msgstr "Входная функция передачи"
 #: src/wx/audio_dialog.cc:423
 #, c-format
 msgid "Integrated loudness %.2f LUFS"
-msgstr "Интегральная громкость %.2f LUFS"
+msgstr "Интегральная громкость: %.2f LUFS"
 
 #: src/wx/config_dialog.cc:519
 msgid "Intermediate"
@@ -1620,7 +1620,7 @@ msgstr "Присоединить"
 
 #: src/wx/controls.cc:90
 msgid "Jump to selected content"
-msgstr "Перейти к выбранному контенту"
+msgstr "Переходить к времени субтитра"
 
 #: src/wx/full_config_dialog.cc:834
 msgid "KDM Email"
@@ -1650,7 +1650,7 @@ msgstr "Ключи"
 #: src/wx/audio_dialog.cc:441
 #, c-format
 msgid "LEQ(m) %.2fdB"
-msgstr "LEQ(m) %.2f дБ"
+msgstr "LEQ(m): %.2f дБ"
 
 #: src/wx/interop_metadata_dialog.cc:62 src/wx/rating_dialog.cc:31
 msgid "Label"
@@ -1675,7 +1675,7 @@ msgstr "Язык этих субтитров"
 
 #: src/wx/metadata_dialog.cc:232
 msgid "Language used for any sign language video track"
-msgstr "Язык для видеодорожек с языком глухонемых"
+msgstr "Язык для видеодорожек с языком жестов"
 
 #: src/wx/markers_dialog.cc:134
 msgid "Last frame of composition"
@@ -1749,7 +1749,7 @@ msgstr "Лог"
 #: src/wx/audio_dialog.cc:432
 #, c-format
 msgid "Loudness range %.2f LU"
-msgstr "Диапазон громкости %.2f LU"
+msgstr "Диапазон громкости: %.2f LU"
 
 #: src/wx/batch_job_view.cc:53
 msgid "Lower priority"
@@ -1820,7 +1820,7 @@ msgstr "Пометить все аудиоканалы"
 
 #: src/wx/kdm_advanced_dialog.cc:44
 msgid "Mark audio channels up to (and including)"
-msgstr "Пометить аудиоканалы до текущего"
+msgstr "Пометить аудиоканалы до (включительно)"
 
 #: src/wx/markers_dialog.cc:126
 msgid "Markers"
@@ -1873,11 +1873,11 @@ msgstr "Переместить контент"
 
 #: src/wx/content_panel.cc:118
 msgid "Move the selected piece of content earlier in the film."
-msgstr "Переместить выбранный элемент контента выше."
+msgstr "Переместить выбранный контент выше."
 
 #: src/wx/content_panel.cc:122
 msgid "Move the selected piece of content later in the film."
-msgstr "Переместить выбранный элемент контента ниже."
+msgstr "Переместить выбранный контент ниже."
 
 # +
 #: src/wx/timing_panel.cc:106
@@ -2000,7 +2000,7 @@ msgstr "OSS"
 
 #: src/wx/audio_mapping_view.cc:88
 msgid "Off"
-msgstr "Выключен"
+msgstr "Отключить"
 
 #: src/wx/text_panel.cc:92
 msgid "Offset"
@@ -2055,7 +2055,7 @@ msgstr "Контур"
 # Границы контента
 #: src/wx/controls.cc:83
 msgid "Outline content"
-msgstr "Выделить контур контента"
+msgstr "Контур контента"
 
 #: src/wx/subtitle_appearance_dialog.cc:93
 msgid "Outline width"
@@ -2138,11 +2138,11 @@ msgstr "Пик"
 #: src/wx/audio_panel.cc:395
 #, c-format
 msgid "Peak: %.2fdB"
-msgstr "Пик %.2f дБ"
+msgstr "Пик: %.2f дБ"
 
 #: src/wx/audio_panel.cc:397
 msgid "Peak: unknown"
-msgstr "Пик: неизвестен"
+msgstr "Пик: неизвестно"
 
 #: src/wx/player_information.cc:73
 msgid "Performance"
@@ -2285,7 +2285,7 @@ msgstr "Часть фильма %d"
 
 #: src/wx/dcp_panel.cc:114
 msgid "Reel length"
-msgstr "Длительность части фильма"
+msgstr "Размер части фильма"
 
 #: src/wx/dcp_panel.cc:111
 msgid "Reels"
@@ -2320,7 +2320,7 @@ msgstr "Удалить экран"
 
 #: src/wx/content_panel.cc:114
 msgid "Remove the selected piece of content from the film."
-msgstr "Удалить выбранный элемент контента из проекта."
+msgstr "Удалить выбранный контент из проекта."
 
 #: src/wx/rename_template_dialog.cc:26
 msgid "Rename template"
@@ -2356,11 +2356,11 @@ msgstr "Сбросить по умолчанию"
 
 #: src/wx/full_config_dialog.cc:879 src/wx/full_config_dialog.cc:1013
 msgid "Reset to default subject and text"
-msgstr "Сбросить по умолчанию тему и текст"
+msgstr "Восстановить тему и текст по умолчанию"
 
 #: src/wx/full_config_dialog.cc:1145
 msgid "Reset to default text"
-msgstr "Сбросить по умолчанию текст"
+msgstr "Восстановить текст по умолчанию"
 
 #: src/wx/dcp_panel.cc:776
 msgid "Resolution"
@@ -2422,7 +2422,7 @@ msgstr "STARTTLS"
 #: src/wx/audio_dialog.cc:392
 #, c-format
 msgid "Sample peak is %.2fdB at %s on %s"
-msgstr "Пиковая громкость сэмпла %.2f дБ в %s на %s"
+msgstr "Пиковая громкость семпла: %.2f дБ в %s на канале %s"
 
 #: src/wx/save_template_dialog.cc:31
 msgid "Save template"
@@ -2434,7 +2434,7 @@ msgstr "Сохранить в список инструмента KDM Creator"
 
 #: src/wx/text_panel.cc:100 src/wx/video_panel.cc:178
 msgid "Scale"
-msgstr "Масштабировать"
+msgstr "Масштаб"
 
 #: src/wx/kdm_dialog.cc:78
 msgid "Screens"
@@ -2442,7 +2442,7 @@ msgstr "Экраны"
 
 #: src/wx/full_config_dialog.cc:538
 msgid "Search network for servers"
-msgstr "Искать сервера в сети"
+msgstr "Искать серверы в сети"
 
 #: src/wx/timeline_dialog.cc:74
 msgid "Select"
@@ -2536,7 +2536,7 @@ msgstr "Сервер"
 
 #: src/wx/full_config_dialog.cc:525
 msgid "Servers"
-msgstr "Сервера"
+msgstr "Серверы"
 
 #: src/wx/content_advanced_dialog.cc:88 src/wx/timecode.cc:67
 msgid "Set"
@@ -2544,7 +2544,7 @@ msgstr "Задать"
 
 #: src/wx/markers_dialog.cc:57
 msgid "Set from current position"
-msgstr "Обрезать с текущей позиции"
+msgstr "Текущая позиция"
 
 #: src/wx/config_dialog.cc:116
 msgid "Set language"
@@ -2592,13 +2592,12 @@ msgstr "Показать область субтитров"
 
 #: src/wx/metadata_dialog.cc:231
 msgid "Sign language video language"
-msgstr "Язык видео с языком глухонемых"
+msgstr "Язык видео с языком жестов"
 
 #: src/wx/config_dialog.cc:715 src/wx/config_dialog.cc:742
 msgid "Signing DCPs and KDMs"
 msgstr "Подписывание DCP и KDM"
 
-# +
 #: src/wx/full_config_dialog.cc:1461 src/wx/player_config_dialog.cc:107
 msgid "Simple (safer)"
 msgstr "Простой (безопаснее)"
@@ -2626,7 +2625,7 @@ msgstr "Сглаживание"
 
 #: src/wx/timeline_dialog.cc:77
 msgid "Snap"
-msgstr "Присоединять"
+msgstr "Привязка к сетке (захват)"
 
 #: src/wx/verify_dcp_dialog.cc:369
 msgid ""
@@ -2653,7 +2652,7 @@ msgstr "Обработчик звука"
 
 #: src/wx/dcp_panel.cc:148
 msgid "Split by video content"
-msgstr "Разделять по видео-контенту"
+msgstr "Разделять по видеоконтенту"
 
 #: src/wx/update_dialog.cc:53
 msgid "Stable version "
@@ -2669,7 +2668,7 @@ msgstr "Начало"
 
 #: src/wx/move_to_dialog.cc:37
 msgid "Start of reel"
-msgstr "Начало части фильма"
+msgstr "Часть фильма"
 
 #: src/wx/player_config_dialog.cc:90
 msgid "Start player as"
@@ -2740,7 +2739,7 @@ msgstr "TMS"
 
 #: src/wx/full_config_dialog.cc:614
 msgid "Target path"
-msgstr "Целевой путь"
+msgstr "Путь к папке"
 
 #: src/wx/templates_dialog.cc:48
 msgid "Template"
@@ -3068,8 +3067,8 @@ msgid ""
 "The hash of the CPL %n in the PKL does not agree with the CPL file.  This "
 "probably means that the CPL file is corrupt."
 msgstr ""
-"Хэш CPL %n в PKL несогласован с CPL-файлом.  Возможно это значит, что CPL-файл "
-"повреждён.."
+"Хэш CPL %n в PKL несогласован с CPL-файлом.  Возможно это значит, что CPL-"
+"файл повреждён.."
 
 #: src/wx/verify_dcp_dialog.cc:121
 #, c-format
@@ -3357,7 +3356,7 @@ msgstr "Кому"
 
 #: src/wx/video_panel.cc:140
 msgid "Top"
-msgstr "Верх"
+msgstr "Сверху"
 
 #: src/wx/closed_captions_dialog.cc:66
 msgid "Track"
@@ -3390,7 +3389,7 @@ msgstr "Обрезать до текущей позиции"
 #: src/wx/audio_dialog.cc:409
 #, c-format
 msgid "True peak is %.2fdB"
-msgstr "Истинный пик %.2f дБ"
+msgstr "Истинный пик: %.2f дБ"
 
 #: src/wx/screen_dialog.cc:55
 msgid "Trusted Device"
@@ -3531,7 +3530,7 @@ msgstr "Обновление"
 
 #: src/wx/full_config_dialog.cc:599
 msgid "Upload DCP to TMS after creation"
-msgstr "Загрузить DCP на TMS после создания"
+msgstr "Загрузить DCP на TMS (Theatre Management System) после создания"
 
 #: src/wx/dcp_panel.cc:87
 msgid "Use ISDCF name"
@@ -3543,11 +3542,11 @@ msgstr "Использовать как"
 
 #: src/wx/dcp_panel.cc:783
 msgid "Use best"
-msgstr "Использовать лучшее"
+msgstr "Рекомендуется"
 
 #: src/wx/content_colour_conversion_dialog.cc:48
 msgid "Use preset"
-msgstr "Использовать заготовку"
+msgstr "Использовать параметры"
 
 #: src/wx/audio_panel.cc:67
 msgid "Use this DCP's audio as OV and make VF"
@@ -3576,7 +3575,7 @@ msgstr "Имя пользователя"
 
 #: src/wx/system_information_dialog.cc:69
 msgid "Vendor"
-msgstr "Поставщик"
+msgstr "Производитель"
 
 #: src/wx/system_information_dialog.cc:71
 msgid "Version"
@@ -3661,7 +3660,7 @@ msgstr "Записать каждый аудиоканал в отдельный
 
 #: src/wx/export_subtitles_dialog.cc:42 src/wx/export_video_file_dialog.cc:67
 msgid "Write reels into separate files"
-msgstr "Записать часть фильма в отдельные файлы"
+msgstr "Записывать части фильма в отдельные файлы"
 
 #: src/wx/dkdm_output_panel.cc:69 src/wx/kdm_output_panel.cc:110
 #: src/wx/self_dkdm_dialog.cc:85
@@ -3910,7 +3909,7 @@ msgstr "до"
 
 #: src/wx/system_information_dialog.cc:74
 msgid "vsync"
-msgstr "vsync"
+msgstr "Верт. синхронизация (vsync)"
 
 #: src/wx/player_config_dialog.cc:92
 msgid "window"
