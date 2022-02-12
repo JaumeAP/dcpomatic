@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+
+import os
+import sys
+
+import bs4
+
+with open(sys.argv[1]) as file:
+    xml = file.read()
+
+soup = bs4.BeautifulSoup(xml, 'xml')
+signature = soup.CompositionPlaylist.Signature
+if not signature:
+    print("Unsigned CPL")
+    sys.exit(0)
+
+number_of_certs = len(signature.KeyInfo.findAll('X509Certificate'))
+
+n = 0
+for data in signature.KeyInfo.findAll('X509Certificate'):
+    if n == 0:
+        name = 'leaf'
+    elif n == number_of_certs - 1:
+        name = 'root'
+    else:
+        name = f'inter_{number_of_certs - n - 1}'
+
+    with open(f"{name}.pem", "w") as out:
+        print("-----BEGIN CERTIFICATE-----", file=out)
+        print(data.text, file=out)
+        print("-----END CERTIFICATE-----", file=out)
+    os.system(f"openssl x509 -text -in {name}.pem > {name}.dump")
+    os.system(f"openssl asn1parse < {name}.pem > {name}.asn1")
+    n += 1
+
+
