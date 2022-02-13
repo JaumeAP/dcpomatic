@@ -1051,7 +1051,7 @@ Player::audio (weak_ptr<Piece> wp, AudioStreamPtr stream, ContentAudio content_a
 
 	/* Gain and fade */
 
-	auto const fade_coeffs = content->fade (content_audio.frame, content_audio.audio->frames(), rfr);
+	auto const fade_coeffs = content->fade (stream, content_audio.frame, content_audio.audio->frames(), rfr);
 	if (content->gain() != 0 || !fade_coeffs.empty()) {
 		auto gain_buffers = make_shared<AudioBuffers>(content_audio.audio);
 		if (!fade_coeffs.empty()) {

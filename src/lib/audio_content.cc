@@ -443,7 +443,7 @@ AudioContent::set_fade_out (ContentTime t)
 
 
 vector<float>
-AudioContent::fade (Frame frame, Frame length, int frame_rate) const
+AudioContent::fade (AudioStreamPtr stream, Frame frame, Frame length, int frame_rate) const
 {
 	auto const in = fade_in().frames_round(frame_rate);
 	auto const out = fade_out().frames_round(frame_rate);
@@ -451,7 +451,7 @@ AudioContent::fade (Frame frame, Frame length, int frame_rate) const
 	/* Where the start trim ends, at frame_rate */
 	auto const trim_start = _parent->trim_start().frames_round(frame_rate);
 	/* Where the end trim starts within the whole length of the content, at frame_rate */
-	auto const trim_end = ContentTime(ContentTime::from_frames(stream()->length(), stream()->frame_rate()) - _parent->trim_end()).frames_round(frame_rate);
+	auto const trim_end = ContentTime(ContentTime::from_frames(stream->length(), stream->frame_rate()) - _parent->trim_end()).frames_round(frame_rate);
 
 	if (
 		(in == 0  || (frame >= (trim_start + in))) &&

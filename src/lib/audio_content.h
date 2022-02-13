@@ -114,7 +114,7 @@ public:
 	 *  @return a fade coefficient for @ref length samples starting at an offset @frame within
 	 *  the content, or an empty vector if the given section has no fade.
 	 */
-	std::vector<float> fade (Frame frame, Frame length, int frame_rate) const;
+	std::vector<float> fade (AudioStreamPtr stream, Frame frame, Frame length, int frame_rate) const;
 
 	static std::shared_ptr<AudioContent> from_xml (Content* parent, cxml::ConstNodePtr, int version);
 
