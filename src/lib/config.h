@@ -1113,6 +1113,8 @@ public:
 	void rename_template (std::string old_name, std::string new_name) const;
 	void delete_template (std::string name) const;
 
+	boost::optional<BadReason> check_certificates () const;
+
 	static Config* instance ();
 	static void drop ();
 	static void restore_defaults ();
