@@ -19,6 +19,7 @@
 */
 
 
+#include "dcpomatic_spin_ctrl.h"
 #include "make_chain_dialog.h"
 #include "static_text.h"
 #include "lib/cross.h"
@@ -118,9 +119,21 @@ MakeChainDialog::MakeChainDialog (
 		add (s);
 	}
 
+	add (_("Valid for"), true);
+
+	{
+		auto s = new wxBoxSizer (wxHORIZONTAL);
+		s->Add (_validity = new SpinCtrl(this, 156), 0, wxALIGN_CENTER_VERTICAL);
+		s->Add (new StaticText(this, _("days")), 0, wxLEFT | wxALIGN_CENTER_VERTICAL, DCPOMATIC_SIZER_X_GAP);
+		add (s);
+	}
+
 	layout ();
 
 	_organisation->SetFocus ();
+
+	_validity->SetRange (7, 50 * 365);
+	_validity->SetValue (3650);
 }
 
 
@@ -129,7 +142,7 @@ MakeChainDialog::get () const
 {
 	return make_shared<dcp::CertificateChain>(
 		openssl_path(),
-		CERTIFICATE_VALIDITY_PERIOD,
+		_validity->GetValue(),
 		wx_to_std(_organisation->GetValue()),
 		wx_to_std(_organisational_unit->GetValue()),
 		"." + wx_to_std(_root_common_name->GetValue()),

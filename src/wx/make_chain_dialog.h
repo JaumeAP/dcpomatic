@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2014-2015 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2014-2021 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -18,11 +18,16 @@
 
 */
 
+
 #ifndef DCPOMATIC_MAKE_CHAIN_DIALOG_H
 #define DCPOMATIC_MAKE_CHAIN_DIALOG_H
 
+
 #include "table_dialog.h"
 #include "wx_util.h"
+
+
+class SpinCtrl;
 
 class MakeChainDialog : public TableDialog
 {
@@ -37,6 +42,8 @@ private:
 	wxTextCtrl* _root_common_name;
 	wxTextCtrl* _intermediate_common_name;
 	wxTextCtrl* _leaf_common_name;
+	SpinCtrl* _validity;
 };
+
 
 #endif
