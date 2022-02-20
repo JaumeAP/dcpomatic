@@ -500,6 +500,7 @@ supported_by.Add (wxT ("Sebastian Kreis"));
 supported_by.Add (wxT ("Tobias Kremer"));
 supported_by.Add (wxT ("Indu Krishnan"));
 supported_by.Add (wxT ("Kino Krokodil"));
+supported_by.Add (wxT ("Jakub Królikowski"));
 supported_by.Add (wxT ("Cihan Kulaber"));
 supported_by.Add (wxT ("Patrick Kulemann"));
 supported_by.Add (wxT ("Steven Kurtz"));
