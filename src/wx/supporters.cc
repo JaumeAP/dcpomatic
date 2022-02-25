@@ -568,6 +568,7 @@ supported_by.Add (wxT ("Tim Lorge"));
 supported_by.Add (wxT ("Thomas Lorin"));
 supported_by.Add (wxT ("Leonard Louder"));
 supported_by.Add (wxT ("Auguste & Louise"));
+supported_by.Add (wxT ("LoïcK!"));
 supported_by.Add (wxT ("Cubic Films Pty Ltd"));
 supported_by.Add (wxT ("First And Only Ltd"));
 supported_by.Add (wxT ("The Digital Picture House Ltd"));
