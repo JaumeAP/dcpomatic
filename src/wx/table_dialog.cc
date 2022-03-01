@@ -18,9 +18,11 @@
 
 */
 
+
+#include "static_text.h"
 #include "table_dialog.h"
 #include "wx_util.h"
-#include "static_text.h"
+
 
 TableDialog::TableDialog (wxWindow* parent, wxString title, int columns, int growable, bool cancel)
 	: wxDialog (parent, wxID_ANY, title)
@@ -44,12 +46,14 @@ TableDialog::TableDialog (wxWindow* parent, wxString title, int columns, int gro
 	}
 }
 
+
 void
 TableDialog::layout ()
 {
 	_overall_sizer->Layout ();
 	_overall_sizer->SetSizeHints (this);
 }
+
 
 wxStaticText *
 #ifdef DCPOMATIC_OSX
@@ -70,6 +74,7 @@ TableDialog::add (wxString text, bool)
 	_table->Add (m, 0, flags, 6);
 	return m;
 }
+
 
 void
 TableDialog::add_spacer ()
