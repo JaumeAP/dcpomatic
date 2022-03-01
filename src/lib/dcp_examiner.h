@@ -18,6 +18,7 @@
 
 */
 
+
 /** @file  src/lib/dcp_examiner.h
  *  @brief DCPExaminer class.
  */
@@ -28,6 +29,8 @@
 #include "dcpomatic_assert.h"
 #include "video_examiner.h"
 #include <dcp/dcp_time.h>
+#include <dcp/rating.h>
+
 
 
 class DCPContent;
