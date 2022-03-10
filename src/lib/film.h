@@ -417,7 +417,9 @@ public:
 		return _audio_frame_rate;
 	}
 
-
+	boost::gregorian::date isdcf_date () const {
+		return _isdcf_date;
+	}
 
 	/* SET */
 
