@@ -52,6 +52,7 @@ public:
 private:
 
 	std::string fix (std::string s) const;
+	static std::string encode_rfc1342 (std::string subject);
 
 	std::string _from;
 	std::list<std::string> _to;
