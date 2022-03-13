@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2015-2018 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2015-2022 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -19,16 +19,16 @@
 */
 
 
+#include "check_box.h"
+#include "confirm_kdm_email_dialog.h"
+#include "dcpomatic_button.h"
+#include "kdm_advanced_dialog.h"
 #include "kdm_output_panel.h"
 #include "kdm_timing_panel.h"
-#include "confirm_kdm_email_dialog.h"
-#include "wx_util.h"
-#include "kdm_advanced_dialog.h"
 #include "name_format_editor.h"
-#include "check_box.h"
-#include "dcpomatic_button.h"
-#include "lib/config.h"
+#include "wx_util.h"
 #include "lib/cinema.h"
+#include "lib/config.h"
 #include "lib/send_kdm_email_job.h"
 #include "lib/warnings.h"
 #include <dcp/exceptions.h>
@@ -166,6 +166,7 @@ KDMOutputPanel::KDMOutputPanel (wxWindow* parent)
 	SetSizer (table);
 }
 
+
 void
 KDMOutputPanel::setup_sensitivity ()
 {
@@ -175,6 +176,7 @@ KDMOutputPanel::setup_sensitivity ()
 	_write_folder->Enable (write);
 	_write_zip->Enable (write);
 }
+
 
 void
 KDMOutputPanel::advanced_clicked ()
@@ -187,6 +189,7 @@ KDMOutputPanel::advanced_clicked ()
 	d->Destroy ();
 }
 
+
 void
 KDMOutputPanel::kdm_write_type_changed ()
 {
@@ -198,6 +201,7 @@ KDMOutputPanel::kdm_write_type_changed ()
 		Config::instance()->set_last_kdm_write_type (Config::KDM_WRITE_ZIP);
 	}
 }
+
 
 pair<shared_ptr<Job>, int>
 KDMOutputPanel::make (
@@ -217,12 +221,10 @@ KDMOutputPanel::make (
 			error_dialog (this, _("You must set up a mail server in Preferences before you can send emails."));
 		}
 
-		bool cinemas_with_no_email = false;
-		for (auto i: cinema_kdms) {
-			if (i.front()->emails().empty()) {
-				cinemas_with_no_email = true;
-			}
-		}
+		bool const cinemas_with_no_email = std::any_of(
+			cinema_kdms.begin(), cinema_kdms.end(),
+			[](list<KDMWithMetadataPtr> const& list) { return list.front()->emails().empty(); }
+			);
 
 		if (proceed && cinemas_with_no_email && !confirm_dialog (
 			    this,
@@ -250,7 +252,7 @@ KDMOutputPanel::make (
 	}
 
 	if (!proceed) {
-		return make_pair (shared_ptr<Job>(), 0);
+		return {};
 	}
 
 	Config::instance()->set_kdm_filename_format (_filename_format->get ());
@@ -307,11 +309,13 @@ KDMOutputPanel::make (
 	return make_pair (job, written);
 }
 
+
 dcp::Formulation
 KDMOutputPanel::formulation () const
 {
 	return (dcp::Formulation) reinterpret_cast<intptr_t> (_type->GetClientData (_type->GetSelection()));
 }
+
 
 boost::filesystem::path
 KDMOutputPanel::directory () const
