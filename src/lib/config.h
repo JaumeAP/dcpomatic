@@ -564,6 +564,14 @@ public:
 		return _use_isdcf_name_by_default;
 	}
 
+	bool write_kdms_to_disk () const {
+		return _write_kdms_to_disk;
+	}
+
+	bool email_kdms () const {
+		return _email_kdms;
+	}
+
 	/* SET (mostly) */
 
 	void set_master_encoding_threads (int n) {
@@ -1080,6 +1088,14 @@ public:
 		maybe_set (_use_isdcf_name_by_default, use);
 	}
 
+	void set_write_kdms_to_disk (bool write) {
+		maybe_set (_write_kdms_to_disk, write);
+	}
+
+	void set_email_kdms (bool email) {
+		maybe_set (_email_kdms, email);
+	}
+
 	void changed (Property p = OTHER);
 	boost::signals2::signal<void (Property)> Changed;
 	/** Emitted if read() failed on an existing Config file.  There is nothing
@@ -1298,6 +1314,8 @@ private:
 	boost::optional<boost::filesystem::path> _add_files_path;
 	double _auto_crop_threshold;
 	bool _use_isdcf_name_by_default;
+	bool _write_kdms_to_disk;
+	bool _email_kdms;
 
 	static int const _current_version;
 
