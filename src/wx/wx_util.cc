@@ -429,6 +429,8 @@ dcpomatic_setup_i18n ()
 	if (locale) {
 		dcpomatic_setup_gettext_i18n (wx_to_std (locale->GetCanonicalName ()));
 	}
+
+	wxSetlocale (LC_ALL, "");
 }
 
 
