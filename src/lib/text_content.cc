@@ -255,68 +255,68 @@ TextContent::TextContent (Content* parent, cxml::ConstNodePtr node, int version,
 	}
 }
 
-TextContent::TextContent (Content* parent, vector<shared_ptr<Content>> c)
+TextContent::TextContent (Content* parent, vector<shared_ptr<Content>> content)
 	: ContentPart (parent)
 {
 	/* This constructor is for join which is only supported for content types
 	   that have a single text, so we can use only_text() here.
 	*/
-	auto ref = c[0]->only_text();
+	auto ref = content[0]->only_text();
 	DCPOMATIC_ASSERT (ref);
 	auto ref_fonts = ref->fonts ();
 
-	for (size_t i = 1; i < c.size(); ++i) {
+	for (size_t i = 1; i < content.size(); ++i) {
 
-		if (c[i]->only_text()->use() != ref->use()) {
+		if (content[i]->only_text()->use() != ref->use()) {
 			throw JoinError (_("Content to be joined must have the same 'use subtitles' setting."));
 		}
 
-		if (c[i]->only_text()->burn() != ref->burn()) {
+		if (content[i]->only_text()->burn() != ref->burn()) {
 			throw JoinError (_("Content to be joined must have the same 'burn subtitles' setting."));
 		}
 
-		if (c[i]->only_text()->x_offset() != ref->x_offset()) {
+		if (content[i]->only_text()->x_offset() != ref->x_offset()) {
 			throw JoinError (_("Content to be joined must have the same subtitle X offset."));
 		}
 
-		if (c[i]->only_text()->y_offset() != ref->y_offset()) {
+		if (content[i]->only_text()->y_offset() != ref->y_offset()) {
 			throw JoinError (_("Content to be joined must have the same subtitle Y offset."));
 		}
 
-		if (c[i]->only_text()->x_scale() != ref->x_scale()) {
+		if (content[i]->only_text()->x_scale() != ref->x_scale()) {
 			throw JoinError (_("Content to be joined must have the same subtitle X scale."));
 		}
 
-		if (c[i]->only_text()->y_scale() != ref->y_scale()) {
+		if (content[i]->only_text()->y_scale() != ref->y_scale()) {
 			throw JoinError (_("Content to be joined must have the same subtitle Y scale."));
 		}
 
-		if (c[i]->only_text()->line_spacing() != ref->line_spacing()) {
+		if (content[i]->only_text()->line_spacing() != ref->line_spacing()) {
 			throw JoinError (_("Content to be joined must have the same subtitle line spacing."));
 		}
 
-		if ((c[i]->only_text()->fade_in() != ref->fade_in()) || (c[i]->only_text()->fade_out() != ref->fade_out())) {
+		if ((content[i]->only_text()->fade_in() != ref->fade_in()) || (content[i]->only_text()->fade_out() != ref->fade_out())) {
 			throw JoinError (_("Content to be joined must have the same subtitle fades."));
 		}
 
-		if ((c[i]->only_text()->outline_width() != ref->outline_width())) {
+		if ((content[i]->only_text()->outline_width() != ref->outline_width())) {
 			throw JoinError (_("Content to be joined must have the same outline width."));
 		}
 
-		auto fonts = c[i]->only_text()->fonts ();
+		auto fonts = content[i]->only_text()->fonts ();
 		if (fonts.size() != ref_fonts.size()) {
 			throw JoinError (_("Content to be joined must use the same fonts."));
 		}
 
-		if (c[i]->only_text()->dcp_track() != ref->dcp_track()) {
+		if (content[i]->only_text()->dcp_track() != ref->dcp_track()) {
 			throw JoinError (_("Content to be joined must use the same DCP track."));
 		}
 
-		if (c[i]->only_text()->language() != ref->language()) {
+		if (content[i]->only_text()->language() != ref->language()) {
 			throw JoinError (_("Content to be joined must use the same text language."));
 		}
 
-		if (c[i]->only_text()->language_is_additional() != ref->language_is_additional()) {
+		if (content[i]->only_text()->language_is_additional() != ref->language_is_additional()) {
 			throw JoinError (_("Content to be joined must both be main subtitle languages or both additional."));
 		}
 
