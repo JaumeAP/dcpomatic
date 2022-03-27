@@ -78,6 +78,5 @@ FFmpegStream::index (AVFormatContext const * fc) const
 		++i;
 	}
 
-	DCPOMATIC_ASSERT (false);
-	return 0;
+	return -1;
 }

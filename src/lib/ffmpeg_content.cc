@@ -132,49 +132,53 @@ FFmpegContent::FFmpegContent (cxml::ConstNodePtr node, int version, list<string>
 }
 
 
-FFmpegContent::FFmpegContent (vector<shared_ptr<Content>> c)
-	: Content (c)
+FFmpegContent::FFmpegContent (vector<shared_ptr<Content>> content)
+	: Content (content)
 {
-	auto i = c.begin ();
+	auto i = content.begin ();
 
 	bool need_video = false;
 	bool need_audio = false;
-	bool need_text = false;
+	bool any_text = false;
 
-	if (i != c.end ()) {
+	if (i != content.end()) {
 		need_video = static_cast<bool> ((*i)->video);
 		need_audio = static_cast<bool> ((*i)->audio);
-		need_text = !(*i)->text.empty();
+		any_text = !(*i)->text.empty();
 	}
 
-	while (i != c.end ()) {
+	while (i != content.end()) {
 		if (need_video != static_cast<bool> ((*i)->video)) {
 			throw JoinError (_("Content to be joined must all have or not have video"));
 		}
 		if (need_audio != static_cast<bool> ((*i)->audio)) {
 			throw JoinError (_("Content to be joined must all have or not have audio"));
 		}
-		if (need_text != !(*i)->text.empty()) {
-			throw JoinError (_("Content to be joined must all have or not have subtitles or captions"));
+		if (!(*i)->text.empty()) {
+			any_text = true;
 		}
 		++i;
 	}
 
 	if (need_video) {
-		video = make_shared<VideoContent>(this, c);
+		video = make_shared<VideoContent>(this, content);
 	}
 	if (need_audio) {
-		audio = make_shared<AudioContent>(this, c);
+		audio = make_shared<AudioContent>(this, content);
 	}
-	if (need_text) {
-		text.push_back (make_shared<TextContent>(this, c));
+	if (any_text) {
+		text.push_back (make_shared<TextContent>(this, content));
 	}
 
-	auto ref = dynamic_pointer_cast<FFmpegContent> (c[0]);
+	/* Use the first content with a text as the reference */
+
+	auto ref_iter = std::find_if(content.begin(), content.end(), [](shared_ptr<Content> c) { return !c->text.empty(); });
+	DCPOMATIC_ASSERT (ref_iter != content.end());
+	auto ref = dynamic_pointer_cast<FFmpegContent>(*ref_iter);
 	DCPOMATIC_ASSERT (ref);
 
-	for (size_t i = 0; i < c.size(); ++i) {
-		auto fc = dynamic_pointer_cast<FFmpegContent>(c[i]);
+	for (size_t i = 0; i < content.size(); ++i) {
+		auto fc = dynamic_pointer_cast<FFmpegContent>(content[i]);
 		if (fc->only_text() && fc->only_text()->use() && *(fc->_subtitle_stream.get()) != *(ref->_subtitle_stream.get())) {
 			throw JoinError (_("Content to be joined must use the same subtitle stream."));
 		}

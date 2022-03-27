@@ -258,14 +258,17 @@ TextContent::TextContent (Content* parent, cxml::ConstNodePtr node, int version,
 TextContent::TextContent (Content* parent, vector<shared_ptr<Content>> content)
 	: ContentPart (parent)
 {
-	/* This constructor is for join which is only supported for content types
-	   that have a single text, so we can use only_text() here.
-	*/
-	auto ref = content[0]->only_text();
+	auto ref_iter = std::find_if(content.begin(), content.end(), [](shared_ptr<Content> c) { return !c->text.empty(); });
+	DCPOMATIC_ASSERT (ref_iter != content.end());
+	auto ref = (*ref_iter)->only_text();
 	DCPOMATIC_ASSERT (ref);
 	auto ref_fonts = ref->fonts ();
 
 	for (size_t i = 1; i < content.size(); ++i) {
+
+		if (content[i]->text.empty()) {
+			continue;
+		}
 
 		if (content[i]->only_text()->use() != ref->use()) {
 			throw JoinError (_("Content to be joined must have the same 'use subtitles' setting."));

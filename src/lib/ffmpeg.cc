@@ -204,6 +204,7 @@ FFmpeg::setup_decoders ()
 {
 	boost::mutex::scoped_lock lm (_mutex);
 
+	std::cout << this << " has " << _format_context->nb_streams << "\n";
 	_codec_context.resize (_format_context->nb_streams);
 	for (uint32_t i = 0; i < _format_context->nb_streams; ++i) {
 		auto codec = avcodec_find_decoder (_format_context->streams[i]->codecpar->codec_id);
@@ -213,6 +214,7 @@ FFmpeg::setup_decoders ()
 				throw std::bad_alloc ();
 			}
 			_codec_context[i] = context;
+			std::cout << this << " context " << i << " = " << context << "\n";
 
 			int r = avcodec_parameters_to_context (context, _format_context->streams[i]->codecpar);
 			if (r < 0) {
@@ -260,12 +262,21 @@ FFmpeg::video_codec_context () const
 AVCodecContext *
 FFmpeg::subtitle_codec_context () const
 {
+	std::cout << "get subtitle_codec_context\n";
 	auto str = _ffmpeg_content->subtitle_stream();
 	if (!str) {
-		return nullptr;
+		std::cout << "no stream.\n";
+		return {};
 	}
 
-	return _codec_context[str->index(_format_context)];
+	auto index = str->index(_format_context);
+	if (index == -1) {
+		std::cout << "stream not in fc.\n";
+		return {};
+	}
+
+	std::cout << this << " using cc " << index << "\n";
+	return _codec_context[index];
 }
 
 
