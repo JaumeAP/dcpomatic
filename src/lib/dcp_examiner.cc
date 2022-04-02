@@ -41,7 +41,6 @@
 #include <dcp/reel_subtitle_asset.h>
 #include <dcp/search.h>
 #include <dcp/sound_asset.h>
-#include <dcp/sound_asset.h>
 #include <dcp/sound_asset_reader.h>
 #include <dcp/stereo_picture_asset.h>
 #include <dcp/stereo_picture_asset_reader.h>

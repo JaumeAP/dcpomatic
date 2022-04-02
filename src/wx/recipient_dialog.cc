@@ -100,8 +100,8 @@ RecipientDialog::RecipientDialog (
 	auto font = _name->GetFont ();
 	font.SetFamily (wxFONTFAMILY_TELETYPE);
 	dc.SetFont (font);
-        wxSize size = dc.GetTextExtent (wxT ("1234567890123456789012345678"));
-        size.SetHeight (-1);
+	auto size = dc.GetTextExtent(wxT("1234567890123456789012345678"));
+	size.SetHeight (-1);
 
 	add_label_to_sizer (_sizer, this, _("Recipient certificate"), true, wxGBPosition (r, 0));
 	auto s = new wxBoxSizer (wxHORIZONTAL);
