@@ -249,7 +249,7 @@ copy (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_
 		set_timestamps_to_now (cr);
 
 		for (auto i: directory_iterator(from)) {
-			copy (i->path(), cr, total_remaining, total, copied_files, nanomsg);
+			copy (i.path(), cr, total_remaining, total, copied_files, nanomsg);
 		}
 	} else {
 		string const write_digest = write (from, cr, total_remaining, total, nanomsg);
