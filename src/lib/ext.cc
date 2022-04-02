@@ -248,7 +248,7 @@ copy (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_
 		}
 		set_timestamps_to_now (cr);
 
-		for (directory_iterator i = directory_iterator(from); i != directory_iterator(); ++i) {
+		for (auto i: directory_iterator(from)) {
 			copy (i->path(), cr, total_remaining, total, copied_files, nanomsg);
 		}
 	} else {
