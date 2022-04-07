@@ -123,4 +123,15 @@ private:
 extern PositionImage merge (std::list<PositionImage> images, Image::Alignment alignment);
 extern bool operator== (Image const & a, Image const & b);
 
+class ImageInformation
+{
+public:
+	int32_t minima[3];
+	int32_t maxima[3];
+
+	void merge(ImageInformation const& other);
+};
+
+ImageInformation image_information (Image const& image);
+
 #endif

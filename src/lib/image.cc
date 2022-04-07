@@ -191,6 +191,20 @@ Image::crop_scale_window (
 	DCPOMATIC_ASSERT (out_size.width >= inter_size.width);
 	DCPOMATIC_ASSERT (out_size.height >= inter_size.height);
 
+	static boost::optional<ImageInformation> before;
+
+	std::cout << "csw video_range=" << static_cast<int>(video_range) << " out_video_range=" << static_cast<int>(out_video_range) << "\n";
+	auto this_info = image_information(*this);
+	if (before) {
+		before->merge(this_info);
+	} else {
+		before = this_info;
+	}
+
+	std::cout << "before Y " << before->minima[0] << " " << before->maxima[0] << "\n";
+	std::cout << "before U " << before->minima[1] << " " << before->maxima[1] << "\n";
+	std::cout << "before V " << before->minima[2] << " " << before->maxima[2] << "\n";
+
 	auto out = make_shared<Image>(out_format, out_size, out_alignment);
 	out->make_black ();
 
@@ -251,6 +265,7 @@ Image::crop_scale_window (
 	   parameters unless the both source and destination images
 	   are isYUV or isGray.  (If either is not, it uses video range).
 	*/
+	std::cout << "passing " << (video_range == VideoRange::VIDEO ? 0 : 1) << " " << (out_video_range == VideoRange::VIDEO ? 0 : 1) << "\n";
 	sws_setColorspaceDetails (
 		scale_context,
 		sws_getCoefficients (lut[static_cast<int>(yuv_to_rgb)]), video_range == VideoRange::VIDEO ? 0 : 1,
@@ -299,14 +314,30 @@ Image::crop_scale_window (
 		out->make_part_black (corner.x + cropped_size.width, out_size.width - cropped_size.width);
 	}
 
+	std::cout << "CHECK IT " << (video_range == VideoRange::VIDEO) << " " << (out_video_range == VideoRange::FULL) << " " << (av_pix_fmt_desc_get(_pixel_format)->flags & AV_PIX_FMT_FLAG_RGB) << "\n";
+
 	if (
 		video_range == VideoRange::VIDEO &&
 		out_video_range == VideoRange::FULL &&
 		av_pix_fmt_desc_get(_pixel_format)->flags & AV_PIX_FMT_FLAG_RGB
 	   ) {
 		/* libswscale will not convert video range for RGB sources, so we have to do it ourselves */
+		std::cout << "doing the v->f conversion ourselves.\n";
 		out->video_range_to_full_range ();
 	}
+
+	boost::optional<ImageInformation> after;
+
+	this_info = image_information(*out);
+	if (after) {
+		after->merge(this_info);
+	} else {
+		after = this_info;
+	}
+
+	std::cout << "after Y " << after->minima[0] << " " << after->maxima[0] << "\n";
+	std::cout << "after U " << after->minima[1] << " " << after->maxima[1] << "\n";
+	std::cout << "after V " << after->minima[2] << " " << after->maxima[2] << "\n";
 
 	return out;
 }
@@ -1526,6 +1557,64 @@ Image::video_range_to_full_range ()
 	}
 	default:
 		throw PixelFormatError ("video_range_to_full_range()", _pixel_format);
+	}
+}
+
+
+ImageInformation
+image_information (Image const& image)
+{
+	ImageInformation info;
+
+	switch (image.pixel_format()) {
+	case AV_PIX_FMT_YUV444P12LE:
+		DCPOMATIC_ASSERT(image.planes() == 3);
+		info.minima[0] = info.minima[1] = info.minima[2] = INT32_MAX;
+		info.maxima[0] = info.maxima[1] = info.maxima[2] = 0;
+		for (int plane = 0; plane < image.planes(); ++plane) {
+			for (int y = 0; y < image.size().height; ++y) {
+				uint16_t* p = reinterpret_cast<uint16_t*>(image.data()[plane] + image.stride()[plane] * y);
+				for (int x = 0; x < image.size().width; ++x) {
+					info.minima[plane] = std::min(info.minima[plane], static_cast<int32_t>(*p));
+					info.maxima[plane] = std::max(info.maxima[plane], static_cast<int32_t>(*p));
+					++p;
+				}
+			}
+		}
+		break;
+	case AV_PIX_FMT_RGB48LE:
+		DCPOMATIC_ASSERT(image.planes() == 1);
+		info.minima[0] = info.minima[1] = info.minima[2] = INT32_MAX;
+		info.maxima[0] = info.maxima[1] = info.maxima[2] = 0;
+		for (int y = 0; y < image.size().height; ++y) {
+			uint16_t* p = reinterpret_cast<uint16_t*>(image.data()[0] + image.stride()[0] * y);
+			for (int x = 0; x < image.size().width; ++x) {
+				info.minima[0] = std::min(info.minima[0], static_cast<int32_t>(*p));
+				info.maxima[0] = std::max(info.maxima[0], static_cast<int32_t>(*p));
+				++p;
+				info.minima[1] = std::min(info.minima[1], static_cast<int32_t>(*p));
+				info.maxima[1] = std::max(info.maxima[1], static_cast<int32_t>(*p));
+				++p;
+				info.minima[2] = std::min(info.minima[2], static_cast<int32_t>(*p));
+				info.maxima[2] = std::max(info.maxima[2], static_cast<int32_t>(*p));
+				++p;
+			}
+		}
+		break;
+	default:
+		DCPOMATIC_ASSERT(false);
+	}
+
+	return info;
+}
+
+
+void
+ImageInformation::merge (ImageInformation const& other)
+{
+	for (int i = 0; i < 3; ++i) {
+		minima[i] = std::min(minima[i], other.minima[i]);
+		maxima[i] = std::max(maxima[i], other.maxima[i]);
 	}
 }
 
