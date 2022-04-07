@@ -62,7 +62,7 @@ ImageContent::ImageContent (boost::filesystem::path p)
 ImageContent::ImageContent (cxml::ConstNodePtr node, int version)
 	: Content (node)
 {
-	video = VideoContent::from_xml (this, node, version);
+	video = VideoContent::from_xml (this, node, version, VideoRange::FULL);
 }
 
 
