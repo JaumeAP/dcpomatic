@@ -1591,7 +1591,7 @@ public:
 
 private:
 
-	bool OnInit ()
+	bool OnInit () override
 	{
 		try {
 			wxInitAllImageHandlers ();
@@ -1699,13 +1699,13 @@ private:
 		return true;
 	}
 
-	void OnInitCmdLine (wxCmdLineParser& parser)
+	void OnInitCmdLine (wxCmdLineParser& parser) override
 	{
 		parser.SetDesc (command_line_description);
 		parser.SetSwitchChars (wxT ("-"));
 	}
 
-	bool OnCmdLineParsed (wxCmdLineParser& parser)
+	bool OnCmdLineParsed (wxCmdLineParser& parser) override
 	{
 		if (parser.Found (wxT("version"))) {
 			cout << "dcpomatic version " << dcpomatic_version << " " << dcpomatic_git_commit << "\n";
@@ -1775,14 +1775,14 @@ private:
 	}
 
 	/* An unhandled exception has occurred inside the main event loop */
-	bool OnExceptionInMainLoop ()
+	bool OnExceptionInMainLoop () override
 	{
 		report_exception ();
 		/* This will terminate the program */
 		return false;
 	}
 
-	void OnUnhandledException ()
+	void OnUnhandledException () override
 	{
 		report_exception ();
 	}
