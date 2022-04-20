@@ -44,15 +44,10 @@
 #include "lib/ffmpeg_content.h"
 #include "lib/file_log.h"
 #include "lib/film.h"
-#include "lib/image.h"
-#include "lib/image_jpeg.h"
-#include "lib/image_png.h"
 #include "lib/internet.h"
 #include "lib/job.h"
 #include "lib/job_manager.h"
 #include "lib/null_log.h"
-#include "lib/player.h"
-#include "lib/player_video.h"
 #include "lib/ratio.h"
 #include "lib/scoped_temporary.h"
 #include "lib/server.h"
@@ -64,8 +59,6 @@
 #include <dcp/cpl.h>
 #include <dcp/dcp.h>
 #include <dcp/exceptions.h>
-#include <dcp/search.h>
-#include <dcp/raw_convert.h>
 #include <wx/cmdline.h>
 #include <wx/display.h>
 #include <wx/preferences.h>
@@ -76,15 +69,17 @@
 #ifdef __WXGTK__
 #include <X11/Xlib.h>
 #endif
-#include <boost/bind/bind.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/bind/bind.hpp>
 #include <iostream>
 
 #ifdef check
 #undef check
 #endif
 
+
 #define MAX_CPLS 32
+
 
 using std::cout;
 using std::dynamic_pointer_cast;
@@ -95,15 +90,16 @@ using std::shared_ptr;
 using std::string;
 using std::vector;
 using std::weak_ptr;
-using boost::scoped_array;
-using boost::optional;
-using boost::thread;
 using boost::bind;
+using boost::optional;
+using boost::scoped_array;
+using boost::thread;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
 using dcp::raw_convert;
 using namespace dcpomatic;
+
 
 enum {
 	ID_file_open = 1,
