@@ -33,6 +33,7 @@
 #include "lib/content_factory.h"
 #include "lib/copy_dcp_details_to_film.h"
 #include "lib/dcp_content.h"
+#include "lib/dcp_examiner.h"
 #include "lib/examine_content_job.h"
 #include "lib/exceptions.h"
 #include "lib/ffmpeg_content.h"
@@ -49,11 +50,8 @@
 #include <dcp/search.h>
 #include <wx/dirdlg.h>
 #include <wx/wx.h>
-#include <algorithm>
-#include <iostream>
 
 
-using std::cout;
 using std::dynamic_pointer_cast;
 using std::exception;
 using std::list;

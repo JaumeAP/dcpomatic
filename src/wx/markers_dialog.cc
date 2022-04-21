@@ -31,10 +31,8 @@
 #include <dcp/types.h>
 #include <wx/gbsizer.h>
 #include <boost/bind/bind.hpp>
-#include <iostream>
 
 
-using std::cout;
 using std::make_shared;
 using std::shared_ptr;
 using std::weak_ptr;

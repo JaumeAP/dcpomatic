@@ -36,14 +36,14 @@
 #include "lib/job.h"
 #include "lib/job_manager.h"
 #include "lib/player_video.h"
-#include <dcp/dcp.h>
 #include <dcp/cpl.h>
+#include <dcp/dcp.h>
 #include <dcp/reel.h>
 #include <dcp/reel_picture_asset.h>
-#include <wx/wx.h>
-#include <wx/tglbtn.h>
 #include <wx/listctrl.h>
 #include <wx/progdlg.h>
+#include <wx/tglbtn.h>
+#include <wx/wx.h>
 
 
 using std::cout;

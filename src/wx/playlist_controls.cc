@@ -41,7 +41,6 @@
 using std::cout;
 using std::dynamic_pointer_cast;
 using std::exception;
-using std::make_shared;
 using std::shared_ptr;
 using std::sort;
 using std::string;

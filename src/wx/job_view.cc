@@ -19,12 +19,14 @@
 */
 
 
+#include "check_box.h"
+#include "dcpomatic_button.h"
 #include "job_view.h"
-#include "wx_util.h"
 #include "message_dialog.h"
 #include "static_text.h"
 #include "check_box.h"
 #include "dcpomatic_button.h"
+#include "wx_util.h"
 #include "lib/analyse_audio_job.h"
 #include "lib/compose.hpp"
 #include "lib/config.h"

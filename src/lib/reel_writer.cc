@@ -59,7 +59,6 @@
 #include "i18n.h"
 
 
-using std::cout;
 using std::dynamic_pointer_cast;
 using std::exception;
 using std::list;
