@@ -236,6 +236,25 @@ BOOST_AUTO_TEST_CASE (threed_test_separate_files_slightly_different_lengths1)
 }
 
 
+/** Same again but other way round */
+BOOST_AUTO_TEST_CASE (threed_test_separate_files_slightly_different_lengths2)
+{
+	auto film = new_test_film2 ("threed_test_separate_files_slightly_different_lengths2");
+	auto L = make_shared<FFmpegContent>("test/data/test.mp4");
+	film->examine_and_add_content (L);
+	auto R = make_shared<FFmpegContent>("test/data/test.mp4");
+	film->examine_and_add_content (R);
+	BOOST_REQUIRE (!wait_for_jobs());
+
+	L->video->set_frame_type (VideoFrameType::THREE_D_LEFT);
+	R->video->set_frame_type (VideoFrameType::THREE_D_RIGHT);
+	L->set_trim_end (dcpomatic::ContentTime::from_frames(1, 24));
+
+	film->set_three_d (true);
+	make_and_verify_dcp (film);
+}
+
+
 /** Trigger a -114 error by trying to make a 3D DCP out of two files with very
  *  different lengths.
  */
