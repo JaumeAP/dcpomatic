@@ -1201,7 +1201,7 @@ Player::plain_text_start (weak_ptr<Piece> weak_piece, weak_ptr<const TextContent
 		ps.string.push_back (s);
 	}
 
-	ps.z_position = text->z_position();
+	ps.z_position = content->z_position();
 	_active_texts[static_cast<int>(content->type())].add_from(weak_content, ps, from);
 }
 
