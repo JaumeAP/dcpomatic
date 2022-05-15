@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE (player_subframe_test)
 	auto player = std::make_shared<Player>(film, Image::Alignment::COMPACT);
 	player->setup_pieces ();
 	BOOST_REQUIRE_EQUAL (player->_black._periods.size(), 1U);
-	BOOST_CHECK (player->_black._periods.front() == DCPTimePeriod(DCPTime::from_frames(3 * 24, 24), DCPTime::from_frames(3 * 24 + 1, 24)));
+	BOOST_CHECK (player->_black._periods.front().first == DCPTimePeriod(DCPTime::from_frames(3 * 24, 24), DCPTime::from_frames(3 * 24 + 1, 24)));
 	BOOST_REQUIRE_EQUAL (player->_silent._periods.size(), 1U);
 	BOOST_CHECK (player->_silent._periods.front() == DCPTimePeriod(DCPTime(289920), DCPTime::from_frames(3 * 24 + 1, 24)));
 }

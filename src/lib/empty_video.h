@@ -27,12 +27,15 @@
 #include "dcpomatic_time.h"
 #include "playlist.h"
 #include <list>
+#include <utility>
 
 
 struct empty_video_test1;
 struct empty_video_test2;
 struct empty_video_test3;
 struct empty_video_test_with_overlapping_content;
+struct empty_video_test_with_three_d1;
+struct empty_video_test_with_three_d2;
 struct player_subframe_test;
 
 
@@ -46,7 +49,7 @@ public:
 		return _position;
 	}
 
-	dcpomatic::DCPTimePeriod period_at_position () const;
+	std::pair<dcpomatic::DCPTimePeriod, Eyes> period_at_position () const;
 
 	bool done () const;
 
@@ -57,9 +60,11 @@ private:
 	friend struct ::empty_video_test2;
 	friend struct ::empty_video_test3;
 	friend struct ::empty_video_test_with_overlapping_content;
+	friend struct empty_video_test_with_three_d1;
+	friend struct empty_video_test_with_three_d2;
 	friend struct ::player_subframe_test;
 
-	std::list<dcpomatic::DCPTimePeriod> _periods;
+	std::list<std::pair<dcpomatic::DCPTimePeriod, Eyes>> _periods;
 	dcpomatic::DCPTime _position;
 };
 

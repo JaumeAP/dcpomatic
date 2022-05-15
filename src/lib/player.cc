@@ -710,10 +710,13 @@ Player::pass ()
 		break;
 	}
 	case BLACK:
+	{
 		LOG_DEBUG_PLAYER ("Emit black for gap at %1", to_string(_black.position()));
-		emit_video (black_player_video_frame(Eyes::BOTH), _black.position());
+		auto period = _black.period_at_position();
+		emit_video (black_player_video_frame(period.second), _black.position());
 		_black.set_position (_black.position() + one_video_frame());
 		break;
+	}
 	case SILENT:
 	{
 		LOG_DEBUG_PLAYER ("Emit silence for gap at %1", to_string(_silent.position()));

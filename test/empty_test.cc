@@ -72,11 +72,11 @@ BOOST_AUTO_TEST_CASE (empty_video_test1)
 	EmptyVideo black (film, film->playlist(), film->playlist()->length(film));
 	BOOST_REQUIRE_EQUAL (black._periods.size(), 2U);
 	auto i = black._periods.begin();
-	BOOST_CHECK (i->from == DCPTime::from_frames(0, vfr));
-	BOOST_CHECK (i->to ==   DCPTime::from_frames(2, vfr));
+	BOOST_CHECK (i->first.from == DCPTime::from_frames(0, vfr));
+	BOOST_CHECK (i->first.to ==   DCPTime::from_frames(2, vfr));
 	++i;
-	BOOST_CHECK (i->from == DCPTime::from_frames(5, vfr));
-	BOOST_CHECK (i->to ==   DCPTime::from_frames(7, vfr));
+	BOOST_CHECK (i->first.from == DCPTime::from_frames(5, vfr));
+	BOOST_CHECK (i->first.to ==   DCPTime::from_frames(7, vfr));
 }
 
 
@@ -140,8 +140,8 @@ BOOST_AUTO_TEST_CASE (empty_video_test2)
 
 	EmptyVideo black (film, film->playlist(), film->playlist()->length(film));
 	BOOST_REQUIRE_EQUAL (black._periods.size(), 1U);
-	BOOST_CHECK (black._periods.front().from == DCPTime::from_frames(3, vfr));
-	BOOST_CHECK (black._periods.front().to == DCPTime::from_frames(7, vfr));
+	BOOST_CHECK (black._periods.front().first.from == DCPTime::from_frames(3, vfr));
+	BOOST_CHECK (black._periods.front().first.to == DCPTime::from_frames(7, vfr));
 
 	/* position should initially be the start of the first empty period */
 	BOOST_CHECK (black.position() == DCPTime::from_frames(3, vfr));
@@ -224,8 +224,8 @@ BOOST_AUTO_TEST_CASE (empty_video_test3)
 	playlist->add (film, contentB);
 	EmptyVideo black (film, playlist, playlist->length(film));
 	BOOST_REQUIRE_EQUAL (black._periods.size(), 1U);
-	BOOST_CHECK (black._periods.front().from == DCPTime::from_frames(0, vfr));
-	BOOST_CHECK (black._periods.front().to == DCPTime::from_frames(7, vfr));
+	BOOST_CHECK (black._periods.front().first.from == DCPTime::from_frames(0, vfr));
+	BOOST_CHECK (black._periods.front().first.to == DCPTime::from_frames(7, vfr));
 
 	/* position should initially be the start of the first empty period */
 	BOOST_CHECK (black.position() == DCPTime::from_frames(0, vfr));
@@ -319,5 +319,88 @@ BOOST_AUTO_TEST_CASE (empty_audio_test_with_overlapping_content)
 	EmptyAudio silent(film, film->playlist(), film->playlist()->length(film));
 
 	BOOST_REQUIRE (silent._periods.empty());
+}
+
+
+BOOST_AUTO_TEST_CASE (empty_video_test_with_three_d1)
+{
+	auto film = new_test_film2 ("empty_video_test_with_three_d1");
+	film->set_sequence (false);
+
+	auto both1 = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+	auto left = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+	auto right = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+	auto both2 = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+
+	film->examine_and_add_content (both1);
+	film->examine_and_add_content (left);
+	film->examine_and_add_content (right);
+	film->examine_and_add_content (both2);
+	BOOST_REQUIRE (!wait_for_jobs());
+
+	int const vfr = film->video_frame_rate ();
+
+	both1->video->set_length (vfr * 1);
+	both1->set_position (film, DCPTime(0));
+
+	left->video->set_length (vfr * 2);
+	left->video->set_frame_type (VideoFrameType::THREE_D_LEFT);
+	left->set_position (film, DCPTime::from_seconds(2));
+
+	right->video->set_length (vfr * 2);
+	right->video->set_frame_type (VideoFrameType::THREE_D_RIGHT);
+	right->set_position (film, DCPTime::from_seconds(3));
+
+	both2->video->set_length (vfr * 1);
+	both2->set_position (film, DCPTime::from_seconds(6));
+
+	EmptyVideo black(film, film->playlist(), film->playlist()->length(film));
+
+	for (auto i: black._periods) {
+		std::cout << to_string(i.first.from) << " " << to_string(i.first.to) << " " << static_cast<int>(i.second) << "\n";
+	}
+	BOOST_REQUIRE_EQUAL (black._periods.size(), 4U);
+	auto i = black._periods.begin();
+	BOOST_CHECK (i->first.from == DCPTime::from_seconds(1));
+	BOOST_CHECK (i->first.to ==   DCPTime::from_seconds(2));
+	BOOST_CHECK (i->second ==     Eyes::BOTH);
+	++i;
+	BOOST_CHECK (i->first.from == DCPTime::from_seconds(2));
+	BOOST_CHECK (i->first.to ==   DCPTime::from_seconds(3));
+	BOOST_CHECK (i->second ==     Eyes::RIGHT);
+	++i;
+	BOOST_CHECK (i->first.from == DCPTime::from_seconds(4));
+	BOOST_CHECK (i->first.to ==   DCPTime::from_seconds(5));
+	BOOST_CHECK (i->second ==     Eyes::LEFT);
+	++i;
+	BOOST_CHECK (i->first.from == DCPTime::from_seconds(5));
+	BOOST_CHECK (i->first.to ==   DCPTime::from_seconds(6));
+	BOOST_CHECK (i->second ==     Eyes::BOTH);
+}
+
+
+BOOST_AUTO_TEST_CASE (empty_video_test_with_three_d2)
+{
+	auto film = new_test_film2 ("empty_video_test_with_three_d2");
+	film->set_sequence (false);
+
+	auto both = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+	auto right = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+
+	film->examine_and_add_content (both);
+	film->examine_and_add_content (right);
+	BOOST_REQUIRE (!wait_for_jobs());
+
+	int const vfr = film->video_frame_rate ();
+
+	both->video->set_length (vfr * 1);
+	both->set_position (film, DCPTime(0));
+
+	right->video->set_length (vfr * 1);
+	right->video->set_frame_type (VideoFrameType::THREE_D_RIGHT);
+	right->set_position (film, DCPTime::from_seconds(0));
+
+	EmptyVideo black(film, film->playlist(), film->playlist()->length(film));
+	BOOST_REQUIRE (black._periods.empty());
 }
 
