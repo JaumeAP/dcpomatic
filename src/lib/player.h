@@ -31,7 +31,8 @@
 #include "content_audio.h"
 #include "content_text.h"
 #include "content_video.h"
-#include "empty.h"
+#include "empty_audio.h"
+#include "empty_video.h"
 #include "film.h"
 #include "image.h"
 #include "player_text.h"
@@ -225,8 +226,8 @@ private:
 	};
 	std::map<AudioStreamPtr, StreamState> _stream_states;
 
-	Empty _black;
-	Empty _silent;
+	EmptyVideo _black;
+	EmptyAudio _silent;
 
 	ActiveText _active_texts[static_cast<int>(TextType::COUNT)];
 	std::shared_ptr<AudioProcessor> _audio_processor;

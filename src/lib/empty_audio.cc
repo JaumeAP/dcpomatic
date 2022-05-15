@@ -19,30 +19,30 @@
 */
 
 
-#include "empty.h"
-#include "film.h"
-#include "playlist.h"
 #include "content.h"
 #include "content_part.h"
 #include "dcp_content.h"
 #include "dcpomatic_time_coalesce.h"
+#include "empty_audio.h"
+#include "film.h"
 #include "piece.h"
+#include "playlist.h"
 #include <iostream>
 
 
 using std::cout;
-using std::list;
-using std::shared_ptr;
 using std::dynamic_pointer_cast;
 using std::function;
+using std::list;
+using std::shared_ptr;
 using namespace dcpomatic;
 
 
-Empty::Empty (shared_ptr<const Film> film, shared_ptr<const Playlist> playlist, function<bool (shared_ptr<const Content>)> part, DCPTime length)
+EmptyAudio::EmptyAudio (shared_ptr<const Film> film, shared_ptr<const Playlist> playlist, DCPTime length)
 {
 	list<DCPTimePeriod> full;
 	for (auto i: playlist->content()) {
-		if (part(i) && i->paths_valid()) {
+		if (i->audio && i->paths_valid()) {
 			full.push_back (DCPTimePeriod(i->position(), i->end(film)));
 		}
 	}
@@ -56,7 +56,7 @@ Empty::Empty (shared_ptr<const Film> film, shared_ptr<const Playlist> playlist, 
 
 
 void
-Empty::set_position (DCPTime position)
+EmptyAudio::set_position (DCPTime position)
 {
 	_position = position;
 
@@ -76,7 +76,7 @@ Empty::set_position (DCPTime position)
 
 
 DCPTimePeriod
-Empty::period_at_position () const
+EmptyAudio::period_at_position () const
 {
 	for (auto i: _periods) {
 		if (i.contains(_position)) {
@@ -89,7 +89,7 @@ Empty::period_at_position () const
 
 
 bool
-Empty::done () const
+EmptyAudio::done () const
 {
 	DCPTime latest;
 	for (auto i: _periods) {

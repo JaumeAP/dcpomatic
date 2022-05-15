@@ -85,7 +85,8 @@ sources = """
           dkdm_wrapper.cc
           dolby_cp750.cc
           emailer.cc
-          empty.cc
+          empty_audio.cc
+          empty_video.cc
           encoder.cc
           encode_server.cc
           encode_server_finder.cc

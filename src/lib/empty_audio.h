@@ -19,28 +19,28 @@
 */
 
 
-#ifndef DCPOMATIC_EMPTY_H
-#define DCPOMATIC_EMPTY_H
+#ifndef DCPOMATIC_EMPTY_AUDIO_H
+#define DCPOMATIC_EMPTY_AUDIO_H
 
 
-#include "playlist.h"
-#include "dcpomatic_time.h"
 #include "content_part.h"
+#include "dcpomatic_time.h"
+#include "playlist.h"
 #include <list>
 
 
-struct empty_test1;
-struct empty_test2;
-struct empty_test3;
-struct empty_test_with_overlapping_content;
+struct empty_audio_test1;
+struct empty_audio_test2;
+struct empty_audio_test3;
+struct empty_audio_test_with_overlapping_content;
 struct player_subframe_test;
 
 
-class Empty
+class EmptyAudio
 {
 public:
-	Empty () {}
-	Empty (std::shared_ptr<const Film> film, std::shared_ptr<const Playlist> playlist, std::function<bool (std::shared_ptr<const Content>)> part, dcpomatic::DCPTime length);
+	EmptyAudio () {}
+	EmptyAudio (std::shared_ptr<const Film> film, std::shared_ptr<const Playlist> playlist, dcpomatic::DCPTime length);
 
 	dcpomatic::DCPTime position () const {
 		return _position;
@@ -53,10 +53,10 @@ public:
 	void set_position (dcpomatic::DCPTime amount);
 
 private:
-	friend struct ::empty_test1;
-	friend struct ::empty_test2;
-	friend struct ::empty_test3;
-	friend struct ::empty_test_with_overlapping_content;
+	friend struct ::empty_audio_test1;
+	friend struct ::empty_audio_test2;
+	friend struct ::empty_audio_test3;
+	friend struct ::empty_audio_test_with_overlapping_content;
 	friend struct ::player_subframe_test;
 
 	std::list<dcpomatic::DCPTimePeriod> _periods;

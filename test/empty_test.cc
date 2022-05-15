@@ -25,9 +25,11 @@
  */
 
 
+#include "lib/audio_content.h"
 #include "lib/dcp_content_type.h"
 #include "lib/decoder.h"
-#include "lib/empty.h"
+#include "lib/empty_audio.h"
+#include "lib/empty_video.h"
 #include "lib/film.h"
 #include "lib/image_content.h"
 #include "lib/player.h"
@@ -46,16 +48,9 @@ using namespace boost::placeholders;
 using namespace dcpomatic;
 
 
-bool
-has_video (shared_ptr<const Content> content)
+BOOST_AUTO_TEST_CASE (empty_video_test1)
 {
-        return static_cast<bool>(content->video);
-}
-
-
-BOOST_AUTO_TEST_CASE (empty_test1)
-{
-	auto film = new_test_film2 ("empty_test1");
+	auto film = new_test_film2 ("empty_video_test1");
 	film->set_sequence (false);
 	auto contentA = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
 	auto contentB = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
@@ -74,7 +69,7 @@ BOOST_AUTO_TEST_CASE (empty_test1)
 	contentB->video->set_length (1);
 	contentB->set_position (film, DCPTime::from_frames(7, vfr));
 
-	Empty black (film, film->playlist(), bind(&has_video, _1), film->playlist()->length(film));
+	EmptyVideo black (film, film->playlist(), film->playlist()->length(film));
 	BOOST_REQUIRE_EQUAL (black._periods.size(), 2U);
 	auto i = black._periods.begin();
 	BOOST_CHECK (i->from == DCPTime::from_frames(0, vfr));
@@ -85,10 +80,46 @@ BOOST_AUTO_TEST_CASE (empty_test1)
 }
 
 
-/** Some tests where the first empty period is not at time 0 */
-BOOST_AUTO_TEST_CASE (empty_test2)
+BOOST_AUTO_TEST_CASE (empty_audio_test1)
 {
-	auto film = new_test_film2 ("empty_test2");
+	auto film = new_test_film2 ("empty_audio_test1");
+	film->set_sequence (false);
+	auto contentA = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+	auto contentB = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+
+	film->examine_and_add_content (contentA);
+	film->examine_and_add_content (contentB);
+	BOOST_REQUIRE (!wait_for_jobs());
+
+	/* Make this content look like it has audio so we can test the EmptyAudio class */
+	contentA->audio = make_shared<AudioContent>(contentA.get());
+	contentB->audio = make_shared<AudioContent>(contentB.get());
+
+	int const vfr = film->video_frame_rate ();
+
+	/* 0 1 2 3 4 5 6 7
+	 *     A A A     B
+	 */
+	contentA->video->set_length (3);
+	contentA->set_position (film, DCPTime::from_frames(2, vfr));
+	contentB->video->set_length (1);
+	contentB->set_position (film, DCPTime::from_frames(7, vfr));
+
+	EmptyAudio silent (film, film->playlist(), film->playlist()->length(film));
+	BOOST_REQUIRE_EQUAL (silent._periods.size(), 2U);
+	auto i = silent._periods.begin();
+	BOOST_CHECK (i->from == DCPTime::from_frames(0, vfr));
+	BOOST_CHECK (i->to ==   DCPTime::from_frames(2, vfr));
+	++i;
+	BOOST_CHECK (i->from == DCPTime::from_frames(5, vfr));
+	BOOST_CHECK (i->to ==   DCPTime::from_frames(7, vfr));
+}
+
+
+/** Some tests where the first empty period is not at time 0 */
+BOOST_AUTO_TEST_CASE (empty_video_test2)
+{
+	auto film = new_test_film2 ("empty_video_test2");
 	film->set_sequence (false);
 	auto contentA = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
 	auto contentB = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
@@ -107,7 +138,7 @@ BOOST_AUTO_TEST_CASE (empty_test2)
 	contentB->video->set_length (1);
 	contentB->set_position (film, DCPTime::from_frames(7, vfr));
 
-	Empty black (film, film->playlist(), bind(&has_video, _1), film->playlist()->length(film));
+	EmptyVideo black (film, film->playlist(), film->playlist()->length(film));
 	BOOST_REQUIRE_EQUAL (black._periods.size(), 1U);
 	BOOST_CHECK (black._periods.front().from == DCPTime::from_frames(3, vfr));
 	BOOST_CHECK (black._periods.front().to == DCPTime::from_frames(7, vfr));
@@ -124,10 +155,53 @@ BOOST_AUTO_TEST_CASE (empty_test2)
 }
 
 
-/** Test for when the film's playlist is not the same as the one passed into Empty */
-BOOST_AUTO_TEST_CASE (empty_test3)
+/** Some tests where the first empty period is not at time 0 */
+BOOST_AUTO_TEST_CASE (empty_audio_test2)
 {
-	auto film = new_test_film2 ("empty_test3");
+	auto film = new_test_film2 ("empty_audio_test2");
+	film->set_sequence (false);
+	auto contentA = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+	auto contentB = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+
+	film->examine_and_add_content (contentA);
+	film->examine_and_add_content (contentB);
+	BOOST_REQUIRE (!wait_for_jobs());
+
+	/* Make this content look like it has audio so we can test the EmptyAudio class */
+	contentA->audio = make_shared<AudioContent>(contentA.get());
+	contentB->audio = make_shared<AudioContent>(contentB.get());
+
+	int const vfr = film->video_frame_rate ();
+
+	/* 0 1 2 3 4 5 6 7
+	 * A A A         B
+	 */
+	contentA->video->set_length (3);
+	contentA->set_position (film, DCPTime(0));
+	contentB->video->set_length (1);
+	contentB->set_position (film, DCPTime::from_frames(7, vfr));
+
+	EmptyAudio silent (film, film->playlist(), film->playlist()->length(film));
+	BOOST_REQUIRE_EQUAL (silent._periods.size(), 1U);
+	BOOST_CHECK (silent._periods.front().from == DCPTime::from_frames(3, vfr));
+	BOOST_CHECK (silent._periods.front().to == DCPTime::from_frames(7, vfr));
+
+	/* position should initially be the start of the first empty period */
+	BOOST_CHECK (silent.position() == DCPTime::from_frames(3, vfr));
+
+	/* check that done() works */
+	BOOST_CHECK (!silent.done ());
+	silent.set_position (DCPTime::from_frames (4, vfr));
+	BOOST_CHECK (!silent.done ());
+	silent.set_position (DCPTime::from_frames (7, vfr));
+	BOOST_CHECK (silent.done ());
+}
+
+
+/** Test for when the film's playlist is not the same as the one passed into Empty */
+BOOST_AUTO_TEST_CASE (empty_video_test3)
+{
+	auto film = new_test_film2 ("empty_video_test3");
 	film->set_sequence (false);
 	auto contentA = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
 	auto contentB = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
@@ -148,7 +222,7 @@ BOOST_AUTO_TEST_CASE (empty_test3)
 
 	auto playlist = make_shared<Playlist>();
 	playlist->add (film, contentB);
-	Empty black (film, playlist, bind(&has_video, _1), playlist->length(film));
+	EmptyVideo black (film, playlist, playlist->length(film));
 	BOOST_REQUIRE_EQUAL (black._periods.size(), 1U);
 	BOOST_CHECK (black._periods.front().from == DCPTime::from_frames(0, vfr));
 	BOOST_CHECK (black._periods.front().to == DCPTime::from_frames(7, vfr));
@@ -158,9 +232,47 @@ BOOST_AUTO_TEST_CASE (empty_test3)
 }
 
 
-BOOST_AUTO_TEST_CASE (empty_test_with_overlapping_content)
+/** Test for when the film's playlist is not the same as the one passed into Empty */
+BOOST_AUTO_TEST_CASE (empty_audio_test3)
 {
-	auto film = new_test_film2 ("empty_test_with_overlapping_content");
+	auto film = new_test_film2 ("empty_audio_test3");
+	film->set_sequence (false);
+	auto contentA = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+	auto contentB = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+
+	film->examine_and_add_content (contentA);
+	film->examine_and_add_content (contentB);
+	BOOST_REQUIRE (!wait_for_jobs());
+
+	/* Make this content look like it has audio so we can test the EmptyAudio class */
+	contentA->audio = make_shared<AudioContent>(contentA.get());
+	contentB->audio = make_shared<AudioContent>(contentB.get());
+
+	int const vfr = film->video_frame_rate ();
+
+	/* 0 1 2 3 4 5 6 7
+	 * A A A         B
+	 */
+	contentA->video->set_length (3);
+	contentA->set_position (film, DCPTime(0));
+	contentB->video->set_length (1);
+	contentB->set_position (film, DCPTime::from_frames(7, vfr));
+
+	auto playlist = make_shared<Playlist>();
+	playlist->add (film, contentB);
+	EmptyAudio silent (film, playlist, playlist->length(film));
+	BOOST_REQUIRE_EQUAL (silent._periods.size(), 1U);
+	BOOST_CHECK (silent._periods.front().from == DCPTime::from_frames(0, vfr));
+	BOOST_CHECK (silent._periods.front().to == DCPTime::from_frames(7, vfr));
+
+	/* position should initially be the start of the first empty period */
+	BOOST_CHECK (silent.position() == DCPTime::from_frames(0, vfr));
+}
+
+
+BOOST_AUTO_TEST_CASE (empty_video_test_with_overlapping_content)
+{
+	auto film = new_test_film2 ("empty_video_test_with_overlapping_content");
 	film->set_sequence (false);
 	auto contentA = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
 	auto contentB = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
@@ -176,8 +288,36 @@ BOOST_AUTO_TEST_CASE (empty_test_with_overlapping_content)
 	contentB->video->set_length (vfr * 1);
 	contentB->set_position (film, DCPTime::from_seconds(1));
 
-	Empty black(film, film->playlist(), bind(&has_video, _1), film->playlist()->length(film));
+	EmptyVideo black(film, film->playlist(), film->playlist()->length(film));
 
 	BOOST_REQUIRE (black._periods.empty());
+}
+
+
+BOOST_AUTO_TEST_CASE (empty_audio_test_with_overlapping_content)
+{
+	auto film = new_test_film2 ("empty_audio_test_with_overlapping_content");
+	film->set_sequence (false);
+	auto contentA = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+	auto contentB = make_shared<ImageContent>("test/data/simple_testcard_640x480.png");
+
+	film->examine_and_add_content (contentA);
+	film->examine_and_add_content (contentB);
+	BOOST_REQUIRE (!wait_for_jobs());
+
+	/* Make this content look like it has audio so we can test the EmptyAudio class */
+	contentA->audio = make_shared<AudioContent>(contentA.get());
+	contentB->audio = make_shared<AudioContent>(contentB.get());
+
+	int const vfr = film->video_frame_rate ();
+
+	contentA->video->set_length (vfr * 3);
+	contentA->set_position (film, DCPTime());
+	contentB->video->set_length (vfr * 1);
+	contentB->set_position (film, DCPTime::from_seconds(1));
+
+	EmptyAudio silent(film, film->playlist(), film->playlist()->length(film));
+
+	BOOST_REQUIRE (silent._periods.empty());
 }
 

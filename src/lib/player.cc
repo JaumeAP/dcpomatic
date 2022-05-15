@@ -144,20 +144,6 @@ Player::setup_pieces ()
 }
 
 
-bool
-have_video (shared_ptr<const Content> content)
-{
-	return static_cast<bool>(content->video) && content->video->use() && content->can_be_played();
-}
-
-
-bool
-have_audio (shared_ptr<const Content> content)
-{
-	return static_cast<bool>(content->audio);
-}
-
-
 void
 Player::setup_pieces_unlocked ()
 {
@@ -288,8 +274,8 @@ Player::setup_pieces_unlocked ()
 		}
 	}
 
-	_black = Empty (_film, playlist(), bind(&have_video, _1), _playback_length);
-	_silent = Empty (_film, playlist(), bind(&have_audio, _1), _playback_length);
+	_black = EmptyVideo (_film, playlist(), _playback_length);
+	_silent = EmptyAudio (_film, playlist(), _playback_length);
 
 	_next_video_time = boost::none;
 	_next_video_eyes = Eyes::BOTH;
