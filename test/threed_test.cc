@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE (threed_test7)
  */
 BOOST_AUTO_TEST_CASE (threed_test_separate_files_slightly_different_lengths)
 {
-	shared_ptr<Film> film = new_test_film2 ("threed_test3");
+	auto film = new_test_film2 ("threed_test3");
 	auto L = make_shared<FFmpegContent>("test/data/test.mp4");
 	film->examine_and_add_content (L);
 	auto R = make_shared<FFmpegContent>("test/data/test.mp4");
@@ -247,7 +247,7 @@ BOOST_AUTO_TEST_CASE (threed_test_separate_files_slightly_different_lengths)
  */
 BOOST_AUTO_TEST_CASE (threed_test_separate_files_very_different_lengths)
 {
-	shared_ptr<Film> film = new_test_film2 ("threed_test3");
+	auto film = new_test_film2 ("threed_test3");
 	auto L = make_shared<FFmpegContent>("test/data/test.mp4");
 	film->examine_and_add_content (L);
 	auto R = make_shared<FFmpegContent>("test/data/test.mp4");

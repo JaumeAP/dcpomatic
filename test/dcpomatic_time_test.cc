@@ -18,20 +18,24 @@
 
 */
 
+
 /** @file  test/dcpomatic_time_test.cc
  *  @brief Test dcpomatic::Time and dcpomatic::TimePeriod classes.
  *  @ingroup selfcontained
  */
 
+
 #include "lib/dcpomatic_time.h"
 #include "lib/dcpomatic_time_coalesce.h"
 #include <boost/test/unit_test.hpp>
-#include <list>
 #include <iostream>
+#include <list>
 
-using std::list;
+
 using std::cout;
+using std::list;
 using namespace dcpomatic;
+
 
 BOOST_AUTO_TEST_CASE (dcpomatic_time_test)
 {
@@ -50,6 +54,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_test)
 	}
 }
 
+
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_overlaps_test)
 {
 	/* Taking times as the start of a sampling interval
@@ -65,7 +70,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_overlaps_test)
 	   the period... a and b do not overlap.
 	*/
 
-	TimePeriod<DCPTime> a (DCPTime (0), DCPTime (4));
+	TimePeriod<DCPTime> a (DCPTime(0), DCPTime(4));
 	TimePeriod<DCPTime> b (DCPTime (4), DCPTime (8));
 	BOOST_CHECK (!a.overlap (b));
 
@@ -85,15 +90,17 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_overlaps_test)
 	BOOST_CHECK (a.overlap(b).get() == DCPTimePeriod(DCPTime(1), DCPTime(9)));
 }
 
+
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test1)
 {
 	DCPTimePeriod A (DCPTime (0), DCPTime (106));
-	list<DCPTimePeriod> B;
-	B.push_back (DCPTimePeriod (DCPTime (0), DCPTime (42)));
-	B.push_back (DCPTimePeriod (DCPTime (52), DCPTime (91)));
-	B.push_back (DCPTimePeriod (DCPTime (94), DCPTime (106)));
-	list<DCPTimePeriod> r = subtract (A, B);
-	list<DCPTimePeriod>::const_iterator i = r.begin ();
+	list<DCPTimePeriod> B = {
+		DCPTimePeriod(DCPTime(0), DCPTime(42)),
+		DCPTimePeriod(DCPTime(52), DCPTime(91)),
+		DCPTimePeriod(DCPTime(94), DCPTime(106))
+	};
+	auto r = subtract (A, B);
+	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (42));
 	BOOST_CHECK (i->to == DCPTime (52));
@@ -105,15 +112,17 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test1)
 	BOOST_REQUIRE (i == r.end ());
 }
 
+
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test2)
 {
 	DCPTimePeriod A (DCPTime (0), DCPTime (106));
-	list<DCPTimePeriod> B;
-	B.push_back (DCPTimePeriod (DCPTime (14), DCPTime (42)));
-	B.push_back (DCPTimePeriod (DCPTime (52), DCPTime (91)));
-	B.push_back (DCPTimePeriod (DCPTime (94), DCPTime (106)));
-	list<DCPTimePeriod> r = subtract (A, B);
-	list<DCPTimePeriod>::const_iterator i = r.begin ();
+	list<DCPTimePeriod> B = {
+		DCPTimePeriod(DCPTime(14), DCPTime(42)),
+		DCPTimePeriod(DCPTime(52), DCPTime(91)),
+		DCPTimePeriod(DCPTime(94), DCPTime(106))
+	};
+	auto r = subtract (A, B);
+	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (0));
 	BOOST_CHECK (i->to == DCPTime (14));
@@ -129,15 +138,17 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test2)
 	BOOST_REQUIRE (i == r.end ());
 }
 
+
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test3)
 {
 	DCPTimePeriod A (DCPTime (0), DCPTime (106));
-	list<DCPTimePeriod> B;
-	B.push_back (DCPTimePeriod (DCPTime (14), DCPTime (42)));
-	B.push_back (DCPTimePeriod (DCPTime (52), DCPTime (91)));
-	B.push_back (DCPTimePeriod (DCPTime (94), DCPTime (99)));
-	list<DCPTimePeriod> r = subtract (A, B);
-	list<DCPTimePeriod>::const_iterator i = r.begin ();
+	list<DCPTimePeriod> B = {
+		DCPTimePeriod(DCPTime(14), DCPTime(42)),
+		DCPTimePeriod(DCPTime(52), DCPTime(91)),
+		DCPTimePeriod(DCPTime(94), DCPTime(99))
+	};
+	auto r = subtract (A, B);
+	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (0));
 	BOOST_CHECK (i->to == DCPTime (14));
@@ -157,12 +168,13 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test3)
 	BOOST_REQUIRE (i == r.end ());
 }
 
+
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test4)
 {
 	DCPTimePeriod A (DCPTime (0), DCPTime (106));
 	list<DCPTimePeriod> B;
-	list<DCPTimePeriod> r = subtract (A, B);
-	list<DCPTimePeriod>::const_iterator i = r.begin ();
+	auto r = subtract (A, B);
+	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (0));
 	BOOST_CHECK (i->to == DCPTime (106));
@@ -170,15 +182,17 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test4)
 	BOOST_REQUIRE (i == r.end ());
 }
 
+
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test5)
 {
 	DCPTimePeriod A (DCPTime (0), DCPTime (106));
-	list<DCPTimePeriod> B;
-	B.push_back (DCPTimePeriod (DCPTime (14), DCPTime (42)));
-	B.push_back (DCPTimePeriod (DCPTime (42), DCPTime (91)));
-	B.push_back (DCPTimePeriod (DCPTime (94), DCPTime (99)));
-	list<DCPTimePeriod> r = subtract (A, B);
-	list<DCPTimePeriod>::const_iterator i = r.begin ();
+	list<DCPTimePeriod> B = {
+		DCPTimePeriod(DCPTime(14), DCPTime(42)),
+		DCPTimePeriod(DCPTime(42), DCPTime(91)),
+		DCPTimePeriod(DCPTime(94), DCPTime(99))
+	};
+	auto r = subtract (A, B);
+	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (0));
 	BOOST_CHECK (i->to == DCPTime (14));
@@ -194,24 +208,28 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test5)
 	BOOST_REQUIRE (i == r.end ());
 }
 
+
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test6)
 {
 	DCPTimePeriod A (DCPTime (0), DCPTime (106));
-	list<DCPTimePeriod> B;
-	B.push_back (DCPTimePeriod (DCPTime (0), DCPTime (42)));
-	B.push_back (DCPTimePeriod (DCPTime (42), DCPTime (91)));
-	B.push_back (DCPTimePeriod (DCPTime (91), DCPTime (106)));
-	list<DCPTimePeriod> r = subtract (A, B);
+	list<DCPTimePeriod> B = {
+		DCPTimePeriod(DCPTime(0), DCPTime(42)),
+		DCPTimePeriod(DCPTime(42), DCPTime(91)),
+		DCPTimePeriod(DCPTime(91), DCPTime(106))
+	};
+	auto r = subtract (A, B);
 	BOOST_CHECK (r.empty());
 }
+
 
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test7)
 {
 	DCPTimePeriod A (DCPTime (228), DCPTime (356));
-	list<DCPTimePeriod> B;
-	B.push_back (DCPTimePeriod (DCPTime (34), DCPTime (162)));
-	list<DCPTimePeriod> r = subtract (A, B);
-	list<DCPTimePeriod>::const_iterator i = r.begin ();
+	list<DCPTimePeriod> B = {
+		DCPTimePeriod(DCPTime(34), DCPTime(162))
+	};
+	auto r = subtract (A, B);
+	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (228));
 	BOOST_CHECK (i->to == DCPTime (356));
@@ -219,14 +237,16 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test7)
 	BOOST_REQUIRE (i == r.end ());
 }
 
+
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test8)
 {
 	DCPTimePeriod A (DCPTime(0), DCPTime(32000));
-	list<DCPTimePeriod> B;
-	B.push_back (DCPTimePeriod (DCPTime(8000), DCPTime(20000)));
-	B.push_back (DCPTimePeriod (DCPTime(28000), DCPTime(32000)));
-	list<DCPTimePeriod> r = subtract (A, B);
-	list<DCPTimePeriod>::const_iterator i = r.begin ();
+	list<DCPTimePeriod> B = {
+		DCPTimePeriod(DCPTime(8000), DCPTime(20000)),
+		DCPTimePeriod(DCPTime(28000), DCPTime(32000))
+	};
+	auto r = subtract (A, B);
+	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (*i == DCPTimePeriod(DCPTime(0), DCPTime(8000)));
 	++i;
@@ -236,83 +256,76 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test8)
 	BOOST_REQUIRE (i == r.end ());
 }
 
+
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_coalesce_test1)
 {
 	DCPTimePeriod A (DCPTime(14), DCPTime(29));
 	DCPTimePeriod B (DCPTime(45), DCPTime(91));
-	list<DCPTimePeriod> p;
-	p.push_back (A);
-	p.push_back (B);
-	list<DCPTimePeriod> q = coalesce (p);
+	list<DCPTimePeriod> p = { A, B };
+	auto q = coalesce (p);
 	BOOST_REQUIRE_EQUAL (q.size(), 2U);
 	BOOST_CHECK (q.front() == DCPTimePeriod(DCPTime(14), DCPTime(29)));
 	BOOST_CHECK (q.back () == DCPTimePeriod(DCPTime(45), DCPTime(91)));
 }
 
+
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_coalesce_test2)
 {
 	DCPTimePeriod A (DCPTime(14), DCPTime(29));
 	DCPTimePeriod B (DCPTime(26), DCPTime(91));
-	list<DCPTimePeriod> p;
-	p.push_back (A);
-	p.push_back (B);
-	list<DCPTimePeriod> q = coalesce (p);
+	list<DCPTimePeriod> p = { A, B };
+	auto q = coalesce (p);
 	BOOST_REQUIRE_EQUAL (q.size(), 1U);
 	BOOST_CHECK (q.front() == DCPTimePeriod(DCPTime(14), DCPTime(91)));
 }
+
 
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_coalesce_test3)
 {
 	DCPTimePeriod A (DCPTime(14), DCPTime(29));
 	DCPTimePeriod B (DCPTime(29), DCPTime(91));
-	list<DCPTimePeriod> p;
-	p.push_back (A);
-	p.push_back (B);
-	list<DCPTimePeriod> q = coalesce (p);
+	list<DCPTimePeriod> p = { A, B };
+	auto q = coalesce (p);
 	BOOST_REQUIRE_EQUAL (q.size(), 1U);
 	BOOST_CHECK (q.front() == DCPTimePeriod(DCPTime(14), DCPTime(91)));
 }
+
 
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_coalesce_test4)
 {
 	DCPTimePeriod A (DCPTime(14), DCPTime(29));
 	DCPTimePeriod B (DCPTime(20), DCPTime(91));
 	DCPTimePeriod C (DCPTime(35), DCPTime(106));
-	list<DCPTimePeriod> p;
-	p.push_back (A);
-	p.push_back (B);
-	p.push_back (C);
-	list<DCPTimePeriod> q = coalesce (p);
+	list<DCPTimePeriod> p = { A, B, C };
+	auto q = coalesce (p);
 	BOOST_REQUIRE_EQUAL (q.size(), 1U);
 	BOOST_CHECK (q.front() == DCPTimePeriod(DCPTime(14), DCPTime(106)));
 }
+
 
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_coalesce_test5)
 {
 	DCPTimePeriod A (DCPTime(14), DCPTime(29));
 	DCPTimePeriod B (DCPTime(20), DCPTime(91));
 	DCPTimePeriod C (DCPTime(100), DCPTime(106));
-	list<DCPTimePeriod> p;
-	p.push_back (A);
-	p.push_back (B);
-	p.push_back (C);
-	list<DCPTimePeriod> q = coalesce (p);
+	list<DCPTimePeriod> p = { A, B, C };
+	auto q = coalesce (p);
 	BOOST_REQUIRE_EQUAL (q.size(), 2U);
 	BOOST_CHECK (q.front() == DCPTimePeriod(DCPTime(14), DCPTime(91)));
 	BOOST_CHECK (q.back()  == DCPTimePeriod(DCPTime(100), DCPTime(106)));
 }
 
+
 BOOST_AUTO_TEST_CASE (test_coalesce_with_overlapping_periods)
 {
 	DCPTimePeriod A (DCPTime(0), DCPTime(10));
 	DCPTimePeriod B (DCPTime(2), DCPTime(8));
-	list<DCPTimePeriod> p;
-	p.push_back (A);
-	p.push_back (B);
+	list<DCPTimePeriod> p = { A, B };
 	auto q = coalesce(p);
 	BOOST_REQUIRE_EQUAL (q.size(), 1U);
 	BOOST_CHECK (q.front() == DCPTimePeriod(DCPTime(0), DCPTime(10)));
 }
+
 
 /* Straightforward test of DCPTime::ceil */
 BOOST_AUTO_TEST_CASE (dcpomatic_time_ceil_test)
@@ -333,6 +346,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_ceil_test)
 	/* Check another tricky case that used to fail */
 	BOOST_CHECK_EQUAL (DCPTime(212256039).ceil(23.976).get(), 212256256);
 }
+
 
 /* Straightforward test of DCPTime::floor */
 BOOST_AUTO_TEST_CASE (dcpomatic_time_floor_test)
