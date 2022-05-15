@@ -83,8 +83,8 @@ Shuffler::video (weak_ptr<Piece> weak_piece, ContentVideo video)
 				(_store.front().second.frame >= (_last->frame + 1) && _store.front().second.eyes == Eyes::LEFT  && _last->eyes == Eyes::RIGHT)
 				);
 
-		if (!store_front_in_sequence) {
-			string const store = _store.empty() ? "store empty" : String::compose("store front frame=%1 eyes=%2", _store.front().second.frame, static_cast<int>(_store.front().second.eyes));
+		if (!store_front_in_sequence && !_store.empty()) {
+			string const store = String::compose("store front frame=%1 eyes=%2", _store.front().second.frame, static_cast<int>(_store.front().second.eyes));
 			string const last = _last ? String::compose("last frame=%1 eyes=%2", _last->frame, static_cast<int>(_last->eyes)) : "no last";
 			LOG_DEBUG_THREE_D("Shuffler not in sequence: %1 %2", store, last);
 		}

@@ -916,7 +916,11 @@ Player::video (weak_ptr<Piece> weak_piece, ContentVideo video)
 
 	/* Time of the first frame we will emit */
 	DCPTime const time = content_video_to_dcp (piece, video.frame);
-	LOG_DEBUG_PLAYER("Received video frame %1 at %2", video.frame, to_string(time));
+	if (video.eyes == Eyes::BOTH) {
+		LOG_DEBUG_PLAYER("Received video frame %1 at %2", video.frame, to_string(time));
+	} else {
+		LOG_DEBUG_PLAYER("Received video frame %1 %2 at %3", (video.eyes == Eyes::LEFT ? "L" : "R"), video.frame, to_string(time));
+	}
 
 	/* Discard if it's before the content's period or the last accurate seek.  We can't discard
 	   if it's after the content's period here as in that case we still need to fill any gap between
