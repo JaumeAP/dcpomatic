@@ -342,14 +342,13 @@ public:
 };
 
 
-/** @param A Period which is subtracted from.
+/** @param A Periods which are subtracted from, must be in ascending order of start time and must not overlap.
  *  @param B Periods to subtract from `A', must be in ascending order of start time and must not overlap.
  */
 template <class T>
-std::list<TimePeriod<T>> subtract (TimePeriod<T> A, std::list<TimePeriod<T>> const & B)
+std::list<TimePeriod<T>> subtract (std::list<TimePeriod<T>> const & A, std::list<TimePeriod<T>> const & B)
 {
-	std::list<TimePeriod<T>> result;
-	result.push_back (A);
+	std::list<TimePeriod<T>> result = A;
 
 	for (auto i: B) {
 		std::list<TimePeriod<T>> new_result;

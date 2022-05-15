@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test1)
 		DCPTimePeriod(DCPTime(52), DCPTime(91)),
 		DCPTimePeriod(DCPTime(94), DCPTime(106))
 	};
-	auto r = subtract (A, B);
+	auto r = subtract ({A}, B);
 	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (42));
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test2)
 		DCPTimePeriod(DCPTime(52), DCPTime(91)),
 		DCPTimePeriod(DCPTime(94), DCPTime(106))
 	};
-	auto r = subtract (A, B);
+	auto r = subtract ({A}, B);
 	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (0));
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test3)
 		DCPTimePeriod(DCPTime(52), DCPTime(91)),
 		DCPTimePeriod(DCPTime(94), DCPTime(99))
 	};
-	auto r = subtract (A, B);
+	auto r = subtract ({A}, B);
 	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (0));
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test4)
 {
 	DCPTimePeriod A (DCPTime (0), DCPTime (106));
 	list<DCPTimePeriod> B;
-	auto r = subtract (A, B);
+	auto r = subtract ({A}, B);
 	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (0));
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test5)
 		DCPTimePeriod(DCPTime(42), DCPTime(91)),
 		DCPTimePeriod(DCPTime(94), DCPTime(99))
 	};
-	auto r = subtract (A, B);
+	auto r = subtract ({A}, B);
 	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (0));
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test6)
 		DCPTimePeriod(DCPTime(42), DCPTime(91)),
 		DCPTimePeriod(DCPTime(91), DCPTime(106))
 	};
-	auto r = subtract (A, B);
+	auto r = subtract ({A}, B);
 	BOOST_CHECK (r.empty());
 }
 
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test7)
 	list<DCPTimePeriod> B = {
 		DCPTimePeriod(DCPTime(34), DCPTime(162))
 	};
-	auto r = subtract (A, B);
+	auto r = subtract ({A}, B);
 	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (i->from == DCPTime (228));
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test8)
 		DCPTimePeriod(DCPTime(8000), DCPTime(20000)),
 		DCPTimePeriod(DCPTime(28000), DCPTime(32000))
 	};
-	auto r = subtract (A, B);
+	auto r = subtract ({A}, B);
 	auto i = r.begin ();
 	BOOST_REQUIRE (i != r.end ());
 	BOOST_CHECK (*i == DCPTimePeriod(DCPTime(0), DCPTime(8000)));
@@ -254,6 +254,69 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_test8)
 	BOOST_CHECK (*i == DCPTimePeriod(DCPTime(20000), DCPTime(28000)));
 	++i;
 	BOOST_REQUIRE (i == r.end ());
+}
+
+
+BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_list_from_list_test1)
+{
+	list<DCPTimePeriod> A = {
+		DCPTimePeriod(DCPTime(0),    DCPTime(2000)),
+		DCPTimePeriod(DCPTime(4000), DCPTime(6000))
+	};
+
+	list<DCPTimePeriod> B = {
+		DCPTimePeriod(DCPTime(1000), DCPTime(3000)),
+		DCPTimePeriod(DCPTime(5000), DCPTime(7000))
+	};
+
+	auto result = subtract(A, B);
+	list<DCPTimePeriod> reference = {
+		DCPTimePeriod(DCPTime(0),    DCPTime(1000)),
+		DCPTimePeriod(DCPTime(4000), DCPTime(5000))
+	};
+
+	BOOST_CHECK (result == reference);
+}
+
+
+BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_list_from_list_test2)
+{
+	list<DCPTimePeriod> A = {
+		DCPTimePeriod(DCPTime(0),    DCPTime(2000)),
+		DCPTimePeriod(DCPTime(4000), DCPTime(6000))
+	};
+
+	list<DCPTimePeriod> B = {
+		DCPTimePeriod(DCPTime(500),  DCPTime(1500)),
+		DCPTimePeriod(DCPTime(4500), DCPTime(5500))
+	};
+
+	auto result = subtract(A, B);
+	list<DCPTimePeriod> reference = {
+		DCPTimePeriod(DCPTime(0),    DCPTime(500)),
+		DCPTimePeriod(DCPTime(1500), DCPTime(2000)),
+		DCPTimePeriod(DCPTime(4000), DCPTime(4500)),
+		DCPTimePeriod(DCPTime(5500), DCPTime(6000)),
+	};
+
+	BOOST_CHECK (result == reference);
+}
+
+
+BOOST_AUTO_TEST_CASE (dcpomatic_time_period_subtract_list_from_list_test3)
+{
+	list<DCPTimePeriod> A = {
+		DCPTimePeriod(DCPTime(500),  DCPTime(1500)),
+		DCPTimePeriod(DCPTime(4500), DCPTime(5500))
+	};
+
+	list<DCPTimePeriod> B = {
+		DCPTimePeriod(DCPTime(0),    DCPTime(2000)),
+		DCPTimePeriod(DCPTime(4000), DCPTime(6000))
+	};
+
+	auto result = subtract(A, B);
+	BOOST_CHECK (result.empty());
 }
 
 

@@ -132,7 +132,7 @@ AudioMerger::push (std::shared_ptr<const AudioBuffers> audio, DCPTime time)
 	}
 
 	/* Add the non-overlapping parts */
-	for (auto i: subtract(period, periods)) {
+	for (auto i: subtract({period}, periods)) {
 		auto before = _buffers.end();
 		auto after = _buffers.end();
 		for (auto j = _buffers.begin(); j != _buffers.end(); ++j) {

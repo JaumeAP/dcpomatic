@@ -47,7 +47,7 @@ EmptyAudio::EmptyAudio (shared_ptr<const Film> film, shared_ptr<const Playlist> 
 		}
 	}
 
-	_periods = subtract (DCPTimePeriod(DCPTime(), length), coalesce(full));
+	_periods = subtract ({DCPTimePeriod(DCPTime(), length)}, coalesce(full));
 
 	if (!_periods.empty()) {
 		_position = _periods.front().from;
