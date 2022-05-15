@@ -30,11 +30,13 @@
 #include "lib/content_factory.h"
 #include "lib/cross.h"
 #include "lib/dcp_content_type.h"
+#include "lib/dcpomatic_log.h"
 #include "lib/ffmpeg_content.h"
 #include "lib/film.h"
 #include "lib/image.h"
 #include "lib/job.h"
 #include "lib/job_manager.h"
+#include "lib/log_entry.h"
 #include "lib/make_dcp.h"
 #include "lib/player.h"
 #include "lib/ratio.h"
@@ -287,5 +289,29 @@ BOOST_AUTO_TEST_CASE (threed_test_butler_overfill)
 		butler->get_audio(Butler::Behaviour::BLOCKING, audio.data(), audio_frames);
 	}
 	BOOST_REQUIRE (error.code == Butler::Error::Code::NONE);
+}
+
+
+/** Check #2253 in which there was a reel length error with these inputs,
+ *  which are quite different in length (R is about 5s longer than L).
+ */
+BOOST_AUTO_TEST_CASE (threed_test_incorrect_reel_length)
+{
+	dcpomatic_log->set_types (
+		LogEntry::TYPE_GENERAL | LogEntry::TYPE_WARNING |
+		LogEntry::TYPE_ERROR | LogEntry::TYPE_DISK | LogEntry::TYPE_DEBUG_PLAYER |
+		LogEntry::TYPE_DEBUG_THREE_D
+		);
+
+	auto L = make_shared<FFmpegContent>(TestPaths::private_data() / "01 - L 2048x1080.mp4");
+	auto R = make_shared<FFmpegContent>(TestPaths::private_data() / "02 - R 2048x1080.mp4");
+	auto film = new_test_film2("threed_test_incorrect_reel_length", {L, R});
+
+	L->video->set_frame_type(VideoFrameType::THREE_D_LEFT);
+	R->video->set_frame_type(VideoFrameType::THREE_D_RIGHT);
+
+	film->set_three_d(true);
+
+	make_and_verify_dcp (film, {dcp::VerificationNote::Code::INVALID_PICTURE_FRAME_RATE_FOR_2K});
 }
 
