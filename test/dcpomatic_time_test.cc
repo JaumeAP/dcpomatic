@@ -27,6 +27,7 @@
 
 #include "lib/dcpomatic_time.h"
 #include "lib/dcpomatic_time_coalesce.h"
+#include "lib/dcpomatic_time_overlap.h"
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 #include <list>
@@ -426,4 +427,110 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_floor_test)
 
 	/* Check that rounding down to non-integer frame rates works */
 	BOOST_CHECK_EQUAL (DCPTime(45312).floor(29.976).get(), 44836);
+}
+
+
+BOOST_AUTO_TEST_CASE (dcpomatic_time_overlap_test1)
+{
+	list<DCPTimePeriod> A = {
+		{ DCPTime(0), DCPTime(5) }
+	};
+
+	BOOST_CHECK (overlap(A, std::list<DCPTimePeriod>()).empty());
+	BOOST_CHECK (overlap(std::list<DCPTimePeriod>(), A).empty());
+}
+
+
+BOOST_AUTO_TEST_CASE (dcpomatic_time_overlap_test2)
+{
+	list<DCPTimePeriod> A = {
+		{ DCPTime(0), DCPTime(5) }
+	};
+
+	list<DCPTimePeriod> B = {
+		{ DCPTime(6), DCPTime(10) }
+	};
+
+	BOOST_CHECK (overlap(A, B).empty());
+	BOOST_CHECK (overlap(B, A).empty());
+}
+
+
+BOOST_AUTO_TEST_CASE (dcpomatic_time_overlap_test3)
+{
+	list<DCPTimePeriod> A = {
+		{ DCPTime(0), DCPTime(5) }
+	};
+
+	list<DCPTimePeriod> B = {
+		{ DCPTime(2), DCPTime(3) }
+	};
+
+	std::list<DCPTimePeriod> correct = {
+		{ DCPTime(2), DCPTime(3) }
+	};
+
+	BOOST_CHECK (overlap(A, B) == correct);
+	BOOST_CHECK (overlap(B, A) == correct);
+}
+
+
+BOOST_AUTO_TEST_CASE (dcpomatic_time_overlap_test4)
+{
+	list<DCPTimePeriod> A = {
+		{ DCPTime(0), DCPTime(5) }
+	};
+
+	list<DCPTimePeriod> B = {
+		{ DCPTime(0), DCPTime(5) }
+	};
+
+	std::list<DCPTimePeriod> correct = {
+		{ DCPTime(0), DCPTime(5) }
+	};
+
+	BOOST_CHECK (overlap(A, B) == correct);
+	BOOST_CHECK (overlap(B, A) == correct);
+}
+
+
+BOOST_AUTO_TEST_CASE (dcpomatic_time_overlap_test5)
+{
+	list<DCPTimePeriod> A = {
+		{ DCPTime(0), DCPTime(5) },
+		{ DCPTime(7), DCPTime(12) }
+	};
+
+	list<DCPTimePeriod> B = {
+		{ DCPTime(0), DCPTime(15) }
+	};
+
+	std::list<DCPTimePeriod> correct = {
+		{ DCPTime(0), DCPTime(5) },
+		{ DCPTime(7), DCPTime(12) }
+	};
+
+	BOOST_CHECK (overlap(A, B) == correct);
+	BOOST_CHECK (overlap(B, A) == correct);
+}
+
+
+BOOST_AUTO_TEST_CASE (dcpomatic_time_overlap_test6)
+{
+	list<DCPTimePeriod> A = {
+		{ DCPTime(0), DCPTime(5) },
+		{ DCPTime(7), DCPTime(12) }
+	};
+
+	list<DCPTimePeriod> B = {
+		{ DCPTime(3), DCPTime(10) }
+	};
+
+	std::list<DCPTimePeriod> correct = {
+		{ DCPTime(3), DCPTime(5) },
+		{ DCPTime(7), DCPTime(10) }
+	};
+
+	BOOST_CHECK (overlap(A, B) == correct);
+	BOOST_CHECK (overlap(B, A) == correct);
 }
