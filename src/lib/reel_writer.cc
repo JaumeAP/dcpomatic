@@ -309,6 +309,8 @@ ReelWriter::check_existing_picture_asset (boost::filesystem::path asset)
 void
 ReelWriter::write (shared_ptr<const Data> encoded, Frame frame, Eyes eyes)
 {
+	LOG_DEBUG_WRITER("ReelWriter::write frame=%1 eyes=%2", frame, static_cast<int>(eyes));
+
 	if (!_picture_asset_writer) {
 		/* We're not writing any data */
 		return;
@@ -351,6 +353,8 @@ ReelWriter::fake_write (int size)
 void
 ReelWriter::repeat_write (Frame frame, Eyes eyes)
 {
+	LOG_DEBUG_WRITER("ReelWriter::repeat_write frame=%1 eyes=%2", frame, static_cast<int>(eyes));
+
 	if (!_picture_asset_writer) {
 		/* We're not writing any data */
 		return;

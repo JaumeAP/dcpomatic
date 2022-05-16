@@ -42,6 +42,7 @@ public:
 	static const int TYPE_DISK;
 	static const int TYPE_DEBUG_PLAYER;     ///< the Player class
 	static const int TYPE_DEBUG_AUDIO_ANALYSIS; ///< audio analysis job
+	static const int TYPE_DEBUG_WRITER;         ///< Writer and ReelWriter classes
 
 	explicit LogEntry (int type);
 	virtual ~LogEntry () {}

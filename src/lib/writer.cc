@@ -448,7 +448,7 @@ try
 				++_fake_written;
 				break;
 			case QueueItem::Type::REPEAT:
-				LOG_DEBUG_ENCODE (N_("Writer REPEAT-writes %1"), qi.frame);
+				LOG_DEBUG_ENCODE (N_("Writer REPEAT-writes %1 %2"), qi.frame, static_cast<int>(qi.eyes));
 				reel.repeat_write (qi.frame, qi.eyes);
 				++_repeat_written;
 				break;

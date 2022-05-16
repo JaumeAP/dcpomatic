@@ -1334,6 +1334,7 @@ Player::do_emit_video (shared_ptr<PlayerVideo> pv, DCPTime time)
 		pv->set_text (subtitles.get ());
 	}
 
+	LOG_DEBUG_PLAYER("Player --> Video %1 %2", to_string(time), static_cast<int>(pv->eyes()));
 	Video (pv, time);
 }
 
