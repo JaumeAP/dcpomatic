@@ -24,7 +24,6 @@
 
 
 #include "dcpomatic_time.h"
-#include <iostream>
 
 
 namespace dcpomatic {
