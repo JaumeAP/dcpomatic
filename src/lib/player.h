@@ -208,7 +208,7 @@ private:
 	LastVideoMap _last_video;
 
 	AudioMerger _audio_merger;
-	std::unique_ptr<Shuffler> _shuffler;
+	boost::optional<Shuffler> _shuffler;
 	std::list<std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime>> _delay;
 
 	class StreamState
