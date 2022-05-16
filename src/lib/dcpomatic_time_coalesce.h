@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_TIME_COALESCE_H
+#define DCPOMATIC_TIME_COALESCE_H
+
+
 #include "dcpomatic_time.h"
 #include <iostream>
 
@@ -54,3 +58,7 @@ std::list<TimePeriod<T>> coalesce (std::list<TimePeriod<T>> periods)
 
 
 }
+
+
+#endif
+
