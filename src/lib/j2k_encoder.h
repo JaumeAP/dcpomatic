@@ -41,12 +41,13 @@
 #include <stdint.h>
 
 
-class Film;
-class EncodeServerDescription;
 class DCPVideo;
-class Writer;
+class EncodeServerDescription;
+class Film;
+class J2KFrameEncoder;
 class Job;
 class PlayerVideo;
+class Writer;
 
 
 /** @class J2KEncoder
@@ -84,7 +85,7 @@ private:
 
 	void frame_done ();
 
-	void encoder_thread (boost::optional<EncodeServerDescription>);
+	void encoder_thread (std::weak_ptr<J2KFrameEncoder> worker);
 	void terminate_threads ();
 
 	/** Film that we are encoding */
@@ -97,6 +98,7 @@ private:
 
 	mutable boost::mutex _queue_mutex;
 	std::list<DCPVideo> _queue;
+	std::list<std::shared_ptr<J2KFrameEncoder>> _workers;
 	/** condition to manage thread wakeups when we have nothing to do */
 	boost::condition _empty_condition;
 	/** condition to manage thread wakeups when we have too much to do */
