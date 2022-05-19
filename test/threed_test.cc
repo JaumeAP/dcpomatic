@@ -247,6 +247,12 @@ BOOST_AUTO_TEST_CASE (threed_test_separate_files_slightly_different_lengths)
  */
 BOOST_AUTO_TEST_CASE (threed_test_separate_files_very_different_lengths)
 {
+	dcpomatic_log->set_types (
+		LogEntry::TYPE_GENERAL | LogEntry::TYPE_WARNING |
+		LogEntry::TYPE_ERROR | LogEntry::TYPE_DISK | LogEntry::TYPE_DEBUG_PLAYER |
+		LogEntry::TYPE_DEBUG_THREE_D
+		);
+
 	auto film = new_test_film2 ("threed_test3");
 	auto L = make_shared<FFmpegContent>("test/data/test.mp4");
 	film->examine_and_add_content (L);

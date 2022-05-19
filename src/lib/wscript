@@ -44,6 +44,7 @@ sources = """
           audio_processor.cc
           audio_ring_buffers.cc
           audio_stream.cc
+          black_decoder.cc
           butler.cc
           text_content.cc
           text_decoder.cc

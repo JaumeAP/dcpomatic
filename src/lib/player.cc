@@ -24,6 +24,8 @@
 #include "audio_content.h"
 #include "audio_decoder.h"
 #include "audio_processor.h"
+#include "black_content.h"
+#include "black_decoder.h"
 #include "compose.hpp"
 #include "config.h"
 #include "content_audio.h"
@@ -145,6 +147,58 @@ Player::setup_pieces ()
 
 
 void
+Player::add_black_pieces ()
+{
+	list<DCPTimePeriod> full_left;
+	list<DCPTimePeriod> full_right;
+	list<DCPTimePeriod> full_both;
+	for (auto i: playlist()->content()) {
+		if (i->video && i->video->use() && i->can_be_played() && i->paths_valid()) {
+			auto period = DCPTimePeriod(i->position(), i->end(_film));
+			if (i->video->frame_type() == VideoFrameType::THREE_D_LEFT) {
+				full_left.push_back (period);
+			} else if (i->video->frame_type() == VideoFrameType::THREE_D_RIGHT) {
+				full_right.push_back (period);
+			} else {
+				full_both.push_back (period);
+			}
+		}
+	}
+
+	auto const whole = DCPTimePeriod(DCPTime(), _playback_length);
+
+	auto empty_both = subtract(subtract(subtract({whole}, full_left), full_right), full_both);
+	auto empty_left = subtract(subtract(subtract({whole}, full_left), full_both), empty_both);
+	auto empty_right = subtract(subtract(subtract({whole}, full_right), full_both), empty_both);
+
+	list<pair<DCPTimePeriod, Eyes>> periods;
+
+	for (auto left: empty_left) {
+		periods.push_back (make_pair(left, Eyes::LEFT));
+	}
+
+	for (auto right: empty_right) {
+		periods.push_back (make_pair(right, Eyes::RIGHT));
+	}
+
+	for (auto both: empty_both) {
+		periods.push_back (make_pair(both, Eyes::BOTH));
+	}
+
+	periods.sort([](std::pair<DCPTimePeriod, Eyes> const& a, std::pair<DCPTimePeriod, Eyes> const& b) {
+		return a.first < b.first;
+	});
+
+	for (auto period: periods) {
+		LOG_DEBUG_PLAYER("BlackContent in period %1", to_string(period.first));
+		auto content = make_shared<BlackContent>(period.first, period.second);
+		auto decoder = make_shared<BlackDecoder>(_film, content);
+		_pieces.push_back(make_shared<Piece>(content, decoder, FrameRateChange(_film->video_frame_rate(), _film->video_frame_rate())));
+	}
+}
+
+
+void
 Player::setup_pieces_unlocked ()
 {
 	_playback_length = _playlist ? _playlist->length(_film) : _film->length();
@@ -214,38 +268,39 @@ Player::setup_pieces_unlocked ()
 
 		auto piece = make_shared<Piece>(i, decoder, frc);
 		_pieces.push_back (piece);
+	}
 
-		if (decoder->video) {
+
+	add_black_pieces ();
+
+	for (auto piece: _pieces) {
+		if (piece->decoder->video) {
 			if (have_threed) {
 				/* We need a Shuffler to cope with 3D L/R video data arriving out of sequence */
-				decoder->video->Data.connect (bind(&Shuffler::video, &_shuffler.get(), weak_ptr<Piece>(piece), _1));
+				piece->decoder->video->Data.connect(bind(&Shuffler::video, &_shuffler.get(), weak_ptr<Piece>(piece), _1));
 			} else {
-				decoder->video->Data.connect (bind(&Player::video, this, weak_ptr<Piece>(piece), _1));
+				piece->decoder->video->Data.connect(bind(&Player::video, this, weak_ptr<Piece>(piece), _1));
 			}
 		}
 
-		if (decoder->audio) {
-			decoder->audio->Data.connect (bind (&Player::audio, this, weak_ptr<Piece> (piece), _1, _2));
+		if (piece->decoder->audio) {
+			piece->decoder->audio->Data.connect(bind(&Player::audio, this, weak_ptr<Piece>(piece), _1, _2));
 		}
 
-		auto j = decoder->text.begin();
-
-		while (j != decoder->text.end()) {
-			(*j)->BitmapStart.connect (
-				bind(&Player::bitmap_text_start, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>((*j)->content()), _1)
+		for (auto j: piece->decoder->text) {
+			j->BitmapStart.connect (
+				bind(&Player::bitmap_text_start, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>(j->content()), _1)
 				);
-			(*j)->PlainStart.connect (
-				bind(&Player::plain_text_start, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>((*j)->content()), _1)
+			j->PlainStart.connect (
+				bind(&Player::plain_text_start, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>(j->content()), _1)
 				);
-			(*j)->Stop.connect (
-				bind(&Player::subtitle_stop, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>((*j)->content()), _1)
+			j->Stop.connect (
+				bind(&Player::subtitle_stop, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>(j->content()), _1)
 				);
-
-			++j;
 		}
 
-		if (decoder->atmos) {
-			decoder->atmos->Data.connect (bind(&Player::atmos, this, weak_ptr<Piece>(piece), _1));
+		if (piece->decoder->atmos) {
+			piece->decoder->atmos->Data.connect(bind(&Player::atmos, this, weak_ptr<Piece>(piece), _1));
 		}
 	}
 
@@ -274,7 +329,6 @@ Player::setup_pieces_unlocked ()
 		}
 	}
 
-	_black = EmptyVideo (_film, playlist(), _playback_length);
 	_silent = EmptyAudio (_film, playlist(), _playback_length);
 
 	_next_video_time = boost::none;
@@ -676,17 +730,11 @@ Player::pass ()
 	enum {
 		NONE,
 		CONTENT,
-		BLACK,
 		SILENT
 	} which = NONE;
 
 	if (earliest_content) {
 		which = CONTENT;
-	}
-
-	if (!_black.done() && !_ignore_video && (!earliest_time || _black.position() < *earliest_time)) {
-		earliest_time = _black.position ();
-		which = BLACK;
 	}
 
 	if (!_silent.done() && !_ignore_audio && (!earliest_time || _silent.position() < *earliest_time)) {
@@ -697,7 +745,9 @@ Player::pass ()
 	switch (which) {
 	case CONTENT:
 	{
-		LOG_DEBUG_PLAYER ("Calling pass() on %1", earliest_content->content->path(0));
+		if (earliest_content->content->number_of_paths()) {
+			LOG_DEBUG_PLAYER ("Calling pass() on %1", earliest_content->content->path(0));
+		}
 		earliest_content->done = earliest_content->decoder->pass ();
 		auto dcp = dynamic_pointer_cast<DCPContent>(earliest_content->content);
 		if (dcp && !_play_referenced && dcp->reference_audio()) {
@@ -707,14 +757,6 @@ Player::pass ()
 			*/
 			_next_audio_time = dcp->end (_film);
 		}
-		break;
-	}
-	case BLACK:
-	{
-		LOG_DEBUG_PLAYER ("Emit black for gap at %1", to_string(_black.position()));
-		auto period = _black.period_at_position();
-		emit_video (black_player_video_frame(period.second), _black.position());
-		_black.set_position (_black.position() + one_video_frame());
 		break;
 	}
 	case SILENT:
@@ -1270,7 +1312,6 @@ Player::seek (DCPTime time, bool accurate)
 		_next_audio_time = boost::none;
 	}
 
-	_black.set_position (time);
 	_silent.set_position (time);
 
 	_last_video.clear ();

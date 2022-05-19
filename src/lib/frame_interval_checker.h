@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_FRAME_INTERVAL_CHECKER_H
+#define DCPOMATIC_FRAME_INTERVAL_CHECKER_H
+
+
 #include "dcpomatic_time.h"
 #include <boost/optional.hpp>
 #include <vector>
@@ -52,4 +56,7 @@ private:
 
 	static int const _frames;
 };
+
+
+#endif
 

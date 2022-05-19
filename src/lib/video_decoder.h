@@ -28,19 +28,19 @@
 #define DCPOMATIC_VIDEO_DECODER_H
 
 
-#include "decoder.h"
-#include "video_content.h"
-#include "util.h"
+#include "frame_interval_checker.h"
 #include "content_video.h"
+#include "decoder.h"
 #include "decoder_part.h"
+#include "util.h"
+#include "video_content.h"
 #include <boost/signals2.hpp>
 
 
-class VideoContent;
-class ImageProxy;
 class Image;
+class ImageProxy;
 class Log;
-class FrameIntervalChecker;
+class VideoContent;
 
 
 /** @class VideoDecoder

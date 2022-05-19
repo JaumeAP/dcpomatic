@@ -26,6 +26,7 @@
 
 
 #include "lib/audio_buffers.h"
+#include "lib/black_content.h"
 #include "lib/butler.h"
 #include "lib/compose.hpp"
 #include "lib/content_factory.h"
@@ -35,6 +36,7 @@
 #include "lib/ffmpeg_content.h"
 #include "lib/film.h"
 #include "lib/image_content.h"
+#include "lib/piece.h"
 #include "lib/player.h"
 #include "lib/ratio.h"
 #include "lib/string_text_file_content.h"
@@ -47,6 +49,7 @@
 
 
 using std::cout;
+using std::dynamic_pointer_cast;
 using std::list;
 using std::shared_ptr;
 using std::make_shared;
@@ -164,9 +167,20 @@ BOOST_AUTO_TEST_CASE (player_subframe_test)
 	BOOST_CHECK (film->length() == DCPTime::from_frames(3 * 24 + 1, 24));
 
 	auto player = std::make_shared<Player>(film, Image::Alignment::COMPACT);
+
 	player->setup_pieces ();
-	BOOST_REQUIRE_EQUAL (player->_black._periods.size(), 1U);
-	BOOST_CHECK (player->_black._periods.front().first == DCPTimePeriod(DCPTime::from_frames(3 * 24, 24), DCPTime::from_frames(3 * 24 + 1, 24)));
+	list<std::shared_ptr<Piece>> black;
+	std::copy_if(
+		player->_pieces.begin(),
+		player->_pieces.end(),
+		std::back_inserter(black),
+		[](shared_ptr<Piece> piece) {
+			return static_cast<bool>(dynamic_pointer_cast<BlackContent>(piece->content));
+		});
+	BOOST_REQUIRE_EQUAL (black.size(), 1U);
+	BOOST_CHECK (black.front()->content->position() == DCPTime::from_frames(3 * 24, 24));
+	BOOST_CHECK (black.front()->content->full_length(film) == DCPTime::from_frames(1, 24));
+
 	BOOST_REQUIRE_EQUAL (player->_silent._periods.size(), 1U);
 	BOOST_CHECK (player->_silent._periods.front() == DCPTimePeriod(DCPTime(289920), DCPTime::from_frames(3 * 24 + 1, 24)));
 }
