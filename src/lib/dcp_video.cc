@@ -30,6 +30,7 @@
  */
 
 
+#include "colour_conversion.h"
 #include "compose.hpp"
 #include "config.h"
 #include "cross.h"
@@ -100,26 +101,6 @@ DCPVideo::DCPVideo (shared_ptr<const PlayerVideo> frame, shared_ptr<const cxml::
 	_resolution = Resolution (node->optional_number_child<int>("Resolution").get_value_or(static_cast<int>(Resolution::TWO_K)));
 }
 
-shared_ptr<dcp::OpenJPEGImage>
-DCPVideo::convert_to_xyz (shared_ptr<const PlayerVideo> frame, dcp::NoteHandler note)
-{
-	shared_ptr<dcp::OpenJPEGImage> xyz;
-
-	auto image = frame->image (bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
-	if (frame->colour_conversion()) {
-		xyz = dcp::rgb_to_xyz (
-			image->data()[0],
-			image->size(),
-			image->stride()[0],
-			frame->colour_conversion().get(),
-			note
-			);
-	} else {
-		xyz = make_shared<dcp::OpenJPEGImage>(image->data()[0], image->size(), image->stride()[0]);
-	}
-
-	return xyz;
-}
 
 /** J2K-encode this frame on the local host.
  *  @return Encoded data.

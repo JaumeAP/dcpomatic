@@ -22,12 +22,15 @@
 #include "colour_conversion.h"
 #include "config.h"
 #include "digester.h"
+#include "player_video.h"
 #include "util.h"
 #include <dcp/chromaticity.h>
 #include <dcp/gamma_transfer_function.h>
 #include <dcp/identity_transfer_function.h>
 #include <dcp/modified_gamma_transfer_function.h>
+#include <dcp/openjpeg_image.h>
 #include <dcp/raw_convert.h>
+#include <dcp/rgb_xyz.h>
 #include <dcp/s_gamut3_transfer_function.h>
 #include <dcp/warnings.h>
 #include <libcxml/cxml.h>
@@ -47,6 +50,9 @@ using std::shared_ptr;
 using std::string;
 using std::vector;
 using boost::optional;
+#if BOOST_VERSION >= 106100
+using namespace boost::placeholders;
+#endif
 using dcp::raw_convert;
 
 
@@ -305,3 +311,26 @@ PresetColourConversion::from_id (string s)
 
 	DCPOMATIC_ASSERT (false);
 }
+
+
+shared_ptr<dcp::OpenJPEGImage>
+convert_to_xyz (shared_ptr<const PlayerVideo> frame, dcp::NoteHandler note)
+{
+	shared_ptr<dcp::OpenJPEGImage> xyz;
+
+	auto image = frame->image (bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
+	if (frame->colour_conversion()) {
+		xyz = dcp::rgb_to_xyz (
+			image->data()[0],
+			image->size(),
+			image->stride()[0],
+			frame->colour_conversion().get(),
+			note
+			);
+	} else {
+		xyz = make_shared<dcp::OpenJPEGImage>(image->data()[0], image->size(), image->stride()[0]);
+	}
+
+	return xyz;
+}
+

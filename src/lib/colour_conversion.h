@@ -18,20 +18,33 @@
 
 */
 
+
 #ifndef DCPOMATIC_COLOUR_CONVERSION_H
 #define DCPOMATIC_COLOUR_CONVERSION_H
+
 
 /* Hack for OS X compile failure; see https://bugs.launchpad.net/hugin/+bug/910160 */
 #ifdef check
 #undef check
 #endif
 
+
 #include <dcp/colour_conversion.h>
+#include <dcp/types.h>
 #include <libcxml/cxml.h>
+
 
 namespace xmlpp {
 	class Node;
 }
+
+namespace dcp {
+	class OpenJPEGImage;
+}
+
+
+class PlayerVideo;
+
 
 class ColourConversion : public dcp::ColourConversion
 {
@@ -76,5 +89,9 @@ private:
 bool operator== (ColourConversion const &, ColourConversion const &);
 bool operator!= (ColourConversion const &, ColourConversion const &);
 bool operator== (PresetColourConversion const &, PresetColourConversion const &);
+
+
+extern std::shared_ptr<dcp::OpenJPEGImage> convert_to_xyz (std::shared_ptr<const PlayerVideo> frame, dcp::NoteHandler note);
+
 
 #endif
