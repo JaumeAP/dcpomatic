@@ -25,18 +25,19 @@
  */
 
 
-#include "encode_server.h"
-#include "util.h"
-#include "dcpomatic_socket.h"
-#include "image.h"
-#include "dcp_video.h"
-#include "config.h"
-#include "cross.h"
-#include "player_video.h"
 #include "compose.hpp"
-#include "log.h"
+#include "config.h"
+#include "cpu_j2k_frame_encoder.h"
+#include "cross.h"
+#include "dcp_video.h"
 #include "dcpomatic_log.h"
+#include "dcpomatic_socket.h"
+#include "encode_server.h"
 #include "encoded_log_entry.h"
+#include "image.h"
+#include "log.h"
+#include "player_video.h"
+#include "util.h"
 #include "version.h"
 #include <dcp/raw_convert.h>
 #include <dcp/warnings.h>
@@ -49,25 +50,25 @@ LIBDCP_ENABLE_WARNINGS
 #ifdef HAVE_VALGRIND_H
 #include <valgrind/memcheck.h>
 #endif
+#include <iostream>
 #include <string>
 #include <vector>
-#include <iostream>
 
 #include "i18n.h"
 
 
+using std::cerr;
+using std::cout;
+using std::fixed;
+using std::list;
+using std::make_shared;
+using std::shared_ptr;
 using std::string;
 using std::vector;
-using std::list;
-using std::cout;
-using std::cerr;
-using std::fixed;
-using std::shared_ptr;
-using std::make_shared;
-using boost::thread;
 using boost::bind;
-using boost::scoped_array;
 using boost::optional;
+using boost::scoped_array;
+using boost::thread;
 using dcp::ArrayData;
 using dcp::Size;
 using dcp::raw_convert;
@@ -151,14 +152,15 @@ EncodeServer::process (shared_ptr<Socket> socket, struct timeval& after_read, st
 
 	gettimeofday (&after_read, 0);
 
-	auto encoded = dcp_video_frame.encode_locally ();
+	CPUJ2KFrameEncoder cpu;
+	auto encoded = cpu.encode(dcp_video_frame);
 
 	gettimeofday (&after_encode, 0);
 
 	try {
 		Socket::WriteDigestScope ds (socket);
-		socket->write (encoded.size());
-		socket->write (encoded.data(), encoded.size());
+		socket->write (encoded->size());
+		socket->write (encoded->data(), encoded->size());
 	} catch (std::exception& e) {
 		cerr << "Send failed; frame " << dcp_video_frame.index() << "\n";
 		LOG_ERROR ("Send failed; frame %1", dcp_video_frame.index());

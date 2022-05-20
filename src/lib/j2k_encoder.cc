@@ -137,14 +137,11 @@ J2KEncoder::end ()
 	     So just mop up anything left in the queue here.
 	*/
 
+	CPUJ2KFrameEncoder cpu;
 	for (auto const& i: _queue) {
 		LOG_GENERAL(N_("Encode left-over frame %1"), i.index());
 		try {
-			_writer->write (
-				make_shared<dcp::ArrayData>(i.encode_locally()),
-				i.index(),
-				i.eyes()
-				);
+			_writer->write(make_shared<dcp::ArrayData>(*cpu.encode(i)), i.index(), i.eyes());
 			frame_done ();
 		} catch (std::exception& e) {
 			LOG_ERROR (N_("Local encode failed (%1)"), e.what ());
@@ -290,12 +287,6 @@ try
 		return;
 	}
 
-	/* Number of seconds that we currently wait between attempts
-	   to connect to the server; not relevant for localhost
-	   encodings.
-	*/
-	int remote_backoff = 0;
-
 	while (true) {
 
 		LOG_TIMING ("encoder-sleep thread=%1", thread_id ());
@@ -330,10 +321,6 @@ try
 				_queue.push_front (vf);
 				lock.unlock ();
 			}
-		}
-
-		if (remote_backoff > 0) {
-			boost::this_thread::sleep (boost::posix_time::seconds (remote_backoff));
 		}
 
 		/* The queue might not be full any more, so notify anything that is waiting on that */

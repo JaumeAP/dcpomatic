@@ -29,8 +29,9 @@
 class RemoteJ2KFrameEncoder : public J2KFrameEncoder
 {
 public:
-	RemoteJ2KFrameEncoder(EncodeServerDescription s)
+	RemoteJ2KFrameEncoder(EncodeServerDescription s, int timeout = 30)
 		: _server(s)
+		, _timeout(timeout)
 	{}
 
 	boost::optional<dcp::ArrayData> encode (DCPVideo const &) override;
@@ -38,6 +39,7 @@ public:
 
 private:
 	EncodeServerDescription _server;
+	int _timeout;
 	int _remote_backoff = 0;
 };
 

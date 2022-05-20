@@ -29,6 +29,7 @@
  */
 
 
+#include "lib/cpu_j2k_frame_encoder.h"
 #include "lib/cross.h"
 #include "lib/dcp_video.h"
 #include "lib/dcpomatic_log.h"
@@ -39,6 +40,7 @@
 #include "lib/j2k_image_proxy.h"
 #include "lib/player_video.h"
 #include "lib/raw_image_proxy.h"
+#include "lib/remote_j2k_frame_encoder.h"
 #include "test.h"
 #include <boost/test/unit_test.hpp>
 #include <boost/thread.hpp>
@@ -54,13 +56,15 @@ using dcp::ArrayData;
 
 
 void
-do_remote_encode (shared_ptr<DCPVideo> frame, EncodeServerDescription description, ArrayData locally_encoded)
+do_remote_encode (DCPVideo const& frame, EncodeServerDescription description, ArrayData locally_encoded)
 {
-	ArrayData remotely_encoded;
-	BOOST_REQUIRE_NO_THROW (remotely_encoded = frame->encode_remotely (description, 1200));
+	optional<ArrayData> remotely_encoded;
+	RemoteJ2KFrameEncoder remote(description, 1200);
+	BOOST_REQUIRE_NO_THROW (remotely_encoded = remote.encode(frame));
+	BOOST_REQUIRE (remotely_encoded);
 
-	BOOST_REQUIRE_EQUAL (locally_encoded.size(), remotely_encoded.size());
-	BOOST_CHECK_EQUAL (memcmp (locally_encoded.data(), remotely_encoded.data(), locally_encoded.size()), 0);
+	BOOST_REQUIRE_EQUAL (locally_encoded.size(), remotely_encoded->size());
+	BOOST_CHECK_EQUAL (memcmp(locally_encoded.data(), remotely_encoded->data(), locally_encoded.size()), 0);
 }
 
 
@@ -111,7 +115,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_rgb)
 
 	pvf->set_text (PositionImage(sub_image, Position<int>(50, 60)));
 
-	auto frame = make_shared<DCPVideo> (
+	auto frame = DCPVideo(
 		pvf,
 		0,
 		24,
@@ -119,7 +123,8 @@ BOOST_AUTO_TEST_CASE (client_server_test_rgb)
 		Resolution::TWO_K
 		);
 
-	auto locally_encoded = frame->encode_locally ();
+	CPUJ2KFrameEncoder cpu;
+	auto locally_encoded = cpu.encode(frame);
 
 	auto server = new EncodeServer (true, 2);
 
@@ -133,7 +138,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_rgb)
 
 	list<thread*> threads;
 	for (int i = 0; i < 8; ++i) {
-		threads.push_back (new thread (boost::bind (do_remote_encode, frame, description, locally_encoded)));
+		threads.push_back(new thread(boost::bind(do_remote_encode, frame, description, *locally_encoded)));
 	}
 
 	for (auto i: threads) {
@@ -194,7 +199,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_yuv)
 
 	pvf->set_text (PositionImage(sub_image, Position<int>(50, 60)));
 
-	auto frame = make_shared<DCPVideo>(
+	auto frame = DCPVideo(
 		pvf,
 		0,
 		24,
@@ -202,7 +207,8 @@ BOOST_AUTO_TEST_CASE (client_server_test_yuv)
 		Resolution::TWO_K
 		);
 
-	auto locally_encoded = frame->encode_locally ();
+	CPUJ2KFrameEncoder cpu;
+	auto locally_encoded = cpu.encode(frame);
 
 	auto server = new EncodeServer (true, 2);
 
@@ -216,7 +222,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_yuv)
 
 	list<thread*> threads;
 	for (int i = 0; i < 8; ++i) {
-		threads.push_back (new thread(boost::bind(do_remote_encode, frame, description, locally_encoded)));
+		threads.push_back(new thread(boost::bind(do_remote_encode, frame, description, *locally_encoded)));
 	}
 
 	for (auto i: threads) {
@@ -262,7 +268,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 		false
 		);
 
-	auto raw_frame = make_shared<DCPVideo> (
+	auto raw_frame = DCPVideo(
 		raw_pvf,
 		0,
 		24,
@@ -270,10 +276,11 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 		Resolution::TWO_K
 		);
 
-	auto raw_locally_encoded = raw_frame->encode_locally ();
+	CPUJ2KFrameEncoder cpu;
+	auto raw_locally_encoded = cpu.encode(raw_frame);
 
 	auto j2k_pvf = std::make_shared<PlayerVideo> (
-		std::make_shared<J2KImageProxy>(raw_locally_encoded, dcp::Size(1998, 1080), AV_PIX_FMT_XYZ12LE),
+		std::make_shared<J2KImageProxy>(*raw_locally_encoded, dcp::Size(1998, 1080), AV_PIX_FMT_XYZ12LE),
 		Crop(),
 		optional<double>(),
 		dcp::Size(1998, 1080),
@@ -287,7 +294,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 		false
 		);
 
-	auto j2k_frame = make_shared<DCPVideo> (
+	auto j2k_frame = DCPVideo(
 		j2k_pvf,
 		0,
 		24,
@@ -295,7 +302,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 		Resolution::TWO_K
 		);
 
-	auto j2k_locally_encoded = j2k_frame->encode_locally ();
+	auto j2k_locally_encoded = cpu.encode(j2k_frame);
 
 	auto server = new EncodeServer (true, 2);
 
@@ -309,7 +316,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 
 	list<thread*> threads;
 	for (int i = 0; i < 8; ++i) {
-		threads.push_back (new thread(boost::bind(do_remote_encode, j2k_frame, description, j2k_locally_encoded)));
+		threads.push_back(new thread(boost::bind(do_remote_encode, j2k_frame, description, *j2k_locally_encoded)));
 	}
 
 	for (auto i: threads) {

@@ -19,6 +19,7 @@
 */
 
 
+#include "lib/cpu_j2k_frame_encoder.h"
 #include "lib/dcp_video.h"
 #include "lib/decoder.h"
 #include "lib/encode_server.h"
@@ -30,6 +31,7 @@
 #include "lib/player.h"
 #include "lib/player_video.h"
 #include "lib/ratio.h"
+#include "lib/remote_j2k_frame_encoder.h"
 #include "lib/util.h"
 #include "lib/video_decoder.h"
 #include <getopt.h>
@@ -60,20 +62,22 @@ static int frame_count = 0;
 void
 process_video (shared_ptr<PlayerVideo> pvf)
 {
-	auto local = make_shared<DCPVideo>(pvf, frame_count, film->video_frame_rate(), 250000000, Resolution::TWO_K);
-	auto remote = make_shared<DCPVideo>(pvf, frame_count, film->video_frame_rate(), 250000000, Resolution::TWO_K);
+	auto local = DCPVideo(pvf, frame_count, film->video_frame_rate(), 250000000, Resolution::TWO_K);
+	auto remote = DCPVideo(pvf, frame_count, film->video_frame_rate(), 250000000, Resolution::TWO_K);
 
 	cout << "Frame " << frame_count << ": ";
 	cout.flush ();
 
 	++frame_count;
 
-	auto local_encoded = local->encode_locally ();
-	ArrayData remote_encoded;
+	CPUJ2KFrameEncoder cpu;
+	auto local_encoded = cpu.encode(local);
+	optional<dcp::ArrayData> remote_encoded;
 
 	string remote_error;
 	try {
-		remote_encoded = remote->encode_remotely (*server);
+		RemoteJ2KFrameEncoder encoder(*server);
+		remote_encoded = encoder.encode(remote);
 	} catch (NetworkError& e) {
 		remote_error = e.what ();
 	}
@@ -83,14 +87,14 @@ process_video (shared_ptr<PlayerVideo> pvf)
 		return;
 	}
 
-	if (local_encoded.size() != remote_encoded.size()) {
+	if (local_encoded->size() != remote_encoded->size()) {
 		cout << "\033[0;31msizes differ\033[0m\n";
 		return;
 	}
 
-	auto p = local_encoded.data();
-	auto q = remote_encoded.data();
-	for (int i = 0; i < local_encoded.size(); ++i) {
+	auto p = local_encoded->data();
+	auto q = remote_encoded->data();
+	for (int i = 0; i < local_encoded->size(); ++i) {
 		if (*p++ != *q++) {
 			cout << "\033[0;31mdata differ\033[0m at byte " << i << "\n";
 			return;

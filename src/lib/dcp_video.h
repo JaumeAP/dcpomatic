@@ -48,11 +48,24 @@ public:
 	DCPVideo (DCPVideo const&) = default;
 	DCPVideo& operator= (DCPVideo const&) = default;
 
-	dcp::ArrayData encode_locally () const;
-	dcp::ArrayData encode_remotely (EncodeServerDescription, int timeout = 30) const;
+	std::shared_ptr<const PlayerVideo> frame() const {
+		return _frame;
+	}
 
 	int index () const {
 		return _index;
+	}
+
+	int frames_per_second() const {
+		return _frames_per_second;
+	}
+
+	int j2k_bandwidth() const {
+		return _j2k_bandwidth;
+	}
+
+	Resolution resolution() const {
+		return _resolution;
 	}
 
 	Eyes eyes () const;
@@ -60,9 +73,6 @@ public:
 	bool same (std::shared_ptr<const DCPVideo> other) const;
 
 private:
-
-	void add_metadata (xmlpp::Element *) const;
-
 	std::shared_ptr<const PlayerVideo> _frame;
 	int _index;			 ///< frame index within the DCP's intrinsic duration
 	int _frames_per_second;		 ///< Frames per second that we will use for the DCP
