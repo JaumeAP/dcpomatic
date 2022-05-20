@@ -149,6 +149,7 @@ def configure(conf):
             pass
 
     conf.env.append_value('INCLUDES', os.path.join(conf.options.cuda_path, 'include'))
+    conf.env.append_value('LIBPATH', os.path.join(conf.options.cuda_path, 'targets', 'x86_64-linux', 'lib'))
 
     #
     # Windows/Linux/OS X specific
@@ -561,7 +562,9 @@ def configure(conf):
                            lib=deps,
                            uselib_store='BOOST_PROCESS')
 
-    conf.check(header_name='nvjpeg2k.h', mandatory=False)
+    if conf.check(header_name='nvjpeg2k.h', mandatory=False):
+        conf.env.LIB_CUDA = ['cudart', 'nvjpeg2k']
+
 
     # Other stuff
 

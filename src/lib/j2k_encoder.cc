@@ -27,6 +27,7 @@
 #include "compose.hpp"
 #include "config.h"
 #include "cpu_j2k_frame_encoder.h"
+#include "cuda_j2k_frame_encoder.h"
 #include "cross.h"
 #include "dcp_video.h"
 #include "dcpomatic_log.h"
@@ -350,6 +351,7 @@ J2KEncoder::servers_list_changed ()
 
 	/* XXX: could re-use threads */
 
+#if 0
 	if (!Config::instance()->only_servers_encode ()) {
 		for (int i = 0; i < Config::instance()->master_encoding_threads (); ++i) {
 			auto worker = make_shared<CPUJ2KFrameEncoder>();
@@ -375,6 +377,10 @@ J2KEncoder::servers_list_changed ()
                        _threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, worker));
 		}
 	}
+#endif
+	auto worker = make_shared<CUDAJ2KFrameEncoder>();
+	_workers.push_back(worker);
+	_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, worker));
 
 	_writer->set_encoder_threads (_threads->size());
 }

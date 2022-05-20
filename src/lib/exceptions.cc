@@ -172,3 +172,16 @@ VerifyError::VerifyError (string m, int n)
 
 }
 
+
+CUDAError::CUDAError (string function, cudaError error)
+	: runtime_error(String::compose("CUDA error on %1 (%2)", function, static_cast<int>(error)))
+{
+
+}
+
+
+CUDAError::CUDAError (string function, int error)
+	: runtime_error(String::compose("CUDA error on %1 (%2)", function, error))
+{
+}
+

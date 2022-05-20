@@ -32,6 +32,9 @@
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
+#ifdef HAVE_NVJPEG2K_H
+#include <cuda_runtime_api.h>
+#endif
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <cstring>
@@ -454,6 +457,14 @@ public:
 	explicit PrivilegeError (std::string s)
 			: std::runtime_error (s)
 		{}
+};
+
+
+class CUDAError : public std::runtime_error
+{
+public:
+	CUDAError (std::string function, cudaError_t error);
+	CUDAError (std::string function, int);
 };
 
 
