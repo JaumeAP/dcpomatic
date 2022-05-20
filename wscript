@@ -78,6 +78,7 @@ def options(opt):
     opt.add_option('--enable-disk',       action='store_true', default=False, help='build dcpomatic2_disk tool; requires Boost process, lwext4 and nanomsg libraries')
     opt.add_option('--warnings-are-errors', action='store_true', default=False, help='build with -Werror')
     opt.add_option('--wx-config',         help='path to wx-config')
+    opt.add_option('--cuda-path',         help='path to directory containing include/cuda_runtime_api.h etc.', default='/usr/local/cuda')
 
 def configure(conf):
     conf.load('compiler_cxx')
@@ -146,6 +147,8 @@ def configure(conf):
             conf.env.append_value('LINKFLAGS', '-fuse-ld=lld')
         except conf.errors.ConfigurationError:
             pass
+
+    conf.env.append_value('INCLUDES', os.path.join(conf.options.cuda_path, 'include'))
 
     #
     # Windows/Linux/OS X specific
@@ -557,6 +560,8 @@ def configure(conf):
                            msg='Checking for boost process library',
                            lib=deps,
                            uselib_store='BOOST_PROCESS')
+
+    conf.check(header_name='nvjpeg2k.h', mandatory=False)
 
     # Other stuff
 
