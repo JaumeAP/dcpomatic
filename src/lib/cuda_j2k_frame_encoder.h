@@ -24,6 +24,7 @@
 
 
 #include "j2k_frame_encoder.h"
+#include "types.h"
 #include <dcp/types.h>
 #include <nvjpeg2k.h>
 #include <vector>
@@ -33,24 +34,39 @@ class CUDAJ2KFrameEncoder : public J2KFrameEncoder
 {
 public:
 	CUDAJ2KFrameEncoder();
-	~CUDAJ2KFrameEncoder();
 
-	boost::optional<dcp::ArrayData> encode(DCPVideo const &) override;
+	std::vector<dcp::ArrayData> encode(DCPVideo const &) override;
+	std::vector<dcp::ArrayData> flush() override;
 	void log_thread_start() override;
 
 private:
-	void allocate(dcp::Size size);
-	void free();
-
 	nvjpeg2kEncoder_t _encoder_handle;
 	nvjpeg2kEncodeState_t _encoder_state;
 	nvjpeg2kEncodeParams_t _encoder_params;
-	uint8_t* _pixel_data_h[3];
-	uint8_t* _pixel_data_d[3];
-	size_t _pitch_in_bytes[3];
-	nvjpeg2kImageComponentInfo_t _image_component_info[3];
 
-	dcp::Size _allocated_size;
+	class Frame
+	{
+	public:
+		Frame(DCPVideo const& vf);
+		Frame(Frame const& other) = delete;
+		Frame(Frame&& other);
+		~Frame();
+
+		Frame& operator=(Frame const& other) = delete;
+
+		nvjpeg2kImage_t const* const device_image() const {
+			return &_device_image;
+		}
+
+	private:
+		uint8_t* _pixel_data_d[3];
+		size_t _pitch_in_bytes[3];
+		nvjpeg2kImage_t _device_image;
+	};
+
+	std::vector<Frame> _batch;
+	boost::optional<dcp::Size> _size;
+	boost::optional<Resolution> _resolution;
 };
 
 
