@@ -35,20 +35,13 @@ using std::vector;
 using boost::optional;
 
 
-boost::mutex CUDAJ2KFrameEncoder::_mutex;
-boost::condition CUDAJ2KFrameEncoder::_condition;
-std::vector<CUDAJ2KFrameEncoder::Input> CUDAJ2KFrameEncoder::_queue;
-std::map<std::pair<int, Eyes>, dcp::ArrayData> CUDAJ2KFrameEncoder::_output;
-
-boost::optional<dcp::Size> CUDAJ2KFrameEncoder::_size;
-boost::optional<Resolution> CUDAJ2KFrameEncoder::_resolution;
-
-
 CUDAJ2KFrameEncoder::CUDAJ2KFrameEncoder()
 {
 	nvjpeg2kEncoderCreateSimple(&_encoder_handle);
 	nvjpeg2kEncodeStateCreate(_encoder_handle, &_encoder_state);
 	nvjpeg2kEncodeParamsCreate(&_encoder_params);
+
+	cudaStreamCreateWithFlags(&_stream, cudaStreamNonBlocking);
 }
 
 
@@ -92,8 +85,6 @@ CUDAJ2KFrameEncoder::Input::Input(DCPVideo const& vf)
 		if (status != cudaSuccess) {
 			throw CUDAError("cudaMemcpy2D", status);
 		}
-
-		cudaDeviceSynchronize();
 	}
 
 	_device_image.num_components = 3;
@@ -133,8 +124,6 @@ CUDAJ2KFrameEncoder::encode(DCPVideo const& vf)
 {
 	auto input = Input(vf);
 
-	boost::mutex::scoped_lock lm(_mutex);
-
 	auto const size = vf.frame()->out_size();
 	DCPOMATIC_ASSERT(!_size || size == *_size);
 	_size = size;
@@ -142,27 +131,6 @@ CUDAJ2KFrameEncoder::encode(DCPVideo const& vf)
 	DCPOMATIC_ASSERT(!_resolution || vf.resolution() == *_resolution);
 	_resolution = vf.resolution();
 
-	_queue.push_back(std::move(input));
-	if (_queue.size() < batch_size) {
-		std::cout << "queue is " << _queue.size() << " - waiting\n";
-		_condition.wait(lm);
-	} else {
-		encode_queue();
-		_condition.notify_all();
-	}
-
-	auto output = _output.find(make_pair(vf.index(), vf.eyes()));
-	if (output == _output.end()) {
-		return {};
-	}
-
-	return output->second;
-}
-
-
-void
-CUDAJ2KFrameEncoder::encode_queue()
-{
 	nvjpeg2kImageComponentInfo_t info[3];
 	for (int i = 0; i < 3; ++i) {
 		info[i].component_width = _size->width;
@@ -192,33 +160,26 @@ CUDAJ2KFrameEncoder::encode_queue()
 	}
 
 	// XXX: quality
-	status = nvjpeg2kEncodeParamsSetQuality(_encoder_params, 25);
+	status = nvjpeg2kEncodeParamsSetQuality(_encoder_params, 30);
 	if (status != NVJPEG2K_STATUS_SUCCESS) {
 		throw CUDAError("nvjpeg2kEncodeParamsSetQuality", status);
 	}
 
-	std::cout << "encoding queue of " << _queue.size() << "\n";
-	for (auto const& frame: _queue) {
-
-		status = nvjpeg2kEncode(_encoder_handle, _encoder_state, _encoder_params, frame.device_image(), 0);
-		if (status != NVJPEG2K_STATUS_SUCCESS) {
-			throw CUDAError("nvjpeg2kEncode", status);
-		}
-
-		size_t compressed_size;
-		status = nvjpeg2kEncodeRetrieveBitstream(_encoder_handle, _encoder_state, nullptr, &compressed_size, 0);
-
-		dcp::ArrayData this_output(compressed_size);
-		status = nvjpeg2kEncodeRetrieveBitstream(_encoder_handle, _encoder_state, this_output.data(), &compressed_size, 0);
-		if (status != NVJPEG2K_STATUS_SUCCESS) {
-			throw CUDAError("nvjpeg2kEncodeRetrieveBitstream", status);
-		}
-
-		_output[make_pair(frame.index(), frame.eyes())] = this_output;
-		cudaStreamSynchronize(0);
+	status = nvjpeg2kEncode(_encoder_handle, _encoder_state, _encoder_params, input.device_image(), _stream);
+	if (status != NVJPEG2K_STATUS_SUCCESS) {
+		throw CUDAError("nvjpeg2kEncode", status);
 	}
 
-	_queue.clear();
+	size_t compressed_size;
+	status = nvjpeg2kEncodeRetrieveBitstream(_encoder_handle, _encoder_state, nullptr, &compressed_size, _stream);
+
+	dcp::ArrayData output(compressed_size);
+	status = nvjpeg2kEncodeRetrieveBitstream(_encoder_handle, _encoder_state, output.data(), &compressed_size, _stream);
+	if (status != NVJPEG2K_STATUS_SUCCESS) {
+		throw CUDAError("nvjpeg2kEncodeRetrieveBitstream", status);
+	}
+
+	return output;
 }
 
 
@@ -232,7 +193,5 @@ CUDAJ2KFrameEncoder::log_thread_start ()
 void
 CUDAJ2KFrameEncoder::flush()
 {
-	boost::mutex::scoped_lock lm(_mutex);
-	encode_queue();
-	_condition.notify_all();
+
 }

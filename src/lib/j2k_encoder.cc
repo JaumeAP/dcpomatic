@@ -382,7 +382,7 @@ J2KEncoder::servers_list_changed ()
 		}
 	}
 #endif
-	for (int i = 0; i < CUDAJ2KFrameEncoder::batch_size; ++i) {
+	for (int i = 0; i < 16; ++i) {
 		auto worker = make_shared<CUDAJ2KFrameEncoder>();
 		_workers.push_back(worker);
 		_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, worker));

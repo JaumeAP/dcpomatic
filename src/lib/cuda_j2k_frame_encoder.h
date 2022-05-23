@@ -42,8 +42,6 @@ public:
 	void flush() override;
 	void log_thread_start() override;
 
-	static int constexpr batch_size = 1;
-
 private:
 	void encode_queue();
 
@@ -81,13 +79,9 @@ private:
 		Eyes _eyes;
 	};
 
-	static boost::mutex _mutex;
-	static boost::condition _condition;
-	static std::vector<Input> _queue;
-	static std::map<std::pair<int, Eyes>, dcp::ArrayData> _output;
-
-	static boost::optional<dcp::Size> _size;
-	static boost::optional<Resolution> _resolution;
+	boost::optional<dcp::Size> _size;
+	boost::optional<Resolution> _resolution;
+	cudaStream_t _stream;
 };
 
 
