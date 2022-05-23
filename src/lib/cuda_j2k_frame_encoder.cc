@@ -104,6 +104,13 @@ CUDAJ2KFrameEncoder::cuda_thread()
 		config.mct_mode = 1;
 		config.prog_order = NVJPEG2K_CPRL;
 		config.num_resolutions = input.resolution() == Resolution::FOUR_K ? 7 : 6;
+		config.enable_custom_precincts = 0;
+		config.precint_width[0] = 7;
+		config.precint_height[0] = 7;
+		for (int i = 1; i < 6; ++i) {
+			config.precint_width[i] = 8;
+			config.precint_height[i] = 8;
+		}
 
 		auto status = nvjpeg2kEncodeParamsSetEncodeConfig(encoder_params, &config);
 		if (status != NVJPEG2K_STATUS_SUCCESS) {
