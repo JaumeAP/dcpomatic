@@ -79,10 +79,13 @@ private:
 		}
 
 	private:
-		std::shared_ptr<dcp::OpenJPEGImage> _xyz;
+		std::vector<int16_t> xyz_x;
+		std::vector<int16_t> xyz_y;
+		std::vector<int16_t> xyz_z;
 		uint8_t* _pixel_data_h[3];
 		uint8_t* _pixel_data_d[3];
-		size_t _pitch_in_bytes[3];
+		size_t _pitch_in_bytes_h[3];
+		size_t _pitch_in_bytes_d[3];
 		nvjpeg2kImage_t _device_image;
 		int _index;
 		Eyes _eyes;

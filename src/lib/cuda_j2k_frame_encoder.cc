@@ -151,22 +151,37 @@ CUDAJ2KFrameEncoder::Input::Input(DCPVideo const& vf)
 	, _eyes(vf.eyes())
 	, _resolution(vf.resolution())
 {
-	_xyz = convert_to_xyz(vf.frame(), boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
+	auto xyz = convert_to_xyz(vf.frame(), boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
+	_size = xyz->size();
 
-	for (int i = 0; i < 3; ++i) {
-		_pixel_data_h[i] = reinterpret_cast<uint8_t*>(_xyz->data(i));
+	int* xlp = xyz->data(0);
+	int* ylp = xyz->data(1);
+	int* zlp = xyz->data(2);
+
+	xyz_x.resize(_size.width * _size.height);
+	int16_t* xp = xyz_x.data();
+	_pixel_data_h[0] = reinterpret_cast<uint8_t*>(xp);
+
+	xyz_y.resize(_size.width * _size.height);
+	int16_t* yp = xyz_y.data();
+	_pixel_data_h[1] = reinterpret_cast<uint8_t*>(yp);
+
+	xyz_z.resize(_size.width * _size.height);
+	int16_t* zp = xyz_z.data();
+	_pixel_data_h[2] = reinterpret_cast<uint8_t*>(zp);
+
+	for (int j = 0; j < _size.width * _size.height; ++j) {
+		*xp++ = static_cast<int16_t>(*xlp++);
+		*yp++ = static_cast<int16_t>(*ylp++);
+		*zp++ = static_cast<int16_t>(*zlp++);
 	}
 
-	_size = _xyz->size();
-
-	auto const pitch = _size.width * 2;
-
 	for (int i = 0; i < 3; ++i) {
-		_pitch_in_bytes[i] = pitch;
+		_pitch_in_bytes_h[i] = _size.width * 2;
 		auto status = cudaMallocPitch(
 			reinterpret_cast<void**>(&_pixel_data_d[i]),
-			&_pitch_in_bytes[i],
-			pitch,
+			&_pitch_in_bytes_d[i],
+			_size.width * 2,
 			_size.height
 			);
 
@@ -176,10 +191,10 @@ CUDAJ2KFrameEncoder::Input::Input(DCPVideo const& vf)
 
 		status = cudaMemcpy2D(
 			_pixel_data_d[i],
-			_pitch_in_bytes[i],
+			_pitch_in_bytes_d[i],
 			_pixel_data_h[i],
-			_pitch_in_bytes[i],
-			pitch,
+			_pitch_in_bytes_h[i],
+			_size.width * 2,
 			_size.height,
 			cudaMemcpyHostToDevice
 			);
@@ -192,7 +207,7 @@ CUDAJ2KFrameEncoder::Input::Input(DCPVideo const& vf)
 	_device_image.num_components = 3;
 	_device_image.pixel_data = reinterpret_cast<void**>(_pixel_data_d);
 	_device_image.pixel_type = NVJPEG2K_UINT16;
-	_device_image.pitch_in_bytes = reinterpret_cast<size_t*>(_pitch_in_bytes);
+	_device_image.pitch_in_bytes = reinterpret_cast<size_t*>(_pitch_in_bytes_d);
 }
 
 
@@ -205,13 +220,14 @@ CUDAJ2KFrameEncoder::Input::Input(Input&& other)
 	for (int i = 0; i < 3; ++i) {
 		_pixel_data_d[i] = other._pixel_data_d[i];
 		other._pixel_data_d[i] = nullptr;
-		_pitch_in_bytes[i] = other._pitch_in_bytes[i];
+		_pitch_in_bytes_h[i] = other._pitch_in_bytes_h[i];
+		_pitch_in_bytes_d[i] = other._pitch_in_bytes_d[i];
 	}
 
 	_device_image.num_components = other._device_image.num_components;
 	_device_image.pixel_data = reinterpret_cast<void**>(_pixel_data_d);
 	_device_image.pixel_type = NVJPEG2K_UINT16;
-	_device_image.pitch_in_bytes = reinterpret_cast<size_t*>(_pitch_in_bytes);
+	_device_image.pitch_in_bytes = reinterpret_cast<size_t*>(_pitch_in_bytes_d);
 }
 
 
