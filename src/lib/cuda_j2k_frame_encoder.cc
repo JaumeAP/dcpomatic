@@ -45,6 +45,12 @@ CUDAJ2KFrameEncoder::CUDAJ2KFrameEncoder()
 }
 
 
+CUDAJ2KFrameEncoder::~CUDAJ2KFrameEncoder()
+{
+	cudaStreamDestroy(_stream);
+}
+
+
 CUDAJ2KFrameEncoder::Input::Input(DCPVideo const& vf, cudaStream_t stream)
 	: _index(vf.index())
 	, _eyes(vf.eyes())

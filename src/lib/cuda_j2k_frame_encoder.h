@@ -37,6 +37,7 @@ class CUDAJ2KFrameEncoder : public J2KFrameEncoder
 {
 public:
 	CUDAJ2KFrameEncoder();
+	~CUDAJ2KFrameEncoder();
 
 	boost::optional<dcp::ArrayData> encode(DCPVideo const &) override;
 	void flush() override;
