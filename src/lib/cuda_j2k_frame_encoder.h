@@ -27,9 +27,12 @@
 #include "types.h"
 #include <dcp/types.h>
 #include <nvjpeg2k.h>
+#include <boost/lockfree/spsc_queue.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 #include <map>
+#include <queue>
+#include <thread>
 #include <vector>
 
 
@@ -37,7 +40,6 @@ class CUDAJ2KFrameEncoder : public J2KFrameEncoder
 {
 public:
 	CUDAJ2KFrameEncoder();
-	~CUDAJ2KFrameEncoder();
 
 	boost::optional<dcp::ArrayData> encode(DCPVideo const &) override;
 	void flush() override;
@@ -46,14 +48,10 @@ public:
 private:
 	void encode_queue();
 
-	nvjpeg2kEncoder_t _encoder_handle;
-	nvjpeg2kEncodeState_t _encoder_state;
-	nvjpeg2kEncodeParams_t _encoder_params;
-
 	class Input
 	{
 	public:
-		Input(DCPVideo const& vf, cudaStream_t stream);
+		Input(DCPVideo const& vf);
 		Input(Input const& other) = delete;
 		Input(Input&& other);
 		~Input();
@@ -72,6 +70,14 @@ private:
 			return _eyes;
 		}
 
+		dcp::Size size() const {
+			return _size;
+		}
+
+		Resolution resolution() const {
+			return _resolution;
+		}
+
 	private:
 		std::shared_ptr<dcp::OpenJPEGImage> _xyz;
 		uint8_t* _pixel_data_h[3];
@@ -80,11 +86,23 @@ private:
 		nvjpeg2kImage_t _device_image;
 		int _index;
 		Eyes _eyes;
+		dcp::Size _size;
+		Resolution _resolution;
 	};
 
 	boost::optional<dcp::Size> _size;
 	boost::optional<Resolution> _resolution;
-	cudaStream_t _stream;
+
+	static void cuda_thread();
+
+	static std::vector<std::thread> _cuda_threads;
+	static std::queue<Input> _input;
+	static boost::condition _input_condition;
+	static boost::mutex _input_mutex;
+
+	static std::map<std::pair<int, Eyes>, dcp::ArrayData> _output;
+	static boost::condition _output_condition;
+	static boost::mutex _output_mutex;
 };
 
 
