@@ -118,7 +118,7 @@ CUDAJ2KFrameEncoder::cuda_thread()
 		}
 
 		// XXX: quality
-		status = nvjpeg2kEncodeParamsSetQuality(encoder_params, 30);
+		status = nvjpeg2kEncodeParamsSetQuality(encoder_params, 50);
 		if (status != NVJPEG2K_STATUS_SUCCESS) {
 			throw CUDAError("nvjpeg2kEncodeParamsSetQuality", status);
 		}
