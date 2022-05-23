@@ -52,7 +52,7 @@ private:
 	class Input
 	{
 	public:
-		Input(DCPVideo const& vf);
+		Input(DCPVideo const& vf, cudaStream_t stream);
 		Input(Input const& other) = delete;
 		Input(Input&& other);
 		~Input();
@@ -72,6 +72,8 @@ private:
 		}
 
 	private:
+		std::shared_ptr<dcp::OpenJPEGImage> _xyz;
+		uint8_t* _pixel_data_h[3];
 		uint8_t* _pixel_data_d[3];
 		size_t _pitch_in_bytes[3];
 		nvjpeg2kImage_t _device_image;

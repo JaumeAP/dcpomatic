@@ -45,19 +45,17 @@ CUDAJ2KFrameEncoder::CUDAJ2KFrameEncoder()
 }
 
 
-CUDAJ2KFrameEncoder::Input::Input(DCPVideo const& vf)
+CUDAJ2KFrameEncoder::Input::Input(DCPVideo const& vf, cudaStream_t stream)
 	: _index(vf.index())
 	, _eyes(vf.eyes())
 {
-	auto xyz = convert_to_xyz(vf.frame(), boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
+	_xyz = convert_to_xyz(vf.frame(), boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
 
-	void* pixel_data_h[] = {
-		xyz->data(0),
-		xyz->data(1),
-		xyz->data(2)
-	};
+	for (int i = 0; i < 3; ++i) {
+		_pixel_data_h[i] = reinterpret_cast<uint8_t*>(_xyz->data(i));
+	}
 
-	auto const pitch = xyz->size().width * 2;
+	auto const pitch = _xyz->size().width * 2;
 
 	for (int i = 0; i < 3; ++i) {
 		_pitch_in_bytes[i] = pitch;
@@ -65,21 +63,22 @@ CUDAJ2KFrameEncoder::Input::Input(DCPVideo const& vf)
 			reinterpret_cast<void**>(&_pixel_data_d[i]),
 			&_pitch_in_bytes[i],
 			pitch,
-			xyz->size().height
+			_xyz->size().height
 			);
 
 		if (status != cudaSuccess) {
 			throw CUDAError("cudaMallocPitch", status);
 		}
 
-		status = cudaMemcpy2D(
+		status = cudaMemcpy2DAsync(
 			_pixel_data_d[i],
 			_pitch_in_bytes[i],
-			pixel_data_h[i],
+			_pixel_data_h[i],
 			_pitch_in_bytes[i],
 			pitch,
-			xyz->size().height,
-			cudaMemcpyHostToDevice
+			_xyz->size().height,
+			cudaMemcpyHostToDevice,
+			stream
 			);
 
 		if (status != cudaSuccess) {
@@ -122,7 +121,7 @@ CUDAJ2KFrameEncoder::Input::~Input()
 optional<dcp::ArrayData>
 CUDAJ2KFrameEncoder::encode(DCPVideo const& vf)
 {
-	auto input = Input(vf);
+	auto input = Input(vf, _stream);
 
 	auto const size = vf.frame()->out_size();
 	DCPOMATIC_ASSERT(!_size || size == *_size);
