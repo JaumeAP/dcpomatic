@@ -30,8 +30,18 @@
 #include <vector>
 
 
+using std::make_pair;
 using std::vector;
 using boost::optional;
+
+
+boost::mutex CUDAJ2KFrameEncoder::_mutex;
+boost::condition CUDAJ2KFrameEncoder::_condition;
+std::vector<CUDAJ2KFrameEncoder::Input> CUDAJ2KFrameEncoder::_queue;
+std::map<std::pair<int, Eyes>, dcp::ArrayData> CUDAJ2KFrameEncoder::_output;
+
+boost::optional<dcp::Size> CUDAJ2KFrameEncoder::_size;
+boost::optional<Resolution> CUDAJ2KFrameEncoder::_resolution;
 
 
 CUDAJ2KFrameEncoder::CUDAJ2KFrameEncoder()
@@ -42,7 +52,9 @@ CUDAJ2KFrameEncoder::CUDAJ2KFrameEncoder()
 }
 
 
-CUDAJ2KFrameEncoder::Frame::Frame(DCPVideo const& vf)
+CUDAJ2KFrameEncoder::Input::Input(DCPVideo const& vf)
+	: _index(vf.index())
+	, _eyes(vf.eyes())
 {
 	auto xyz = convert_to_xyz(vf.frame(), boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
 
@@ -91,7 +103,9 @@ CUDAJ2KFrameEncoder::Frame::Frame(DCPVideo const& vf)
 }
 
 
-CUDAJ2KFrameEncoder::Frame::Frame(Frame&& other)
+CUDAJ2KFrameEncoder::Input::Input(Input&& other)
+	: _index(other._index)
+	, _eyes(other._eyes)
 {
 	for (int i = 0; i < 3; ++i) {
 		_pixel_data_d[i] = other._pixel_data_d[i];
@@ -106,7 +120,7 @@ CUDAJ2KFrameEncoder::Frame::Frame(Frame&& other)
 }
 
 
-CUDAJ2KFrameEncoder::Frame::~Frame()
+CUDAJ2KFrameEncoder::Input::~Input()
 {
 	cudaFree(_pixel_data_d[0]);
 	cudaFree(_pixel_data_d[1]);
@@ -114,10 +128,12 @@ CUDAJ2KFrameEncoder::Frame::~Frame()
 }
 
 
-vector<dcp::ArrayData>
+optional<dcp::ArrayData>
 CUDAJ2KFrameEncoder::encode(DCPVideo const& vf)
 {
-	int constexpr BATCH_SIZE = 128;
+	auto input = Input(vf);
+
+	boost::mutex::scoped_lock lm(_mutex);
 
 	auto const size = vf.frame()->out_size();
 	DCPOMATIC_ASSERT(!_size || size == *_size);
@@ -126,22 +142,27 @@ CUDAJ2KFrameEncoder::encode(DCPVideo const& vf)
 	DCPOMATIC_ASSERT(!_resolution || vf.resolution() == *_resolution);
 	_resolution = vf.resolution();
 
-	if (_batch.size() < BATCH_SIZE) {
-		_batch.push_back(Frame(vf));
+	_queue.push_back(std::move(input));
+	if (_queue.size() < batch_size) {
+		std::cout << "queue is " << _queue.size() << " - waiting\n";
+		_condition.wait(lm);
+	} else {
+		encode_queue();
+		_condition.notify_all();
+	}
+
+	auto output = _output.find(make_pair(vf.index(), vf.eyes()));
+	if (output == _output.end()) {
 		return {};
 	}
 
-	return flush();
+	return output->second;
 }
 
 
-vector<dcp::ArrayData>
-CUDAJ2KFrameEncoder::flush()
+void
+CUDAJ2KFrameEncoder::encode_queue()
 {
-	if (_batch.empty()) {
-		return {};
-	}
-
 	nvjpeg2kImageComponentInfo_t info[3];
 	for (int i = 0; i < 3; ++i) {
 		info[i].component_width = _size->width;
@@ -176,11 +197,8 @@ CUDAJ2KFrameEncoder::flush()
 		throw CUDAError("nvjpeg2kEncodeParamsSetQuality", status);
 	}
 
-	vector<dcp::ArrayData> output;
-
-	for (auto const& frame: _batch) {
-
-		auto x = frame.device_image();
+	std::cout << "encoding queue of " << _queue.size() << "\n";
+	for (auto const& frame: _queue) {
 
 		status = nvjpeg2kEncode(_encoder_handle, _encoder_state, _encoder_params, frame.device_image(), 0);
 		if (status != NVJPEG2K_STATUS_SUCCESS) {
@@ -196,13 +214,11 @@ CUDAJ2KFrameEncoder::flush()
 			throw CUDAError("nvjpeg2kEncodeRetrieveBitstream", status);
 		}
 
-		output.push_back(this_output);
+		_output[make_pair(frame.index(), frame.eyes())] = this_output;
 		cudaStreamSynchronize(0);
 	}
 
-	_batch.clear();
-
-	return output;
+	_queue.clear();
 }
 
 
@@ -210,4 +226,13 @@ void
 CUDAJ2KFrameEncoder::log_thread_start ()
 {
        LOG_TIMING("start-encoder-thread thread=%1", thread_id());
+}
+
+
+void
+CUDAJ2KFrameEncoder::flush()
+{
+	boost::mutex::scoped_lock lm(_mutex);
+	encode_queue();
+	_condition.notify_all();
 }

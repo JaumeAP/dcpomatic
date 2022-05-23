@@ -27,6 +27,9 @@
 #include "types.h"
 #include <dcp/types.h>
 #include <nvjpeg2k.h>
+#include <boost/thread/condition.hpp>
+#include <boost/thread/mutex.hpp>
+#include <map>
 #include <vector>
 
 
@@ -35,38 +38,56 @@ class CUDAJ2KFrameEncoder : public J2KFrameEncoder
 public:
 	CUDAJ2KFrameEncoder();
 
-	std::vector<dcp::ArrayData> encode(DCPVideo const &) override;
-	std::vector<dcp::ArrayData> flush() override;
+	boost::optional<dcp::ArrayData> encode(DCPVideo const &) override;
+	void flush() override;
 	void log_thread_start() override;
 
+	static int constexpr batch_size = 1;
+
 private:
+	void encode_queue();
+
 	nvjpeg2kEncoder_t _encoder_handle;
 	nvjpeg2kEncodeState_t _encoder_state;
 	nvjpeg2kEncodeParams_t _encoder_params;
 
-	class Frame
+	class Input
 	{
 	public:
-		Frame(DCPVideo const& vf);
-		Frame(Frame const& other) = delete;
-		Frame(Frame&& other);
-		~Frame();
+		Input(DCPVideo const& vf);
+		Input(Input const& other) = delete;
+		Input(Input&& other);
+		~Input();
 
-		Frame& operator=(Frame const& other) = delete;
+		Input& operator=(Input const& other) = delete;
 
 		nvjpeg2kImage_t const* const device_image() const {
 			return &_device_image;
+		}
+
+		int index() const {
+			return _index;
+		}
+
+		Eyes eyes() const {
+			return _eyes;
 		}
 
 	private:
 		uint8_t* _pixel_data_d[3];
 		size_t _pitch_in_bytes[3];
 		nvjpeg2kImage_t _device_image;
+		int _index;
+		Eyes _eyes;
 	};
 
-	std::vector<Frame> _batch;
-	boost::optional<dcp::Size> _size;
-	boost::optional<Resolution> _resolution;
+	static boost::mutex _mutex;
+	static boost::condition _condition;
+	static std::vector<Input> _queue;
+	static std::map<std::pair<int, Eyes>, dcp::ArrayData> _output;
+
+	static boost::optional<dcp::Size> _size;
+	static boost::optional<Resolution> _resolution;
 };
 
 

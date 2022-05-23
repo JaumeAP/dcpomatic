@@ -37,6 +37,7 @@ public:
 	virtual ~J2KFrameEncoder() {}
 
 	virtual boost::optional<dcp::ArrayData> encode (DCPVideo const &) = 0;
+	virtual void flush () {}
 	virtual void log_thread_start () = 0;
 };
 

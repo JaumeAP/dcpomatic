@@ -115,6 +115,10 @@ J2KEncoder::end ()
 		_full_condition.wait (lock);
 	}
 
+	for (auto& worker: _workers) {
+		worker->flush();
+	}
+
 	lock.unlock ();
 
 	LOG_GENERAL_NC (N_("Terminating encoder threads"));
@@ -378,9 +382,11 @@ J2KEncoder::servers_list_changed ()
 		}
 	}
 #endif
-	auto worker = make_shared<CUDAJ2KFrameEncoder>();
-	_workers.push_back(worker);
-	_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, worker));
+	for (int i = 0; i < CUDAJ2KFrameEncoder::batch_size; ++i) {
+		auto worker = make_shared<CUDAJ2KFrameEncoder>();
+		_workers.push_back(worker);
+		_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, worker));
+	}
 
 	_writer->set_encoder_threads (_threads->size());
 }
