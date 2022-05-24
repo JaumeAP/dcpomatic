@@ -24,31 +24,31 @@
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
+#include <nvjpeg2k.h>
+#include <boost/thread.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 #include <memory>
 #include <queue>
-#include <thread>
 
 
-class CUDA
+class CUDADecoder
 {
 public:
-	CUDA();
+	CUDADecoder();
+	~CUDADecoder();
 
-	CUDA(CUDA &) = delete;
-	CUDA(CUDA &&) = delete;
+	CUDADecoder(CUDADecoder &) = delete;
+	CUDADecoder(CUDADecoder &&) = delete;
 
 	std::shared_ptr<Image> decode(std::shared_ptr<const dcp::Data> j2k_data, int reduce, AVPixelFormat pixel_format, Image::Alignment alignment);
 
-	static CUDA* instance();
+	static CUDADecoder* instance();
 
 private:
-	void decode_thread();
-
 	typedef uint64_t ID;
 
-	class DecodeQueueItem
+	class QueueItem
 	{
 	public:
 		ID id;
@@ -58,14 +58,22 @@ private:
 		Image::Alignment alignment;
 	};
 
-	std::queue<DecodeQueueItem> _decode_queue;
-	std::map<ID, std::shared_ptr<Image>> _decode_output;
-	boost::condition _decode_queue_empty_condition;
-	boost::condition _decode_complete_condition;
-	boost::mutex _decode_mutex;
-	std::thread _decode_thread;
-	ID _next_decode_id = 0;
+	void thread();
+	std::shared_ptr<Image> decode_one(QueueItem const& input, nvjpeg2kHandle_t handle, nvjpeg2kDecodeState_t state, nvjpeg2kStream_t jpeg2k_stream);
+	void check_jpeg2k(std::string name, nvjpeg2kStatus_t status);
 
-	static CUDA* _instance;
+	std::queue<QueueItem> _queue;
+	std::map<ID, std::shared_ptr<Image>> _output;
+	boost::condition _queue_empty_condition;
+	boost::condition _complete_condition;
+	boost::mutex _mutex;
+	boost::thread _thread;
+	ID _next_id = 0;
+	dcp::Size _allocation;
+	uint16_t* _device[3] = { nullptr, nullptr, nullptr };
+	size_t _pitch[3];
+	std::vector<uint16_t> _host[3];
+
+	static CUDADecoder* _instance;
 };
 

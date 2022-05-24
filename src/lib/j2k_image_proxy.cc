@@ -20,7 +20,7 @@
 
 
 #ifdef HAVE_NVJPEG2K_H
-#include "cuda.h"
+#include "cuda_decoder.h"
 #endif
 #include "dcpomatic_assert.h"
 #include "dcpomatic_socket.h"
@@ -171,7 +171,7 @@ J2KImageProxy::prepare (Image::Alignment alignment, optional<dcp::Size> target_s
 			}
 		}
 #endif
-		_image = CUDA::instance()->decode(_data, 0, _pixel_format, alignment);
+		_image = CUDADecoder::instance()->decode(_data, 0, _pixel_format, alignment);
 	} catch (dcp::J2KDecompressionError& e) {
 		_image = make_shared<Image>(_pixel_format, _size, alignment);
 		_image->make_black ();
