@@ -19,6 +19,9 @@
 */
 
 
+#ifdef HAVE_NVJPEG2K_H
+#include "cuda.h"
+#endif
 #include "dcpomatic_assert.h"
 #include "dcpomatic_socket.h"
 #include "image.h"
@@ -141,6 +144,7 @@ J2KImageProxy::prepare (Image::Alignment alignment, optional<dcp::Size> target_s
 	}
 
 	try {
+#if 0
 		/* XXX: should check that potentially trashing _data here doesn't matter */
 		auto decompressed = dcp::decompress_j2k (const_cast<uint8_t*>(_data->data()), _data->size(), reduce);
 		_image = make_shared<Image>(_pixel_format, decompressed->size(), alignment);
@@ -166,6 +170,8 @@ J2KImageProxy::prepare (Image::Alignment alignment, optional<dcp::Size> target_s
 				++p;
 			}
 		}
+#endif
+		_image = CUDA::instance()->decode(_data, 0, _pixel_format, alignment);
 	} catch (dcp::J2KDecompressionError& e) {
 		_image = make_shared<Image>(_pixel_format, _size, alignment);
 		_image->make_black ();

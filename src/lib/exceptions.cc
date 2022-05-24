@@ -183,5 +183,6 @@ CUDAError::CUDAError (string function, cudaError error)
 CUDAError::CUDAError (string function, int error)
 	: runtime_error(String::compose("CUDA error on %1 (%2)", function, error))
 {
+	std::cout << "CUDA error " << function << " " << error << "\n";
 }
 
