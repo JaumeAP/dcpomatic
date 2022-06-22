@@ -26,6 +26,7 @@
 #include "wx/servers_list_dialog.h"
 #include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
+#include "lib/check_content_job.h"
 #include "lib/compose.hpp"
 #include "lib/config.h"
 #include "lib/dcpomatic_socket.h"
@@ -215,6 +216,7 @@ public:
 				}
 			}
 
+			JobManager::instance()->add(make_shared<CheckContentJob>(film));
 			make_dcp (film, TranscodeJob::ChangedBehaviour::STOP);
 		} catch (std::exception& e) {
 			auto p = std_to_wx (path.string ());
