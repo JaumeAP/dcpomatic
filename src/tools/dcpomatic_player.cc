@@ -34,6 +34,7 @@
 #include "wx/verify_dcp_progress_dialog.h"
 #include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
+#include "wx/video_waveform_dialog.h"
 #include "lib/compose.hpp"
 #include "lib/config.h"
 #include "lib/cross.h"
@@ -125,6 +126,7 @@ enum {
 	ID_view_full_screen = 200,
 	ID_view_dual_screen,
 	ID_view_closed_captions,
+	ID_view_video_waveform,
 	ID_view_scale_appropriate,
 	ID_view_scale_full,
 	ID_view_scale_half,
@@ -186,6 +188,7 @@ public:
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_full_screen, this), ID_view_full_screen);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_dual_screen, this), ID_view_dual_screen);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_closed_captions, this), ID_view_closed_captions);
+		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_video_waveform, this), ID_view_video_waveform);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_cpl, this, _1), ID_view_cpl, ID_view_cpl + MAX_CPLS);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::set_decode_reduction, this, optional<int>(0)), ID_view_scale_full);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::set_decode_reduction, this, optional<int>(1)), ID_view_scale_half);
@@ -536,6 +539,7 @@ private:
 		setup_menu ();
 		view->AppendSeparator();
 		view->Append(ID_view_closed_captions, _("Closed captions..."));
+		view->Append(ID_view_video_waveform, _("Video waveform..."));
 		view->AppendSeparator();
 		view->AppendRadioItem(ID_view_scale_appropriate, _("Set decode resolution to match display"))->Check(!static_cast<bool>(c));
 		view->AppendRadioItem(ID_view_scale_full, _("Decode at full resolution"))->Check(c && c.get() == 0);
@@ -834,6 +838,15 @@ private:
 		_viewer->show_closed_captions ();
 	}
 
+	void view_video_waveform ()
+	{
+		if (!_video_waveform_dialog) {
+			_video_waveform_dialog = new VideoWaveformDialog(this, _film, _viewer);
+		}
+
+		_video_waveform_dialog->Show();
+	}
+
 	void tools_verify ()
 	{
 		auto dcp = std::dynamic_pointer_cast<DCPContent>(_film->content().front());
@@ -1057,6 +1070,7 @@ private:
 	wxMenuItem* _view_dual_screen = nullptr;
 	wxSizer* _main_sizer = nullptr;
 	PlayerStressTester _stress;
+	VideoWaveformDialog* _video_waveform_dialog = nullptr;
 };
 
 static const wxCmdLineEntryDesc command_line_description[] = {
