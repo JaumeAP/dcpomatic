@@ -100,26 +100,6 @@ DCPVideo::DCPVideo (shared_ptr<const PlayerVideo> frame, shared_ptr<const cxml::
 	_resolution = Resolution (node->optional_number_child<int>("Resolution").get_value_or(static_cast<int>(Resolution::TWO_K)));
 }
 
-shared_ptr<dcp::OpenJPEGImage>
-DCPVideo::convert_to_xyz (shared_ptr<const PlayerVideo> frame, dcp::NoteHandler note)
-{
-	shared_ptr<dcp::OpenJPEGImage> xyz;
-
-	auto image = frame->image (bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
-	if (frame->colour_conversion()) {
-		xyz = dcp::rgb_to_xyz (
-			image->data()[0],
-			image->size(),
-			image->stride()[0],
-			frame->colour_conversion().get(),
-			note
-			);
-	} else {
-		xyz = make_shared<dcp::OpenJPEGImage>(image->data()[0], image->size(), image->stride()[0]);
-	}
-
-	return xyz;
-}
 
 /** J2K-encode this frame on the local host.
  *  @return Encoded data.
@@ -134,7 +114,7 @@ DCPVideo::encode_locally () const
 	int const minimum_size = 16384;
 	LOG_DEBUG_ENCODE("Using minimum frame size %1", minimum_size);
 
-	auto xyz = convert_to_xyz (_frame, boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
+	auto xyz = _frame->convert_to_xyz(boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
 	int noise_amount = 2;
 	int pixel_skip = 16;
 	while (true) {
@@ -159,7 +139,7 @@ DCPVideo::encode_locally () const
 		 * convert_to_xyz() again because compress_j2k() corrupts its xyz parameter.
 		 */
 
-		xyz = convert_to_xyz (_frame, boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
+		xyz = _frame->convert_to_xyz(boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
 		auto size = xyz->size ();
 		auto pixels = size.width * size.height;
 		dcpomatic::RNG rng(42);

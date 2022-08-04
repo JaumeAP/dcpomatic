@@ -27,7 +27,9 @@
 #include "player.h"
 #include "player_video.h"
 #include "video_content.h"
+#include <dcp/openjpeg_image.h>
 #include <dcp/raw_convert.h>
+#include <dcp/rgb_xyz.h>
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
@@ -43,6 +45,9 @@ using std::shared_ptr;
 using std::string;
 using std::weak_ptr;
 using boost::optional;
+#if BOOST_VERSION >= 106100
+using namespace boost::placeholders;
+#endif
 using dcp::Data;
 using dcp::raw_convert;
 
@@ -374,3 +379,22 @@ PlayerVideo::reset_metadata (shared_ptr<const Film> film, dcp::Size player_video
 
 	return true;
 }
+
+
+shared_ptr<dcp::OpenJPEGImage>
+PlayerVideo::convert_to_xyz(dcp::NoteHandler note) const
+{
+	auto frame_image = image(bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
+	if (colour_conversion()) {
+		return dcp::rgb_to_xyz (
+			frame_image->data()[0],
+			frame_image->size(),
+			frame_image->stride()[0],
+			colour_conversion().get(),
+			note
+			);
+	} else {
+		return make_shared<dcp::OpenJPEGImage>(frame_image->data()[0], frame_image->size(), frame_image->stride()[0]);
+	}
+}
+
