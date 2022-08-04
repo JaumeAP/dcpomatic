@@ -112,6 +112,8 @@ FFmpegEncoder::FFmpegEncoder (
 		map,
 		_output_audio_channels,
 		bind(&PlayerVideo::force, FFmpegFileEncoder::pixel_format(format)),
+		_film->frame_size(),
+		_film->frame_size(),
 		VideoRange::VIDEO,
 		Image::Alignment::PADDED,
 		false,

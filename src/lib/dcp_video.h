@@ -42,7 +42,7 @@ class PlayerVideo;
 class DCPVideo
 {
 public:
-	DCPVideo (std::shared_ptr<const PlayerVideo>, int index, int dcp_fps, int bandwidth, Resolution r);
+	DCPVideo (std::shared_ptr<const PlayerVideo>, dcp::Size container, int index, int dcp_fps, int bandwidth, Resolution resolution);
 	DCPVideo (std::shared_ptr<const PlayerVideo>, cxml::ConstNodePtr);
 
 	DCPVideo (DCPVideo const&) = default;
@@ -59,13 +59,14 @@ public:
 
 	bool same (std::shared_ptr<const DCPVideo> other) const;
 
-	static std::shared_ptr<dcp::OpenJPEGImage> convert_to_xyz (std::shared_ptr<const PlayerVideo> frame, dcp::NoteHandler note);
+	static std::shared_ptr<dcp::OpenJPEGImage> convert_to_xyz(std::shared_ptr<const PlayerVideo> frame, dcp::Size container, dcp::NoteHandler note);
 
 private:
 
 	void add_metadata (xmlpp::Element *) const;
 
 	std::shared_ptr<const PlayerVideo> _frame;
+	dcp::Size _container;
 	int _index;			 ///< frame index within the DCP's intrinsic duration
 	int _frames_per_second;		 ///< Frames per second that we will use for the DCP
 	int _j2k_bandwidth;		 ///< J2K bandwidth to use

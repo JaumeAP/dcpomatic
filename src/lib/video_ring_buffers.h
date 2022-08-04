@@ -45,7 +45,7 @@ public:
 	Frame size () const;
 	bool empty () const;
 
-	void reset_metadata (std::shared_ptr<const Film> film, dcp::Size player_video_container_size);
+	void reset_metadata(std::shared_ptr<const Film> film);
 
 	std::pair<size_t, std::string> memory_used () const;
 

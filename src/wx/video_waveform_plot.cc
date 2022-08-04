@@ -195,10 +195,15 @@ VideoWaveformPlot::set_image (shared_ptr<PlayerVideo> image)
 		return;
 	}
 
+	auto film = _film.lock ();
+	if (!film) {
+		return;
+	}
+
 	/* We must copy the PlayerVideo here as we will call ::image() on it, potentially
 	   with a different pixel_format than was used when ::prepare() was called.
 	*/
-	_image = DCPVideo::convert_to_xyz (image->shallow_copy(), [](dcp::NoteType, string) {});
+	_image = DCPVideo::convert_to_xyz(image->shallow_copy(), film->frame_size(), [](dcp::NoteType, string) {});
 	_dirty = true;
 	Refresh ();
 }

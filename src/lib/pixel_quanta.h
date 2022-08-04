@@ -62,6 +62,8 @@ public:
 
 
 PixelQuanta max (PixelQuanta const& a, PixelQuanta const& b);
+bool operator==(PixelQuanta const& a, PixelQuanta const& b);
+bool operator!=(PixelQuanta const& a, PixelQuanta const& b);
 
 #endif
 

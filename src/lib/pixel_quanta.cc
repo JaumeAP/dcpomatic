@@ -66,3 +66,17 @@ max (PixelQuanta const& a, PixelQuanta const& b)
 	return { std::max(a.x, b.x), std::max(a.y, b.y) };
 }
 
+
+bool
+operator==(PixelQuanta const& a, PixelQuanta const& b)
+{
+	return a.x == b.x && a.y == b.y;
+}
+
+
+bool
+operator!=(PixelQuanta const& a, PixelQuanta const& b)
+{
+	return a.x != b.x || a.y != b.y;
+}
+

@@ -26,6 +26,7 @@
 #include "j2k_image_proxy.h"
 #include "player.h"
 #include "player_video.h"
+#include "util.h"
 #include "video_content.h"
 #include <dcp/raw_convert.h>
 extern "C" {
@@ -51,8 +52,8 @@ PlayerVideo::PlayerVideo (
 	shared_ptr<const ImageProxy> in,
 	Crop crop,
 	boost::optional<double> fade,
-	dcp::Size inter_size,
-	dcp::Size out_size,
+	dcp::Size size_in_film,
+	PixelQuanta pixel_quanta,
 	Eyes eyes,
 	Part part,
 	optional<ColourConversion> colour_conversion,
@@ -64,8 +65,8 @@ PlayerVideo::PlayerVideo (
 	: _in (in)
 	, _crop (crop)
 	, _fade (fade)
-	, _inter_size (inter_size)
-	, _out_size (out_size)
+	, _size_in_film(size_in_film)
+	, _pixel_quanta(pixel_quanta)
 	, _eyes (eyes)
 	, _part (part)
 	, _colour_conversion (colour_conversion)
@@ -83,8 +84,8 @@ PlayerVideo::PlayerVideo (shared_ptr<cxml::Node> node, shared_ptr<Socket> socket
 	_crop = Crop (node);
 	_fade = node->optional_number_child<double> ("Fade");
 
-	_inter_size = dcp::Size (node->number_child<int> ("InterWidth"), node->number_child<int> ("InterHeight"));
-	_out_size = dcp::Size (node->number_child<int> ("OutWidth"), node->number_child<int> ("OutHeight"));
+	_size_in_film = dcp::Size(node->number_child<int>("SizeInFilmWidth"), node->number_child<int>("SizeInFilmHeight"));
+	_pixel_quanta = PixelQuanta(node->number_child<int>("PixelQuantumX"), node->number_child<int>("PixelQuantumY"));
 	_eyes = static_cast<Eyes>(node->number_child<int>("Eyes"));
 	_part = static_cast<Part>(node->number_child<int>("Part"));
 	_video_range = static_cast<VideoRange>(node->number_child<int>("VideoRange"));
@@ -116,22 +117,29 @@ PlayerVideo::set_text (PositionImage image)
 
 
 shared_ptr<Image>
-PlayerVideo::image (function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, bool fast) const
+PlayerVideo::image(
+	function<AVPixelFormat (AVPixelFormat)> pixel_format,
+	dcp::Size display_container,
+	dcp::Size film_container,
+	VideoRange video_range,
+	bool fast
+	) const
 {
 	/* XXX: this assumes that image() and prepare() are only ever called with the same parameters (except crop, inter size, out size, fade) */
 
 	boost::mutex::scoped_lock lm (_mutex);
-	if (!_image || _crop != _image_crop || _inter_size != _image_inter_size || _out_size != _image_out_size || _fade != _image_fade) {
-		make_image (pixel_format, video_range, fast);
+	if (!_image || _crop != _image_crop || _size_in_film != _image_size_in_film || _pixel_quanta != _image_pixel_quanta || _fade != _image_fade) {
+		make_image(pixel_format, display_container, film_container, video_range, fast);
 	}
 	return _image;
 }
 
 
 shared_ptr<const Image>
-PlayerVideo::raw_image () const
+PlayerVideo::raw_image(dcp::Size display_container, dcp::Size film_container) const
 {
-	return _in->image(Image::Alignment::COMPACT, _inter_size).image;
+	auto const inter_size = scale_for_display(_size_in_film, display_container, film_container, _pixel_quanta);
+	return _in->image(Image::Alignment::COMPACT, inter_size).image;
 }
 
 
@@ -142,14 +150,22 @@ PlayerVideo::raw_image () const
  *  @param fast true to be fast at the expense of quality.
  */
 void
-PlayerVideo::make_image (function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, bool fast) const
+PlayerVideo::make_image (
+	function<AVPixelFormat (AVPixelFormat)> pixel_format,
+	dcp::Size display_container,
+	dcp::Size film_container,
+	VideoRange video_range,
+	bool fast
+	) const
 {
 	_image_crop = _crop;
-	_image_inter_size = _inter_size;
-	_image_out_size = _out_size;
+	_image_size_in_film = _size_in_film;
+	_image_pixel_quanta = _pixel_quanta;
 	_image_fade = _fade;
 
-	auto prox = _in->image (Image::Alignment::PADDED, _inter_size);
+	auto const inter_size = scale_for_display(_size_in_film, display_container, film_container, _pixel_quanta);
+
+	auto prox = _in->image (Image::Alignment::PADDED, inter_size);
 	_error = prox.error;
 
 	auto total_crop = _crop;
@@ -185,7 +201,7 @@ PlayerVideo::make_image (function<AVPixelFormat (AVPixelFormat)> pixel_format, V
 	}
 
 	_image = prox.image->crop_scale_window (
-		total_crop, _inter_size, _out_size, yuv_to_rgb, _video_range, pixel_format (prox.image->pixel_format()), video_range, Image::Alignment::COMPACT, fast
+		total_crop, inter_size, display_container, yuv_to_rgb, _video_range, pixel_format(prox.image->pixel_format()), video_range, Image::Alignment::COMPACT, fast
 		);
 
 	if (_text) {
@@ -206,10 +222,10 @@ PlayerVideo::add_metadata (xmlpp::Node* node) const
 		node->add_child("Fade")->add_child_text (raw_convert<string> (_fade.get ()));
 	}
 	_in->add_metadata (node->add_child ("In"));
-	node->add_child("InterWidth")->add_child_text (raw_convert<string> (_inter_size.width));
-	node->add_child("InterHeight")->add_child_text (raw_convert<string> (_inter_size.height));
-	node->add_child("OutWidth")->add_child_text (raw_convert<string> (_out_size.width));
-	node->add_child("OutHeight")->add_child_text (raw_convert<string> (_out_size.height));
+	node->add_child("SizeInFilmWidth")->add_child_text(raw_convert<string>(_size_in_film.width));
+	node->add_child("SizeInFilmHeight")->add_child_text(raw_convert<string>(_size_in_film.height));
+	node->add_child("PixelQuantumX")->add_child_text(raw_convert<string>(_pixel_quanta.x));
+	node->add_child("PixelQuantumY")->add_child_text(raw_convert<string>(_pixel_quanta.y));
 	node->add_child("Eyes")->add_child_text (raw_convert<string> (static_cast<int> (_eyes)));
 	node->add_child("Part")->add_child_text (raw_convert<string> (static_cast<int> (_part)));
 	node->add_child("VideoRange")->add_child_text(raw_convert<string>(static_cast<int>(_video_range)));
@@ -237,7 +253,7 @@ PlayerVideo::write_to_socket (shared_ptr<Socket> socket) const
 
 
 bool
-PlayerVideo::has_j2k () const
+PlayerVideo::has_j2k(dcp::Size display_container, dcp::Size film_container) const
 {
 	/* XXX: maybe other things */
 
@@ -246,7 +262,8 @@ PlayerVideo::has_j2k () const
 		return false;
 	}
 
-	return _crop == Crop() && _out_size == j2k->size() && _inter_size == j2k->size() && !_text && !_fade && !_colour_conversion;
+	auto const inter_size = scale_for_display(_size_in_film, display_container, film_container, _pixel_quanta);
+	return _crop == Crop() && film_container == j2k->size() && inter_size == j2k->size() && !_text && !_fade && !_colour_conversion;
 }
 
 
@@ -259,21 +276,14 @@ PlayerVideo::j2k () const
 }
 
 
-Position<int>
-PlayerVideo::inter_position () const
-{
-	return Position<int> ((_out_size.width - _inter_size.width) / 2, (_out_size.height - _inter_size.height) / 2);
-}
-
-
 /** @return true if this PlayerVideo is definitely the same as another, false if it is probably not */
 bool
 PlayerVideo::same (shared_ptr<const PlayerVideo> other) const
 {
 	if (_crop != other->_crop ||
 	    _fade != other->_fade ||
-	    _inter_size != other->_inter_size ||
-	    _out_size != other->_out_size ||
+	    _size_in_film != other->_size_in_film ||
+	    _pixel_quanta != other->_pixel_quanta ||
 	    _eyes != other->_eyes ||
 	    _part != other->_part ||
 	    _colour_conversion != other->_colour_conversion ||
@@ -311,12 +321,21 @@ PlayerVideo::keep_xyz_or_rgb (AVPixelFormat p)
 
 
 void
-PlayerVideo::prepare (function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, Image::Alignment alignment, bool fast, bool proxy_only)
+PlayerVideo::prepare(
+	function<AVPixelFormat (AVPixelFormat)> pixel_format,
+	dcp::Size display_container,
+	dcp::Size film_container,
+	VideoRange video_range,
+	Image::Alignment alignment,
+	bool fast,
+	bool proxy_only
+	)
 {
-	_in->prepare (alignment, _inter_size);
+	auto const inter_size = scale_for_display(_size_in_film, display_container, film_container, _pixel_quanta);
+	_in->prepare(alignment, inter_size);
 	boost::mutex::scoped_lock lm (_mutex);
 	if (!_image && !proxy_only) {
-		make_image (pixel_format, video_range, fast);
+		make_image(pixel_format, display_container, film_container, video_range, fast);
 	}
 }
 
@@ -336,8 +355,8 @@ PlayerVideo::shallow_copy () const
 		_in,
 		_crop,
 		_fade,
-		_inter_size,
-		_out_size,
+		_size_in_film,
+		_pixel_quanta,
 		_eyes,
 		_part,
 		_colour_conversion,
@@ -349,11 +368,11 @@ PlayerVideo::shallow_copy () const
 }
 
 
-/** Re-read crop, fade, inter/out size, colour conversion and video range from our content.
+/** Re-read crop, fade, colour conversion and video range from our content.
  *  @return true if this was possible, false if not.
  */
 bool
-PlayerVideo::reset_metadata (shared_ptr<const Film> film, dcp::Size player_video_container_size)
+PlayerVideo::reset_metadata (shared_ptr<const Film> film)
 {
 	auto content = _content.lock();
 	if (!content || !_video_frame) {
@@ -362,13 +381,6 @@ PlayerVideo::reset_metadata (shared_ptr<const Film> film, dcp::Size player_video
 
 	_crop = content->video->actual_crop();
 	_fade = content->video->fade(film, _video_frame.get());
-	_inter_size = scale_for_display(
-		content->video->scaled_size(film->frame_size()),
-		player_video_container_size,
-		film->frame_size(),
-		content->video->pixel_quanta()
-		);
-	_out_size = player_video_container_size;
 	_colour_conversion = content->video->colour_conversion();
 	_video_range = content->video->range();
 

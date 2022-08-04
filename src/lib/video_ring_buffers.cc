@@ -94,11 +94,11 @@ VideoRingBuffers::memory_used () const
 
 
 void
-VideoRingBuffers::reset_metadata (shared_ptr<const Film> film, dcp::Size player_video_container_size)
+VideoRingBuffers::reset_metadata (shared_ptr<const Film> film)
 {
 	boost::mutex::scoped_lock lm (_mutex);
 	for (auto const& i: _data) {
-		i.first->reset_metadata (film, player_video_container_size);
+		i.first->reset_metadata(film);
 	}
 }
 

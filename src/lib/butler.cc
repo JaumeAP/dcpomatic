@@ -57,6 +57,8 @@ using namespace boost::placeholders;
 
 /** @param pixel_format Pixel format functor that will be used when calling ::image on PlayerVideos coming out of this
  *  butler.  This will be used (where possible) to prepare the PlayerVideos so that calling image() on them is quick.
+ *  @param display_container Same as above for the `display_container` value.
+ *  @param film_container Same as above for the `film_container` value.
  *  @param alignment Same as above for the `alignment' value.
  *  @param fast Same as above for the `fast' flag.
  */
@@ -66,6 +68,8 @@ Butler::Butler (
 	AudioMapping audio_mapping,
 	int audio_channels,
 	function<AVPixelFormat (AVPixelFormat)> pixel_format,
+	dcp::Size display_container,
+	dcp::Size film_container,
 	VideoRange video_range,
 	Image::Alignment alignment,
 	bool fast,
@@ -84,6 +88,8 @@ Butler::Butler (
 	, _audio_channels (audio_channels)
 	, _disable_audio (audio == Audio::DISABLED)
 	, _pixel_format (pixel_format)
+	, _display_container(display_container)
+	, _film_container(film_container)
 	, _video_range (video_range)
 	, _alignment (alignment)
 	, _fast (fast)
@@ -326,7 +332,7 @@ try
 	/* If the weak_ptr cannot be locked the video obviously no longer requires any work */
 	if (video) {
 		LOG_TIMING("start-prepare in %1", thread_id());
-		video->prepare (_pixel_format, _video_range, _alignment, _fast, _prepare_only_proxy);
+		video->prepare(_pixel_format, _display_container, _film_container, _video_range, _alignment, _fast, _prepare_only_proxy);
 		LOG_TIMING("finish-prepare in %1", thread_id());
 	}
 }
@@ -410,7 +416,7 @@ Butler::player_change (ChangeType type, int property)
 		if (type == ChangeType::DONE) {
 			auto film = _film.lock();
 			if (film) {
-				_video.reset_metadata (film, _player->video_container_size());
+				_video.reset_metadata(film);
 			}
 		}
 		return;

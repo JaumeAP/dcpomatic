@@ -26,6 +26,7 @@
 #include "colour_conversion.h"
 #include "dcpomatic_time.h"
 #include "image.h"
+#include "pixel_quanta.h"
 #include "position.h"
 #include "position_image.h"
 #include "types.h"
@@ -52,8 +53,8 @@ public:
 		std::shared_ptr<const ImageProxy> image,
 		Crop crop,
 		boost::optional<double> fade,
-		dcp::Size inter_size,
-		dcp::Size out_size,
+		dcp::Size size_in_film,
+		PixelQuanta pixel_quanta,
 		Eyes eyes,
 		Part part,
 		boost::optional<ColourConversion> colour_conversion,
@@ -75,9 +76,28 @@ public:
 		return _text;
 	}
 
-	void prepare (std::function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, Image::Alignment alignment, bool fast, bool proxy_only);
-	std::shared_ptr<Image> image (std::function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, bool fast) const;
-	std::shared_ptr<const Image> raw_image () const;
+	void prepare(
+		std::function<AVPixelFormat (AVPixelFormat)> pixel_format,
+		dcp::Size display_container,
+		dcp::Size film_container,
+		VideoRange video_range,
+		Image::Alignment alignment,
+		bool fast,
+		bool proxy_only
+		);
+
+	std::shared_ptr<Image> image(
+		std::function<AVPixelFormat (AVPixelFormat)> pixel_format,
+		dcp::Size display_container,
+		dcp::Size film_container,
+		VideoRange video_range,
+		bool fast
+		) const;
+
+	std::shared_ptr<const Image> raw_image(
+		dcp::Size display_container,
+		dcp::Size film_container
+		) const;
 
 	static AVPixelFormat force (AVPixelFormat);
 	static AVPixelFormat keep_xyz_or_rgb (AVPixelFormat);
@@ -85,9 +105,13 @@ public:
 	void add_metadata (xmlpp::Node* node) const;
 	void write_to_socket (std::shared_ptr<Socket> socket) const;
 
-	bool reset_metadata (std::shared_ptr<const Film> film, dcp::Size player_video_container_size);
+	bool reset_metadata(std::shared_ptr<const Film> film);
 
-	bool has_j2k () const;
+	bool has_j2k(
+		dcp::Size display_container,
+		dcp::Size film_container
+		) const;
+
 	std::shared_ptr<const dcp::Data> j2k () const;
 
 	Eyes eyes () const {
@@ -100,18 +124,6 @@ public:
 
 	boost::optional<ColourConversion> colour_conversion () const {
 		return _colour_conversion;
-	}
-
-	/** @return Position of the content within the overall image once it has been scaled up */
-	Position<int> inter_position () const;
-
-	/** @return Size of the content within the overall image once it has been scaled up */
-	dcp::Size inter_size () const {
-		return _inter_size;
-	}
-
-	dcp::Size out_size () const {
-		return _out_size;
 	}
 
 	bool same (std::shared_ptr<const PlayerVideo> other) const;
@@ -127,13 +139,19 @@ public:
 	}
 
 private:
-	void make_image (std::function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, bool fast) const;
+	void make_image(
+		std::function<AVPixelFormat (AVPixelFormat)> pixel_format,
+		dcp::Size display_container,
+		dcp::Size film_container,
+		VideoRange video_range,
+		bool fast
+		) const;
 
 	std::shared_ptr<const ImageProxy> _in;
 	Crop _crop;
 	boost::optional<double> _fade;
-	dcp::Size _inter_size;
-	dcp::Size _out_size;
+	dcp::Size _size_in_film;
+	PixelQuanta _pixel_quanta;
 	Eyes _eyes;
 	Part _part;
 	boost::optional<ColourConversion> _colour_conversion;
@@ -148,10 +166,10 @@ private:
 	mutable std::shared_ptr<Image> _image;
 	/** _crop that was used to make _image */
 	mutable Crop _image_crop;
-	/** _inter_size that was used to make _image */
-	mutable dcp::Size _image_inter_size;
-	/** _out_size that was used to make _image */
-	mutable dcp::Size _image_out_size;
+	/** _size_in_film that was used to make _image */
+	mutable dcp::Size _image_size_in_film;
+	/** _pixel_quanta that was used to make _image */
+	mutable PixelQuanta _image_pixel_quanta;
 	/** _fade that was used to make _image */
 	mutable boost::optional<double> _image_fade;
 	/** true if there was an error when decoding our image */

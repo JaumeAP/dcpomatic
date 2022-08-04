@@ -402,7 +402,9 @@ FFmpegFileEncoder::video (shared_ptr<PlayerVideo> video, DCPTime time)
 {
 	/* All our output formats are video range at the moment */
 	auto image = video->image (
-		bind (&PlayerVideo::force, _pixel_format),
+		bind(&PlayerVideo::force, _pixel_format),
+		_video_frame_size,
+		_video_frame_size,
 		VideoRange::VIDEO,
 		false
 		);
