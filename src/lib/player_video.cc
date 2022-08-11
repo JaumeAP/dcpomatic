@@ -382,19 +382,18 @@ PlayerVideo::reset_metadata (shared_ptr<const Film> film, dcp::Size player_video
 
 
 shared_ptr<dcp::OpenJPEGImage>
-PlayerVideo::convert_to_xyz(dcp::NoteHandler note) const
+PlayerVideo::convert_to_xyz(shared_ptr<const Image> image, dcp::NoteHandler note) const
 {
-	auto frame_image = image(bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
 	if (colour_conversion()) {
 		return dcp::rgb_to_xyz (
-			frame_image->data()[0],
-			frame_image->size(),
-			frame_image->stride()[0],
+			image->data()[0],
+			image->size(),
+			image->stride()[0],
 			colour_conversion().get(),
 			note
 			);
 	} else {
-		return make_shared<dcp::OpenJPEGImage>(frame_image->data()[0], frame_image->size(), frame_image->stride()[0]);
+		return make_shared<dcp::OpenJPEGImage>(image->data()[0], image->size(), image->stride()[0]);
 	}
 }
 

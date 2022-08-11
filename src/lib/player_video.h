@@ -90,7 +90,7 @@ public:
 	bool has_j2k () const;
 	std::shared_ptr<const dcp::Data> j2k () const;
 
-	std::shared_ptr<dcp::OpenJPEGImage> convert_to_xyz(dcp::NoteHandler note) const;
+	std::shared_ptr<dcp::OpenJPEGImage> convert_to_xyz(std::shared_ptr<const Image> image, dcp::NoteHandler note) const;
 
 
 	Eyes eyes () const {

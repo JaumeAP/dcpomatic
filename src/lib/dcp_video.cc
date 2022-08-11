@@ -114,7 +114,8 @@ DCPVideo::encode_locally () const
 	int const minimum_size = 16384;
 	LOG_DEBUG_ENCODE("Using minimum frame size %1", minimum_size);
 
-	auto xyz = _frame->convert_to_xyz(boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
+	auto frame_image = _frame->image(bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
+	auto xyz = _frame->convert_to_xyz(frame_image, boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
 	int noise_amount = 2;
 	int pixel_skip = 16;
 	while (true) {
@@ -139,7 +140,7 @@ DCPVideo::encode_locally () const
 		 * convert_to_xyz() again because compress_j2k() corrupts its xyz parameter.
 		 */
 
-		xyz = _frame->convert_to_xyz(boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
+		xyz = _frame->convert_to_xyz(frame_image, boost::bind(&Log::dcp_log, dcpomatic_log.get(), _1, _2));
 		auto size = xyz->size ();
 		auto pixels = size.width * size.height;
 		dcpomatic::RNG rng(42);
