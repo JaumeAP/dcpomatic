@@ -249,7 +249,7 @@ Image::crop_scale_window (
 	   1 -> destination range JPEG (i.e. "full", 0-255)
 
 	   But remember: sws_setColorspaceDetails ignores these
-	   parameters unless the both source and destination images
+	   parameters unless both source and destination images
 	   are isYUV or isGray.  (If either is not, it uses video range).
 	*/
 	sws_setColorspaceDetails (
@@ -307,9 +307,12 @@ Image::crop_scale_window (
 	if (
 		video_range == VideoRange::VIDEO &&
 		out_video_range == VideoRange::FULL &&
-		av_pix_fmt_desc_get(_pixel_format)->flags & AV_PIX_FMT_FLAG_RGB
+		((av_pix_fmt_desc_get(_pixel_format)->flags & AV_PIX_FMT_FLAG_RGB) ||
+		 (av_pix_fmt_desc_get(out_format)->flags & AV_PIX_FMT_FLAG_RGB))
 	   ) {
-		/* libswscale will not convert video range for RGB sources, so we have to do it ourselves */
+		/* libswscale will not convert video range if input or output is RGB, as far as I can see,
+		 * so we have to do it ourselves.
+		 */
 		out->video_range_to_full_range ();
 	}
 
