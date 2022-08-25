@@ -881,9 +881,9 @@ Player::open_subtitles_for_frame (DCPTime time, Eyes eyes) const
 		if (!burnt.string.empty()) {
 			int stereo_offset = 0;
 			if (eyes == Eyes::LEFT) {
-				stereo_offset = -burnt.z_position;
+				stereo_offset = -burnt.z_position / 10;
 			} else if (eyes == Eyes::RIGHT) {
-				stereo_offset = burnt.z_position;
+				stereo_offset = burnt.z_position / 10;
 			}
 			for (auto subtitle: render_text(burnt.string, _video_container_size, time, vfr)) {
 				subtitle.position.x += stereo_offset;
