@@ -1,0 +1,9 @@
+#!/bin/bash
+
+SIZE=480x640
+NUMBER=240
+
+for number in $(seq 1 $NUMBER); do
+    convert -size $SIZE xc:red -font "Free-Monospaced-Bold" -pointsize 180 -gravity center -draw "text 0,0'$number'" $number.png
+done
+
