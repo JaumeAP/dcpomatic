@@ -346,7 +346,9 @@ FFmpegContent::examine (shared_ptr<const Film> film, shared_ptr<Job> job)
 string
 FFmpegContent::summary () const
 {
-	if (video && audio) {
+	if (video && video->type() == VideoType::SIGN_LANGUAGE) {
+		return String::compose(_("%1 [sign language]"), path_summary());
+	} else if (video && audio) {
 		return String::compose (_("%1 [movie]"), path_summary());
 	} else if (video) {
 		return String::compose (_("%1 [video]"), path_summary());

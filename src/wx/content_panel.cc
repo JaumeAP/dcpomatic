@@ -867,6 +867,7 @@ ContentPanel::film_content_changed (int property)
 {
 	if (
 		property == ContentProperty::PATH ||
+		property == VideoContentProperty::TYPE ||
 		property == DCPContentProperty::NEEDS_ASSETS ||
 		property == DCPContentProperty::NEEDS_KDM ||
 		property == DCPContentProperty::NAME
