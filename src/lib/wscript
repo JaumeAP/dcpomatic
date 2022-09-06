@@ -230,6 +230,7 @@ sources = """
           video_mxf_examiner.cc
           video_range.cc
           video_ring_buffers.cc
+          video_type.cc
           writer.cc
           zipper.cc
           """

@@ -104,6 +104,10 @@ ContentAdvancedDialog::ContentAdvancedDialog (wxWindow* parent, shared_ptr<Conte
 	sizer->Add(_ignore_video, wxGBPosition(r, 0), wxGBSpan(1, 3));
 	++r;
 
+	_sign_language = new CheckBox(this, _("Video contains sign language"));
+	sizer->Add(_sign_language, wxGBPosition(r, 0), wxGBSpan(1, 3));
+	++r;
+
 	auto overall = new wxBoxSizer (wxVERTICAL);
 	overall->Add (sizer, 1, wxALL, DCPOMATIC_DIALOG_BORDER);
 	auto buttons = CreateSeparatedButtonSizer (wxOK | wxCANCEL);
@@ -135,12 +139,23 @@ ContentAdvancedDialog::ContentAdvancedDialog (wxWindow* parent, shared_ptr<Conte
 	_burnt_subtitle->SetValue (_content->video && static_cast<bool>(_content->video->burnt_subtitle_language()));
 	_burnt_subtitle_language->set (_content->video ? _content->video->burnt_subtitle_language() : boost::none);
 
+	_sign_language->Enable(static_cast<bool>(_content->video));
+	_sign_language->SetValue(_content->video ? (_content->video->type() == VideoType::SIGN_LANGUAGE) : false);
+
 	_filters_button->Bind (wxEVT_BUTTON, bind(&ContentAdvancedDialog::edit_filters, this));
 	_set_video_frame_rate->Bind (wxEVT_BUTTON, bind(&ContentAdvancedDialog::set_video_frame_rate, this));
 	_video_frame_rate->Bind (wxEVT_TEXT, boost::bind(&ContentAdvancedDialog::video_frame_rate_changed, this));
 	_burnt_subtitle->bind(&ContentAdvancedDialog::burnt_subtitle_changed, this);
 
 	setup_sensitivity ();
+}
+
+
+VideoType
+ContentAdvancedDialog::video_type() const
+{
+	DCPOMATIC_ASSERT(_content->video);
+	return _sign_language->GetValue() ? VideoType::SIGN_LANGUAGE : VideoType::MAIN;
 }
 
 

@@ -19,6 +19,7 @@
 */
 
 
+#include "lib/video_type.h"
 #include <dcp/language_tag.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -48,6 +49,7 @@ public:
 
 	boost::optional<double> video_frame_rate() const;
 	boost::optional<dcp::LanguageTag> burnt_subtitle_language() const;
+	VideoType video_type() const;
 
 private:
 	void edit_filters ();
@@ -69,5 +71,6 @@ private:
 	CheckBox* _burnt_subtitle;
 	LanguageTagWidget* _burnt_subtitle_language;
 	CheckBox* _ignore_video;
+	CheckBox* _sign_language;
 };
 

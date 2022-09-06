@@ -52,6 +52,7 @@ int const VideoContentProperty::RANGE             = 7;
 int const VideoContentProperty::CUSTOM_RATIO      = 8;
 int const VideoContentProperty::CUSTOM_SIZE       = 9;
 int const VideoContentProperty::BURNT_SUBTITLE_LANGUAGE = 10;
+int const VideoContentProperty::TYPE              = 11;
 
 
 using std::cout;
@@ -76,6 +77,7 @@ VideoContent::VideoContent (Content* parent)
 	: ContentPart (parent)
 	, _use (true)
 	, _length (0)
+	, _type(VideoType::MAIN)
 	, _frame_type (VideoFrameType::TWO_D)
 	, _yuv (true)
 	, _fade_in (0)
@@ -106,6 +108,8 @@ VideoContent::VideoContent (Content* parent, cxml::ConstNodePtr node, int versio
 
 	_use = node->optional_bool_child("Use").get_value_or(true);
 	_length = node->number_child<Frame> ("VideoLength");
+
+	_type = string_to_video_type(node->optional_string_child("VideoType").get_value_or("main"));
 
 	if (version <= 34) {
 		/* Snapshot of the VideoFrameType enum at version 34 */
@@ -224,6 +228,10 @@ VideoContent::VideoContent (Content* parent, vector<shared_ptr<Content> > c)
 			throw JoinError (_("Content to be joined must have the same picture size."));
 		}
 
+		if (c[i]->video->type() != ref->type()) {
+			throw JoinError(_("Content to be joined must have the same video type."));
+		}
+
 		if (c[i]->video->frame_type() != ref->frame_type()) {
 			throw JoinError (_("Content to be joined must have the same video frame type."));
 		}
@@ -263,6 +271,7 @@ VideoContent::VideoContent (Content* parent, vector<shared_ptr<Content> > c)
 
 	_use = ref->use ();
 	_size = ref->size ();
+	_type = ref->type();
 	_frame_type = ref->frame_type ();
 	_crop = ref->requested_crop ();
 	_custom_ratio = ref->custom_ratio ();
@@ -284,6 +293,7 @@ VideoContent::as_xml(xmlpp::Element* element) const
 		cxml::add_text_child(element, "VideoWidth", raw_convert<string>(_size->width));
 		cxml::add_text_child(element, "VideoHeight", raw_convert<string>(_size->height));
 	}
+	cxml::add_text_child(element, "VideoType", video_type_to_string(_type));
 	cxml::add_text_child(element, "VideoFrameType", video_frame_type_to_string(_frame_type));
 	if (_sample_aspect_ratio) {
 		cxml::add_text_child(element, "SampleAspectRatio", raw_convert<string> (_sample_aspect_ratio.get ()));
@@ -572,6 +582,13 @@ void
 VideoContent::set_bottom_crop (int c)
 {
 	maybe_set (_crop.bottom, c, VideoContentProperty::CROP);
+}
+
+
+void
+VideoContent::set_type(VideoType type)
+{
+	maybe_set(_type, type, VideoContentProperty::TYPE);
 }
 
 

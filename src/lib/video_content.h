@@ -31,6 +31,7 @@
 #include "user_property.h"
 #include "video_frame_type.h"
 #include "video_range.h"
+#include "video_type.h"
 #include "types.h"
 #include <dcp/language_tag.h>
 #include <boost/thread/mutex.hpp>
@@ -56,6 +57,7 @@ public:
 	static int const CUSTOM_RATIO;
 	static int const CUSTOM_SIZE;
 	static int const BURNT_SUBTITLE_LANGUAGE;
+	static int const TYPE;
 };
 
 
@@ -90,6 +92,7 @@ public:
 		return _size;
 	}
 
+	void set_type(VideoType type);
 	void set_frame_type (VideoFrameType);
 
 	void set_crop (Crop crop);
@@ -111,6 +114,11 @@ public:
 	void set_use (bool);
 
 	void set_burnt_subtitle_language (boost::optional<dcp::LanguageTag> language);
+
+	VideoType type() const {
+		boost::mutex::scoped_lock lm (_mutex);
+		return _type;
+	}
 
 	VideoFrameType frame_type () const {
 		boost::mutex::scoped_lock lm (_mutex);
@@ -240,6 +248,7 @@ private:
 	Frame _length;
 	boost::optional<ColourConversion> _colour_conversion;
 	boost::optional<dcp::Size> _size;
+	VideoType _type;
 	VideoFrameType _frame_type;
 	Crop _crop;
 	/** ratio to scale cropped image to (or none to guess); i.e. if set, scale to _custom_ratio:1 */

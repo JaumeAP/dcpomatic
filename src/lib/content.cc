@@ -589,4 +589,3 @@ Content::has_mapped_audio() const
 {
 	return audio && !audio->mapping().mapped_output_channels().empty();
 }
-
