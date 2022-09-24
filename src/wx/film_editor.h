@@ -73,7 +73,6 @@ private:
 
 	wxNotebook* _main_notebook;
 	ContentPanel* _content_panel;
-	DCPPanel* _dcp_panel;
 
 	/** The film we are editing */
 	std::shared_ptr<Film> _film;

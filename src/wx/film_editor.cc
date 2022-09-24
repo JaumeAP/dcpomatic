@@ -25,7 +25,6 @@
 
 
 #include "content_panel.h"
-#include "dcp_panel.h"
 #include "film_editor.h"
 #include "wx_util.h"
 #include "lib/content.h"
@@ -59,8 +58,6 @@ FilmEditor::FilmEditor (wxWindow* parent, weak_ptr<FilmViewer> viewer)
 
 	_content_panel = new ContentPanel (_main_notebook, _film, viewer);
 	_main_notebook->AddPage (_content_panel->window(), _("Content"), true);
-	_dcp_panel = new DCPPanel (_main_notebook, _film, viewer);
-	_main_notebook->AddPage (_dcp_panel->panel (), _("DCP"), false);
 
 	JobManager::instance()->ActiveJobsChanged.connect (
 		bind(&FilmEditor::active_jobs_changed, this, _2)
@@ -89,7 +86,6 @@ FilmEditor::film_change (ChangeType type, Film::Property p)
 	}
 
 	_content_panel->film_changed (p);
-	_dcp_panel->film_changed (p);
 
 	if (p == Film::Property::CONTENT && !_film->content().empty()) {
 		/* Select newly-added content */
@@ -115,7 +111,6 @@ FilmEditor::film_content_change (ChangeType type, int property)
 	}
 
 	_content_panel->film_content_changed (property);
-	_dcp_panel->film_content_changed (property);
 }
 
 
@@ -132,7 +127,6 @@ FilmEditor::set_film (shared_ptr<Film> film)
 	_film = film;
 
 	_content_panel->set_film (_film);
-	_dcp_panel->set_film (_film);
 
 	if (!_film) {
 		return;
@@ -151,7 +145,6 @@ void
 FilmEditor::set_general_sensitivity (bool s)
 {
 	_content_panel->set_general_sensitivity (s);
-	_dcp_panel->set_general_sensitivity (s);
 }
 
 

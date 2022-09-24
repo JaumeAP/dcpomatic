@@ -106,8 +106,6 @@ private:
 
 	void config_changed (Config::Property p);
 
-	void setup_sensitivity ();
-
 	wxPanel* _panel;
 	wxNotebook* _notebook;
 	wxBoxSizer* _sizer;

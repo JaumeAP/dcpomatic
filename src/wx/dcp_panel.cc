@@ -125,9 +125,6 @@ DCPPanel::DCPPanel (wxNotebook* n, shared_ptr<Film> film, weak_ptr<FilmViewer> v
 	_notebook = new wxNotebook (_panel, wxID_ANY);
 	_sizer->Add (_notebook, 1, wxEXPAND | wxTOP, 6);
 
-	_notebook->AddPage (make_video_panel (), _("Video"), false);
-	_notebook->AddPage (make_audio_panel (), _("Audio"), false);
-
 	_name->Bind		     (wxEVT_TEXT,     boost::bind(&DCPPanel::name_changed, this));
 	_use_isdcf_name->Bind	     (wxEVT_CHECKBOX, boost::bind(&DCPPanel::use_isdcf_name_toggled, this));
 	_copy_isdcf_name_button->Bind(wxEVT_BUTTON,   boost::bind(&DCPPanel::copy_isdcf_name_button_clicked, this));
@@ -468,7 +465,6 @@ DCPPanel::film_changed (Film::Property p)
 		break;
 	case Film::Property::CONTENT:
 		setup_dcp_name ();
-		setup_sensitivity ();
 		break;
 	case Film::Property::AUDIO_LANGUAGE:
 	{
@@ -476,7 +472,6 @@ DCPPanel::film_changed (Film::Property p)
 		checked_set (_enable_audio_language, static_cast<bool>(al));
 		checked_set (_audio_language, al ? std_to_wx(al->to_string()) : wxT(""));
 		setup_dcp_name ();
-		setup_sensitivity ();
 		break;
 	}
 	case Film::Property::AUDIO_FRAME_RATE:
@@ -520,7 +515,6 @@ DCPPanel::film_content_changed (int property)
 	    property == DCPContentProperty::REFERENCE_AUDIO ||
 	    property == DCPContentProperty::REFERENCE_TEXT) {
 		setup_dcp_name ();
-		setup_sensitivity ();
 	}
 }
 
@@ -639,53 +633,7 @@ void
 DCPPanel::set_general_sensitivity (bool s)
 {
 	_generally_sensitive = s;
-	setup_sensitivity ();
 }
-
-
-void
-DCPPanel::setup_sensitivity ()
-{
-	_name->Enable                   (_generally_sensitive);
-	_use_isdcf_name->Enable         (_generally_sensitive);
-	_dcp_content_type->Enable       (_generally_sensitive);
-	_copy_isdcf_name_button->Enable (_generally_sensitive);
-	_enable_audio_language->Enable  (_generally_sensitive);
-	_audio_language->Enable         (_enable_audio_language->GetValue());
-	_edit_audio_language->Enable    (_enable_audio_language->GetValue());
-	_encrypted->Enable              (_generally_sensitive);
-	_reel_type->Enable              (_generally_sensitive && _film && !_film->references_dcp_video() && !_film->references_dcp_audio());
-	_reel_length->Enable            (_generally_sensitive && _film && _film->reel_type() == ReelType::BY_LENGTH);
-	_markers->Enable                (_generally_sensitive && _film && !_film->interop());
-	_metadata->Enable               (_generally_sensitive);
-	_frame_rate_choice->Enable      (_generally_sensitive && _film && !_film->references_dcp_video() && !_film->contains_atmos_content());
-	_frame_rate_spin->Enable        (_generally_sensitive && _film && !_film->references_dcp_video() && !_film->contains_atmos_content());
-	_audio_channels->Enable         (_generally_sensitive && _film && !_film->references_dcp_audio() && !_film->contains_atmos_content());
-	_audio_processor->Enable        (_generally_sensitive && _film && !_film->references_dcp_audio());
-	_j2k_bandwidth->Enable          (_generally_sensitive && _film && !_film->references_dcp_video());
-	_container->Enable              (_generally_sensitive && _film && !_film->references_dcp_video());
-	_best_frame_rate->Enable (
-		_generally_sensitive &&
-		_film &&
-		_film->best_video_frame_rate () != _film->video_frame_rate() &&
-		!_film->references_dcp_video() &&
-		!_film->contains_atmos_content()
-		);
-	_resolution->Enable             (_generally_sensitive && _film && !_film->references_dcp_video());
-	_three_d->Enable                (_generally_sensitive && _film && !_film->references_dcp_video());
-
-	_standard->Enable (
-		_generally_sensitive &&
-		_film &&
-		!_film->references_dcp_video() &&
-		!_film->references_dcp_audio() &&
-		!_film->contains_atmos_content()
-		);
-
-	_reencode_j2k->Enable           (_generally_sensitive && _film);
-	_show_audio->Enable             (_generally_sensitive && _film);
-}
-
 
 void
 DCPPanel::use_isdcf_name_toggled ()
@@ -1024,7 +972,6 @@ DCPPanel::add_audio_processors ()
 void
 DCPPanel::enable_audio_language_toggled ()
 {
-	setup_sensitivity ();
 	if (_enable_audio_language->GetValue()) {
 		auto al = wx_to_std (_audio_language->GetLabel());
 		_film->set_audio_language (al.empty() ? dcp::LanguageTag("en-US") : dcp::LanguageTag(al));
