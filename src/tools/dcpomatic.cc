@@ -15,11 +15,8 @@ public:
 
 		_film_viewer.reset (new FilmViewer (overall_panel));
 
-		auto right_sizer = new wxBoxSizer (wxVERTICAL);
-		right_sizer->Add (_film_viewer->panel(), 2, wxEXPAND | wxALL, 6);
-
 		wxBoxSizer* main_sizer = new wxBoxSizer (wxHORIZONTAL);
-		main_sizer->Add (right_sizer, 1, wxEXPAND | wxALL, 6);
+		main_sizer->Add (_film_viewer->panel(), 1, wxEXPAND);
 
 		overall_panel->SetSizer (main_sizer);
 	}
