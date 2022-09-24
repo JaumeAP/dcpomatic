@@ -47,7 +47,6 @@
 #include "wx/self_dkdm_dialog.h"
 #include "wx/send_i18n_dialog.h"
 #include "wx/servers_list_dialog.h"
-#include "wx/standard_controls.h"
 #include "wx/system_information_dialog.h"
 #include "wx/templates_dialog.h"
 #include "wx/update_dialog.h"
@@ -354,14 +353,10 @@ public:
 		auto overall_panel = new wxPanel (this, wxID_ANY);
 
 		_film_viewer.reset (new FilmViewer (overall_panel));
-		_controls = new StandardControls (overall_panel, _film_viewer, true);
 		_film_editor = new FilmEditor (overall_panel, _film_viewer);
-		auto job_manager_view = new JobManagerView (overall_panel, false);
 
 		auto right_sizer = new wxBoxSizer (wxVERTICAL);
 		right_sizer->Add (_film_viewer->panel(), 2, wxEXPAND | wxALL, 6);
-		right_sizer->Add (_controls, 0, wxEXPAND | wxALL, 6);
-		right_sizer->Add (job_manager_view, 1, wxEXPAND | wxALL, 6);
 
 		wxBoxSizer* main_sizer = new wxBoxSizer (wxHORIZONTAL);
 		main_sizer->Add (_film_editor, 0, wxEXPAND | wxALL, 6);
@@ -371,8 +366,6 @@ public:
 
 		_film_editor->content_panel()->SelectionChanged.connect (boost::bind (&DOMFrame::set_menu_sensitivity, this));
 		set_title ();
-
-		JobManager::instance()->ActiveJobsChanged.connect(boost::bind(&DOMFrame::active_jobs_changed, this));
 
 		overall_panel->SetSizer (main_sizer);
 
@@ -483,7 +476,6 @@ public:
 		_film = film;
 		_film_viewer->set_film (_film);
 		_film_editor->set_film (_film);
-		_controls->set_film (_film);
 		if (_video_waveform_dialog) {
 			_video_waveform_dialog->Destroy ();
 			_video_waveform_dialog = nullptr;
@@ -1552,7 +1544,6 @@ private:
 
 	FilmEditor* _film_editor;
 	std::shared_ptr<FilmViewer> _film_viewer;
-	StandardControls* _controls;
 	VideoWaveformDialog* _video_waveform_dialog = nullptr;
 	SystemInformationDialog* _system_information_dialog = nullptr;
 	HintsDialog* _hints_dialog = nullptr;
