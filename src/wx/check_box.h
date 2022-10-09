@@ -37,6 +37,14 @@ public:
 
 	void set_text (wxString text) override;
 	wxString get_text () const override;
+
+	bool get() const {
+		return GetValue();
+	}
+
+	void set(bool s) {
+		SetValue(s);
+	}
 };
 
 
