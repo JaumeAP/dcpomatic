@@ -19,7 +19,9 @@
 */
 
 
+LIBDCP_DISABLE_WARNINGS
 #include <wx/dialog.h>
+LIBDCP_ENABLE_WARNINGS
 #include <memory>
 
 
