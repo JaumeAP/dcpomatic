@@ -468,6 +468,7 @@ Film::metadata (bool with_content_paths) const
 	if (_audio_language) {
 		root->add_child("AudioLanguage")->add_child_text(_audio_language->to_string());
 	}
+	root->add_child("WriteCPLMetadata")->add_child_text(_write_cpl_metadata ? "1" : "0");
 	_playlist->as_xml (root->add_child ("Playlist"), with_content_paths);
 
 	return doc;
@@ -697,6 +698,8 @@ Film::read_metadata (optional<boost::filesystem::path> path)
 		_two_d_version_of_three_d = isdcf->optional_bool_child("TwoDVersionOfThreeD").get_value_or("false");
 		_chain = isdcf->optional_string_child("Chain");
 	}
+
+	_write_cpl_metadata = f.optional_bool_child("WriteCPLMetadata").get_value_or(true);
 
 	list<string> notes;
 	_playlist->set_from_xml (shared_from_this(), f.node_child ("Playlist"), _state_version, notes);
@@ -2206,5 +2209,13 @@ Film::last_written_by_earlier_than(int major, int minor, int micro) const
 	}
 
 	return our_micro < micro;
+}
+
+
+void
+Film::set_write_cpl_metadata(bool write)
+{
+	FilmChangeSignaller ch (this, Property::WRITE_CPL_METADATA);
+	_write_cpl_metadata = write;
 }
 

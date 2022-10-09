@@ -85,6 +85,7 @@ private:
 	void reel_length_changed ();
 	void markers_clicked ();
 	void metadata_clicked ();
+	void advanced_clicked();
 	void reencode_j2k_changed ();
 	void enable_audio_language_toggled ();
 	void edit_audio_language_clicked ();
@@ -157,6 +158,7 @@ private:
 	wxSpinCtrl* _reel_length;
 	wxButton* _markers;
 	wxButton* _metadata;
+	wxButton* _advanced;
 	wxSizer* _audio_panel_sizer;
 
 	AudioDialog* _audio_dialog = nullptr;

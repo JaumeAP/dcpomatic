@@ -19,6 +19,7 @@
 */
 
 
+#include "advanced_dcp_settings_dialog.h"
 #include "audio_dialog.h"
 #include "check_box.h"
 #include "check_box.h"
@@ -40,6 +41,7 @@
 #include "lib/ffmpeg_content.h"
 #include "lib/film.h"
 #include "lib/ratio.h"
+#include "lib/scope_guard.h"
 #include "lib/text_content.h"
 #include "lib/util.h"
 #include "lib/video_content.h"
@@ -121,6 +123,7 @@ DCPPanel::DCPPanel (wxNotebook* n, shared_ptr<Film> film, weak_ptr<FilmViewer> v
 
 	_markers = new Button (_panel, _("Markers..."));
 	_metadata = new Button (_panel, _("Metadata..."));
+	_advanced = new Button(_panel, _("Advanced..."));
 
 	_notebook = new wxNotebook (_panel, wxID_ANY);
 	_sizer->Add (_notebook, 1, wxEXPAND | wxTOP, 6);
@@ -138,6 +141,7 @@ DCPPanel::DCPPanel (wxNotebook* n, shared_ptr<Film> film, weak_ptr<FilmViewer> v
 	_standard->Bind              (wxEVT_CHOICE,   boost::bind(&DCPPanel::standard_changed, this));
 	_markers->Bind               (wxEVT_BUTTON,   boost::bind(&DCPPanel::markers_clicked, this));
 	_metadata->Bind              (wxEVT_BUTTON,   boost::bind(&DCPPanel::metadata_clicked, this));
+	_advanced->Bind              (wxEVT_BUTTON,   boost::bind(&DCPPanel::advanced_clicked, this));
 	_enable_audio_language->Bind (wxEVT_CHECKBOX, boost::bind(&DCPPanel::enable_audio_language_toggled, this));
 	_edit_audio_language->Bind   (wxEVT_BUTTON,   boost::bind(&DCPPanel::edit_audio_language_clicked, this));
 
@@ -223,6 +227,7 @@ DCPPanel::add_to_grid ()
 	auto extra = new wxBoxSizer (wxHORIZONTAL);
 	extra->Add (_markers, 1, wxRIGHT, DCPOMATIC_SIZER_X_GAP);
 	extra->Add (_metadata, 1, wxRIGHT, DCPOMATIC_SIZER_X_GAP);
+	extra->Add(_advanced, 1, wxRIGHT, DCPOMATIC_SIZER_X_GAP);
 	_grid->Add (extra, wxGBPosition(r, 0), wxGBSpan(1, 2));
 	++r;
 }
@@ -357,6 +362,18 @@ DCPPanel::metadata_clicked ()
 		_smpte_metadata_dialog = new SMPTEMetadataDialog (_panel, _film);
 		_smpte_metadata_dialog->setup ();
 		_smpte_metadata_dialog->Show ();
+	}
+}
+
+
+void
+DCPPanel::advanced_clicked()
+{
+	auto dialog = new AdvancedDCPSettingsDialog(_panel, _film);
+	ScopeGuard sg = [dialog]() { dialog->Destroy(); };
+
+	if (dialog->ShowModal() == wxID_OK) {
+		_film->set_write_cpl_metadata(dialog->write_cpl_metadata());
 	}
 }
 

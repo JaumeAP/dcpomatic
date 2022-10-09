@@ -257,6 +257,7 @@ public:
 		RED_BAND,
 		TWO_D_VERSION_OF_THREE_D,
 		LUMINANCE,
+		WRITE_CPL_METADATA,
 	};
 
 
@@ -418,6 +419,10 @@ public:
 		return _audio_frame_rate;
 	}
 
+	bool write_cpl_metadata() const {
+		return _write_cpl_metadata;
+	}
+
 	/* SET */
 
 	void set_directory (boost::filesystem::path);
@@ -465,6 +470,7 @@ public:
 	void set_luminance (boost::optional<dcp::Luminance> l = boost::none);
 	void set_audio_language (boost::optional<dcp::LanguageTag> language);
 	void set_audio_frame_rate (int rate);
+	void set_write_cpl_metadata(bool write);
 
 	void add_ffoc_lfoc (Markers& markers) const;
 
@@ -578,6 +584,7 @@ private:
 	boost::optional<dcp::Luminance> _luminance;
 	boost::optional<dcp::LanguageTag> _audio_language;
 	int _audio_frame_rate = 48000;
+	bool _write_cpl_metadata = true;
 
 	int _state_version;
 
