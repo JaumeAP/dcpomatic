@@ -77,7 +77,7 @@ using namespace dcpomatic;
 FFmpegDecoder::FFmpegDecoder (shared_ptr<const Film> film, shared_ptr<const FFmpegContent> c, bool fast)
 	: FFmpeg (c)
 	, Decoder (film)
-	, _filter_graphs(c->filters(), dcp::Fraction(lrint(_ffmpeg_content->video_frame_rate().get() * 1000), 1000))
+	, _filter_graphs(c->filters(), dcp::Fraction(lrint(_ffmpeg_content->video_frame_rate().get_value_or(24) * 1000), 1000))
 {
 	if (c->video && c->video->use()) {
 		video = make_shared<VideoDecoder>(this, c);
