@@ -244,6 +244,7 @@ enum {
 	ID_jobs_show_dcp,
 	ID_jobs_open_dcp_in_player,
 	ID_view_closed_captions,
+	ID_view_sign_language,
 	ID_view_video_waveform,
 	ID_tools_version_file,
 	ID_tools_hints,
@@ -356,6 +357,7 @@ public:
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::jobs_show_dcp, this),           ID_jobs_show_dcp);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::jobs_open_dcp_in_player, this), ID_jobs_open_dcp_in_player);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_closed_captions, this),    ID_view_closed_captions);
+		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_sign_language, this),      ID_view_sign_language);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_video_waveform, this),     ID_view_video_waveform);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::tools_version_file, this),      ID_tools_version_file);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::tools_hints, this),             ID_tools_hints);
@@ -1081,6 +1083,11 @@ private:
 		_film_viewer.show_closed_captions ();
 	}
 
+	void view_sign_language()
+	{
+		_film_viewer.show_sign_language();
+	}
+
 	void view_video_waveform ()
 	{
 		if (!_video_waveform_dialog) {
@@ -1411,6 +1418,7 @@ private:
 
 		auto view = new wxMenu;
 		add_item (view, _("Closed captions..."), ID_view_closed_captions, NEEDS_FILM);
+		add_item(view, _("Sign language..."), ID_view_sign_language, NEEDS_FILM);
 		add_item (view, _("Video waveform..."), ID_view_video_waveform, NEEDS_FILM);
 
 		auto tools = new wxMenu;

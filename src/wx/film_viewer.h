@@ -49,6 +49,7 @@ class Image;
 class Player;
 class PlayerVideo;
 class RGBPlusAlphaImage;
+class SignLanguageDialog;
 class wxToggleButton;
 
 
@@ -71,6 +72,7 @@ public:
 	}
 
 	void show_closed_captions ();
+	void show_sign_language();
 
 	void set_film (std::shared_ptr<Film>);
 	std::shared_ptr<Film> film () const {
@@ -208,6 +210,7 @@ private:
 	Optimisation _optimisation = Optimisation::NONE;
 
 	ClosedCaptionsDialog* _closed_captions_dialog = nullptr;
+	SignLanguageDialog* _sign_language_dialog = nullptr;
 
 	bool _outline_content = false;
 	boost::optional<dcpomatic::Rect<double>> _outline_subtitles;

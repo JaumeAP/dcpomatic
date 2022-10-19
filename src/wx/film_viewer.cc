@@ -31,6 +31,7 @@
 #include "nag_dialog.h"
 #include "playhead_to_frame_dialog.h"
 #include "playhead_to_timecode_dialog.h"
+#include "sign_language_dialog.h"
 #include "simple_video_view.h"
 #include "wx_util.h"
 #include "lib/butler.h"
@@ -89,6 +90,7 @@ rtaudio_callback (void* out, void *, unsigned int frames, double, RtAudioStreamS
 
 FilmViewer::FilmViewer (wxWindow* p)
 	: _closed_captions_dialog (new ClosedCaptionsDialog(p, this))
+	, _sign_language_dialog(new SignLanguageDialog(p))
 {
 #if wxCHECK_VERSION(3, 1, 0)
 	switch (Config::instance()->video_view_type()) {
@@ -803,6 +805,13 @@ void
 FilmViewer::show_closed_captions ()
 {
 	_closed_captions_dialog->Show();
+}
+
+
+void
+FilmViewer::show_sign_language()
+{
+	_sign_language_dialog->Show();
 }
 
 
