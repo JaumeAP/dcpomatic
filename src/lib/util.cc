@@ -1203,3 +1203,15 @@ join_strings(vector<string> const& in, string const& separator)
 	});
 }
 
+
+bool
+contains_sign_language(ContentList const& content)
+{
+	return std::any_of(
+		content.begin(),
+		content.end(),
+		[](shared_ptr<const Content> c) {
+			return c->video && c->video->type() == VideoType::SIGN_LANGUAGE;
+		});
+}
+

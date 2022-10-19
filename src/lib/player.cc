@@ -28,6 +28,7 @@
 #include "config.h"
 #include "content_audio.h"
 #include "content_video.h"
+#include "constants.h"
 #include "dcp_content.h"
 #include "dcp_decoder.h"
 #include "dcpomatic_log.h"
@@ -131,14 +132,32 @@ Player::Player (shared_ptr<const Film> film, shared_ptr<const Playlist> playlist
 }
 
 
+dcp::Size
+Player::full_size(VideoType type) const
+{
+	switch (type) {
+	case VideoType::MAIN:
+	{
+		auto film = _film.lock();
+		DCPOMATIC_ASSERT(film);
+		return film->frame_size();
+	}
+	case VideoType::SIGN_LANGUAGE:
+		return { 480, 640 };
+	default:
+		DCPOMATIC_ASSERT(false);
+	}
+}
+
+
 void
 Player::construct ()
 {
-	auto film = _film.lock();
-	DCPOMATIC_ASSERT(film);
-
 	connect();
-	set_video_container_size(film->frame_size());
+	set_video_container_size(VideoType::MAIN, full_size(VideoType::MAIN));
+	set_video_container_size(VideoType::SIGN_LANGUAGE, full_size(VideoType::SIGN_LANGUAGE));
+
+	_black_image[VideoType::SIGN_LANGUAGE] = make_shared<Image>(AV_PIX_FMT_RGB24, dcp::Size(SIGN_LANGUAGE_WIDTH, SIGN_LANGUAGE_HEIGHT), Image::Alignment::PADDED);
 
 	film_change(ChangeType::DONE, FilmProperty::AUDIO_PROCESSOR);
 
@@ -167,7 +186,7 @@ Player::Player(Player&& other)
 	, _playlist(std::move(other._playlist))
 	, _suspended(other._suspended.load())
 	, _pieces(std::move(other._pieces))
-	, _video_container_size(other._video_container_size.load())
+	, _video_container_size(other._video_container_size)
 	, _black_image(std::move(other._black_image))
 	, _ignore_video(other._ignore_video.load())
 	, _ignore_audio(other._ignore_audio.load())
@@ -207,7 +226,7 @@ Player::operator=(Player&& other)
 	_playlist = std::move(other._playlist);
 	_suspended = other._suspended.load();
 	_pieces = std::move(other._pieces);
-	_video_container_size = other._video_container_size.load();
+	_video_container_size = other._video_container_size;
 	_black_image = std::move(other._black_image);
 	_ignore_video = other._ignore_video.load();
 	_ignore_audio = other._ignore_audio.load();
@@ -239,9 +258,12 @@ Player::operator=(Player&& other)
 
 
 bool
-have_video (shared_ptr<const Content> content)
+have_video(shared_ptr<const Content> content, VideoType type)
 {
-	return static_cast<bool>(content->video) && content->video->use() && content->can_be_played();
+	return static_cast<bool>(content->video)
+		&& content->video->use()
+		&& content->can_be_played()
+		&& content->video->type() == type;
 }
 
 
@@ -405,10 +427,15 @@ Player::setup_pieces ()
 		}
 	}
 
-	_black = Empty(film, playlist(), bind(&have_video, _1), _playback_length);
+	_have_sign_language = contains_sign_language(playlist_content);
+
+	_black[VideoType::MAIN] = Empty(film, playlist(), bind(&have_video, _1, VideoType::MAIN), _playback_length);
+	if (_have_sign_language) {
+		_black[VideoType::SIGN_LANGUAGE] = Empty(film, playlist(), bind(&have_video, _1, VideoType::SIGN_LANGUAGE), _playback_length);
+	}
 	_silent = Empty(film, playlist(), bind(&have_audio, _1), _playback_length);
 
-	_next_video_time = boost::none;
+	_next_video_time[VideoType::MAIN] = _next_video_time[VideoType::SIGN_LANGUAGE] = boost::none;
 	_next_audio_time = boost::none;
 }
 
@@ -425,7 +452,7 @@ Player::playlist_content_change (ChangeType type, int property, bool frequent)
 		if (type == ChangeType::DONE) {
 			boost::mutex::scoped_lock lm (_mutex);
 			for (auto const& i: _delay) {
-				i.first->reset_metadata(film, _video_container_size);
+				i.first->reset_metadata(film, video_container_size(VideoType::MAIN));
 			}
 		}
 	} else {
@@ -449,21 +476,22 @@ Player::playlist_content_change (ChangeType type, int property, bool frequent)
 
 
 void
-Player::set_video_container_size (dcp::Size s)
+Player::set_video_container_size(VideoType type, dcp::Size size)
 {
 	ChangeSignaller<Player, int> cc(this, PlayerProperty::VIDEO_CONTAINER_SIZE);
 
-	if (s == _video_container_size) {
+	if (size == video_container_size(type)) {
 		cc.abort();
 		return;
 	}
 
-	_video_container_size = s;
+	boost::mutex::scoped_lock lm(_video_container_size_mutex);
+	_video_container_size[type] = size;
 
 	{
 		boost::mutex::scoped_lock lm(_black_image_mutex);
-		_black_image = make_shared<Image>(AV_PIX_FMT_RGB24, _video_container_size, Image::Alignment::PADDED);
-		_black_image->make_black ();
+		_black_image[type] = make_shared<Image>(AV_PIX_FMT_RGB24, _video_container_size[type], Image::Alignment::PADDED);
+		_black_image[type]->make_black();
 	}
 }
 
@@ -516,16 +544,19 @@ Player::film_change(ChangeType type, FilmProperty p)
 
 
 shared_ptr<PlayerVideo>
-Player::black_player_video_frame (Eyes eyes) const
+Player::black_player_video_frame(VideoType type, Eyes eyes) const
 {
 	boost::mutex::scoped_lock lm(_black_image_mutex);
 
+	auto const image = _black_image[type];
+
 	return std::make_shared<PlayerVideo> (
-		make_shared<const RawImageProxy>(_black_image),
+		make_shared<const RawImageProxy>(image),
 		Crop(),
 		optional<double>(),
-		_video_container_size,
-		_video_container_size,
+		image->size(),
+		image->size(),
+		type,
 		eyes,
 		Part::WHOLE,
 		PresetColourConversion::all().front().conversion,
@@ -732,7 +763,8 @@ Player::pass ()
 
 	if (_playback_length.load() == DCPTime() || !film) {
 		/* Special; just give one black frame */
-		use_video(black_player_video_frame(Eyes::BOTH), DCPTime(), one_video_frame());
+		use_video(black_player_video_frame(VideoType::MAIN, Eyes::BOTH), DCPTime(), one_video_frame());
+		use_video(black_player_video_frame(VideoType::SIGN_LANGUAGE, Eyes::BOTH), DCPTime(), one_video_frame());
 		return true;
 	}
 
@@ -751,14 +783,22 @@ Player::pass ()
 		SILENT
 	} which = NONE;
 
+	optional<VideoType> black_type;
+
 	if (earliest_content) {
 		which = CONTENT;
 	}
 
-	if (!_black.done() && !_ignore_video && (!earliest_time || _black.position() < *earliest_time)) {
-		earliest_time = _black.position ();
-		which = BLACK;
-	}
+	auto check_black = [this, &earliest_time, &which, &black_type](VideoType type) {
+		if (!_black[type].done() && !_ignore_video && (!earliest_time || _black[type].position() < *earliest_time)) {
+			earliest_time = _black[type].position();
+			which = BLACK;
+			black_type = type;
+		}
+	};
+
+	check_black(VideoType::MAIN);
+	check_black(VideoType::SIGN_LANGUAGE);
 
 	if (!_silent.done() && !_ignore_audio && (!earliest_time || _silent.position() < *earliest_time)) {
 		earliest_time = _silent.position ();
@@ -773,7 +813,7 @@ Player::pass ()
 		auto dcp = dynamic_pointer_cast<DCPContent>(earliest_content->content);
 		if (dcp && !_play_referenced) {
 			if (dcp->reference_video()) {
-				_next_video_time = dcp->end(film);
+				_next_video_time[earliest_content->content->video->type()] = dcp->end(film);
 			}
 			if (dcp->reference_audio()) {
 				/* We are skipping some referenced DCP audio content, so we need to update _next_audio_time
@@ -786,21 +826,25 @@ Player::pass ()
 		break;
 	}
 	case BLACK:
-		LOG_DEBUG_PLAYER ("Emit black for gap at %1", to_string(_black.position()));
-		if (!_next_video_time) {
+	{
+		DCPOMATIC_ASSERT(black_type);
+		auto& black = _black[*black_type];
+		LOG_DEBUG_PLAYER("Emit black for gap at %1", to_string(black.position()));
+		if (!_next_video_time[*black_type]) {
 			/* Deciding to emit black has the same effect as getting some video from the content
 			 * when we are inaccurately seeking.
 			 */
-			_next_video_time = _black.position();
+			_next_video_time[*black_type] = black.position();
 		}
 		if (film->three_d()) {
-			use_video(black_player_video_frame(Eyes::LEFT), _black.position(), _black.period_at_position().to);
-			use_video(black_player_video_frame(Eyes::RIGHT), _black.position(), _black.period_at_position().to);
+			use_video(black_player_video_frame(*black_type, Eyes::LEFT), black.position(), black.period_at_position().to);
+			use_video(black_player_video_frame(*black_type, Eyes::RIGHT), black.position(), black.period_at_position().to);
 		} else {
-			use_video(black_player_video_frame(Eyes::BOTH), _black.position(), _black.period_at_position().to);
+			use_video(black_player_video_frame(*black_type, Eyes::BOTH), black.position(), black.period_at_position().to);
 		}
-		_black.set_position (_black.position() + one_video_frame());
+		black.set_position(black.position() + one_video_frame());
 		break;
+	}
 	case SILENT:
 	{
 		LOG_DEBUG_PLAYER ("Emit silence for gap at %1", to_string(_silent.position()));
@@ -900,9 +944,12 @@ Player::pass ()
 	}
 
 	if (done) {
-		if (_next_video_time) {
+		if (_next_video_time[VideoType::MAIN]) {
 			LOG_DEBUG_PLAYER("Done: emit video until end of film at %1", to_string(film->length()));
-			emit_video_until(film->length());
+			emit_video_until(VideoType::MAIN, film->length());
+		}
+		if (_next_video_time[VideoType::SIGN_LANGUAGE] && _have_sign_language) {
+			emit_video_until(VideoType::SIGN_LANGUAGE, film->length());
 		}
 
 		if (_shuffler) {
@@ -928,6 +975,7 @@ Player::open_texts_for_frame(DCPTime time) const
 
 	list<PositionImage> texts;
 	int const vfr = film->video_frame_rate();
+	auto const container = video_container_size(VideoType::MAIN);
 
 	for (auto type: { TextType::OPEN_SUBTITLE, TextType::OPEN_CAPTION }) {
 		for (
@@ -942,14 +990,14 @@ Player::open_texts_for_frame(DCPTime time) const
 				}
 
 				/* i.image will already have been scaled to fit _video_container_size */
-				dcp::Size scaled_size (i.rectangle.width * _video_container_size.load().width, i.rectangle.height * _video_container_size.load().height);
+				dcp::Size scaled_size(i.rectangle.width * container.width, i.rectangle.height * container.height);
 
 				texts.push_back(
 					PositionImage (
 						i.image,
 						Position<int> (
-							lrint(_video_container_size.load().width * i.rectangle.x),
-							lrint(_video_container_size.load().height * i.rectangle.y)
+							lrint(container.width * i.rectangle.x),
+							lrint(container.height * i.rectangle.y)
 							)
 						)
 					);
@@ -957,11 +1005,10 @@ Player::open_texts_for_frame(DCPTime time) const
 
 			/* String texts (rendered to an image) */
 			if (!text.string.empty()) {
-				auto s = render_text(text.string, _video_container_size, time, vfr);
+				auto s = render_text(text.string, container, time, vfr);
 				copy_if(s.begin(), s.end(), back_inserter(texts), [](PositionImage const& image) {
 					return image.image->size().width && image.image->size().height;
 				});
-
 			}
 		}
 	}
@@ -975,17 +1022,17 @@ Player::open_texts_for_frame(DCPTime time) const
 
 
 void
-Player::emit_video_until(DCPTime time)
+Player::emit_video_until(VideoType type, DCPTime time)
 {
-	LOG_DEBUG_PLAYER("emit_video_until %1; next video time is %2", to_string(time), to_string(_next_video_time.get_value_or({})));
-	auto frame = [this](shared_ptr<PlayerVideo> pv, DCPTime time) {
+	LOG_DEBUG_PLAYER("emit_video_until %1; next video time is %2", to_string(time), to_string(_next_video_time[type].get_value_or({})));
+	auto frame = [this, type](shared_ptr<PlayerVideo> pv, DCPTime time) {
 		/* We need a delay to give a little wiggle room to ensure that relevant subtitles arrive at the
 		   player before the video that requires them.
 		*/
 		_delay.push_back(make_pair(pv, time));
 
 		if (pv->eyes() == Eyes::BOTH || pv->eyes() == Eyes::RIGHT) {
-			_next_video_time = time + one_video_frame();
+			_next_video_time[type] = time + one_video_frame();
 		}
 
 		if (_delay.size() < 3) {
@@ -999,12 +1046,12 @@ Player::emit_video_until(DCPTime time)
 
 	auto const age_threshold = one_video_frame() * 2;
 
-	while (_next_video_time.get_value_or({}) < time) {
-		auto left = _last_video[Eyes::LEFT];
-		auto right = _last_video[Eyes::RIGHT];
-		auto both = _last_video[Eyes::BOTH];
+	while (_next_video_time[type].get_value_or({}) < time) {
+		auto left = _last_video[type][Eyes::LEFT];
+		auto right = _last_video[type][Eyes::RIGHT];
+		auto both = _last_video[type][Eyes::BOTH];
 
-		auto const next = _next_video_time.get_value_or({});
+		auto const next = _next_video_time[type].get_value_or({});
 
 		if (
 			left.first &&
@@ -1021,10 +1068,10 @@ Player::emit_video_until(DCPTime time)
 		} else {
 			auto film = _film.lock();
 			if (film && film->three_d()) {
-				frame(black_player_video_frame(Eyes::LEFT), next);
-				frame(black_player_video_frame(Eyes::RIGHT), next);
+				frame(black_player_video_frame(type, Eyes::LEFT), next);
+				frame(black_player_video_frame(type, Eyes::RIGHT), next);
 			} else {
-				frame(black_player_video_frame(Eyes::BOTH), next);
+				frame(black_player_video_frame(type, Eyes::BOTH), next);
 			}
 			LOG_DEBUG_PLAYER("Black selected for DCP %1", to_string(next));
 		}
@@ -1044,7 +1091,8 @@ Player::video (weak_ptr<Piece> weak_piece, ContentVideo video)
 		return;
 	}
 
-	if (!piece->content->video->use()) {
+	auto const content_video = piece->content->video;
+	if (!content_video->use()) {
 		return;
 	}
 
@@ -1054,6 +1102,7 @@ Player::video (weak_ptr<Piece> weak_piece, ContentVideo video)
 	}
 
 	vector<Eyes> eyes_to_emit;
+	auto const type = content_video->type();
 
 	if (!film->three_d()) {
 		if (video.eyes == Eyes::RIGHT) {
@@ -1092,11 +1141,10 @@ Player::video (weak_ptr<Piece> weak_piece, ContentVideo video)
 		return;
 	}
 
-	if (!_next_video_time) {
-		_next_video_time = time.round(film->video_frame_rate());
+	if (!_next_video_time[type]) {
+		/* XXX: round to 24fps for SL? */
+		_next_video_time[type] = time.round(film->video_frame_rate());
 	}
-
-	auto const content_video = piece->content->video;
 
 	auto scaled_size = content_video->scaled_size(film->frame_size());
 	DCPOMATIC_ASSERT(scaled_size);
@@ -1109,11 +1157,12 @@ Player::video (weak_ptr<Piece> weak_piece, ContentVideo video)
 				content_video->fade(film, video.time),
 				scale_for_display(
 					*scaled_size,
-					_video_container_size,
-					film->frame_size(),
+					video_container_size(type),
+					full_size(type),
 					content_video->pixel_quanta()
 					),
-				_video_container_size,
+				video_container_size(type),
+				type,
 				eyes,
 				video.part,
 				content_video->colour_conversion(),
@@ -1131,9 +1180,9 @@ Player::video (weak_ptr<Piece> weak_piece, ContentVideo video)
 void
 Player::use_video(shared_ptr<PlayerVideo> pv, DCPTime time, DCPTime end)
 {
-	_last_video[pv->eyes()] = { pv, time };
+	_last_video[pv->type()][pv->eyes()] = { pv, time };
 	if (pv->eyes() != Eyes::LEFT) {
-		emit_video_until(std::min(time + one_video_frame() / 2, end));
+		emit_video_until(pv->type(), std::min(time + one_video_frame() / 2, end));
 	}
 }
 
@@ -1264,8 +1313,9 @@ Player::bitmap_text_start (weak_ptr<Piece> weak_piece, weak_ptr<const TextConten
 		auto image = sub.image;
 
 		/* We will scale the subtitle up to fit _video_container_size */
-		int const width = sub.rectangle.width * _video_container_size.load().width;
-		int const height = sub.rectangle.height * _video_container_size.load().height;
+		auto const container = video_container_size(VideoType::MAIN);
+		int const width = sub.rectangle.width * container.width;
+		int const height = sub.rectangle.height * container.height;
 		if (width == 0 || height == 0) {
 			return;
 		}
@@ -1414,19 +1464,19 @@ Player::seek (DCPTime time, bool accurate)
 	}
 
 	if (accurate) {
-		_next_video_time = time;
+		_next_video_time[VideoType::MAIN] = _next_video_time[VideoType::SIGN_LANGUAGE] = time;
 		_next_audio_time = time;
 	} else {
-		_next_video_time = boost::none;
+		_next_video_time[VideoType::MAIN] = _next_video_time[VideoType::SIGN_LANGUAGE] = boost::none;
 		_next_audio_time = boost::none;
 	}
 
-	_black.set_position (time);
+	_black[VideoType::MAIN].set_position(time);
+	_black[VideoType::SIGN_LANGUAGE].set_position(time);
 	_silent.set_position (time);
 
-	_last_video[Eyes::LEFT] = {};
-	_last_video[Eyes::RIGHT] = {};
-	_last_video[Eyes::BOTH] = {};
+	_last_video[VideoType::MAIN][Eyes::LEFT] = _last_video[VideoType::MAIN][Eyes::RIGHT] = _last_video[VideoType::MAIN][Eyes::BOTH] = {};
+	_last_video[VideoType::SIGN_LANGUAGE][Eyes::LEFT] = _last_video[VideoType::SIGN_LANGUAGE][Eyes::RIGHT] = _last_video[VideoType::SIGN_LANGUAGE][Eyes::BOTH] = {};
 
 	for (auto& state: _stream_states) {
 		state.second.last_push_end = boost::none;
@@ -1437,12 +1487,14 @@ Player::seek (DCPTime time, bool accurate)
 void
 Player::emit_video(shared_ptr<PlayerVideo> pv, DCPTime time)
 {
-	if (pv->eyes() == Eyes::BOTH || pv->eyes() == Eyes::RIGHT) {
-		std::for_each(_active_texts.begin(), _active_texts.end(), [time](ActiveText& a) { a.clear_before(time); });
-	}
+	if (pv->type() == VideoType::MAIN) {
+		if (pv->eyes() == Eyes::BOTH || pv->eyes() == Eyes::RIGHT) {
+			std::for_each(_active_texts.begin(), _active_texts.end(), [time](ActiveText& a) { a.clear_before(time); });
+		}
 
-	if (auto texts = open_texts_for_frame(time)) {
-		pv->set_text(texts.get());
+		if (auto texts = open_texts_for_frame(time)) {
+			pv->set_text(texts.get());
+		}
 	}
 
 	Video (pv, time);

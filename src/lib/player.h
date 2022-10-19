@@ -39,6 +39,7 @@
 #include "player_text.h"
 #include "position_image.h"
 #include "shuffler.h"
+#include "video_type.h"
 #include <boost/atomic.hpp>
 #include <list>
 
@@ -95,11 +96,16 @@ public:
 
 	std::vector<std::shared_ptr<dcpomatic::Font>> get_subtitle_fonts ();
 
-	dcp::Size video_container_size () const {
-		return _video_container_size;
+	dcp::Size video_container_size(VideoType type) const {
+		boost::mutex::scoped_lock lm(_video_container_size_mutex);
+		return _video_container_size[type];
 	}
 
-	void set_video_container_size (dcp::Size);
+	bool have_sign_language() const {
+		return _have_sign_language;
+	}
+
+	void set_video_container_size(VideoType type, dcp::Size size);
 	void set_ignore_video ();
 	void set_ignore_audio ();
 	void set_ignore_text ();
@@ -156,10 +162,11 @@ private:
 	dcpomatic::DCPTime resampled_audio_to_dcp (std::shared_ptr<const Piece> piece, Frame f) const;
 	dcpomatic::ContentTime dcp_to_content_time (std::shared_ptr<const Piece> piece, dcpomatic::DCPTime t) const;
 	dcpomatic::DCPTime content_time_to_dcp (std::shared_ptr<const Piece> piece, dcpomatic::ContentTime t) const;
-	std::shared_ptr<PlayerVideo> black_player_video_frame (Eyes eyes) const;
-	void emit_video_until(dcpomatic::DCPTime time);
+	std::shared_ptr<PlayerVideo> black_player_video_frame(VideoType type, Eyes eyes) const;
+	void emit_video_until(VideoType type, dcpomatic::DCPTime time);
 	void insert_video(std::shared_ptr<PlayerVideo> pv, dcpomatic::DCPTime time, dcpomatic::DCPTime end);
 	std::pair<std::shared_ptr<Piece>, boost::optional<dcpomatic::DCPTime>> earliest_piece_and_time() const;
+	dcp::Size full_size(VideoType type) const;
 
 	void video (std::weak_ptr<Piece>, ContentVideo);
 	void audio (std::weak_ptr<Piece>, AudioStreamPtr, ContentAudio);
@@ -193,13 +200,16 @@ private:
 	boost::atomic<int> _suspended;
 	std::vector<std::shared_ptr<Piece>> _pieces;
 
-	/** Size of the image we are rendering to; this may be the DCP frame size, or
-	 *  the size of preview in a window.
+	boost::atomic<bool> _have_sign_language;
+
+	mutable boost::mutex _video_container_size_mutex;
+	/** Size of the images we are rendering to; for the MAIN video this
+	 *  may be the DCP frame size, or the size of preview in a window.
 	 */
-	boost::atomic<dcp::Size> _video_container_size;
+	EnumIndexedVector<dcp::Size, VideoType> _video_container_size;
 
 	mutable boost::mutex _black_image_mutex;
-	std::shared_ptr<Image> _black_image;
+	EnumIndexedVector<std::shared_ptr<Image>, VideoType> _black_image;
 
 	/** true if the player should ignore all video; i.e. never produce any */
 	boost::atomic<bool> _ignore_video;
@@ -215,13 +225,13 @@ private:
 	boost::atomic<bool> _play_referenced;
 
 	/** Time of the next video that we will emit, or the time of the last accurate seek */
-	boost::optional<dcpomatic::DCPTime> _next_video_time;
+	EnumIndexedVector<boost::optional<dcpomatic::DCPTime>, VideoType> _next_video_time;
 	/** Time of the next audio that we will emit, or the time of the last accurate seek */
 	boost::optional<dcpomatic::DCPTime> _next_audio_time;
 
 	boost::atomic<boost::optional<int>> _dcp_decode_reduction;
 
-	EnumIndexedVector<std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime>, Eyes> _last_video;
+	EnumIndexedVector<EnumIndexedVector<std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime>, Eyes>, VideoType> _last_video;
 
 	AudioMerger _audio_merger;
 	std::unique_ptr<Shuffler> _shuffler;
@@ -241,7 +251,7 @@ private:
 	};
 	std::map<AudioStreamPtr, StreamState> _stream_states;
 
-	Empty _black;
+	EnumIndexedVector<Empty, VideoType> _black;
 	Empty _silent;
 
 	EnumIndexedVector<ActiveText, TextType> _active_texts;

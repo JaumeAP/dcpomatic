@@ -54,6 +54,7 @@ PlayerVideo::PlayerVideo (
 	boost::optional<double> fade,
 	dcp::Size inter_size,
 	dcp::Size out_size,
+	VideoType type,
 	Eyes eyes,
 	Part part,
 	optional<ColourConversion> colour_conversion,
@@ -67,6 +68,7 @@ PlayerVideo::PlayerVideo (
 	, _fade (fade)
 	, _inter_size (inter_size)
 	, _out_size (out_size)
+	, _type(type)
 	, _eyes (eyes)
 	, _part (part)
 	, _colour_conversion (colour_conversion)
@@ -87,6 +89,7 @@ PlayerVideo::PlayerVideo (shared_ptr<cxml::Node> node, shared_ptr<Socket> socket
 	_inter_size = dcp::Size (node->number_child<int> ("InterWidth"), node->number_child<int> ("InterHeight"));
 	_out_size = dcp::Size (node->number_child<int> ("OutWidth"), node->number_child<int> ("OutHeight"));
 	_eyes = static_cast<Eyes>(node->number_child<int>("Eyes"));
+	_type = static_cast<VideoType>(node->number_child<int>("Type"));
 	_part = static_cast<Part>(node->number_child<int>("Part"));
 	_video_range = static_cast<VideoRange>(node->number_child<int>("VideoRange"));
 	_error = node->optional_bool_child("Error").get_value_or (false);
@@ -212,6 +215,7 @@ PlayerVideo::add_metadata(xmlpp::Element* element) const
 	cxml::add_text_child(element, "OutWidth", raw_convert<string>(_out_size.width));
 	cxml::add_text_child(element, "OutHeight", raw_convert<string>(_out_size.height));
 	cxml::add_text_child(element, "Eyes", raw_convert<string>(static_cast<int>(_eyes)));
+	cxml::add_text_child(element, "Type", raw_convert<string>(static_cast<int>(_type)));
 	cxml::add_text_child(element, "Part", raw_convert<string>(static_cast<int>(_part)));
 	cxml::add_text_child(element, "VideoRange", raw_convert<string>(static_cast<int>(_video_range)));
 	cxml::add_text_child(element, "Error", _error ? "1" : "0");
@@ -339,6 +343,7 @@ PlayerVideo::shallow_copy () const
 		_fade,
 		_inter_size,
 		_out_size,
+		_type,
 		_eyes,
 		_part,
 		_colour_conversion,

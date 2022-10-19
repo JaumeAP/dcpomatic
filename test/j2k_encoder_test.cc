@@ -72,6 +72,7 @@ BOOST_AUTO_TEST_CASE(j2k_encoder_deadlock_test)
 				optional<double>(),
 				dcp::Size(1998, 1080),
 				dcp::Size(1998, 1080),
+				VideoType::MAIN,
 				Eyes::BOTH,
 				Part::WHOLE,
 				optional<ColourConversion>(),

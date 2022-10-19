@@ -29,6 +29,7 @@
 #include "position.h"
 #include "position_image.h"
 #include "types.h"
+#include "video_type.h"
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
@@ -54,6 +55,7 @@ public:
 		boost::optional<double> fade,
 		dcp::Size inter_size,
 		dcp::Size out_size,
+		VideoType type,
 		Eyes eyes,
 		Part part,
 		boost::optional<ColourConversion> colour_conversion,
@@ -98,6 +100,10 @@ public:
 		_eyes = e;
 	}
 
+	VideoType type() const {
+		return _type;
+	}
+
 	boost::optional<ColourConversion> colour_conversion () const {
 		return _colour_conversion;
 	}
@@ -134,6 +140,7 @@ private:
 	boost::optional<double> _fade;
 	dcp::Size _inter_size;
 	dcp::Size _out_size;
+	VideoType _type;
 	Eyes _eyes;
 	Part _part;
 	boost::optional<ColourConversion> _colour_conversion;

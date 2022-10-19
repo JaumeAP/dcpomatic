@@ -47,6 +47,7 @@ BOOST_AUTO_TEST_CASE (low_bitrate_test)
 		boost::optional<double>(),
 		dcp::Size(1998, 1080),
 		dcp::Size(1998, 1080),
+		VideoType::MAIN,
 		Eyes::BOTH,
 		Part::WHOLE,
 		boost::optional<ColourConversion>(),

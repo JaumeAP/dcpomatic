@@ -156,11 +156,15 @@ DCPFilmEncoder::resume()
 	_encoder->resume();
 }
 
+
 void
 DCPFilmEncoder::video(shared_ptr<PlayerVideo> data, DCPTime time)
 {
-	_encoder->encode(data, time);
+	if (data->type() == VideoType::MAIN) {
+		_encoder->encode(data, time);
+	}
 }
+
 
 void
 DCPFilmEncoder::audio(shared_ptr<AudioBuffers> data, DCPTime time)

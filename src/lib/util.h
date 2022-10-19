@@ -102,6 +102,7 @@ extern void capture_ffmpeg_logs();
 extern void setup_grok_library_path();
 #endif
 extern std::string join_strings(std::vector<std::string> const& in, std::string const& separator = " ");
+extern bool contains_sign_language(ContentList const& content);
 
 
 template <class T>

@@ -410,7 +410,7 @@ Butler::player_change (ChangeType type, int property)
 		if (type == ChangeType::DONE) {
 			auto film = _film.lock();
 			if (film) {
-				_video.reset_metadata(film, _player.video_container_size());
+				_video.reset_metadata(film, _player.video_container_size(VideoType::MAIN));
 			}
 		}
 		return;

@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE (overlap_video_test1)
 	BOOST_CHECK(pieces[0]->ignore_video[0] == dcpomatic::DCPTimePeriod(dcpomatic::DCPTime::from_seconds(1), dcpomatic::DCPTime::from_seconds(1) + B->length_after_trim(film)));
 	BOOST_CHECK(pieces[0]->ignore_video[1] == dcpomatic::DCPTimePeriod(dcpomatic::DCPTime::from_seconds(3), dcpomatic::DCPTime::from_seconds(3) + C->length_after_trim(film)));
 
-	BOOST_CHECK (player->_black.done());
+	BOOST_CHECK(player->_black[VideoType::MAIN].done());
 
 	make_and_verify_dcp (film);
 
