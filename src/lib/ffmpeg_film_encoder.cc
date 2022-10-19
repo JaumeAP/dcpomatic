@@ -189,7 +189,7 @@ FFmpegFilmEncoder::go()
 
 		for (int j = 0; j < gets_per_frame; ++j) {
 			Butler::Error e;
-			auto video = _butler.get_video(Butler::Behaviour::BLOCKING, &e);
+			auto video = _butler.get_video(VideoType::MAIN, Butler::Behaviour::BLOCKING, &e);
 			_butler.rethrow();
 			if (video.first) {
 				auto fe = encoder->get(video.first->eyes());

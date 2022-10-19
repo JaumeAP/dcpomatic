@@ -136,36 +136,46 @@ Butler::~Butler ()
 bool
 Butler::should_run () const
 {
-	if (_video.size() >= MAXIMUM_VIDEO_READAHEAD * 10) {
-		/* This is way too big */
-		auto pos = _audio.peek();
-		if (pos) {
-			throw ProgrammingError
-				(__FILE__, __LINE__, String::compose ("Butler video buffers reached %1 frames (audio is %2 at %3)", _video.size(), _audio.size(), pos->get()));
-		} else {
-			throw ProgrammingError
-				(__FILE__, __LINE__, String::compose ("Butler video buffers reached %1 frames (audio is %2)", _video.size(), _audio.size()));
+	auto check_video_much_too_big = [this](VideoType type) {
+		if (_video[type].size() >= MAXIMUM_VIDEO_READAHEAD * 10) {
+			/* This is way too big */
+			auto pos = _audio.peek();
+			if (pos) {
+				throw ProgrammingError
+					(__FILE__, __LINE__, String::compose("Butler video (%1) buffers reached %2 frames (audio is %3 at %4)", video_type_to_string(type), _video[type].size(), _audio.size(), pos->get()));
+			} else {
+				throw ProgrammingError
+					(__FILE__, __LINE__, String::compose("Butler video (%1) buffers reached %2 frames (audio is %3)", video_type_to_string(type), _video[type].size(), _audio.size()));
+			}
 		}
-	}
+	};
+
+	check_video_much_too_big(VideoType::MAIN);
+	check_video_much_too_big(VideoType::SIGN_LANGUAGE);
 
 	if (_audio.size() >= MAXIMUM_AUDIO_READAHEAD * 10) {
 		/* This is way too big */
 		auto pos = _audio.peek();
 		if (pos) {
 			throw ProgrammingError
-				(__FILE__, __LINE__, String::compose ("Butler audio buffers reached %1 frames at %2 (video is %3)", _audio.size(), pos->get(), _video.size()));
+				(__FILE__, __LINE__, String::compose ("Butler audio buffers reached %1 frames at %2 (main video is %3)", _audio.size(), pos->get(), _video[VideoType::MAIN].size()));
 		} else {
 			throw ProgrammingError
-				(__FILE__, __LINE__, String::compose ("Butler audio buffers reached %1 frames (video is %3)", _audio.size(), _video.size()));
+				(__FILE__, __LINE__, String::compose ("Butler audio buffers reached %1 frames (main video is %3)", _audio.size(), _video[VideoType::MAIN].size()));
 		}
 	}
 
-	if (_video.size() >= MAXIMUM_VIDEO_READAHEAD * 2) {
-		LOG_WARNING ("Butler video buffers reached %1 frames (audio is %2)", _video.size(), _audio.size());
-	}
+	auto check_video_too_big = [this](VideoType type) {
+		if (_video[type].size() >= MAXIMUM_VIDEO_READAHEAD * 2) {
+			LOG_WARNING ("Butler video buffers reached %1 frames (audio is %2)", _video[type].size(), _audio.size());
+		}
+	};
+
+	check_video_too_big(VideoType::MAIN);
+	check_video_too_big(VideoType::SIGN_LANGUAGE);
 
 	if (_audio.size() >= MAXIMUM_AUDIO_READAHEAD * 2) {
-		LOG_WARNING ("Butler audio buffers reached %1 frames (video is %2)", _audio.size(), _video.size());
+		LOG_WARNING ("Butler audio buffers reached %1 frames (main video is %2)", _audio.size(), _video[VideoType::MAIN].size());
 	}
 
 	if (_stop_thread || _finished || _died || _suspended) {
@@ -173,13 +183,18 @@ Butler::should_run () const
 		return false;
 	}
 
-	if (_video.size() < MINIMUM_VIDEO_READAHEAD || (!_disable_audio && _audio.size() < MINIMUM_AUDIO_READAHEAD)) {
+	if (_video[VideoType::MAIN].size() < MINIMUM_VIDEO_READAHEAD
+	    || (_player.have_sign_language() && _video[VideoType::SIGN_LANGUAGE].size() < MINIMUM_VIDEO_READAHEAD)
+	    || (!_disable_audio && _audio.size() < MINIMUM_AUDIO_READAHEAD)
+	    ) {
 		/* Definitely do run: we need data */
 		return true;
 	}
 
 	/* Run if we aren't full of video or audio */
-	return (_video.size() < MAXIMUM_VIDEO_READAHEAD) && (_audio.size() < MAXIMUM_AUDIO_READAHEAD);
+	return _video[VideoType::MAIN].size() < MAXIMUM_VIDEO_READAHEAD
+		&& _video[VideoType::SIGN_LANGUAGE].size() < MAXIMUM_VIDEO_READAHEAD
+		&& (_audio.size() < MAXIMUM_AUDIO_READAHEAD);
 }
 
 
@@ -244,7 +259,7 @@ try
  *  @param e if non-0 this is filled with an error code (if an error occurs) or is untouched if no error occurs.
  */
 pair<shared_ptr<PlayerVideo>, DCPTime>
-Butler::get_video (Behaviour behaviour, Error* e)
+Butler::get_video(VideoType type, Behaviour behaviour, Error* e)
 {
 	boost::mutex::scoped_lock lm (_mutex);
 
@@ -261,22 +276,22 @@ Butler::get_video (Behaviour behaviour, Error* e)
 		}
 	};
 
-	if (_video.empty() && (_finished || _died || (_suspended && behaviour == Behaviour::NON_BLOCKING))) {
+	if (_video[type].empty() && (_finished || _died || (_suspended && behaviour == Behaviour::NON_BLOCKING))) {
 		setup_error (e, Error::Code::AGAIN);
-		return make_pair(shared_ptr<PlayerVideo>(), DCPTime());
+		return {};
 	}
 
 	/* Wait for data if we have none */
-	while (_video.empty() && !_finished && !_died) {
+	while (_video[type].empty() && !_finished && !_died) {
 		_arrived.wait (lm);
 	}
 
-	if (_video.empty()) {
+	if (_video[type].empty()) {
 		setup_error (e, Error::Code::NONE);
-		return make_pair(shared_ptr<PlayerVideo>(), DCPTime());
+		return {};
 	}
 
-	auto const r = _video.get ();
+	auto const r = _video[type].get();
 	_summon.notify_all ();
 	return r;
 }
@@ -310,7 +325,8 @@ Butler::seek_unlocked (DCPTime position, bool accurate)
 	_pending_seek_position = position;
 	_pending_seek_accurate = accurate;
 
-	_video.clear ();
+	_video[VideoType::MAIN].clear();
+	_video[VideoType::SIGN_LANGUAGE].clear();
 	_audio.clear ();
 	_closed_caption.clear ();
 
@@ -357,7 +373,7 @@ Butler::video (shared_ptr<PlayerVideo> video, DCPTime time)
 
 	_prepare_service.post (bind(&Butler::prepare, this, weak_ptr<PlayerVideo>(video)));
 
-	_video.put (video, time);
+	_video[video->type()].put(video, time);
 }
 
 
@@ -398,8 +414,8 @@ Butler::get_audio (Behaviour behaviour, float* out, Frame frames)
 pair<size_t, string>
 Butler::memory_used () const
 {
-	/* XXX: should also look at _audio.memory_used() */
-	return _video.memory_used();
+	/* XXX: should also look at _audio and _video[VideoType::SIGN_LANGUAGE] */
+	return _video[VideoType::MAIN].memory_used();
 }
 
 
@@ -410,7 +426,8 @@ Butler::player_change (ChangeType type, int property)
 		if (type == ChangeType::DONE) {
 			auto film = _film.lock();
 			if (film) {
-				_video.reset_metadata(film, _player.video_container_size(VideoType::MAIN));
+				_video[VideoType::MAIN].reset_metadata(film, _player.video_container_size(VideoType::MAIN));
+				_video[VideoType::SIGN_LANGUAGE].reset_metadata(film, _player.video_container_size(VideoType::SIGN_LANGUAGE));
 			}
 		}
 		return;
@@ -429,7 +446,7 @@ Butler::player_change (ChangeType type, int property)
 		}
 
 		DCPTime seek_to;
-		auto next = _video.get().second;
+		auto next = _video[VideoType::MAIN].get().second;
 		if (_awaiting && _awaiting > next) {
 			/* We have recently done a player_changed seek and our buffers haven't been refilled yet,
 			   so assume that we're seeking to the same place as last time.

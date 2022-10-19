@@ -26,6 +26,7 @@
 #include "audio_mapping.h"
 #include "audio_ring_buffers.h"
 #include "change_signaller.h"
+#include "enum_indexed_vector.h"
 #include "exception_store.h"
 #include "text_ring_buffers.h"
 #include "text_type.h"
@@ -89,7 +90,7 @@ public:
 		NON_BLOCKING
 	};
 
-	std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime> get_video (Behaviour behaviour, Error* e = nullptr);
+	std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime> get_video(VideoType type, Behaviour behaviour, Error* e = nullptr);
 	boost::optional<dcpomatic::DCPTime> get_audio (Behaviour behaviour, float* out, Frame frames);
 	boost::optional<TextRingBuffers::Data> get_closed_caption ();
 
@@ -109,7 +110,7 @@ private:
 	Player& _player;
 	boost::thread _thread;
 
-	VideoRingBuffers _video;
+	EnumIndexedVector<VideoRingBuffers, VideoType> _video;
 	AudioRingBuffers _audio;
 	TextRingBuffers _closed_caption;
 

@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE (player_seek_test)
 	for (int i = 0; i < 10; ++i) {
 		auto t = DCPTime::from_frames (i, 24);
 		butler->seek (t, true);
-		auto video = butler->get_video(Butler::Behaviour::BLOCKING, 0);
+		auto video = butler->get_video(VideoType::MAIN, Butler::Behaviour::BLOCKING, 0);
 		BOOST_CHECK_EQUAL(video.second.get(), t.get());
 		write_image(video.first->image(bind(PlayerVideo::force, AV_PIX_FMT_RGB24), VideoRange::FULL, true), String::compose("build/test/player_seek_test_%1.png", i));
 		/* This 14.08 is empirically chosen (hopefully) to accept changes in rendering between the reference and a test machine
@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE (player_seek_test2)
 	for (int i = 0; i < 10; ++i) {
 		auto t = DCPTime::from_seconds(5) + DCPTime::from_frames (i, 24);
 		butler->seek (t, true);
-		auto video = butler->get_video(Butler::Behaviour::BLOCKING, 0);
+		auto video = butler->get_video(VideoType::MAIN, Butler::Behaviour::BLOCKING, 0);
 		BOOST_CHECK_EQUAL(video.second.get(), t.get());
 		write_image(
 			video.first->image(bind(PlayerVideo::force, AV_PIX_FMT_RGB24), VideoRange::FULL, true), String::compose("build/test/player_seek_test2_%1.png", i)
@@ -477,7 +477,7 @@ BOOST_AUTO_TEST_CASE (encrypted_dcp_with_no_kdm_gives_no_butler_error)
 
 	float buffer[2000 * 6];
 	for (int i = 0; i < length; ++i) {
-		butler.get_video(Butler::Behaviour::BLOCKING, 0);
+		butler.get_video(VideoType::MAIN, Butler::Behaviour::BLOCKING, 0);
 		butler.get_audio(Butler::Behaviour::BLOCKING, buffer, 2000);
 	}
 

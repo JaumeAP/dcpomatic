@@ -66,9 +66,9 @@ BOOST_AUTO_TEST_CASE (butler_test1)
 		Butler::Audio::ENABLED
 		);
 
-	BOOST_CHECK (butler.get_video(Butler::Behaviour::BLOCKING, 0).second == DCPTime());
-	BOOST_CHECK (butler.get_video(Butler::Behaviour::BLOCKING, 0).second == DCPTime::from_frames(1, 24));
-	BOOST_CHECK (butler.get_video(Butler::Behaviour::BLOCKING, 0).second == DCPTime::from_frames(2, 24));
+	BOOST_CHECK (butler.get_video(VideoType::MAIN, Butler::Behaviour::BLOCKING, 0).second == DCPTime());
+	BOOST_CHECK (butler.get_video(VideoType::MAIN, Butler::Behaviour::BLOCKING, 0).second == DCPTime::from_frames(1, 24));
+	BOOST_CHECK (butler.get_video(VideoType::MAIN, Butler::Behaviour::BLOCKING, 0).second == DCPTime::from_frames(2, 24));
 	/* XXX: check the frame contents */
 
 	float buffer[256 * 6];
@@ -116,14 +116,14 @@ BOOST_AUTO_TEST_CASE (butler_test2)
 	int const audio_frames_per_video_frame = 48000 / 25;
 	float audio_buffer[audio_frames_per_video_frame * 6];
 	for (int i = 0; i < 16; ++i) {
-		butler.get_video(Butler::Behaviour::BLOCKING, 0);
+		butler.get_video(VideoType::MAIN, Butler::Behaviour::BLOCKING, 0);
 		butler.get_audio(Butler::Behaviour::BLOCKING, audio_buffer, audio_frames_per_video_frame);
 	}
 
 	butler.seek (DCPTime::from_seconds(60), false);
 
 	for (int i = 0; i < 240; ++i) {
-		butler.get_video(Butler::Behaviour::BLOCKING, 0);
+		butler.get_video(VideoType::MAIN, Butler::Behaviour::BLOCKING, 0);
 		butler.get_audio(Butler::Behaviour::BLOCKING, audio_buffer, audio_frames_per_video_frame);
 	}
 
