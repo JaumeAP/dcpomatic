@@ -64,12 +64,20 @@ FFmpegExaminer::FFmpegExaminer(shared_ptr<const FFmpegContent> c, shared_ptr<Job
 	: FFmpeg(c)
 {
 	_need_length = _format_context->duration == AV_NOPTS_VALUE;
-	/* Find audio and subtitle streams */
+
+	/* Find streams */
 
 	for (uint32_t i = 0; i < _format_context->nb_streams; ++i) {
 		auto s = _format_context->streams[i];
 		auto codec = _codec_context[i] ? _codec_context[i]->codec : nullptr;
-		if (s->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && codec) {
+		if (s->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+			_video_streams.push_back(
+				make_shared<FFmpegVideoStream>(
+					stream_name(s),
+					s->id,
+					av_q2d(av_guess_frame_rate(_format_context, _format_context->streams[i], 0))
+					));
+		} else if (s->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && codec) {
 
 			DCPOMATIC_ASSERT(codec->name);
 
@@ -93,6 +101,30 @@ FFmpegExaminer::FFmpegExaminer(shared_ptr<const FFmpegContent> c, shared_ptr<Job
 
 	if (has_video()) {
 		_video_length = _need_length ? 0 : llrint((double(_format_context->duration) / AV_TIME_BASE) * video_frame_rate().get());
+	}
+
+	/* Choose the best video stream */
+	using ScoredStream = pair<shared_ptr<FFmpegVideoStream>, int>;
+	vector<ScoredStream> streams_with_scores;
+	for (auto stream: _video_streams) {
+		auto s = stream->stream(_format_context);
+		auto const frame_rate = av_q2d(s->avg_frame_rate);
+		int score = 0;
+		if (1 < frame_rate && frame_rate < 1000) {
+			++score;
+		}
+		if (s->avg_frame_rate.num > 0 && s->avg_frame_rate.den > 0) {
+			++score;
+		}
+		streams_with_scores.push_back({stream, score});
+	}
+
+	streams_with_scores.sort([](ScoredStream const& a, ScoredStream const& b) {
+		return a.second > b.second;
+	});
+
+	if (!streams_with_scores.empty()) {
+		_best_video_stream = streams_with_scores[0].first;
 	}
 
 	if (job && _need_length) {
@@ -172,8 +204,8 @@ FFmpegExaminer::FFmpegExaminer(shared_ptr<const FFmpegContent> c, shared_ptr<Job
 		}
 	}
 
-	if (_video_stream) {
-		auto context = _codec_context[_video_stream.get()];
+	if (_best_video_stream) {
+		auto context = _codec_context[_best_video_stream->index(_format_context)];
 		while (video_packet(context, temporal_reference, nullptr)) {}
 	}
 
@@ -182,10 +214,10 @@ FFmpegExaminer::FFmpegExaminer(shared_ptr<const FFmpegContent> c, shared_ptr<Job
 		audio_packet(context, i, nullptr);
 	}
 
-	if (_video_stream) {
+	if (_best_video_stream) {
 		/* This code taken from get_rotation() in ffmpeg:cmdutils.c */
-		auto stream = _format_context->streams[*_video_stream];
-		auto rotate_tag = av_dict_get(stream->metadata, "rotate", 0, 0);
+		auto stream = _best_video_stream->stream(_format_context);
+		auto rotate_tag = av_dict_get (stream->metadata, "rotate", 0, 0);
 		if (rotate_tag && *rotate_tag->value && strcmp(rotate_tag->value, "0")) {
 			char *tail;
 			_rotation = av_strtod(rotate_tag->value, &tail);
@@ -257,7 +289,7 @@ FFmpegExaminer::check_for_duplicate_ids()
 bool
 FFmpegExaminer::video_packet(AVCodecContext* context, string& temporal_reference, AVPacket* packet)
 {
-	DCPOMATIC_ASSERT(_video_stream);
+	DCPOMATIC_ASSERT(_best_video_stream);
 
 	if (_first_video && !_need_length && temporal_reference.size() >= (PULLDOWN_CHECK_FRAMES * 2)) {
 		return false;
@@ -530,7 +562,7 @@ FFmpegExaminer::yuv() const
 bool
 FFmpegExaminer::has_video() const
 {
-	return static_cast<bool>(_video_stream);
+	return !_video_streams.empty();
 }
 
 

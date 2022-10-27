@@ -213,11 +213,12 @@ FFmpeg::setup_decoder(int stream_index)
 AVCodecContext *
 FFmpeg::video_codec_context () const
 {
-	if (!_video_stream) {
+	auto str = _ffmpeg_content->video_stream();
+	if (!str) {
 		return nullptr;
 	}
 
-	return _codec_context[_video_stream.get()];
+	return _codec_context[str->index(_format_context)];
 }
 
 

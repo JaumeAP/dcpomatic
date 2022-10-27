@@ -79,8 +79,6 @@ protected:
 
 	/** AVFrame used for decoding video */
 	AVFrame* _video_frame = nullptr;
-	/** Index of video stream within AVFormatContext */
-	boost::optional<int> _video_stream;
 
 	AVFrame* audio_frame (std::shared_ptr<const FFmpegAudioStream> stream);
 
