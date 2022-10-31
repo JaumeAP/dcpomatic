@@ -77,6 +77,7 @@ extern void make_and_verify_dcp (std::shared_ptr<Film> film, std::vector<dcp::Ve
 extern void check_int_close (int a, int b, int d);
 extern void check_int_close (std::pair<int, int>, std::pair<int, int>, int d);
 extern boost::filesystem::path find_file (boost::filesystem::path dir, std::string filename_part);
+void write_openjpeg_image(std::shared_ptr<const dcp::OpenJPEGImage> image, boost::filesystem::path path);
 
 
 class LogSwitcher

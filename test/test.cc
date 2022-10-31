@@ -1004,3 +1004,19 @@ Editor::replace(string a, string b)
 	boost::algorithm::replace_all(_content, a, b);
 	BOOST_REQUIRE(_content != old_content);
 }
+
+
+void
+write_openjpeg_image(shared_ptr<const dcp::OpenJPEGImage> image, boost::filesystem::path path)
+{
+	dcp::File output(path, "wb");
+
+	auto size = image->size();
+	output.checked_write(&size.width, sizeof(size.width));
+	output.checked_write(&size.height, sizeof(size.height));
+
+	for (int c = 0; c < 3; ++c) {
+		output.checked_write(image->data(c), size.width * size.height * sizeof(int));
+	}
+}
+
