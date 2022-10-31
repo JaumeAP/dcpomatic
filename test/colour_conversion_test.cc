@@ -25,9 +25,17 @@
  */
 
 
+#include "lib/butler.h"
 #include "lib/colour_conversion.h"
+#include "lib/content_factory.h"
+#include "lib/dcp_video.h"
 #include "lib/film.h"
+#include "lib/player.h"
+#include "lib/video_content.h"
+#include "test.h"
 #include <dcp/gamma_transfer_function.h>
+#include <dcp/openjpeg_image.h>
+#include <dcp/j2k_transcode.h>
 #include <libxml++/libxml++.h>
 #include <boost/test/unit_test.hpp>
 #include <iostream>
@@ -36,6 +44,7 @@
 using std::cout;
 using std::make_shared;
 using std::shared_ptr;
+using std::vector;
 
 
 BOOST_AUTO_TEST_CASE (colour_conversion_test1)
@@ -121,3 +130,49 @@ BOOST_AUTO_TEST_CASE (colour_conversion_test4)
 		BOOST_CHECK (ColourConversion::from_xml(in, Film::current_state_version).get() == i.conversion);
 	}
 }
+
+
+BOOST_AUTO_TEST_CASE(noisy_blacks_test)
+{
+	auto content = content_factory(TestPaths::private_data() / "island.mov").front();
+	auto film = new_test_film2("noisy_black_test", { content });
+
+	Player player(film, Image::Alignment::COMPACT);
+	player.set_fast();
+	player.set_always_burn_open_subtitles();
+	player.set_play_referenced();
+
+	auto butler = make_shared<Butler>(
+		film, player, AudioMapping(), 2, boost::bind(PlayerVideo::force, AV_PIX_FMT_RGB24), VideoRange::FULL, Image::Alignment::PADDED, true, false, Butler::Audio::DISABLED
+		);
+
+	auto video = butler->get_video(Butler::Behaviour::BLOCKING).first;
+
+	vector<int> bitrates = { 50, 100, 150, 200, 250 };
+
+	for (auto bitrate: bitrates) {
+		auto before_encode = DCPVideo::convert_to_xyz(video, [](dcp::NoteType, std::string) {});
+		write_openjpeg_image(before_encode, String::compose("build/test/noisy_black_test_%1_before.opj", bitrate));
+		auto encoded = DCPVideo(video, 0, 24, bitrate * 1000000LL, Resolution::FOUR_K).encode_locally();
+		auto after_decode = dcp::decompress_j2k(encoded, 0);
+		write_openjpeg_image(after_decode, String::compose("build/test/noisy_black_test_%1_after.opj", bitrate));
+
+		int max_diffs[] = { 0, 0, 0 };
+
+		int const width = video->out_size().width;
+		int const height = video->out_size().height;
+
+		for (int y = 0; y < height; ++y) {
+			for (int x = 0; x < width; ++x) {
+				int offset = y * width + x;
+				for (int c = 0; c < 3; ++c) {
+					auto const diff = std::abs(before_encode->data(c)[offset] - after_decode->data(c)[offset]);
+					max_diffs[c] = std::max(max_diffs[c], diff);
+				}
+			}
+		}
+
+		std::cout << bitrate << "MBps diffs; " << max_diffs[0] << " " << max_diffs[1] << " " << max_diffs[2] << "\n";
+	}
+}
+
