@@ -37,6 +37,12 @@ public:
 
 	void set_text (wxString text) override;
 	wxString get_text () const override;
+	bool get() const;
+
+	template <typename Functor>
+	void bind(Functor f) {
+		Bind(wxEVT_CHECKBOX, f);
+	}
 };
 
 
