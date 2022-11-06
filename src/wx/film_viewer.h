@@ -63,12 +63,12 @@ public:
 	~FilmViewer ();
 
 	/** @return the window showing the film's video */
-	wxWindow* panel () const {
-		return _video_view->get();
+	wxWindow* panel(VideoType type) const {
+		return _video_view[type]->get();
 	}
 
-	std::shared_ptr<const VideoView> video_view () const {
-		return _video_view;
+	std::shared_ptr<const VideoView> video_view(VideoType type) const {
+		return _video_view[type];
 	}
 
 	void show_closed_captions ();
@@ -89,7 +89,7 @@ public:
 	void seek_by (dcpomatic::DCPTime by, bool accurate);
 	/** @return our `playhead' position; this may not lie exactly on a frame boundary */
 	dcpomatic::DCPTime position () const {
-		return _video_view->position();
+		return _video_view[VideoType::MAIN]->position();
 	}
 	boost::optional<dcpomatic::ContentTime> position_in_content (std::shared_ptr<const Content> content) const;
 	dcpomatic::DCPTime one_video_frame () const;
@@ -126,16 +126,14 @@ public:
 	int audio_callback (void* out, unsigned int frames);
 
 	StateTimer const & state_timer () const {
-		return _video_view->state_timer ();
+		return _video_view[VideoType::MAIN]->state_timer();
 	}
 
 	/* Some accessors and utility methods that VideoView classes need */
-	bool outline_content () const {
-		return _outline_content;
+	bool outline_content(VideoType type) const {
+		return type == VideoType::MAIN && _outline_content;
 	}
-	boost::optional<dcpomatic::Rect<double>> outline_subtitles () const {
-		return _outline_subtitles;
-	}
+	boost::optional<dcpomatic::Rect<double>> outline_subtitles(VideoType type) const;
 	bool pad_black () const {
 		return _pad_black;
 	}
@@ -147,9 +145,7 @@ public:
 	}
 	void finished ();
 	void image_changed (std::shared_ptr<PlayerVideo> video);
-	boost::optional<dcpomatic::Rect<float>> crop_guess () const {
-		return _crop_guess;
-	}
+	boost::optional<dcpomatic::Rect<float>> crop_guess(VideoType type) const;
 
 	bool pending_idle_get () const {
 		return _idle_get;
@@ -167,7 +163,7 @@ public:
 
 private:
 
-	void video_view_sized ();
+	void video_view_sized(VideoType type);
 	void calculate_sizes ();
 	void player_change (ChangeType type, int, bool);
 	void player_change (std::vector<int> properties);
@@ -190,7 +186,7 @@ private:
 	std::shared_ptr<Film> _film;
 	boost::optional<Player> _player;
 
-	std::shared_ptr<VideoView> _video_view;
+	EnumIndexedVector<std::shared_ptr<VideoView>, VideoType> _video_view;
 	bool _coalesce_player_changes = false;
 	std::vector<int> _pending_player_changes;
 

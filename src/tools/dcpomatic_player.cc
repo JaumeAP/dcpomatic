@@ -335,11 +335,11 @@ public:
 
 	void setup_main_sizer (Config::PlayerMode mode)
 	{
-		_main_sizer->Detach(_viewer.panel());
+		_main_sizer->Detach(_viewer.panel(VideoType::MAIN));
 		_main_sizer->Detach (_controls);
 		_main_sizer->Detach (_info);
 		if (mode != Config::PLAYER_MODE_DUAL) {
-			_main_sizer->Add(_viewer.panel(), 1, wxEXPAND);
+			_main_sizer->Add(_viewer.panel(VideoType::MAIN), 1, wxEXPAND);
 		}
 		_main_sizer->Add (_controls, mode == Config::PLAYER_MODE_DUAL ? 1 : 0, wxEXPAND | wxALL, 6);
 		_main_sizer->Add (_info, 0, wxEXPAND | wxALL, 6);
@@ -911,8 +911,8 @@ private:
 			_dual_screen = new wxFrame(this, wxID_ANY, {});
 			_dual_screen->SetBackgroundColour (wxColour(0, 0, 0));
 			_dual_screen->ShowFullScreen (true);
-			_viewer.panel()->Reparent(_dual_screen);
-			_viewer.panel()->SetFocus();
+			_viewer.panel(VideoType::MAIN)->Reparent(_dual_screen);
+			_viewer.panel(VideoType::MAIN)->SetFocus();
 			_dual_screen->Show ();
 			LOG_DEBUG_PLAYER("Setting up dual screen mode with %1 displays", wxDisplay::GetCount());
 			for (auto index = 0U; index < wxDisplay::GetCount(); ++index) {
@@ -933,13 +933,13 @@ private:
 				};
 				auto const image_display = Config::instance()->image_display();
 				_dual_screen->Move(geometry[image_display].GetX(), geometry[image_display].GetY());
-				_viewer.panel()->SetSize(geometry[image_display].GetWidth(), geometry[image_display].GetHeight());
+				_viewer.panel(VideoType::MAIN)->SetSize(geometry[image_display].GetWidth(), geometry[image_display].GetHeight());
 				Move(geometry[1 - image_display].GetX(), geometry[1 - image_display].GetY());
 			}
 			_dual_screen->Bind(wxEVT_CHAR_HOOK, boost::bind(&DOMFrame::dual_screen_key_press, this, _1));
 		} else {
 			if (_dual_screen) {
-				_viewer.panel()->Reparent(_overall_panel);
+				_viewer.panel(VideoType::MAIN)->Reparent(_overall_panel);
 				_dual_screen->Destroy ();
 				_dual_screen = 0;
 			}

@@ -46,8 +46,8 @@ using namespace boost::placeholders;
 using namespace dcpomatic;
 
 
-SimpleVideoView::SimpleVideoView (FilmViewer* viewer, wxWindow* parent)
-	: VideoView (viewer)
+SimpleVideoView::SimpleVideoView(FilmViewer* viewer, VideoType type, wxWindow* parent)
+	: VideoView (viewer, type)
 	, _rec2020_filter("convert", "convert", "", "colorspace=all=bt709:iall=bt2020")
 	, _rec2020_filter_graph({ _rec2020_filter }, dcp::Fraction(24, 1))
 {
@@ -109,14 +109,14 @@ SimpleVideoView::paint ()
 		dc.DrawRectangle(0, gap + out_size.height + 1, panel_size.width, gap + 1);
 	}
 
-	if (_viewer->outline_content()) {
+	if (_viewer->outline_content(_type)) {
 		wxPen p (outline_content_colour(), 2);
 		dc.SetPen (p);
 		dc.SetBrush (*wxTRANSPARENT_BRUSH);
 		dc.DrawRectangle(_inter_position.x, _inter_position.y + (panel_size.height - out_size.height) / 2, _inter_size.width, _inter_size.height);
 	}
 
-	auto subs = _viewer->outline_subtitles();
+	auto subs = _viewer->outline_subtitles(_type);
 	if (subs) {
 		wxPen p (outline_subtitles_colour(), 2);
 		dc.SetPen (p);
@@ -124,16 +124,15 @@ SimpleVideoView::paint ()
 		dc.DrawRectangle (subs->x * out_size.width, subs->y * out_size.height, subs->width * out_size.width, subs->height * out_size.height);
 	}
 
-	if (_viewer->crop_guess()) {
+	if (auto const crop_guess = _viewer->crop_guess(_type)) {
 		wxPen p (crop_guess_colour(), 2);
 		dc.SetPen (p);
 		dc.SetBrush (*wxTRANSPARENT_BRUSH);
-		auto const crop_guess = _viewer->crop_guess().get();
 		dc.DrawRectangle (
-			_inter_position.x + _inter_size.width * crop_guess.x,
-			_inter_position.y + _inter_size.height * crop_guess.y,
-			_inter_size.width * crop_guess.width,
-			_inter_size.height * crop_guess.height
+			_inter_position.x + _inter_size.width * crop_guess->x,
+			_inter_position.y + _inter_size.height * crop_guess->y,
+			_inter_size.width * crop_guess->width,
+			_inter_size.height * crop_guess->height
 			);
 	}
 

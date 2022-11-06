@@ -95,18 +95,21 @@ FilmViewer::FilmViewer (wxWindow* p)
 #if wxCHECK_VERSION(3, 1, 0)
 	switch (Config::instance()->video_view_type()) {
 	case Config::VIDEO_VIEW_OPENGL:
-		_video_view = std::make_shared<GLVideoView>(this, p);
+		_video_view[VideoType::MAIN] = std::make_shared<GLVideoView>(this, VideoType::MAIN, p);
+		_video_view[VideoType::SIGN_LANGUAGE] = std::make_shared<GLVideoView>(this, VideoType::SIGN_LANGUAGE, _sign_language_dialog);
 		break;
 	case Config::VIDEO_VIEW_SIMPLE:
-		_video_view = std::make_shared<SimpleVideoView>(this, p);
+		_video_view[VideoType::MAIN] = std::make_shared<SimpleVideoView>(this, VideoType::MAIN, p);
+		_video_view[VideoType::SIGN_LANGUAGE] = std::make_shared<SimpleVideoView>(this, VideoType::SIGN_LANGUAGE, _sign_language_dialog);
 		break;
 	}
 #else
 	_video_view = std::make_shared<SimpleVideoView>(this, p);
 #endif
 
-	_video_view->Sized.connect (boost::bind(&FilmViewer::video_view_sized, this));
-	_video_view->TooManyDropped.connect (boost::bind(boost::ref(TooManyDropped)));
+	_video_view[VideoType::MAIN]->Sized.connect(boost::bind(&FilmViewer::video_view_sized, this, VideoType::MAIN));
+	_video_view[VideoType::SIGN_LANGUAGE]->Sized.connect(boost::bind(&FilmViewer::video_view_sized, this, VideoType::SIGN_LANGUAGE));
+	_video_view[VideoType::MAIN]->TooManyDropped.connect(boost::bind(boost::ref(TooManyDropped)));
 
 	set_film (shared_ptr<Film>());
 
@@ -142,7 +145,7 @@ FilmViewer::idle_handler ()
 		return;
 	}
 
-	if (_video_view->display_next_frame(true) == VideoView::AGAIN) {
+	if (_video_view[VideoType::MAIN]->display_next_frame(true) == VideoView::AGAIN) {
 		/* get() could not complete quickly so we'll try again later */
 		signal_manager->when_idle (boost::bind(&FilmViewer::idle_handler, this));
 	} else {
@@ -160,7 +163,8 @@ FilmViewer::set_film (shared_ptr<Film> film)
 
 	_film = film;
 
-	_video_view->clear ();
+	_video_view[VideoType::MAIN]->clear();
+	_video_view[VideoType::SIGN_LANGUAGE]->clear();
 	_closed_captions_dialog->clear ();
 
 	destroy_butler();
@@ -168,7 +172,8 @@ FilmViewer::set_film (shared_ptr<Film> film)
 	if (!_film) {
 		_player = boost::none;
 		resume();
-		_video_view->update ();
+		_video_view[VideoType::MAIN]->update();
+		_video_view[VideoType::SIGN_LANGUAGE]->update();
 		return;
 	}
 
@@ -179,7 +184,7 @@ FilmViewer::set_film (shared_ptr<Film> film)
 			_player->set_dcp_decode_reduction (_dcp_decode_reduction);
 		}
 	} catch (bad_alloc &) {
-		error_dialog (_video_view->get(), _("There is not enough free memory to do that."));
+		error_dialog(_video_view[VideoType::MAIN]->get(), _("There is not enough free memory to do that."));
 		_film.reset ();
 		resume();
 		return;
@@ -234,7 +239,7 @@ void
 FilmViewer::create_butler()
 {
 #if wxCHECK_VERSION(3, 1, 0)
-	auto const opengl = dynamic_pointer_cast<GLVideoView>(_video_view);
+	auto const opengl = dynamic_pointer_cast<GLVideoView>(_video_view[VideoType::MAIN]);
 #else
 	auto const opengl = false;
 #endif
@@ -266,7 +271,7 @@ void
 FilmViewer::set_outline_content (bool o)
 {
 	_outline_content = o;
-	_video_view->update ();
+	_video_view[VideoType::MAIN]->update();
 }
 
 
@@ -274,20 +279,20 @@ void
 FilmViewer::set_outline_subtitles (optional<dcpomatic::Rect<double>> rect)
 {
 	_outline_subtitles = rect;
-	_video_view->update ();
+	_video_view[VideoType::MAIN]->update();
 }
 
 
 void
 FilmViewer::set_eyes (Eyes e)
 {
-	_video_view->set_eyes (e);
+	_video_view[VideoType::MAIN]->set_eyes(e);
 	slow_refresh ();
 }
 
 
 void
-FilmViewer::video_view_sized ()
+FilmViewer::video_view_sized(VideoType)
 {
 	calculate_sizes ();
 	if (!quick_refresh()) {
@@ -303,41 +308,43 @@ FilmViewer::calculate_sizes ()
 		return;
 	}
 
-	auto const container = _film->container ();
+	auto set_sizes = [this](VideoType type, float ratio) {
+		auto const scale = dpi_scale_factor(_video_view[type]->get());
+		int const video_view_width = std::round(_video_view[type]->get()->GetSize().x * scale);
+		int const video_view_height = std::round(_video_view[type]->get()->GetSize().y * scale);
 
-	auto const scale = dpi_scale_factor (_video_view->get());
-	int const video_view_width = std::round(_video_view->get()->GetSize().x * scale);
-	int const video_view_height = std::round(_video_view->get()->GetSize().y * scale);
+		auto const view_ratio = float(video_view_width) / video_view_height;
 
-	auto const view_ratio = float(video_view_width) / video_view_height;
-	auto const film_ratio = container ? container->ratio () : 1.78;
+		dcp::Size out_size;
+		if (view_ratio < ratio) {
+			/* panel is less widescreen than the film; clamp width */
+			out_size.width = video_view_width;
+			out_size.height = lrintf(out_size.width / ratio);
+		} else {
+			/* panel is more widescreen than the film; clamp height */
+			out_size.height = video_view_height;
+			out_size.width = lrintf(out_size.height * ratio);
+		}
 
-	dcp::Size out_size;
-	if (view_ratio < film_ratio) {
-		/* panel is less widscreen than the film; clamp width */
-		out_size.width = video_view_width;
-		out_size.height = lrintf (out_size.width / film_ratio);
-	} else {
-		/* panel is more widescreen than the film; clamp height */
-		out_size.height = video_view_height;
-		out_size.width = lrintf (out_size.height * film_ratio);
-	}
+		/* Catch silly values */
+		out_size.width = max (64, out_size.width);
+		out_size.height = max (64, out_size.height);
 
-	/* Catch silly values */
-	out_size.width = max (64, out_size.width);
-	out_size.height = max (64, out_size.height);
+		/* Make sure the video container sizes are always a multiple of 2 so that
+		 * we don't get gaps with subsampled sources (e.g. YUV420)
+		 */
+		if (out_size.width % 2) {
+			out_size.width++;
+		}
+		if (out_size.height % 2) {
+			out_size.height++;
+		}
 
-	/* Make sure the video container sizes are always a multiple of 2 so that
-	 * we don't get gaps with subsampled sources (e.g. YUV420)
-	 */
-	if (out_size.width % 2) {
-		out_size.width++;
-	}
-	if (out_size.height % 2) {
-		out_size.height++;
-	}
+		_player->set_video_container_size(type, out_size);
+	};
 
-	_player->set_video_container_size (out_size);
+	set_sizes(VideoType::MAIN, _film->container() ? _film->container()->ratio() : 1.78);
+	set_sizes(VideoType::SIGN_LANGUAGE, 480.0 / 640.0);
 }
 
 
@@ -355,12 +362,12 @@ FilmViewer::start_audio_stream_if_open ()
 	auto& audio = AudioBackend::instance()->rtaudio();
 
 	if (audio.isStreamOpen()) {
-		audio.setStreamTime(_video_view->position().seconds());
+		audio.setStreamTime(_video_view[VideoType::MAIN]->position().seconds());
 		auto error = AudioBackend::instance()->start_stream();
 		if (error) {
 			_audio_channels = 0;
 			error_dialog(
-				_video_view->get(),
+				_video_view[VideoType::MAIN]->get(),
 				_("There was a problem starting audio playback.  Please try another audio output device in Preferences."), std_to_wx(*error)
 				);
 		}
@@ -375,7 +382,8 @@ FilmViewer::resume ()
 	--_suspended;
 	if (_playing && !_suspended) {
 		start_audio_stream_if_open ();
-		_video_view->start ();
+		_video_view[VideoType::MAIN]->start();
+		_video_view[VideoType::SIGN_LANGUAGE]->start();
 	}
 }
 
@@ -411,7 +419,8 @@ FilmViewer::start ()
 	 * happens we want it to come after the Started signal, so do that first.
 	 */
 	Started ();
-	_video_view->start ();
+	_video_view[VideoType::MAIN]->start();
+	_video_view[VideoType::SIGN_LANGUAGE]->start();
 }
 
 
@@ -425,10 +434,12 @@ FilmViewer::stop ()
 	}
 
 	_playing = false;
-	_video_view->stop ();
+	_video_view[VideoType::MAIN]->stop();
+	_video_view[VideoType::SIGN_LANGUAGE]->stop();
 	Stopped ();
 
-	_video_view->rethrow ();
+	_video_view[VideoType::MAIN]->rethrow();
+	_video_view[VideoType::SIGN_LANGUAGE]->rethrow();
 	return true;
 }
 
@@ -496,9 +507,10 @@ FilmViewer::film_change(ChangeType type, FilmProperty p)
 	if (p == FilmProperty::AUDIO_CHANNELS) {
 		destroy_and_maybe_create_butler();
 	} else if (p == FilmProperty::VIDEO_FRAME_RATE) {
-		_video_view->set_video_frame_rate (_film->video_frame_rate());
+		_video_view[VideoType::MAIN]->set_video_frame_rate(_film->video_frame_rate());
+		_video_view[VideoType::SIGN_LANGUAGE]->set_video_frame_rate(_film->video_frame_rate());
 	} else if (p == FilmProperty::THREE_D) {
-		_video_view->set_three_d (_film->three_d());
+		_video_view[VideoType::MAIN]->set_three_d(_film->three_d());
 	} else if (p == FilmProperty::CONTENT) {
 		_closed_captions_dialog->update_tracks (_film);
 	}
@@ -508,7 +520,8 @@ FilmViewer::film_change(ChangeType type, FilmProperty p)
 void
 FilmViewer::film_length_change ()
 {
-	_video_view->set_length (_film->length());
+	_video_view[VideoType::MAIN]->set_length(_film->length());
+	_video_view[VideoType::SIGN_LANGUAGE]->set_length(_film->length());
 }
 
 
@@ -516,7 +529,7 @@ FilmViewer::film_length_change ()
 void
 FilmViewer::slow_refresh ()
 {
-	seek (_video_view->position(), true);
+	seek(_video_view[VideoType::MAIN]->position(), true);
 }
 
 
@@ -527,10 +540,10 @@ FilmViewer::slow_refresh ()
 bool
 FilmViewer::quick_refresh ()
 {
-	if (!_video_view || !_film || !_player) {
+	if (!_video_view[VideoType::MAIN] || !_film || !_player) {
 		return true;
 	}
-	return _video_view->reset_metadata (_film, _player->video_container_size());
+	return _video_view[VideoType::MAIN]->reset_metadata(_film, _player->video_container_size(VideoType::MAIN));
 }
 
 
@@ -586,7 +599,7 @@ FilmViewer::seek (DCPTime t, bool accurate)
 		/* We're going to start playing again straight away
 		   so wait for the seek to finish.
 		*/
-		while (_video_view->display_next_frame(false) == VideoView::AGAIN) {}
+		while (_video_view[VideoType::MAIN]->display_next_frame(false) == VideoView::AGAIN) {}
 	}
 
 	resume ();
@@ -635,7 +648,7 @@ FilmViewer::config_changed (Config::Property p)
 		if (audio.openStream(&sp, 0, RTAUDIO_FLOAT32, 48000, &_audio_block_size, &rtaudio_callback, this) != RTAUDIO_NO_ERROR) {
 			_audio_channels = 0;
 			error_dialog(
-				_video_view->get(),
+				_video_view[VideoType::MAIN]->get(),
 				_("Could not set up audio output.  There will be no audio during the preview."), std_to_wx(backend->last_rtaudio_error())
 				);
 		}
@@ -677,7 +690,7 @@ FilmViewer::config_changed (Config::Property p)
 		} catch (RtAudioError& e) {
 			_audio_channels = 0;
 			error_dialog (
-				_video_view->get(),
+				_video_view[VideoType::MAIN]->get(),
 				_("Could not set up audio output.  There will be no audio during the preview."), std_to_wx(e.what())
 				);
 		}
@@ -700,7 +713,7 @@ FilmViewer::uncorrected_time () const
 		return DCPTime::from_seconds(audio.getStreamTime());
 	}
 
-	return _video_view->position();
+	return _video_view[VideoType::MAIN]->position();
 }
 
 
@@ -721,7 +734,7 @@ FilmViewer::audio_time () const
 DCPTime
 FilmViewer::time () const
 {
-	return audio_time().get_value_or(_video_view->position());
+	return audio_time().get_value_or(_video_view[VideoType::MAIN]->position());
 }
 
 
@@ -818,7 +831,7 @@ FilmViewer::show_sign_language()
 void
 FilmViewer::seek_by (DCPTime by, bool accurate)
 {
-	seek (_video_view->position() + by, accurate);
+	seek(_video_view[VideoType::MAIN]->position() + by, accurate);
 }
 
 
@@ -851,21 +864,21 @@ FilmViewer::ui_finished ()
 int
 FilmViewer::dropped () const
 {
-	return _video_view->dropped ();
+	return _video_view[VideoType::MAIN]->dropped();
 }
 
 
 int
 FilmViewer::errored () const
 {
-	return _video_view->errored ();
+	return _video_view[VideoType::MAIN]->errored();
 }
 
 
 int
 FilmViewer::gets () const
 {
-	return _video_view->gets ();
+	return _video_view[VideoType::MAIN]->gets();
 }
 
 
@@ -880,7 +893,7 @@ void
 FilmViewer::set_optimisation(Optimisation o)
 {
 	_optimisation = o;
-	_video_view->set_optimisation(o);
+	_video_view[VideoType::MAIN]->set_optimisation(o);
 	destroy_and_maybe_create_butler();
 }
 
@@ -890,7 +903,7 @@ FilmViewer::set_crop_guess (dcpomatic::Rect<float> crop)
 {
 	if (crop != _crop_guess) {
 		_crop_guess = crop;
-		_video_view->update ();
+		_video_view[VideoType::MAIN]->update();
 	}
 }
 
@@ -899,7 +912,29 @@ void
 FilmViewer::unset_crop_guess ()
 {
 	_crop_guess = boost::none;
-	_video_view->update ();
+	_video_view[VideoType::MAIN]->update();
+}
+
+
+optional<dcpomatic::Rect<float>>
+FilmViewer::crop_guess(VideoType type) const
+{
+	if (type != VideoType::MAIN) {
+		return {};
+	}
+
+	return _crop_guess;
+}
+
+
+optional<dcpomatic::Rect<double>>
+FilmViewer::outline_subtitles(VideoType type) const
+{
+	if (type != VideoType::MAIN) {
+		return {};
+	}
+
+	return _outline_subtitles;
 }
 
 shared_ptr<DCPContent>

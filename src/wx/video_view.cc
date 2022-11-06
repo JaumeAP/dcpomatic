@@ -36,8 +36,9 @@ static constexpr int TOO_MANY_DROPPED_FRAMES = 20;
 static constexpr int TOO_MANY_DROPPED_PERIOD = 5.0;
 
 
-VideoView::VideoView (FilmViewer* viewer)
+VideoView::VideoView(FilmViewer* viewer, VideoType type)
 	: _viewer (viewer)
+	, _type(type)
 	, _state_timer ("viewer")
 {
 
@@ -75,7 +76,7 @@ VideoView::get_next_frame (bool non_blocking)
 
 	do {
 		Butler::Error e;
-		auto pv = butler->get_video(VideoType::MAIN, non_blocking ? Butler::Behaviour::NON_BLOCKING : Butler::Behaviour::BLOCKING, &e);
+		auto pv = butler->get_video(_type, non_blocking ? Butler::Behaviour::NON_BLOCKING : Butler::Behaviour::BLOCKING, &e);
 		if (e.code == Butler::Error::Code::DIED) {
 			LOG_ERROR ("Butler died with %1", e.summary());
 		}

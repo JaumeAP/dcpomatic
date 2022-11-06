@@ -45,7 +45,7 @@ using std::shared_ptr;
 SystemInformationDialog::SystemInformationDialog(wxWindow* parent, FilmViewer const& viewer)
 	: TableDialog (parent, _("System information"), 2, 1, false)
 {
-	auto gl = std::dynamic_pointer_cast<const GLVideoView>(viewer.video_view());
+	auto gl = std::dynamic_pointer_cast<const GLVideoView>(viewer.video_view(VideoType::MAIN));
 
 	if (!gl) {
 		add (_("OpenGL version"), true);

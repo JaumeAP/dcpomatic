@@ -29,6 +29,7 @@
 #include "lib/signaller.h"
 #include "lib/timer.h"
 #include "lib/types.h"
+#include "lib/video_type.h"
 #include <dcp/warnings.h>
 #include <dcp/types.h>
 LIBDCP_DISABLE_WARNINGS
@@ -48,7 +49,7 @@ class wxWindow;
 class VideoView : public ExceptionStore, public Signaller
 {
 public:
-	VideoView (FilmViewer* viewer);
+	VideoView(FilmViewer* viewer, VideoType type);
 	virtual ~VideoView () {}
 
 	VideoView (VideoView const&) = delete;
@@ -178,6 +179,7 @@ protected:
 	}
 
 	FilmViewer* _viewer;
+	VideoType _type;
 
 	StateTimer _state_timer;
 

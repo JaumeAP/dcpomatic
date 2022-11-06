@@ -28,7 +28,7 @@ using std::make_shared;
 
 
 SignLanguageDialog::SignLanguageDialog(wxWindow* parent)
-	: wxDialog(parent, wxID_ANY, _("Sign language"), wxDefaultPosition, wxSize(SIGN_LANGUAGE_WIDTH, SIGN_LANGUAGE_HEIGHT))
+	: wxDialog(parent, wxID_ANY, _("Sign language"), wxDefaultPosition, wxSize(SIGN_LANGUAGE_WIDTH, SIGN_LANGUAGE_HEIGHT), wxDEFAULT_FRAME_STYLE | wxRESIZE_BORDER)
 {
 
 }

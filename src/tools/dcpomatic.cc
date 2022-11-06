@@ -388,7 +388,7 @@ public:
 		auto job_manager_view = new JobManagerView(_right_panel, false);
 
 		auto right_sizer = new wxBoxSizer (wxVERTICAL);
-		right_sizer->Add(_film_viewer.panel(), 2, wxEXPAND | wxALL, 6);
+		right_sizer->Add(_film_viewer.panel(VideoType::MAIN), 2, wxEXPAND | wxALL, 6);
 		right_sizer->Add (_controls, 0, wxEXPAND | wxALL, 6);
 		right_sizer->Add (job_manager_view, 1, wxEXPAND | wxALL, 6);
 

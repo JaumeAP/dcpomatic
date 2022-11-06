@@ -76,8 +76,8 @@ check_gl_error (char const * last)
 }
 
 
-GLVideoView::GLVideoView (FilmViewer* viewer, wxWindow *parent)
-	: VideoView (viewer)
+GLVideoView::GLVideoView(FilmViewer* viewer, VideoType type, wxWindow *parent)
+	: VideoView(viewer, type)
 	, _context (nullptr)
 	, _rec2020(false)
 	, _vsync_enabled (false)
@@ -604,12 +604,12 @@ GLVideoView::draw ()
 		_subtitle_texture->bind();
 		glDrawElements (GL_TRIANGLES, indices_subtitle_texture_number, GL_UNSIGNED_INT, reinterpret_cast<void*>(indices_subtitle_texture_offset * sizeof(int)));
 	}
-	if (_viewer->outline_content()) {
+	if (_viewer->outline_content(_type)) {
 		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::OUTLINE_CONTENT));
 		glDrawElements (GL_LINES, indices_outline_content_number, GL_UNSIGNED_INT, reinterpret_cast<void*>(indices_outline_content_offset * sizeof(int)));
 		check_gl_error ("glDrawElements");
 	}
-	if (auto guess = _viewer->crop_guess()) {
+	if (auto const guess = _viewer->crop_guess(_type)) {
 		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::CROP_GUESS));
 		glDrawElements (GL_LINES, indices_crop_guess_number, GL_UNSIGNED_INT, reinterpret_cast<void*>(indices_crop_guess_offset * sizeof(int)));
 		check_gl_error ("glDrawElements");
@@ -671,7 +671,7 @@ GLVideoView::set_image (shared_ptr<const PlayerVideo> pv)
 	auto const inter_position = pv->inter_position();
 	auto const inter_size = pv->inter_size();
 	auto const out_size = pv->out_size();
-	auto const crop_guess = _viewer->crop_guess();
+	auto const crop_guess = _viewer->crop_guess(_type);
 
 	auto x_offset = std::max(0, (canvas_width - out_size.width) / 2);
 	auto y_offset = std::max(0, (canvas_height - out_size.height) / 2);
