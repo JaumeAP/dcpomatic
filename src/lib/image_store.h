@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_IMAGE_STORE_H
+#define DCPOMATIC_IMAGE_STORE_H
+
+
 #include <boost/thread.hpp>
 #include <map>
 
@@ -49,3 +53,6 @@ private:
 	std::map<uint8_t*, std::pair<std::shared_ptr<const Image>, int>> _images;
 	boost::mutex _mutex;
 };
+
+
+#endif
