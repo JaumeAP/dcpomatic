@@ -70,8 +70,18 @@ public:
 		return _data.end();
 	}
 
+	std::vector<Enum> indices() const {
+		if (_indices.empty()) {
+			for (int i = 0; i < static_cast<int>(Enum::COUNT); ++i) {
+				_indices.push_back(static_cast<Enum>(i));
+			}
+		}
+		return _indices;
+	}
+
 private:
 	std::vector<Type> _data;
+	mutable std::vector<Enum> _indices;
 };
 
 
