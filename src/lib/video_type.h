@@ -24,6 +24,7 @@
 
 
 #include <string>
+#include <vector>
 
 
 enum class VideoType
@@ -36,6 +37,9 @@ enum class VideoType
 
 VideoType string_to_video_type(std::string type);
 std::string video_type_to_string(VideoType type);
+
+
+std::vector<VideoType> video_types();
 
 
 #endif

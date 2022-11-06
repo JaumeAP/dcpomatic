@@ -25,6 +25,7 @@
 
 
 using std::string;
+using std::vector;
 
 
 string
@@ -51,5 +52,12 @@ string_to_video_type(string type)
 	}
 
 	DCPOMATIC_ASSERT(false);
+}
+
+
+vector<VideoType>
+video_types()
+{
+	return { VideoType::MAIN, VideoType::SIGN_LANGUAGE };
 }
 

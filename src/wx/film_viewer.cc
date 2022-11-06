@@ -107,8 +107,9 @@ FilmViewer::FilmViewer (wxWindow* p)
 	_video_view = std::make_shared<SimpleVideoView>(this, p);
 #endif
 
-	_video_view[VideoType::MAIN]->Sized.connect(boost::bind(&FilmViewer::video_view_sized, this, VideoType::MAIN));
-	_video_view[VideoType::SIGN_LANGUAGE]->Sized.connect(boost::bind(&FilmViewer::video_view_sized, this, VideoType::SIGN_LANGUAGE));
+	for (auto type: _video_view.indices()) {
+		_video_view[type]->Sized.connect(boost::bind(&FilmViewer::video_view_sized, this, type));
+	}
 	_video_view[VideoType::MAIN]->TooManyDropped.connect(boost::bind(boost::ref(TooManyDropped)));
 
 	set_film (shared_ptr<Film>());
@@ -163,8 +164,9 @@ FilmViewer::set_film (shared_ptr<Film> film)
 
 	_film = film;
 
-	_video_view[VideoType::MAIN]->clear();
-	_video_view[VideoType::SIGN_LANGUAGE]->clear();
+	for (auto& view: _video_view) {
+		view->clear();
+	}
 	_closed_captions_dialog->clear ();
 
 	destroy_butler();
@@ -172,8 +174,9 @@ FilmViewer::set_film (shared_ptr<Film> film)
 	if (!_film) {
 		_player = boost::none;
 		resume();
-		_video_view[VideoType::MAIN]->update();
-		_video_view[VideoType::SIGN_LANGUAGE]->update();
+		for (auto& view: _video_view) {
+			view->update();
+		}
 		return;
 	}
 
@@ -382,8 +385,9 @@ FilmViewer::resume ()
 	--_suspended;
 	if (_playing && !_suspended) {
 		start_audio_stream_if_open ();
-		_video_view[VideoType::MAIN]->start();
-		_video_view[VideoType::SIGN_LANGUAGE]->start();
+		for (auto& view: _video_view) {
+			view->start();
+		}
 	}
 }
 
@@ -419,8 +423,9 @@ FilmViewer::start ()
 	 * happens we want it to come after the Started signal, so do that first.
 	 */
 	Started ();
-	_video_view[VideoType::MAIN]->start();
-	_video_view[VideoType::SIGN_LANGUAGE]->start();
+	for (auto& view: _video_view) {
+		view->start();
+	}
 }
 
 
@@ -434,12 +439,15 @@ FilmViewer::stop ()
 	}
 
 	_playing = false;
-	_video_view[VideoType::MAIN]->stop();
-	_video_view[VideoType::SIGN_LANGUAGE]->stop();
+	for (auto& view: _video_view) {
+		view->stop();
+	}
+
 	Stopped ();
 
-	_video_view[VideoType::MAIN]->rethrow();
-	_video_view[VideoType::SIGN_LANGUAGE]->rethrow();
+	for (auto& view: _video_view) {
+		view->rethrow();
+	}
 	return true;
 }
 
@@ -507,8 +515,9 @@ FilmViewer::film_change(ChangeType type, FilmProperty p)
 	if (p == FilmProperty::AUDIO_CHANNELS) {
 		destroy_and_maybe_create_butler();
 	} else if (p == FilmProperty::VIDEO_FRAME_RATE) {
-		_video_view[VideoType::MAIN]->set_video_frame_rate(_film->video_frame_rate());
-		_video_view[VideoType::SIGN_LANGUAGE]->set_video_frame_rate(_film->video_frame_rate());
+		for (auto& view: _video_view) {
+			view->set_video_frame_rate(_film->video_frame_rate());
+		}
 	} else if (p == FilmProperty::THREE_D) {
 		_video_view[VideoType::MAIN]->set_three_d(_film->three_d());
 	} else if (p == FilmProperty::CONTENT) {
@@ -520,8 +529,9 @@ FilmViewer::film_change(ChangeType type, FilmProperty p)
 void
 FilmViewer::film_length_change ()
 {
-	_video_view[VideoType::MAIN]->set_length(_film->length());
-	_video_view[VideoType::SIGN_LANGUAGE]->set_length(_film->length());
+	for (auto& view: _video_view) {
+		view->set_length(_film->length());
+	}
 }
 
 

@@ -136,7 +136,7 @@ Butler::~Butler ()
 bool
 Butler::should_run () const
 {
-	auto check_video_much_too_big = [this](VideoType type) {
+	for (auto type: _video.indices()) {
 		if (_video[type].size() >= MAXIMUM_VIDEO_READAHEAD * 10) {
 			/* This is way too big */
 			auto pos = _audio.peek();
@@ -150,9 +150,6 @@ Butler::should_run () const
 		}
 	};
 
-	check_video_much_too_big(VideoType::MAIN);
-	check_video_much_too_big(VideoType::SIGN_LANGUAGE);
-
 	if (_audio.size() >= MAXIMUM_AUDIO_READAHEAD * 10) {
 		/* This is way too big */
 		auto pos = _audio.peek();
@@ -165,14 +162,11 @@ Butler::should_run () const
 		}
 	}
 
-	auto check_video_too_big = [this](VideoType type) {
-		if (_video[type].size() >= MAXIMUM_VIDEO_READAHEAD * 2) {
-			LOG_WARNING ("Butler video buffers reached %1 frames (audio is %2)", _video[type].size(), _audio.size());
+	for (auto& video: _video) {
+		if (video.size() >= MAXIMUM_VIDEO_READAHEAD * 2) {
+			LOG_WARNING ("Butler video buffers reached %1 frames (audio is %2)", video.size(), _audio.size());
 		}
 	};
-
-	check_video_too_big(VideoType::MAIN);
-	check_video_too_big(VideoType::SIGN_LANGUAGE);
 
 	if (_audio.size() >= MAXIMUM_AUDIO_READAHEAD * 2) {
 		LOG_WARNING ("Butler audio buffers reached %1 frames (main video is %2)", _audio.size(), _video[VideoType::MAIN].size());
@@ -325,8 +319,9 @@ Butler::seek_unlocked (DCPTime position, bool accurate)
 	_pending_seek_position = position;
 	_pending_seek_accurate = accurate;
 
-	_video[VideoType::MAIN].clear();
-	_video[VideoType::SIGN_LANGUAGE].clear();
+	for (auto& video: _video) {
+		video.clear();
+	}
 	_audio.clear ();
 	_closed_caption.clear ();
 
@@ -426,8 +421,9 @@ Butler::player_change (ChangeType type, int property)
 		if (type == ChangeType::DONE) {
 			auto film = _film.lock();
 			if (film) {
-				_video[VideoType::MAIN].reset_metadata(film, _player.video_container_size(VideoType::MAIN));
-				_video[VideoType::SIGN_LANGUAGE].reset_metadata(film, _player.video_container_size(VideoType::SIGN_LANGUAGE));
+				for (auto type: _video.indices()) {
+					_video[type].reset_metadata(film, _player.video_container_size(type));
+				}
 			}
 		}
 		return;

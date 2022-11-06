@@ -154,8 +154,9 @@ void
 Player::construct ()
 {
 	connect();
-	set_video_container_size(VideoType::MAIN, full_size(VideoType::MAIN));
-	set_video_container_size(VideoType::SIGN_LANGUAGE, full_size(VideoType::SIGN_LANGUAGE));
+	for (auto type: video_types()) {
+		set_video_container_size(type, full_size(type));
+	}
 
 	_black_image[VideoType::SIGN_LANGUAGE] = make_shared<Image>(AV_PIX_FMT_RGB24, dcp::Size(SIGN_LANGUAGE_WIDTH, SIGN_LANGUAGE_HEIGHT), Image::Alignment::PADDED);
 
@@ -435,7 +436,9 @@ Player::setup_pieces ()
 	}
 	_silent = Empty(film, playlist(), bind(&have_audio, _1), _playback_length);
 
-	_next_video_time[VideoType::MAIN] = _next_video_time[VideoType::SIGN_LANGUAGE] = boost::none;
+	for (auto& next: _next_video_time) {
+		next = boost::none;
+	}
 	_next_audio_time = boost::none;
 }
 
@@ -763,8 +766,9 @@ Player::pass ()
 
 	if (_playback_length.load() == DCPTime() || !film) {
 		/* Special; just give one black frame */
-		use_video(black_player_video_frame(VideoType::MAIN, Eyes::BOTH), DCPTime(), one_video_frame());
-		use_video(black_player_video_frame(VideoType::SIGN_LANGUAGE, Eyes::BOTH), DCPTime(), one_video_frame());
+		for (auto type: video_types()) {
+			use_video(black_player_video_frame(type, Eyes::BOTH), DCPTime(), one_video_frame());
+		}
 		return true;
 	}
 
@@ -789,16 +793,13 @@ Player::pass ()
 		which = CONTENT;
 	}
 
-	auto check_black = [this, &earliest_time, &which, &black_type](VideoType type) {
+	for (auto type: _black.indices()) {
 		if (!_black[type].done() && !_ignore_video && (!earliest_time || _black[type].position() < *earliest_time)) {
 			earliest_time = _black[type].position();
 			which = BLACK;
 			black_type = type;
 		}
-	};
-
-	check_black(VideoType::MAIN);
-	check_black(VideoType::SIGN_LANGUAGE);
+	}
 
 	if (!_silent.done() && !_ignore_audio && (!earliest_time || _silent.position() < *earliest_time)) {
 		earliest_time = _silent.position ();
@@ -1463,20 +1464,29 @@ Player::seek (DCPTime time, bool accurate)
 		}
 	}
 
+	for (auto& next: _next_video_time) {
+		if (accurate) {
+			next = time;
+		} else {
+			next = boost::none;
+		}
+	}
+
+	for (auto& black: _black) {
+		black.set_position(time);
+	}
+
 	if (accurate) {
-		_next_video_time[VideoType::MAIN] = _next_video_time[VideoType::SIGN_LANGUAGE] = time;
 		_next_audio_time = time;
 	} else {
-		_next_video_time[VideoType::MAIN] = _next_video_time[VideoType::SIGN_LANGUAGE] = boost::none;
 		_next_audio_time = boost::none;
 	}
 
-	_black[VideoType::MAIN].set_position(time);
-	_black[VideoType::SIGN_LANGUAGE].set_position(time);
 	_silent.set_position (time);
 
-	_last_video[VideoType::MAIN][Eyes::LEFT] = _last_video[VideoType::MAIN][Eyes::RIGHT] = _last_video[VideoType::MAIN][Eyes::BOTH] = {};
-	_last_video[VideoType::SIGN_LANGUAGE][Eyes::LEFT] = _last_video[VideoType::SIGN_LANGUAGE][Eyes::RIGHT] = _last_video[VideoType::SIGN_LANGUAGE][Eyes::BOTH] = {};
+	for (auto& last: _last_video) {
+		last[Eyes::LEFT] = last[Eyes::RIGHT] = last[Eyes::BOTH] = {};
+	}
 
 	for (auto& state: _stream_states) {
 		state.second.last_push_end = boost::none;
