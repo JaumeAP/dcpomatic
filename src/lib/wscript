@@ -231,6 +231,8 @@ sources = """
           video_range.cc
           video_ring_buffers.cc
           video_type.cc
+          vp9_encoder.cc
+          vp9_pcm_block.cc
           writer.cc
           zipper.cc
           """

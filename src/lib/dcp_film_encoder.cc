@@ -97,6 +97,8 @@ DCPFilmEncoder::DCPFilmEncoder(shared_ptr<const Film> film, weak_ptr<Job> job)
 			}
 		}
 	}
+
+	_sign_language = contains_sign_language(film->content());
 }
 
 DCPFilmEncoder::~DCPFilmEncoder()
@@ -162,14 +164,38 @@ DCPFilmEncoder::video(shared_ptr<PlayerVideo> data, DCPTime time)
 {
 	if (data->type() == VideoType::MAIN) {
 		_encoder->encode(data, time);
+	} else {
+		_vp9_encoder.encode(data->image(boost::bind(&PlayerVideo::force, AV_PIX_FMT_YUV420P), VideoRange::VIDEO, false), time);
 	}
+}
+
+void
+DCPFilmEncoder::write_pending_audio()
+{
+	if (_pending_audio.empty()) {
+		return;
+	}
+
+	auto const last_pending_audio = _pending_audio.back();
+	auto const pending_audio_end = last_pending_audio.second + DCPTime::from_frames(last_pending_audio.first->frames(), _film->video_frame_rate());
+	auto const write_until = std::min(pending_audio_end, _vp9_encoder.end());
+	if (write_until == _last_audio_write_to) {
+		return;
+	}
+
+	/* XXX: need to mix _pending_audio with the output from vp9_encoder */
 }
 
 
 void
 DCPFilmEncoder::audio(shared_ptr<AudioBuffers> data, DCPTime time)
 {
-	_writer.write(data, time);
+	if (!_sign_language) {
+		_writer.write(data, time);
+	} else {
+		_pending_audio.push_back({data, time});
+		write_pending_audio();
+	}
 }
 
 void

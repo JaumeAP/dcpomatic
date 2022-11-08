@@ -25,6 +25,7 @@
 #include "film_encoder.h"
 #include "player_text.h"
 #include "j2k_encoder.h"
+#include "vp9_encoder.h"
 #include "writer.h"
 #include <dcp/atmos_frame.h>
 
@@ -67,10 +68,16 @@ private:
 	void text (PlayerText, TextType, boost::optional<DCPTextTrack>, dcpomatic::DCPTimePeriod);
 	void atmos (std::shared_ptr<const dcp::AtmosFrame>, dcpomatic::DCPTime, AtmosMetadata metadata);
 
+	void write_pending_audio();
+
 	Writer _writer;
 	std::unique_ptr<VideoEncoder> _encoder;
+	VP9Encoder _vp9_encoder;
 	bool _finishing;
 	bool _non_burnt_subtitles;
+	bool _sign_language;
+	dcpomatic::DCPTime _last_audio_write_to;
+	std::list<std::pair<std::shared_ptr<AudioBuffers>, dcpomatic::DCPTime>> _pending_audio;
 
 	boost::signals2::scoped_connection _player_video_connection;
 	boost::signals2::scoped_connection _player_audio_connection;
