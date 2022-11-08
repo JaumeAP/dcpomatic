@@ -393,7 +393,6 @@ capture_asdcp_logs ()
 }
 
 
-static
 void
 ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list vl)
 {
@@ -1214,4 +1213,3 @@ contains_sign_language(ContentList const& content)
 			return c->video && c->video->type() == VideoType::SIGN_LANGUAGE;
 		});
 }
-
