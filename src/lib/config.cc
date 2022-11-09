@@ -152,6 +152,7 @@ Config::set_defaults ()
 		_nagged[i] = false;
 	}
 	_sound = true;
+	_sound_api = boost::none;
 	_sound_output = boost::none;
 	_last_kdm_write_type = KDM_WRITE_FLAT;
 	_last_dkdm_write_type = DKDM_WRITE_INTERNAL;
@@ -523,6 +524,7 @@ try
 	_jump_to_selected = f.optional_bool_child("JumpToSelected").get_value_or (true);
 	/* The variable was renamed but not the XML tag */
 	_sound = f.optional_bool_child("PreviewSound").get_value_or (true);
+	_sound_api = f.optional_string_child("PreviewSoundAPI");
 	_sound_output = f.optional_string_child("PreviewSoundOutput");
 	if (f.optional_string_child("CoverSheet")) {
 		_cover_sheet = f.optional_string_child("CoverSheet").get();
@@ -938,6 +940,10 @@ Config::write_config () const
 	}
 	/* [XML] PreviewSound 1 to use sound in the GUI preview and player, otherwise 0. */
 	root->add_child("PreviewSound")->add_child_text (_sound ? "1" : "0");
+	if (_sound_api) {
+		/* [XML:opt] PreviewSoundAPI ID of the audio API to use. */
+		root->add_child("PreviewSoundAPI")->add_child_text(_sound_api.get());
+	}
 	if (_sound_output) {
 		/* [XML:opt] PreviewSoundOutput Name of the audio output to use. */
 		root->add_child("PreviewSoundOutput")->add_child_text (_sound_output.get());
