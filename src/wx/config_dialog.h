@@ -217,6 +217,7 @@ private:
 	void reset_to_default ();
 	void update_sound_outputs();
 
+	wxBoxSizer* _play_sound_via_sizer;
 	CheckBox* _sound;
 	Choice* _sound_api;
 	wxChoice* _sound_output;
