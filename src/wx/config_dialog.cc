@@ -861,14 +861,14 @@ SoundPage::setup ()
 
 	_sound = new CheckBox (_panel, _("Play sound via"));
 	table->Add (_sound, wxGBPosition (r, 0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
-	auto s = new wxBoxSizer (wxHORIZONTAL);
+	_play_sound_via_sizer = new wxBoxSizer (wxHORIZONTAL);
 	_sound_api = new Choice(_panel);
-	s->Add(_sound_api, 0);
+	_play_sound_via_sizer->Add(_sound_api, 0);
 	_sound_output = new wxChoice (_panel, wxID_ANY);
-	s->Add(_sound_output, 0, wxLEFT, DCPOMATIC_SIZER_X_GAP);
+	_play_sound_via_sizer->Add(_sound_output, 0, wxLEFT, DCPOMATIC_SIZER_X_GAP);
 	_sound_output_details = new wxStaticText (_panel, wxID_ANY, wxT(""));
-	s->Add (_sound_output_details, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, DCPOMATIC_SIZER_X_GAP);
-	table->Add (s, wxGBPosition(r, 1));
+	_play_sound_via_sizer->Add(_sound_output_details, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, DCPOMATIC_SIZER_X_GAP);
+	table->Add(_play_sound_via_sizer, wxGBPosition(r, 1));
 	++r;
 
 	add_label_to_sizer (table, _panel, _("Mapping"), true, wxGBPosition(r, 0));
@@ -920,6 +920,8 @@ SoundPage::update_sound_outputs()
 	if (!_sound_output->IsEmpty()) {
 		_sound_output->SetSelection(0);
 	}
+
+	_play_sound_via_sizer->Layout();
 }
 
 void
