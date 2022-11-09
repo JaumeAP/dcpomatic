@@ -152,7 +152,7 @@ Config::set_defaults ()
 		_nagged[i] = false;
 	}
 	_sound = true;
-	_sound_output = optional<string> ();
+	_sound_output = boost::none;
 	_last_kdm_write_type = KDM_WRITE_FLAT;
 	_last_dkdm_write_type = DKDM_WRITE_INTERNAL;
 
