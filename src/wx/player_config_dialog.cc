@@ -342,7 +342,7 @@ private:
 
 
 wxPreferencesEditor*
-create_player_config_dialog ()
+create_player_config_dialog(FilmViewer* viewer)
 {
 	auto e = new wxPreferencesEditor (_("DCP-o-matic Player Preferences"));
 
@@ -359,7 +359,7 @@ create_player_config_dialog ()
 #endif
 
 	e->AddPage (new PlayerGeneralPage(wxSize(-1, 500), border));
-	e->AddPage (new SoundPage(ps, border));
+	e->AddPage(new SoundPage(ps, border, viewer));
 	e->AddPage (new LocationsPage(ps, border));
 	e->AddPage (new KeysPage(ps, border));
 	e->AddPage (new PlayerAdvancedPage(ps, border));

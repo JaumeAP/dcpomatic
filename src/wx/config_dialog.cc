@@ -23,6 +23,7 @@
 #include "check_box.h"
 #include "config_dialog.h"
 #include "dcpomatic_button.h"
+#include "film_viewer.h"
 #include "nag_dialog.h"
 #include "static_text.h"
 #include <dcp/file.h>
@@ -883,7 +884,7 @@ SoundPage::setup ()
 	font.SetPointSize (font.GetPointSize() - 1);
 	_sound_output_details->SetFont (font);
 
-	RtAudio audio (DCPOMATIC_RTAUDIO_API);
+	auto& audio = _viewer->audio_backend();
 	for (unsigned int i = 0; i < audio.getDeviceCount(); ++i) {
 		try {
 			auto dev = audio.getDeviceInfo (i);
@@ -922,7 +923,7 @@ SoundPage::sound_changed ()
 void
 SoundPage::sound_output_changed ()
 {
-	RtAudio audio (DCPOMATIC_RTAUDIO_API);
+	auto& audio = _viewer->audio_backend();
 	auto const so = get_sound_output();
 	string default_device;
 	try {
@@ -947,11 +948,12 @@ SoundPage::config_changed ()
 	auto const current_so = get_sound_output ();
 	optional<string> configured_so;
 
+	auto& audio = _viewer->audio_backend();
+
 	if (config->sound_output()) {
 		configured_so = config->sound_output().get();
 	} else {
 		/* No configured output means we should use the default */
-		RtAudio audio (DCPOMATIC_RTAUDIO_API);
 		try {
 			configured_so = audio.getDeviceInfo(audio.getDefaultOutputDevice()).name;
 		} catch (RtAudioError&) {
@@ -970,8 +972,6 @@ SoundPage::config_changed ()
 			++i;
 		}
 	}
-
-	RtAudio audio (DCPOMATIC_RTAUDIO_API);
 
 	map<int, wxString> apis;
 	apis[RtAudio::MACOSX_CORE]    = _("CoreAudio");

@@ -25,7 +25,8 @@
 
 
 class wxPreferencesEditor;
+class FilmViewer;
 
 
-wxPreferencesEditor* create_full_config_dialog ();
+wxPreferencesEditor* create_full_config_dialog(FilmViewer* viewer = nullptr);
 

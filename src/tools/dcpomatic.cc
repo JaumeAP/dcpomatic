@@ -766,7 +766,7 @@ private:
 	void edit_preferences ()
 	{
 		if (!_config_dialog) {
-			_config_dialog = create_full_config_dialog ();
+			_config_dialog = create_full_config_dialog(&_film_viewer);
 		}
 		_config_dialog->Show (this);
 	}

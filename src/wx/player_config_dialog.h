@@ -18,10 +18,14 @@
 
 */
 
+
 /** @file src/player_config_dialog.h
  *  @brief A dialogue to edit DCP-o-matic Player configuration.
  */
 
-class wxPreferencesEditor;
 
-wxPreferencesEditor* create_player_config_dialog ();
+class wxPreferencesEditor;
+class FilmViewer;
+
+
+wxPreferencesEditor* create_player_config_dialog(FilmViewer* viewer);

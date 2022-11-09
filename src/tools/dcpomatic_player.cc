@@ -775,7 +775,7 @@ private:
 		}
 
 		if (!_config_dialog) {
-			_config_dialog = create_player_config_dialog ();
+			_config_dialog = create_player_config_dialog(&_viewer);
 		}
 		_config_dialog->Show (this);
 	}

@@ -50,6 +50,7 @@ LIBDCP_ENABLE_WARNINGS
 
 class AudioMappingView;
 class CheckBox;
+class FilmViewer;
 
 
 class Page : public wxPreferencesPage
@@ -189,8 +190,9 @@ private:
 class SoundPage : public Page
 {
 public:
-	SoundPage (wxSize panel_size, int border)
+	SoundPage(wxSize panel_size, int border, FilmViewer* viewer)
 		: Page (panel_size, border)
+		, _viewer(viewer)
 	{}
 
 	wxString GetName() const override;
@@ -218,6 +220,7 @@ private:
 	wxStaticText* _sound_output_details;
 	AudioMappingView* _map;
 	Button* _reset_to_default;
+	FilmViewer* _viewer;
 };
 
 

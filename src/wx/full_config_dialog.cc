@@ -1803,7 +1803,7 @@ private:
 
 
 wxPreferencesEditor*
-create_full_config_dialog ()
+create_full_config_dialog(FilmViewer* viewer)
 {
 	auto e = new wxPreferencesEditor ();
 
@@ -1820,7 +1820,9 @@ create_full_config_dialog ()
 #endif
 
 	e->AddPage (new FullGeneralPage    (ps, border));
-	e->AddPage (new SoundPage          (ps, border));
+	if (viewer) {
+		e->AddPage(new SoundPage(ps, border, viewer));
+	}
 	e->AddPage (new DefaultsPage       (ps, border));
 	e->AddPage (new EncodingServersPage(ps, border));
 	e->AddPage (new KeysPage           (ps, border));

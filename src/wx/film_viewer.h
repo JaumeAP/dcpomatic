@@ -112,6 +112,10 @@ public:
 	int errored () const;
 	int gets () const;
 
+	RtAudio& audio_backend() {
+		return _audio;
+	}
+
 	int audio_callback (void* out, unsigned int frames);
 
 	StateTimer const & state_timer () const {
