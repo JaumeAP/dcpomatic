@@ -916,7 +916,7 @@ public:
 		}
 
 		_sound_output = boost::none;
-		changed();
+		changed(SOUND_OUTPUT);
 	}
 
 	void set_last_player_load_directory (boost::filesystem::path d) {
