@@ -910,6 +910,15 @@ public:
 		maybe_set (_sound_output, o, SOUND_OUTPUT);
 	}
 
+	void unset_sound_output() {
+		if (!_sound_output) {
+			return;
+		}
+
+		_sound_output = boost::none;
+		changed();
+	}
+
 	void set_last_player_load_directory (boost::filesystem::path d) {
 		maybe_set (_last_player_load_directory, d);
 	}
@@ -920,15 +929,6 @@ public:
 
 	void set_last_dkdm_write_type (DKDMWriteType t) {
 		maybe_set (_last_dkdm_write_type, t);
-	}
-
-	void unset_sound_output () {
-		if (!_sound_output) {
-			return;
-		}
-
-		_sound_output = boost::none;
-		changed ();
 	}
 
 	void set_kdm_container_name_format (dcp::NameFormat n) {
