@@ -86,7 +86,7 @@ rtaudio_callback (void* out, void *, unsigned int frames, double, RtAudioStreamS
 
 
 FilmViewer::FilmViewer (wxWindow* p)
-	: _audio (DCPOMATIC_RTAUDIO_API)
+	: _audio(id_to_audio_api(Config::instance()->sound_api()).rtaudio_id())
 	, _closed_captions_dialog (new ClosedCaptionsDialog(p, this))
 {
 #if wxCHECK_VERSION(3, 1, 0)

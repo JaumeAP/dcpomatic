@@ -50,6 +50,7 @@ LIBDCP_ENABLE_WARNINGS
 
 class AudioMappingView;
 class CheckBox;
+class Choice;
 
 
 class Page : public wxPreferencesPage
@@ -206,14 +207,18 @@ private:
 
 	void setup () override;
 	void config_changed () override;
+        boost::optional<std::string> get_sound_api();
         boost::optional<std::string> get_sound_output ();
 	void sound_changed ();
+	void sound_api_changed();
 	void sound_output_changed ();
 	void setup_sensitivity ();
 	void map_changed (AudioMapping m);
 	void reset_to_default ();
+	void update_sound_outputs();
 
 	CheckBox* _sound;
+	Choice* _sound_api;
 	wxChoice* _sound_output;
 	wxStaticText* _sound_output_details;
 	AudioMappingView* _map;

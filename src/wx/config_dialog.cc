@@ -23,6 +23,7 @@
 #include "check_box.h"
 #include "config_dialog.h"
 #include "dcpomatic_button.h"
+#include "dcpomatic_choice.h"
 #include "nag_dialog.h"
 #include "static_text.h"
 #include <dcp/file.h>
@@ -860,9 +861,11 @@ SoundPage::setup ()
 
 	_sound = new CheckBox (_panel, _("Play sound via"));
 	table->Add (_sound, wxGBPosition (r, 0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
-	wxBoxSizer* s = new wxBoxSizer (wxHORIZONTAL);
+	auto s = new wxBoxSizer (wxHORIZONTAL);
+	_sound_api = new Choice(_panel);
+	s->Add(_sound_api, 0);
 	_sound_output = new wxChoice (_panel, wxID_ANY);
-	s->Add (_sound_output, 0);
+	s->Add(_sound_output, 0, wxLEFT, DCPOMATIC_SIZER_X_GAP);
 	_sound_output_details = new wxStaticText (_panel, wxID_ANY, wxT(""));
 	s->Add (_sound_output_details, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, DCPOMATIC_SIZER_X_GAP);
 	table->Add (s, wxGBPosition(r, 1));
@@ -883,22 +886,40 @@ SoundPage::setup ()
 	font.SetPointSize (font.GetPointSize() - 1);
 	_sound_output_details->SetFont (font);
 
-	RtAudio audio (DCPOMATIC_RTAUDIO_API);
+	for (auto const& api: audio_apis()) {
+		_sound_api->add(api.name(), new wxStringClientData(std_to_wx(api.id())));
+	}
+
+	update_sound_outputs();
+
+	_sound->bind(&SoundPage::sound_changed, this);
+	_sound_api->Bind(wxEVT_CHOICE, bind(&SoundPage::sound_api_changed, this));
+	_sound_output->Bind(wxEVT_CHOICE, bind(&SoundPage::sound_output_changed, this));
+	_map->Changed.connect(bind(&SoundPage::map_changed, this, _1));
+	_reset_to_default->Bind(wxEVT_BUTTON, bind(&SoundPage::reset_to_default, this));
+}
+
+
+void
+SoundPage::update_sound_outputs()
+{
+	_sound_output->Clear();
+
+	RtAudio audio(id_to_audio_api(Config::instance()->sound_api()).rtaudio_id());
 	for (unsigned int i = 0; i < audio.getDeviceCount(); ++i) {
 		try {
-			auto dev = audio.getDeviceInfo (i);
+			auto dev = audio.getDeviceInfo(i);
 			if (dev.probed && dev.outputChannels > 0) {
-				_sound_output->Append (std_to_wx (dev.name));
+				_sound_output->Append(std_to_wx(dev.name));
 			}
 		} catch (RtAudioError&) {
 			/* Something went wrong so let's just ignore that device */
 		}
 	}
 
-	_sound->bind(&SoundPage::sound_changed, this);
-	_sound_output->Bind (wxEVT_CHOICE,   bind(&SoundPage::sound_output_changed, this));
-	_map->Changed.connect (bind(&SoundPage::map_changed, this, _1));
-	_reset_to_default->Bind (wxEVT_BUTTON,   bind(&SoundPage::reset_to_default, this));
+	if (!_sound_output->IsEmpty()) {
+		_sound_output->SetSelection(0);
+	}
 }
 
 void
@@ -913,16 +934,28 @@ SoundPage::map_changed (AudioMapping m)
 	Config::instance()->set_audio_mapping (m);
 }
 
+
 void
 SoundPage::sound_changed ()
 {
 	Config::instance()->set_sound (_sound->GetValue ());
 }
 
+
+void
+SoundPage::sound_api_changed()
+{
+	auto config = Config::instance();
+	config->set_sound_api(index_to_audio_api(_sound_api->get().get_value_or(0)).id());
+	config->unset_sound_output();
+	update_sound_outputs();
+}
+
+
 void
 SoundPage::sound_output_changed ()
 {
-	RtAudio audio (DCPOMATIC_RTAUDIO_API);
+	RtAudio audio(id_to_audio_api(Config::instance()->sound_api()).rtaudio_id());
 	auto const so = get_sound_output();
 	string default_device;
 	try {
@@ -944,6 +977,28 @@ SoundPage::config_changed ()
 
 	checked_set (_sound, config->sound ());
 
+	auto const current_api = get_sound_api();
+	optional<string> configured_api;
+
+	if (config->sound_api()) {
+		configured_api = config->sound_api().get();
+	} else {
+		configured_api = audio_apis()[0].id();
+	}
+
+	if (current_api != *configured_api) {
+		unsigned int i = 0;
+		while (i < _sound_api->GetCount()) {
+			if (string_client_data(_sound_api->GetClientObject(i)) == std_to_wx(*configured_api)) {
+				_sound_api->SetSelection(i);
+				break;
+			}
+			++i;
+		}
+	}
+
+	RtAudio audio(id_to_audio_api(configured_api).rtaudio_id());
+
 	auto const current_so = get_sound_output ();
 	optional<string> configured_so;
 
@@ -951,10 +1006,9 @@ SoundPage::config_changed ()
 		configured_so = config->sound_output().get();
 	} else {
 		/* No configured output means we should use the default */
-		RtAudio audio (DCPOMATIC_RTAUDIO_API);
 		try {
 			configured_so = audio.getDeviceInfo(audio.getDefaultOutputDevice()).name;
-		} catch (RtAudioError&) {
+		} catch (RtAudioError& e) {
 			/* Probably no audio devices at all */
 		}
 	}
@@ -971,19 +1025,6 @@ SoundPage::config_changed ()
 		}
 	}
 
-	RtAudio audio (DCPOMATIC_RTAUDIO_API);
-
-	map<int, wxString> apis;
-	apis[RtAudio::MACOSX_CORE]    = _("CoreAudio");
-	apis[RtAudio::WINDOWS_ASIO]   = _("ASIO");
-	apis[RtAudio::WINDOWS_DS]     = _("Direct Sound");
-	apis[RtAudio::WINDOWS_WASAPI] = _("WASAPI");
-	apis[RtAudio::UNIX_JACK]      = _("JACK");
-	apis[RtAudio::LINUX_ALSA]     = _("ALSA");
-	apis[RtAudio::LINUX_PULSE]    = _("PulseAudio");
-	apis[RtAudio::LINUX_OSS]      = _("OSS");
-	apis[RtAudio::RTAUDIO_DUMMY]  = _("Dummy");
-
 	int channels = 0;
 	if (configured_so) {
 		for (unsigned int i = 0; i < audio.getDeviceCount(); ++i) {
@@ -998,9 +1039,7 @@ SoundPage::config_changed ()
 		}
 	}
 
-	_sound_output_details->SetLabel (
-		wxString::Format(_("%d channels on %s"), channels, apis[audio.getCurrentApi()])
-		);
+	_sound_output_details->SetLabel(wxString::Format(_("%d channels"), channels));
 
 	_map->set (Config::instance()->audio_mapping(channels));
 
@@ -1025,13 +1064,26 @@ SoundPage::setup_sensitivity ()
 	_sound_output->Enable (_sound->GetValue());
 }
 
+
+optional<string>
+SoundPage::get_sound_api()
+{
+	auto const sel = _sound_api->GetSelection();
+	if (sel == wxNOT_FOUND) {
+		return {};
+	}
+
+	return wx_to_std(selection_string_client_data(_sound_api));
+}
+
+
 /** @return Currently-selected preview sound output in the dialogue */
 optional<string>
 SoundPage::get_sound_output ()
 {
 	int const sel = _sound_output->GetSelection ();
 	if (sel == wxNOT_FOUND) {
-		return optional<string> ();
+		return {};
 	}
 
 	return wx_to_std (_sound_output->GetString (sel));

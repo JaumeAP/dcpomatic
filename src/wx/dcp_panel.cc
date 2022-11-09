@@ -967,7 +967,7 @@ DCPPanel::audio_processor_changed ()
 		return;
 	}
 
-	auto const s = string_client_data(_audio_processor->GetClientObject(*_audio_processor->get()));
+	auto const s = selection_string_client_data(_audio_processor);
 	_film->set_audio_processor (AudioProcessor::from_id (s));
 }
 

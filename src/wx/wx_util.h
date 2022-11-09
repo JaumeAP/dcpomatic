@@ -34,6 +34,7 @@
 LIBDCP_DISABLE_WARNINGS
 #include <wx/gbsizer.h>
 #include <wx/wx.h>
+#include <RtAudio.h>
 LIBDCP_ENABLE_WARNINGS
 #include <boost/signals2.hpp>
 #include <boost/thread.hpp>
@@ -81,16 +82,6 @@ class PasswordEntry;
 #define DCPOMATIC_BUTTON_STACK_GAP 0
 #endif
 
-#ifdef DCPOMATIC_LINUX
-#define DCPOMATIC_RTAUDIO_API RtAudio::LINUX_PULSE
-#endif
-#ifdef DCPOMATIC_WINDOWS
-#define DCPOMATIC_RTAUDIO_API RtAudio::UNSPECIFIED
-#endif
-#ifdef DCPOMATIC_OSX
-#define DCPOMATIC_RTAUDIO_API RtAudio::MACOSX_CORE
-#endif
-
 
 /** i18n macro to support strings like Context|String
  *  so that `String' can be translated to different things
@@ -112,6 +103,7 @@ extern wxString std_to_wx (std::string);
 extern void dcpomatic_setup_i18n ();
 extern wxString context_translation (wxString);
 extern std::string string_client_data (wxClientData* o);
+extern std::string selection_string_client_data(wxChoice* choice);
 extern wxString time_to_timecode (dcpomatic::DCPTime t, double fps);
 extern void setup_audio_channels_choice (wxChoice* choice, int minimum);
 extern wxSplashScreen* maybe_show_splash ();
@@ -140,6 +132,40 @@ struct Offset
 };
 
 extern int get_offsets (std::vector<Offset>& offsets);
+
+
+class AudioAPI
+{
+public:
+	AudioAPI(wxString name, std::string id, RtAudio::Api rtaudio_id)
+		: _name(name)
+		, _id(id)
+		, _rtaudio_id(rtaudio_id)
+	{}
+
+	wxString name() const {
+		return _name;
+	}
+
+	std::string id() const {
+		return _id;
+	}
+
+	RtAudio::Api rtaudio_id() const {
+		return _rtaudio_id;
+	}
+
+private:
+	wxString _name;
+	std::string _id;
+	RtAudio::Api _rtaudio_id;
+};
+
+
+std::vector<AudioAPI> audio_apis();
+AudioAPI id_to_audio_api(std::string id);
+AudioAPI id_to_audio_api(boost::optional<std::string> id);
+AudioAPI index_to_audio_api(int index);
 
 
 extern void checked_set (FilePickerCtrl* widget, boost::filesystem::path value);

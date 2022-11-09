@@ -86,6 +86,7 @@ public:
 		CINEMAS,
 		DKDM_RECIPIENTS,
 		SOUND,
+		SOUND_API,
 		SOUND_OUTPUT,
 		PLAYER_CONTENT_DIRECTORY,
 		PLAYER_PLAYLIST_DIRECTORY,
@@ -438,6 +439,10 @@ public:
 
 	std::string cover_sheet () const {
 		return _cover_sheet;
+	}
+
+	boost::optional<std::string> sound_api() const {
+		return _sound_api;
 	}
 
 	boost::optional<std::string> sound_output () const {
@@ -906,6 +911,19 @@ public:
 		maybe_set (_sound, s, SOUND);
 	}
 
+	void set_sound_api(std::string api) {
+		maybe_set(_sound_api, api, SOUND_API);
+	}
+
+	void unset_sound_api() {
+		if (!_sound_api) {
+			return;
+		}
+
+		_sound_api = boost::none;
+		changed(SOUND_API);
+	}
+
 	void set_sound_output (std::string o) {
 		maybe_set (_sound_output, o, SOUND_OUTPUT);
 	}
@@ -1356,6 +1374,7 @@ private:
 	bool _jump_to_selected;
 	bool _nagged[NAG_COUNT];
 	bool _sound;
+	boost::optional<std::string> _sound_api;
 	/** name of a specific sound output stream to use, or empty to use the default */
 	boost::optional<std::string> _sound_output;
 	std::string _cover_sheet;

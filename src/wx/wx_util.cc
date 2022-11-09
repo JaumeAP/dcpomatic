@@ -42,6 +42,7 @@ LIBDCP_DISABLE_WARNINGS
 #include <wx/progdlg.h>
 #include <wx/filepicker.h>
 #include <wx/sizer.h>
+#include <RtAudio.h>
 LIBDCP_ENABLE_WARNINGS
 #include <boost/thread.hpp>
 
@@ -217,6 +218,13 @@ string
 string_client_data (wxClientData* o)
 {
 	return wx_to_std (dynamic_cast<wxStringClientData*>(o)->GetData());
+}
+
+
+string
+selection_string_client_data(wxChoice* choice)
+{
+	return string_client_data(choice->GetClientObject(choice->GetSelection()));
 }
 
 
@@ -731,4 +739,65 @@ report_config_load_failure(wxWindow* parent, Config::LoadFailure what)
 		break;
 	}
 }
+
+
+static AudioAPI wasapi(_("WASAPI"), "wasapi", RtAudio::WINDOWS_WASAPI);
+static AudioAPI asio(_("ASIO"), "asio", RtAudio::WINDOWS_ASIO);
+static AudioAPI pulse(_("PulseAudio"), "pulse", RtAudio::LINUX_PULSE);
+static AudioAPI alsa(_("ALSA"), "alsa", RtAudio::LINUX_ALSA);
+static AudioAPI core(_("CoreAudio"), "core", RtAudio::MACOSX_CORE);
+
+
+vector<AudioAPI>
+audio_apis()
+{
+#ifdef DCPOMATIC_WINDOWS
+	return { wasapi, asio };
+	};
+#endif
+#ifdef DCPOMATIC_LINUX
+	return { pulse, alsa };
+#endif
+#ifdef DCPOMATIC_OSX
+	return { core };
+#endif
+}
+
+
+AudioAPI
+id_to_audio_api(string id)
+{
+	const auto apis = audio_apis();
+	auto iter = std::find_if(apis.begin(), apis.end(), [&id](AudioAPI const& api) { return api.id() == id; });
+	if (iter == apis.end()) {
+		return apis[0];
+	}
+
+	return *iter;
+}
+
+
+AudioAPI
+id_to_audio_api(optional<string> id)
+{
+	const auto apis = audio_apis();
+	if (!id) {
+		return apis[0];
+	}
+
+	return id_to_audio_api(*id);
+}
+
+
+AudioAPI
+index_to_audio_api(int index)
+{
+	const auto apis = audio_apis();
+	if (index < 0 || index >= static_cast<int>(apis.size())) {
+		return apis[0];
+	}
+
+	return apis[index];
+}
+
 
