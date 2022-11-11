@@ -68,6 +68,137 @@ def write_installer(bits, dcpomatic_version, debug, disk):
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
 
+!define SF_USELECTED  0
+!define SF_SELECTED   1
+!define SF_SECGRP     2
+!define SF_BOLD       8
+!define SF_RO         16
+!define SF_EXPAND     32
+
+!macro SecUnSelect SecId
+  Push $0
+  IntOp $0 ${SF_USELECTED} | ${SF_RO}
+  SectionSetFlags ${SecId} $0
+  SectionSetText  ${SecId} ""
+  Pop $0
+!macroend
+ 
+!define UnSelectSection '!insertmacro SecUnSelect'
+
+Function GetOptions
+	!define GetOptions `!insertmacro GetOptionsCall`
+ 
+	!macro GetOptionsCall _PARAMETERS _OPTION _RESULT
+		Push `${_PARAMETERS}`
+		Push `${_OPTION}`
+		Call GetOptions
+		Pop ${_RESULT}
+	!macroend
+ 
+	Exch $1
+	Exch
+	Exch $0
+	Exch
+	Push $2
+	Push $3
+	Push $4
+	Push $5
+	Push $6
+	Push $7
+	ClearErrors
+ 
+	StrCpy $2 $1 '' 1
+	StrCpy $1 $1 1
+	StrLen $3 $2
+	StrCpy $7 0
+ 
+	begin:
+	StrCpy $4 -1
+	StrCpy $6 ''
+ 
+	quote:
+	IntOp $4 $4 + 1
+	StrCpy $5 $0 1 $4
+	StrCmp $5$7 '0' notfound
+	StrCmp $5 '' trimright
+	StrCmp $5 '"' 0 +7
+	StrCmp $6 '' 0 +3
+	StrCpy $6 '"'
+	goto quote
+	StrCmp $6 '"' 0 +3
+	StrCpy $6 ''
+	goto quote
+	StrCmp $5 `'` 0 +7
+	StrCmp $6 `` 0 +3
+	StrCpy $6 `'`
+	goto quote
+	StrCmp $6 `'` 0 +3
+	StrCpy $6 ``
+	goto quote
+	StrCmp $5 '`' 0 +7
+	StrCmp $6 '' 0 +3
+	StrCpy $6 '`'
+	goto quote
+	StrCmp $6 '`' 0 +3
+	StrCpy $6 ''
+	goto quote
+	StrCmp $6 '"' quote
+	StrCmp $6 `'` quote
+	StrCmp $6 '`' quote
+	StrCmp $5 $1 0 quote
+	StrCmp $7 0 trimleft trimright
+ 
+	trimleft:
+	IntOp $4 $4 + 1
+	StrCpy $5 $0 $3 $4
+	StrCmp $5 '' notfound
+	StrCmp $5 $2 0 quote
+	IntOp $4 $4 + $3
+	StrCpy $0 $0 '' $4
+	StrCpy $4 $0 1
+	StrCmp $4 ' ' 0 +3
+	StrCpy $0 $0 '' 1
+	goto -3
+	StrCpy $7 1
+	goto begin
+ 
+	trimright:
+	StrCpy $0 $0 $4
+	StrCpy $4 $0 1 -1
+	StrCmp $4 ' ' 0 +3
+	StrCpy $0 $0 -1
+	goto -3
+	StrCpy $3 $0 1
+	StrCpy $4 $0 1 -1
+	StrCmp $3 $4 0 end
+	StrCmp $3 '"' +3
+	StrCmp $3 `'` +2
+	StrCmp $3 '`' 0 end
+	StrCpy $0 $0 -1 1
+	goto end
+ 
+	notfound:
+	SetErrors
+	StrCpy $0 ''
+ 
+	end:
+	Pop $7
+	Pop $6
+	Pop $5
+	Pop $4
+	Pop $3
+	Pop $2
+	Pop $1
+	Exch $0
+FunctionEnd
+
+Function .onInit
+${GetOptions} $R0 /NOSERVER= $0
+${If} $0 == "1"
+  ${UnSelectSection} "Encode server"
+${Endif}
+FunctionEnd
+
 Section "Common files (required)" SEC_COMMON
 SectionIn RO
     """, file=f)
