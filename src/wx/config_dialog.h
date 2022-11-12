@@ -212,10 +212,12 @@ private:
 	boost::optional<std::string> get_sound_api() const;
 	boost::optional<std::string> get_sound_output() const;
 	void sound_changed ();
+	void sound_api_changed();
 	void sound_output_changed ();
 	void setup_sensitivity ();
 	void map_changed (AudioMapping m);
 	void reset_to_default ();
+	void update_sound_outputs();
 
 	CheckBox* _sound;
 	Choice* _sound_api;

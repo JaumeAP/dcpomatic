@@ -892,6 +892,21 @@ SoundPage::setup ()
 		_sound_api->add(api.name(), new wxStringClientData(api.id()));
 	}
 
+	update_sound_outputs();
+
+	_sound->bind(&SoundPage::sound_changed, this);
+	_sound_api->bind(&SoundPage::sound_api_changed, this);
+	_sound_output->Bind(wxEVT_CHOICE, bind(&SoundPage::sound_output_changed, this));
+	_map->Changed.connect(bind(&SoundPage::map_changed, this, _1));
+	_reset_to_default->Bind(wxEVT_BUTTON, bind(&SoundPage::reset_to_default, this));
+}
+
+
+
+void
+SoundPage::update_sound_outputs()
+{
+	_sound_output->Clear();
 	auto& audio = _viewer->audio_backend();
 	for (unsigned int i = 0; i < audio.getDeviceCount(); ++i) {
 		try {
@@ -903,12 +918,8 @@ SoundPage::setup ()
 			/* Something went wrong so let's just ignore that device */
 		}
 	}
-
-	_sound->bind(&SoundPage::sound_changed, this);
-	_sound_output->Bind (wxEVT_CHOICE,   bind(&SoundPage::sound_output_changed, this));
-	_map->Changed.connect (bind(&SoundPage::map_changed, this, _1));
-	_reset_to_default->Bind (wxEVT_BUTTON,   bind(&SoundPage::reset_to_default, this));
 }
+
 
 void
 SoundPage::reset_to_default ()
@@ -927,6 +938,15 @@ SoundPage::sound_changed ()
 {
 	Config::instance()->set_sound (_sound->GetValue ());
 }
+
+
+void
+SoundPage::sound_api_changed()
+{
+	Config::instance()->set_sound_api(id_to_audio_api(get_sound_api()).id());
+	Config::instance()->unset_sound_output();
+}
+
 
 void
 SoundPage::sound_output_changed ()
@@ -966,6 +986,8 @@ SoundPage::config_changed ()
 			++index;
 		}
 	}
+
+	update_sound_outputs();
 
 	auto const current_so = get_sound_output ();
 	optional<string> configured_so;

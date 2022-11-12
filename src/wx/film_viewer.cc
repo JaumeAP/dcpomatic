@@ -24,6 +24,7 @@
  */
 
 
+#include "audio_api.h"
 #include "closed_captions_dialog.h"
 #include "film_viewer.h"
 #include "gl_video_view.h"
@@ -86,7 +87,7 @@ rtaudio_callback (void* out, void *, unsigned int frames, double, RtAudioStreamS
 
 
 FilmViewer::FilmViewer (wxWindow* p)
-	: _audio (DCPOMATIC_RTAUDIO_API)
+	: _audio(new RtAudio(id_to_audio_api(Config::instance()->sound_api()).rtaudio_id()))
 	, _closed_captions_dialog (new ClosedCaptionsDialog(p, this))
 {
 #if wxCHECK_VERSION(3, 1, 0)
@@ -601,7 +602,7 @@ FilmViewer::config_changed (Config::Property p)
 		return;
 	}
 
-	if (p != Config::SOUND && p != Config::SOUND_OUTPUT) {
+	if (p != Config::SOUND && p != Config::SOUND_API && p != Config::SOUND_OUTPUT) {
 		return;
 	}
 
@@ -609,12 +610,41 @@ FilmViewer::config_changed (Config::Property p)
 		_audio->closeStream();
 	}
 
-	if (Config::instance()->sound() && _audio.getDeviceCount() > 0) {
+	auto cleanup = [this]() {
+		_audio_channels = 0;
+		destroy_and_maybe_create_butler();
+	};
+
+	auto config = Config::instance();
+
+	if (!config->sound()) {
+		cleanup();
+		return;
+	}
+
+	auto configured_api = id_to_audio_api(config->sound_api()).rtaudio_id();
+
+	if (configured_api != _audio->getCurrentApi()) {
+		try {
+			delete _audio;
+			_audio = nullptr;
+			_audio = new RtAudio(configured_api);
+		} catch (RtAudioError& e) {
+			cleanup();
+			error_dialog (
+				_video_view->get(),
+				_("There was a problem starting audio playback.  Please try another audio output device in Preferences."), std_to_wx(e.what())
+				);
+			return;
+		}
+	}
+
+	if (_audio->getDeviceCount() > 0) {
 		unsigned int st = 0;
-		if (Config::instance()->sound_output()) {
+		if (config->sound_output()) {
 			while (st < _audio->getDeviceCount()) {
 				try {
-					if (_audio.getDeviceInfo(st).name == Config::instance()->sound_output().get()) {
+					if (_audio->getDeviceInfo(st).name == config->sound_output().get()) {
 						break;
 					}
 				} catch (RtAudioError&) {
@@ -644,10 +674,8 @@ FilmViewer::config_changed (Config::Property p)
 				);
 		}
 		destroy_and_maybe_create_butler();
-
 	} else {
-		_audio_channels = 0;
-		destroy_and_maybe_create_butler();
+		cleanup();
 	}
 }
 
