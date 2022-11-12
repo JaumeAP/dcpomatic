@@ -113,7 +113,7 @@ public:
 	int gets () const;
 
 	RtAudio& audio_backend() {
-		return _audio;
+		return *_audio;
 	}
 
 	int audio_callback (void* out, unsigned int frames);
@@ -187,7 +187,7 @@ private:
 	bool _coalesce_player_changes = false;
 	std::vector<int> _pending_player_changes;
 
-	RtAudio _audio;
+	RtAudio* _audio = nullptr;
 	int _audio_channels = 0;
 	unsigned int _audio_block_size = 1024;
 	bool _playing = false;

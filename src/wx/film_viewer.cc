@@ -115,6 +115,7 @@ FilmViewer::FilmViewer (wxWindow* p)
 FilmViewer::~FilmViewer ()
 {
 	stop ();
+	delete _audio;
 }
 
 
@@ -248,7 +249,7 @@ FilmViewer::create_butler()
 		j2k_gl_optimised ? Image::Alignment::COMPACT : Image::Alignment::PADDED,
 		true,
 		j2k_gl_optimised,
-		(Config::instance()->sound() && _audio.isStreamOpen()) ? Butler::Audio::ENABLED : Butler::Audio::DISABLED
+		(Config::instance()->sound() && _audio->isStreamOpen()) ? Butler::Audio::ENABLED : Butler::Audio::DISABLED
 		);
 
 	_closed_captions_dialog->set_butler (_butler);
@@ -340,8 +341,8 @@ void
 FilmViewer::suspend ()
 {
 	++_suspended;
-	if (_audio.isStreamRunning()) {
-		_audio.abortStream();
+	if (_audio->isStreamRunning()) {
+		_audio->abortStream();
 	}
 }
 
@@ -349,10 +350,10 @@ FilmViewer::suspend ()
 void
 FilmViewer::start_audio_stream_if_open ()
 {
-	if (_audio.isStreamOpen()) {
-		_audio.setStreamTime (_video_view->position().seconds());
+	if (_audio->isStreamOpen()) {
+		_audio->setStreamTime(_video_view->position().seconds());
 		try {
-			_audio.startStream ();
+			_audio->startStream();
 		} catch (RtAudioError& e) {
 			_audio_channels = 0;
 			error_dialog (
@@ -414,9 +415,9 @@ FilmViewer::start ()
 bool
 FilmViewer::stop ()
 {
-	if (_audio.isStreamRunning()) {
+	if (_audio->isStreamRunning()) {
 		/* stop stream and discard any remaining queued samples */
-		_audio.abortStream ();
+		_audio->abortStream();
 	}
 
 	if (!_playing) {
@@ -604,14 +605,14 @@ FilmViewer::config_changed (Config::Property p)
 		return;
 	}
 
-	if (_audio.isStreamOpen ()) {
-		_audio.closeStream ();
+	if (_audio->isStreamOpen()) {
+		_audio->closeStream();
 	}
 
 	if (Config::instance()->sound() && _audio.getDeviceCount() > 0) {
 		unsigned int st = 0;
 		if (Config::instance()->sound_output()) {
-			while (st < _audio.getDeviceCount()) {
+			while (st < _audio->getDeviceCount()) {
 				try {
 					if (_audio.getDeviceInfo(st).name == Config::instance()->sound_output().get()) {
 						break;
@@ -621,20 +622,20 @@ FilmViewer::config_changed (Config::Property p)
 				}
 				++st;
 			}
-			if (st == _audio.getDeviceCount()) {
-				st = _audio.getDefaultOutputDevice();
+			if (st == _audio->getDeviceCount()) {
+				st = _audio->getDefaultOutputDevice();
 			}
 		} else {
-			st = _audio.getDefaultOutputDevice();
+			st = _audio->getDefaultOutputDevice();
 		}
 
 		try {
-			_audio_channels = _audio.getDeviceInfo(st).outputChannels;
+			_audio_channels = _audio->getDeviceInfo(st).outputChannels;
 			RtAudio::StreamParameters sp;
 			sp.deviceId = st;
 			sp.nChannels = _audio_channels;
 			sp.firstChannel = 0;
-			_audio.openStream (&sp, 0, RTAUDIO_FLOAT32, 48000, &_audio_block_size, &rtaudio_callback, this);
+			_audio->openStream(&sp, 0, RTAUDIO_FLOAT32, 48000, &_audio_block_size, &rtaudio_callback, this);
 		} catch (RtAudioError& e) {
 			_audio_channels = 0;
 			error_dialog (
@@ -654,8 +655,8 @@ FilmViewer::config_changed (Config::Property p)
 DCPTime
 FilmViewer::uncorrected_time () const
 {
-	if (_audio.isStreamRunning()) {
-		return DCPTime::from_seconds (const_cast<RtAudio*>(&_audio)->getStreamTime());
+	if (_audio->isStreamRunning()) {
+		return DCPTime::from_seconds(const_cast<RtAudio*>(_audio)->getStreamTime());
 	}
 
 	return _video_view->position();
@@ -665,11 +666,11 @@ FilmViewer::uncorrected_time () const
 optional<DCPTime>
 FilmViewer::audio_time () const
 {
-	if (!_audio.isStreamRunning()) {
+	if (!_audio->isStreamRunning()) {
 		return {};
 	}
 
-	return DCPTime::from_seconds (const_cast<RtAudio*>(&_audio)->getStreamTime ()) -
+	return DCPTime::from_seconds(const_cast<RtAudio*>(_audio)->getStreamTime()) -
 		DCPTime::from_frames (average_latency(), _film->audio_frame_rate());
 }
 
@@ -695,7 +696,7 @@ FilmViewer::audio_callback (void* out_p, unsigned int frames)
 
         boost::mutex::scoped_lock lm (_latency_history_mutex, boost::try_to_lock);
         if (lm) {
-                _latency_history.push_back (_audio.getStreamLatency ());
+                _latency_history.push_back(_audio->getStreamLatency());
                 if (_latency_history.size() > static_cast<size_t> (_latency_history_count)) {
                         _latency_history.pop_front ();
                 }
