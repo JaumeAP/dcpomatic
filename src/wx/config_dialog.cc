@@ -19,8 +19,10 @@
 */
 
 
+#include "audio_api.h"
 #include "audio_mapping_view.h"
 #include "check_box.h"
+#include "dcpomatic_choice.h"
 #include "config_dialog.h"
 #include "dcpomatic_button.h"
 #include "film_viewer.h"
@@ -862,8 +864,10 @@ SoundPage::setup ()
 	_sound = new CheckBox (_panel, _("Play sound via"));
 	table->Add (_sound, wxGBPosition (r, 0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
 	auto s = new wxBoxSizer (wxHORIZONTAL);
+	_sound_api = new Choice(_panel);
+	s->Add(_sound_api);
 	_sound_output = new wxChoice (_panel, wxID_ANY);
-	s->Add (_sound_output, 0);
+	s->Add(_sound_output, 0, wxLEFT, DCPOMATIC_SIZER_X_GAP);
 	_sound_output_details = new wxStaticText (_panel, wxID_ANY, wxT(""));
 	s->Add (_sound_output_details, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, DCPOMATIC_SIZER_X_GAP);
 	table->Add (s, wxGBPosition(r, 1));
@@ -883,6 +887,10 @@ SoundPage::setup ()
 	font.SetStyle (wxFONTSTYLE_ITALIC);
 	font.SetPointSize (font.GetPointSize() - 1);
 	_sound_output_details->SetFont (font);
+
+	for (auto const& api: audio_apis()) {
+		_sound_api->add(api.name(), new wxStringClientData(api.id()));
+	}
 
 	auto& audio = _viewer->audio_backend();
 	for (unsigned int i = 0; i < audio.getDeviceCount(); ++i) {
@@ -944,6 +952,20 @@ SoundPage::config_changed ()
 	auto config = Config::instance ();
 
 	checked_set (_sound, config->sound ());
+
+	auto const current_api = get_sound_api();
+	auto const configured_api = id_to_audio_api(config->sound_api()).id();
+
+	if (current_api != configured_api) {
+		/* Update _sound_api with the configured value */
+		unsigned int index = 0;
+		while (index < _sound_api->GetCount()) {
+			if (string_client_data(_sound_api->GetClientObject(index)) == configured_api) {
+				_sound_api->SetSelection(index);
+			}
+			++index;
+		}
+	}
 
 	auto const current_so = get_sound_output ();
 	optional<string> configured_so;
@@ -1024,6 +1046,19 @@ SoundPage::setup_sensitivity ()
 {
 	_sound_output->Enable (_sound->GetValue());
 }
+
+
+optional<string>
+SoundPage::get_sound_api() const
+{
+	auto const sel = _sound_api->get();
+	if (!sel) {
+		return {};
+	}
+
+	return index_to_audio_api(*sel).id();
+}
+
 
 /** @return Currently-selected preview sound output in the dialogue */
 optional<string>
