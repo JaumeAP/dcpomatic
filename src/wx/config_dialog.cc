@@ -1027,7 +1027,7 @@ SoundPage::setup_sensitivity ()
 
 /** @return Currently-selected preview sound output in the dialogue */
 optional<string>
-SoundPage::get_sound_output ()
+SoundPage::get_sound_output() const
 {
 	int const sel = _sound_output->GetSelection ();
 	if (sel == wxNOT_FOUND) {

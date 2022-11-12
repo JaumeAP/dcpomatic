@@ -208,7 +208,7 @@ private:
 
 	void setup () override;
 	void config_changed () override;
-        boost::optional<std::string> get_sound_output ();
+        boost::optional<std::string> get_sound_output() const;
 	void sound_changed ();
 	void sound_output_changed ();
 	void setup_sensitivity ();
