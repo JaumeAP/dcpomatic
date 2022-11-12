@@ -861,7 +861,7 @@ SoundPage::setup ()
 
 	_sound = new CheckBox (_panel, _("Play sound via"));
 	table->Add (_sound, wxGBPosition (r, 0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
-	wxBoxSizer* s = new wxBoxSizer (wxHORIZONTAL);
+	auto s = new wxBoxSizer (wxHORIZONTAL);
 	_sound_output = new wxChoice (_panel, wxID_ANY);
 	s->Add (_sound_output, 0);
 	_sound_output_details = new wxStaticText (_panel, wxID_ANY, wxT(""));
