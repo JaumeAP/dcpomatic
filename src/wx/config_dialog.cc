@@ -1031,7 +1031,7 @@ SoundPage::get_sound_output() const
 {
 	int const sel = _sound_output->GetSelection ();
 	if (sel == wxNOT_FOUND) {
-		return optional<string> ();
+		return {};
 	}
 
 	return wx_to_std (_sound_output->GetString (sel));
