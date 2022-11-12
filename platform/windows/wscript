@@ -73,7 +73,7 @@ def write_installer(bits, dcpomatic_version, debug, disk):
 !macro SecUnSelect SecId
   Push $0
   IntOp $0 ${SF_USELECTED} | ${SF_RO}
-  SectionSetFlags ${SecId} $0
+  SectionSetFlags ${SecId} "$0"
   SectionSetText  ${SecId} ""
   Pop $0
 !macroend
