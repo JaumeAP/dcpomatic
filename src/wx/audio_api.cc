@@ -42,7 +42,6 @@ audio_apis()
 {
 #ifdef DCPOMATIC_WINDOWS
        return { wasapi, asio };
-       };
 #endif
 #ifdef DCPOMATIC_LINUX
        return { pulse, alsa };
