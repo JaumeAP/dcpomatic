@@ -24,8 +24,8 @@
 
 
 #include <dcp/warnings.h>
-#include <wx/wx.h>
 LIBDCP_DISABLE_WARNINGS
+#include <wx/wx.h>
 #include <RtAudio.h>
 LIBDCP_ENABLE_WARNINGS
 #include <boost/optional.hpp>
