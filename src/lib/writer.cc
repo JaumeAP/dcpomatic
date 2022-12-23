@@ -712,7 +712,7 @@ Writer::write_cover_sheet (boost::filesystem::path output_dcp)
 	auto const cover = film()->file("COVER_SHEET.txt");
 	dcp::File f(cover, "w");
 	if (!f) {
-		throw OpenFileError (cover, errno, OpenFileError::WRITE);
+		throw OpenFileError(cover, f.open_error(), OpenFileError::WRITE);
 	}
 
 	auto text = Config::instance()->cover_sheet ();

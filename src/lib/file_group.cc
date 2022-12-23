@@ -85,8 +85,8 @@ FileGroup::ensure_open_path (size_t p) const
 
 	_current_path = p;
 	_current_file = dcp::File(_paths[_current_path], "rb");
-		throw OpenFileError (_paths[_current_path], errno, OpenFileError::READ);
 	if (!_current_file->get()) {
+		throw OpenFileError(_paths[_current_path], _current_file->open_error(), OpenFileError::READ);
 	}
 	_current_size = boost::filesystem::file_size (_paths[_current_path]);
 }

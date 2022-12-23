@@ -498,7 +498,7 @@ digest_head_tail (vector<boost::filesystem::path> files, boost::uintmax_t size)
 	while (i < int64_t (files.size()) && to_do > 0) {
 		dcp::File f(files[i], "rb");
 		if (!f) {
-			throw OpenFileError (files[i].string(), errno, OpenFileError::READ);
+			throw OpenFileError(files[i].string(), f.open_error(), OpenFileError::READ);
 		}
 
 		boost::uintmax_t this_time = min (to_do, boost::filesystem::file_size (files[i]));
@@ -517,7 +517,7 @@ digest_head_tail (vector<boost::filesystem::path> files, boost::uintmax_t size)
 	while (i >= 0 && to_do > 0) {
 		dcp::File f(files[i], "rb");
 		if (!f) {
-			throw OpenFileError (files[i].string(), errno, OpenFileError::READ);
+			throw OpenFileError(files[i].string(), f.open_error(), OpenFileError::READ);
 		}
 
 		boost::uintmax_t this_time = min (to_do, boost::filesystem::file_size (files[i]));
@@ -892,11 +892,11 @@ copy_in_bits (boost::filesystem::path from, boost::filesystem::path to, std::fun
 {
 	dcp::File f(from, "rb");
 	if (!f) {
-		throw OpenFileError (from, errno, OpenFileError::READ);
+		throw OpenFileError(from, f.open_error(), OpenFileError::READ);
 	}
 	dcp::File t(to, "wb");
 	if (!t) {
-		throw OpenFileError (to, errno, OpenFileError::WRITE);
+		throw OpenFileError(to, t.open_error(), OpenFileError::WRITE);
 	}
 
 	/* on the order of a second's worth of copying */
