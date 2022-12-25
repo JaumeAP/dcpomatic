@@ -34,4 +34,9 @@ class VerifyDCPDialog : public wxDialog
 {
 public:
 	VerifyDCPDialog (wxWindow* parent, std::shared_ptr<VerifyDCPJob> job);
+
+private:
+	void save_report();
+
+	dcp::VerifyResult _result;
 };

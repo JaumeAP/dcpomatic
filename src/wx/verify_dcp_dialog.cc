@@ -19,11 +19,14 @@
 */
 
 
+#include "dcpomatic_button.h"
 #include "verify_dcp_dialog.h"
 #include "wx_util.h"
+#include "lib/scope_guard.h"
 #include "lib/verify_dcp_job.h"
 #include <dcp/raw_convert.h>
 #include <dcp/verify.h>
+#include <dcp/verify_report.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/richtext/richtextctrl.h>
@@ -41,6 +44,7 @@ using std::vector;
 
 VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job)
 	: wxDialog (parent, wxID_ANY, _("DCP verification"), wxDefaultPosition, {600, 400})
+	, _result(job->result())
 {
 	auto sizer = new wxBoxSizer (wxVERTICAL);
 	auto notebook = new wxNotebook (this, wxID_ANY);
@@ -57,6 +61,10 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 	auto summary = new wxStaticText (this, wxID_ANY, wxT(""));
 	sizer->Add (summary, 0, wxALL, DCPOMATIC_DIALOG_BORDER);
 
+	auto save_report = new Button(this, _("Save report..."));
+	sizer->Add(save_report, 0, wxLEFT, DCPOMATIC_DIALOG_BORDER);
+	save_report->bind(&VerifyDCPDialog::save_report, this);
+
 	auto buttons = CreateStdDialogButtonSizer (0);
 	sizer->Add (CreateSeparatedSizer(buttons), wxSizerFlags().Expand().DoubleBorder());
 	buttons->SetAffirmativeButton (new wxButton (this, wxID_OK));
@@ -70,7 +78,7 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 		i.second->GetCaret()->Hide();
 	}
 
-	if (job->finished_ok() && job->notes().empty()) {
+	if (job->finished_ok() && _result.notes.empty()) {
 		summary->SetLabel (_("DCP validates OK."));
 		return;
 	}
@@ -81,10 +89,12 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 	counts[dcp::VerificationNote::Type::ERROR] = 0;
 
 	auto add_bullet = [&pages](dcp::VerificationNote::Type type, wxString message) {
-		pages[type]->BeginStandardBullet(N_("standard/diamond"), 1, 50);
-		pages[type]->WriteText (message);
-		pages[type]->Newline ();
-		pages[type]->EndStandardBullet ();
+		if (pages.find(type) != pages.end()) {
+			pages[type]->BeginStandardBullet(N_("standard/diamond"), 1, 50);
+			pages[type]->WriteText(message);
+			pages[type]->Newline();
+			pages[type]->EndStandardBullet();
+		}
 	};
 
 	auto add = [&counts, &add_bullet](dcp::VerificationNote note, wxString message) {
@@ -121,7 +131,7 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 		add_bullet (dcp::VerificationNote::Type::ERROR, std_to_wx(job->error_summary()));
 	}
 
-	for (auto i: job->notes()) {
+	for (auto i: job->result().notes) {
 		switch (i.code()) {
 		case dcp::VerificationNote::Code::FAILED_READ:
 			add (i, std_to_wx(*i.note()));
@@ -437,6 +447,13 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 		case dcp::VerificationNote::Code::EMPTY_CONTENT_VERSION_LABEL_TEXT:
 			add(i, _("The <LabelText> in a <ContentVersion> in CPL %id is empty"));
 			break;
+		case dcp::VerificationNote::Code::ALL_ENCRYPTED:
+		case dcp::VerificationNote::Code::NONE_ENCRYPTED:
+		case dcp::VerificationNote::Code::MATCHING_CPL_HASHES:
+		case dcp::VerificationNote::Code::CORRECT_PICTURE_HASH:
+		case dcp::VerificationNote::Code::VALID_PICTURE_FRAME_SIZES_IN_BYTES:
+			/* We don't make our own messages for "OK" notes, i.e. things that are used in verification reports */
+			break;
 		}
 	}
 
@@ -480,3 +497,20 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 		add_bullet (dcp::VerificationNote::Type::WARNING, _("No warnings found."));
 	}
 }
+
+
+void
+VerifyDCPDialog::save_report()
+{
+	auto d = new wxFileDialog(
+		this, _("Select report file"), wxEmptyString, wxT("report.html"), wxT("HTML files (*.htm,*.html)|*.htm,*.html"),
+		wxFD_SAVE | wxFD_OVERWRITE_PROMPT
+		);
+
+	ScopeGuard sg = [d]() { d->Destroy(); };
+
+	if (d->ShowModal() == wxID_OK) {
+		dcp::verify_report(_result, wx_to_std(d->GetPath()));
+	}
+}
+
