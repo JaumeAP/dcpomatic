@@ -203,8 +203,8 @@ DCPExaminer::DCPExaminer (shared_ptr<const DCPContent> content, bool tolerant)
 			_text_count[TextType::OPEN_SUBTITLE] = 1;
 			_open_subtitle_language = try_to_parse_language (i->main_subtitle()->language());
 
-			for (auto const& font: i->main_subtitle()->asset()->font_data()) {
-				reel_fonts.push_back(make_shared<dcpomatic::Font>(font.first, font.second));
+			for (auto const& font: i->main_subtitle()->asset()->fonts()) {
+				reel_fonts.push_back(make_shared<dcpomatic::Font>(font.load_id, font.data));
 			}
 		}
 

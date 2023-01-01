@@ -123,9 +123,9 @@ BOOST_AUTO_TEST_CASE(make_dcp_with_subs_without_font_tag)
 	auto check_file = subtitle_file(film);
 	dcp::SMPTESubtitleAsset check_asset(check_file);
 	BOOST_CHECK_EQUAL(check_asset.load_font_nodes().size(), 1U);
-	auto check_font_data = check_asset.font_data();
-	BOOST_CHECK_EQUAL(check_font_data.size(), 1U);
-	BOOST_CHECK(check_font_data.begin()->second == dcp::ArrayData(default_font_file()));
+	auto check_fonts = check_asset.fonts();
+	BOOST_CHECK_EQUAL(check_fonts.size(), 1U);
+	BOOST_CHECK(check_fonts[0].data == dcp::ArrayData(default_font_file()));
 }
 
 
@@ -182,8 +182,8 @@ BOOST_AUTO_TEST_CASE(make_dcp_with_subs_in_dcp_without_font_tag)
 	auto check_file = subtitle_file(film);
 	dcp::SMPTESubtitleAsset check_asset(check_file);
 	BOOST_CHECK_EQUAL(check_asset.load_font_nodes().size(), 1U);
-	auto check_font_data = check_asset.font_data();
-	BOOST_CHECK_EQUAL(check_font_data.size(), 1U);
-	BOOST_CHECK(check_font_data.begin()->second == dcp::ArrayData(default_font_file()));
+	auto check_fonts = check_asset.fonts();
+	BOOST_CHECK_EQUAL(check_fonts.size(), 1U);
+	BOOST_CHECK(check_fonts[0].data == dcp::ArrayData(default_font_file()));
 }
 
