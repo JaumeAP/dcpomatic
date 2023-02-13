@@ -28,14 +28,14 @@
 #define DCPOMATIC_TIME_H
 
 
-#include "frame_rate_change.h"
 #include "dcpomatic_assert.h"
+#include "frame_rate_change.h"
 #include <boost/optional.hpp>
-#include <stdint.h>
 #include <cmath>
-#include <ostream>
-#include <iomanip>
 #include <cstdio>
+#include <iomanip>
+#include <ostream>
+#include <stdint.h>
 
 
 struct dcpomatic_time_ceil_test;
