@@ -183,6 +183,28 @@ DCPDecoder::pass_video(Frame frame, dcp::Size size)
 }
 
 
+void
+DCPDecoder::pass_audio(Frame frame, double video_frame_rate)
+{
+	auto const entry_point = (*_reel)->main_sound()->entry_point().get_value_or(0);
+	auto sf = _sound_reader->get_frame (entry_point + frame);
+	auto from = sf->data ();
+
+	int const channels = _dcp_content->audio->stream()->channels ();
+	int const frames = sf->size() / (3 * channels);
+	auto data = make_shared<AudioBuffers>(channels, frames);
+	auto data_data = data->data();
+	for (int i = 0; i < frames; ++i) {
+		for (int j = 0; j < channels; ++j) {
+			data_data[j][i] = static_cast<int> ((from[0] << 8) | (from[1] << 16) | (from[2] << 24)) / static_cast<float> (INT_MAX - 256);
+			from += 3;
+		}
+	}
+
+	audio->emit(film(), _dcp_content->audio->stream(), data, ContentTime::from_frames(_offset, video_frame_rate) + _next);
+}
+
+
 Decoder::PassResult
 DCPDecoder::pass ()
 {
@@ -215,22 +237,7 @@ DCPDecoder::pass ()
 	}
 
 	if (_sound_reader && (_decode_referenced || !_dcp_content->reference_audio())) {
-		auto const entry_point = (*_reel)->main_sound()->entry_point().get_value_or(0);
-		auto sf = _sound_reader->get_frame (entry_point + frame);
-		auto from = sf->data ();
-
-		int const channels = _dcp_content->audio->stream()->channels ();
-		int const frames = sf->size() / (3 * channels);
-		auto data = make_shared<AudioBuffers>(channels, frames);
-		auto data_data = data->data();
-		for (int i = 0; i < frames; ++i) {
-			for (int j = 0; j < channels; ++j) {
-				data_data[j][i] = static_cast<int> ((from[0] << 8) | (from[1] << 16) | (from[2] << 24)) / static_cast<float> (INT_MAX - 256);
-				from += 3;
-			}
-		}
-
-		audio->emit (film(), _dcp_content->audio->stream(), data, ContentTime::from_frames (_offset, vfr) + _next);
+		pass_audio(frame, vfr);
 	}
 
 	if (_atmos_reader) {
