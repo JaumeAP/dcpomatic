@@ -73,6 +73,7 @@ private:
 
 	void next_reel ();
 	void get_readers ();
+	void pass_video(Frame frame, dcp::Size size);
 	void pass_texts (dcpomatic::ContentTime next, dcp::Size size);
 	void pass_texts (
 		dcpomatic::ContentTime next,

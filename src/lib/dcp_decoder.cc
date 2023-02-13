@@ -139,6 +139,50 @@ DCPDecoder::DCPDecoder (shared_ptr<const Film> film, shared_ptr<const DCPContent
 }
 
 
+void
+DCPDecoder::pass_video(Frame frame, dcp::Size size)
+{
+	auto const entry_point = (*_reel)->main_picture()->entry_point().get_value_or(0);
+
+	if (_mono_reader) {
+		video->emit (
+			film(),
+			std::make_shared<J2KImageProxy>(
+				_mono_reader->get_frame (entry_point + frame),
+				size,
+				AV_PIX_FMT_XYZ12LE,
+				_forced_reduction
+				),
+			_offset + frame
+			);
+	} else {
+		video->emit (
+			film(),
+			std::make_shared<J2KImageProxy>(
+				_stereo_reader->get_frame (entry_point + frame),
+				size,
+				dcp::Eye::LEFT,
+				AV_PIX_FMT_XYZ12LE,
+				_forced_reduction
+				),
+			_offset + frame
+			);
+
+		video->emit (
+			film(),
+			std::make_shared<J2KImageProxy>(
+				_stereo_reader->get_frame (entry_point + frame),
+				size,
+				dcp::Eye::RIGHT,
+				AV_PIX_FMT_XYZ12LE,
+				_forced_reduction
+				),
+			_offset + frame
+			);
+	}
+}
+
+
 bool
 DCPDecoder::pass ()
 {
@@ -167,43 +211,7 @@ DCPDecoder::pass ()
 	pass_texts (_next, picture_asset->size());
 
 	if ((_mono_reader || _stereo_reader) && (_decode_referenced || !_dcp_content->reference_video())) {
-		auto const entry_point = (*_reel)->main_picture()->entry_point().get_value_or(0);
-		if (_mono_reader) {
-			video->emit (
-				film(),
-				std::make_shared<J2KImageProxy>(
-					_mono_reader->get_frame (entry_point + frame),
-					picture_asset->size(),
-					AV_PIX_FMT_XYZ12LE,
-					_forced_reduction
-					),
-				_offset + frame
-				);
-		} else {
-			video->emit (
-				film(),
-				std::make_shared<J2KImageProxy>(
-					_stereo_reader->get_frame (entry_point + frame),
-					picture_asset->size(),
-					dcp::Eye::LEFT,
-					AV_PIX_FMT_XYZ12LE,
-					_forced_reduction
-					),
-				_offset + frame
-				);
-
-			video->emit (
-				film(),
-				std::make_shared<J2KImageProxy>(
-					_stereo_reader->get_frame (entry_point + frame),
-					picture_asset->size(),
-					dcp::Eye::RIGHT,
-					AV_PIX_FMT_XYZ12LE,
-					_forced_reduction
-					),
-				_offset + frame
-				);
-		}
+		pass_video(frame, picture_asset->size());
 	}
 
 	if (_sound_reader && (_decode_referenced || !_dcp_content->reference_audio())) {
