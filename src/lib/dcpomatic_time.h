@@ -30,6 +30,7 @@
 
 #include "dcpomatic_assert.h"
 #include "frame_rate_change.h"
+#include "types.h"
 #include <boost/optional.hpp>
 #include <cmath>
 #include <cstdio>
@@ -181,7 +182,7 @@ public:
 	}
 
 	template <typename T>
-	int64_t frames_round (T r) const {
+	Frame frames_round(T r) const {
 		/* We must cast to double here otherwise if T is integer
 		   the calculation will round down before we get the chance
 		   to llrint().
@@ -190,12 +191,12 @@ public:
 	}
 
 	template <typename T>
-	int64_t frames_floor (T r) const {
+	Frame frames_floor(T r) const {
 		return ::floor (_t * r / HZ);
 	}
 
 	template <typename T>
-	int64_t frames_ceil (T r) const {
+	Frame frames_ceil(T r) const {
 		/* We must cast to double here otherwise if T is integer
 		   the calculation will round down before we get the chance
 		   to ceil().
@@ -241,7 +242,7 @@ public:
 	}
 
 	template <class T>
-	static Time<S, O> from_frames (int64_t f, T r) {
+	static Time<S, O> from_frames(Frame f, T r) {
 		DCPOMATIC_ASSERT (r > 0);
 		return Time<S, O> (f * HZ / r);
 	}
