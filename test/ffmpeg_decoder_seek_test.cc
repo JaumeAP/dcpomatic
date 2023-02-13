@@ -69,7 +69,7 @@ check (shared_ptr<FFmpegDecoder> decoder, int frame)
 	BOOST_REQUIRE (decoder->ffmpeg_content()->video_frame_rate ());
 	decoder->seek (ContentTime::from_frames (frame, decoder->ffmpeg_content()->video_frame_rate().get()), true);
 	stored = optional<ContentVideo> ();
-	while (!decoder->pass() && !stored) {}
+	while (decoder->pass().is_ok() && !stored) {}
 	BOOST_CHECK (stored->frame <= frame);
 }
 

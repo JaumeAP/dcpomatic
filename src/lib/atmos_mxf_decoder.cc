@@ -45,19 +45,19 @@ AtmosMXFDecoder::AtmosMXFDecoder (std::shared_ptr<const Film> film, std::shared_
 }
 
 
-bool
+Decoder::PassResult
 AtmosMXFDecoder::pass ()
 {
 	auto const vfr = _content->active_video_frame_rate (film());
 	auto const frame = _next.frames_round (vfr);
 
 	if (frame >= _content->atmos->length()) {
-		return true;
+		return PassResult::finished();
 	}
 
 	atmos->emit (film(), _reader->get_frame(frame), frame, *_metadata);
 	_next += dcpomatic::ContentTime::from_frames (1, vfr);
-	return false;
+	return PassResult::ok();
 }
 
 

@@ -62,14 +62,14 @@ VideoMXFDecoder::VideoMXFDecoder (shared_ptr<const Film> film, shared_ptr<const 
 }
 
 
-bool
+Decoder::PassResult
 VideoMXFDecoder::pass ()
 {
 	auto const vfr = _content->active_video_frame_rate (film());
 	auto const frame = _next.frames_round (vfr);
 
 	if (frame >= _content->video->length()) {
-		return true;
+		return PassResult::finished();
 	}
 
 	if (_mono_reader) {
@@ -92,7 +92,7 @@ VideoMXFDecoder::pass ()
 	}
 
 	_next += ContentTime::from_frames (1, vfr);
-	return false;
+	return PassResult::ok();
 }
 
 

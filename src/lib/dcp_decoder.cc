@@ -183,18 +183,18 @@ DCPDecoder::pass_video(Frame frame, dcp::Size size)
 }
 
 
-bool
+Decoder::PassResult
 DCPDecoder::pass ()
 {
 	if (!_dcp_content->can_be_played()) {
-		return true;
+		return PassResult::finished();
 	}
 
 	if (_reel == _reels.end()) {
 		if (audio) {
 			audio->flush ();
 		}
-		return true;
+		return PassResult::finished();
 	}
 
 	auto const vfr = _dcp_content->active_video_frame_rate (film());
@@ -248,7 +248,7 @@ DCPDecoder::pass ()
 		}
 	}
 
-	return false;
+	return PassResult::ok();
 }
 
 

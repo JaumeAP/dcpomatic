@@ -59,7 +59,7 @@ public:
 	void set_decode_referenced (bool r);
 	void set_forced_reduction (boost::optional<int> reduction);
 
-	bool pass () override;
+	PassResult pass() override;
 	void seek (dcpomatic::ContentTime t, bool accurate) override;
 
 	std::string lazy_digest () const {

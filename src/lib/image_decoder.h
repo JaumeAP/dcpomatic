@@ -36,7 +36,7 @@ public:
 		return _image_content;
 	}
 
-	bool pass () override;
+	PassResult pass() override;
 	void seek (dcpomatic::ContentTime, bool) override;
 
 private:

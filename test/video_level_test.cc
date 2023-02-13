@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE (ffmpeg_image_video_range_expanded)
 		player_video = pv;
 	});
 	while (!player_video) {
-		BOOST_REQUIRE (!player->pass());
+		BOOST_REQUIRE(!player->pass());
 	}
 
 	auto image = player_video->image ([](AVPixelFormat f) { return f; }, VideoRange::FULL, false);
@@ -261,7 +261,7 @@ pixel_range (shared_ptr<const Film> film, shared_ptr<const Content> content)
 		content_video = cv;
 	});
 	while (!content_video) {
-		BOOST_REQUIRE (!decoder->pass());
+		BOOST_REQUIRE(decoder->pass().is_ok());
 	}
 
 	return pixel_range (content_video->image->image(Image::Alignment::COMPACT).image);

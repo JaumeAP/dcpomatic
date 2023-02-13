@@ -61,10 +61,41 @@ public:
 
 	std::shared_ptr<TextDecoder> only_text () const;
 
-	/** Do some decoding and perhaps emit video, audio or subtitle data.
-	 *  @return true if this decoder will emit no more data unless a seek() happens.
-	 */
-	virtual bool pass () = 0;
+	class PassResult
+	{
+	public:
+		enum class Type
+		{
+			OK,        ///< there was no error and more data may be emitted on the next pass()
+			FINISHED,  ///< this decoder will emit no more data unless a seek() happens
+		};
+
+		static PassResult ok() {
+			return { Type::OK };
+		}
+
+		static PassResult finished() {
+			return { Type::FINISHED };
+		}
+
+		bool is_ok() const {
+			return _type == Type::OK;
+		}
+
+		bool is_finished() const {
+			return _type == Type::FINISHED;
+		}
+
+	private:
+		PassResult(Type type)
+			: _type(type)
+		{}
+
+		Type _type;
+	};
+
+	/** Do some decoding and perhaps emit video, audio or subtitle data */
+	virtual PassResult pass() = 0;
 	virtual void seek (dcpomatic::ContentTime time, bool accurate);
 
 	virtual dcpomatic::ContentTime position () const;

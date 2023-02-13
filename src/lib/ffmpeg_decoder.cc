@@ -208,7 +208,7 @@ FFmpegDecoder::flush_fill()
 }
 
 
-bool
+Decoder::PassResult
 FFmpegDecoder::pass ()
 {
 	auto packet = av_packet_alloc();
@@ -230,7 +230,7 @@ FFmpegDecoder::pass ()
 		}
 
 		av_packet_free (&packet);
-		return flush() == FlushResult::DONE;
+		return flush() == FlushResult::DONE ? PassResult::finished() : PassResult::ok();
 	}
 
 	int const si = packet->stream_index;
@@ -245,7 +245,7 @@ FFmpegDecoder::pass ()
 	}
 
 	av_packet_free (&packet);
-	return false;
+	return PassResult::ok();
 }
 
 

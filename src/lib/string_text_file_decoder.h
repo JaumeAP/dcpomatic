@@ -32,7 +32,7 @@ public:
 	StringTextFileDecoder (std::shared_ptr<const Film> film, std::shared_ptr<const StringTextFileContent>);
 
 	void seek (dcpomatic::ContentTime time, bool accurate) override;
-	bool pass () override;
+	PassResult pass() override;
 
 private:
 	dcpomatic::ContentTimePeriod content_time_period (sub::Subtitle s) const;

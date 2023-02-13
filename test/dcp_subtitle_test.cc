@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_within_dcp_test)
 	decoder->only_text()->PlainStart.connect (bind (store, _1));
 
 	stored = optional<ContentStringText> ();
-	while (!decoder->pass() && !stored) {}
+	while (decoder->pass().is_ok() && !stored) {}
 
 	BOOST_REQUIRE (stored);
 	BOOST_REQUIRE_EQUAL (stored->subs.size(), 2U);
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test2)
 	decoder->only_text()->PlainStart.connect (bind (store, _1));
 
 	stored = optional<ContentStringText> ();
-	while (!decoder->pass()) {
+	while (decoder->pass().is_ok()) {
 		if (stored && stored->from() == ContentTime(0)) {
 			/* Text passed around by the player should be unescaped */
 			BOOST_CHECK_EQUAL(stored->subs.front().text(), "<b>Hello world!</b>");
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test3)
 
 	auto decoder = make_shared<DCPSubtitleDecoder>(film, content);
 	stored = optional<ContentStringText> ();
-	while (!decoder->pass ()) {
+	while (decoder->pass().is_ok()) {
 		decoder->only_text()->PlainStart.connect (bind (store, _1));
 		if (stored && stored->from() == ContentTime::from_seconds(0.08)) {
 			auto s = stored->subs;

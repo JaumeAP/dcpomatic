@@ -51,7 +51,7 @@ class FFmpegDecoder : public FFmpeg, public Decoder
 public:
 	FFmpegDecoder (std::shared_ptr<const Film> film, std::shared_ptr<const FFmpegContent>, bool fast);
 
-	bool pass () override;
+	PassResult pass() override;
 	void seek (dcpomatic::ContentTime time, bool) override;
 
 private:

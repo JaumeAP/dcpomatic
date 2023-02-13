@@ -67,11 +67,11 @@ StringTextFileDecoder::seek (ContentTime time, bool accurate)
 }
 
 
-bool
+Decoder::PassResult
 StringTextFileDecoder::pass ()
 {
 	if (_next >= _subtitles.size ()) {
-		return true;
+		return PassResult::finished();
 	}
 
 	ContentTimePeriod const p = content_time_period (_subtitles[_next]);
@@ -81,7 +81,7 @@ StringTextFileDecoder::pass ()
 
 	update_position();
 
-	return false;
+	return PassResult::ok();
 }
 
 

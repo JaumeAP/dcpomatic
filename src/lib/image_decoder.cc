@@ -51,11 +51,11 @@ ImageDecoder::ImageDecoder (shared_ptr<const Film> film, shared_ptr<const ImageC
 }
 
 
-bool
+Decoder::PassResult
 ImageDecoder::pass ()
 {
 	if (_frame_video_position >= _image_content->video->length()) {
-		return true;
+		return PassResult::finished();
 	}
 
 	if (!_image_content->still() || !_image) {
@@ -81,7 +81,7 @@ ImageDecoder::pass ()
 
 	video->emit (film(), _image, _frame_video_position);
 	++_frame_video_position;
-	return false;
+	return PassResult::ok();
 }
 
 
