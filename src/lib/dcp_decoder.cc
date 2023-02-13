@@ -205,6 +205,15 @@ DCPDecoder::pass_audio(Frame frame, double video_frame_rate)
 }
 
 
+void
+DCPDecoder::pass_atmos(Frame frame)
+{
+	DCPOMATIC_ASSERT (_atmos_metadata);
+	auto const entry_point = (*_reel)->atmos()->entry_point().get_value_or(0);
+	atmos->emit (film(), _atmos_reader->get_frame(entry_point + frame), _offset + frame, *_atmos_metadata);
+}
+
+
 Decoder::PassResult
 DCPDecoder::pass ()
 {
@@ -241,9 +250,7 @@ DCPDecoder::pass ()
 	}
 
 	if (_atmos_reader) {
-		DCPOMATIC_ASSERT (_atmos_metadata);
-		auto const entry_point = (*_reel)->atmos()->entry_point().get_value_or(0);
-		atmos->emit (film(), _atmos_reader->get_frame(entry_point + frame), _offset + frame, *_atmos_metadata);
+		pass_atmos(frame);
 	}
 
 	_next += ContentTime::from_frames (1, vfr);
