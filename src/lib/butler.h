@@ -94,12 +94,14 @@ public:
 	boost::optional<TextRingBuffers::Data> get_closed_caption ();
 
 	std::pair<size_t, std::string> memory_used () const;
+	std::vector<std::string> errors() const;
 
 private:
 	void thread ();
 	void video (std::shared_ptr<PlayerVideo> video, dcpomatic::DCPTime time);
 	void audio (std::shared_ptr<AudioBuffers> audio, dcpomatic::DCPTime time, int frame_rate);
 	void text (PlayerText pt, TextType type, boost::optional<DCPTextTrack> track, dcpomatic::DCPTimePeriod period);
+	void error(std::string message);
 	bool should_run () const;
 	void prepare (std::weak_ptr<PlayerVideo> video);
 	void player_change (ChangeType type, int property);
@@ -117,8 +119,8 @@ private:
 	boost::asio::io_service _prepare_service;
 	std::shared_ptr<boost::asio::io_service::work> _prepare_work;
 
-	/** mutex to protect _pending_seek_position, _pending_seek_accurate, _finished, _died, _stop_thread */
-	boost::mutex _mutex;
+	/** mutex to protect _pending_seek_position, _pending_seek_accurate, _finished, _died, _stop_thread, _errors */
+	mutable boost::mutex _mutex;
 	boost::condition _summon;
 	boost::condition _arrived;
 	boost::optional<dcpomatic::DCPTime> _pending_seek_position;
@@ -128,6 +130,7 @@ private:
 	bool _died;
 	std::string _died_message;
 	bool _stop_thread;
+	std::vector<std::string> _errors;
 
 	AudioMapping _audio_mapping;
 	int _audio_channels;
@@ -155,6 +158,7 @@ private:
 	boost::signals2::scoped_connection _player_video_connection;
 	boost::signals2::scoped_connection _player_audio_connection;
 	boost::signals2::scoped_connection _player_text_connection;
+	boost::signals2::scoped_connection _player_error_connection;
 	boost::signals2::scoped_connection _player_change_connection;
 };
 

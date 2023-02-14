@@ -805,7 +805,7 @@ FilmViewer::dropped () const
 int
 FilmViewer::errored () const
 {
-	return _video_view->errored ();
+	return _video_view->errored() + (_butler ? _butler->errors().size() : 0);
 }
 
 

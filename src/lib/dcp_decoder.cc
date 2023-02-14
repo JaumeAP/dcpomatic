@@ -228,6 +228,8 @@ DCPDecoder::pass ()
 		return PassResult::finished();
 	}
 
+	PassResult result = PassResult::ok();
+
 	auto const vfr = _dcp_content->active_video_frame_rate (film());
 
 	/* Frame within the (played part of the) reel that is coming up next */
@@ -242,15 +244,27 @@ DCPDecoder::pass ()
 	pass_texts (_next, picture_asset->size());
 
 	if ((_mono_reader || _stereo_reader) && (_decode_referenced || !_dcp_content->reference_video())) {
-		pass_video(frame, picture_asset->size());
+		try {
+			pass_video(frame, picture_asset->size());
+		} catch (dcp::ReadError const &e) {
+			result = PassResult::error(e.what());
+		}
 	}
 
 	if (_sound_reader && (_decode_referenced || !_dcp_content->reference_audio())) {
-		pass_audio(frame, vfr);
+		try {
+			pass_audio(frame, vfr);
+		} catch (dcp::ReadError const &e) {
+			result = PassResult::error(e.what());
+		}
 	}
 
 	if (_atmos_reader) {
-		pass_atmos(frame);
+		try {
+			pass_atmos(frame);
+		} catch (dcp::ReadError const &e) {
+			result = PassResult::error(e.what());
+		}
 	}
 
 	_next += ContentTime::from_frames (1, vfr);
@@ -262,7 +276,7 @@ DCPDecoder::pass ()
 		}
 	}
 
-	return PassResult::ok();
+	return result;
 }
 
 

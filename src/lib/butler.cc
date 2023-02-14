@@ -36,6 +36,7 @@ using std::make_pair;
 using std::pair;
 using std::shared_ptr;
 using std::string;
+using std::vector;
 using std::weak_ptr;
 using boost::bind;
 using boost::optional;
@@ -92,6 +93,7 @@ Butler::Butler (
 	_player_video_connection = _player.Video.connect(bind(&Butler::video, this, _1, _2));
 	_player_audio_connection = _player.Audio.connect(bind(&Butler::audio, this, _1, _2, _3));
 	_player_text_connection = _player.Text.connect(bind(&Butler::text, this, _1, _2, _3, _4));
+	_player_error_connection = _player.Error.connect(bind(&Butler::error, this, _1));
 	/* The butler must hear about things first, otherwise it might not sort out suspensions in time for
 	   get_video() to be called in response to this signal.
 	*/
@@ -479,5 +481,21 @@ Butler::Error::summary () const
 	}
 
 	return "";
+}
+
+
+void
+Butler::error(string message)
+{
+	boost::mutex::scoped_lock lm(_mutex);
+	_errors.push_back(message);
+}
+
+
+vector<string>
+Butler::errors() const
+{
+	boost::mutex::scoped_lock lm(_mutex);
+	return _errors;
 }
 

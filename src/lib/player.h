@@ -127,6 +127,9 @@ public:
 	boost::signals2::signal<void (PlayerText, TextType, boost::optional<DCPTextTrack>, dcpomatic::DCPTimePeriod)> Text;
 	boost::signals2::signal<void (std::shared_ptr<const dcp::AtmosFrame>, dcpomatic::DCPTime, AtmosMetadata)> Atmos;
 
+	/** Emitted when some error has occurred; the string is the message */
+	boost::signals2::signal<void (std::string)> Error;
+
 private:
 	friend class PlayerWrapper;
 	friend class Piece;

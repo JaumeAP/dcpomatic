@@ -68,6 +68,7 @@ public:
 		{
 			OK,        ///< there was no error and more data may be emitted on the next pass()
 			FINISHED,  ///< this decoder will emit no more data unless a seek() happens
+			ERROR,     ///< some survivable error occurred; output may not be correct
 		};
 
 		static PassResult ok() {
@@ -78,6 +79,10 @@ public:
 			return { Type::FINISHED };
 		}
 
+		static PassResult error(std::string message) {
+			return { Type::ERROR, message };
+		};
+
 		bool is_ok() const {
 			return _type == Type::OK;
 		}
@@ -86,12 +91,27 @@ public:
 			return _type == Type::FINISHED;
 		}
 
+		bool is_error() const {
+			return _type == Type::ERROR;
+		}
+
+		std::string error_message() const {
+			DCPOMATIC_ASSERT(is_error());
+			return _error_message;
+		}
+
 	private:
 		PassResult(Type type)
 			: _type(type)
 		{}
 
+		PassResult(Type type, std::string error_message)
+			: _type(type)
+			, _error_message(error_message)
+		{}
+
 		Type _type;
+		std::string _error_message;
 	};
 
 	/** Do some decoding and perhaps emit video, audio or subtitle data */

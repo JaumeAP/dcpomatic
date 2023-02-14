@@ -90,6 +90,8 @@ VideoView::get_next_frame (bool non_blocking)
 		_player_video.first->eyes() != Eyes::BOTH
 		);
 
+	// XXX: this is too early to check this; error() is only set up when image/make_image is called
+	// on the _player_video, which might not have happened yet (though it could have, with the prepare() stuff)
 	if (_player_video.first && _player_video.first->error()) {
 		++_errored;
 	}
