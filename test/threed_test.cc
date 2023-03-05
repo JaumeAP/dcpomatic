@@ -339,3 +339,22 @@ BOOST_AUTO_TEST_CASE(threed_passthrough_test, * boost::unit_test::depends_on("th
 	}
 }
 
+
+BOOST_AUTO_TEST_CASE(threed_test_mismatched_left_right_lengths)
+{
+	auto left = content_factory("test/data/flat_red.png").front();
+	auto right = content_factory("test/data/flat_red.png").front();
+	auto sound = content_factory("test/data/sine_440.wav").front();
+	auto film = new_test_film2("threed_test_when_padding_needed", { left, right, sound });
+
+	left->video->set_frame_type(VideoFrameType::THREE_D_LEFT);
+	left->set_position(film, dcpomatic::DCPTime());
+	left->video->set_length(240);
+	right->video->set_frame_type(VideoFrameType::THREE_D_RIGHT);
+	right->set_position(film, dcpomatic::DCPTime());
+	right->video->set_frame_type(VideoFrameType::THREE_D_RIGHT);
+	left->video->set_length(238);
+	film->set_three_d(true);
+
+	make_and_verify_dcp(film);
+}
