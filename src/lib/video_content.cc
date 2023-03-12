@@ -671,7 +671,7 @@ VideoContent::scaled_size (dcp::Size film_container)
 		_legacy_ratio = boost::optional<float>();
 	}
 
-	return _pixel_quanta.round (auto_size);
+	return auto_size;
 }
 
 
