@@ -306,19 +306,8 @@ FilmViewer::calculate_sizes ()
 		static_cast<int>(std::lround(_video_view->get()->GetSize().y * scale))
 	};
 
-	auto const view_ratio = video_view_size.ratio();
 	auto const film_ratio = container ? container->ratio () : 1.78;
-
-	dcp::Size out_size;
-	if (view_ratio < film_ratio) {
-		/* panel is less widscreen than the film; clamp width */
-		out_size.width = video_view_size.width;
-		out_size.height = lrintf (out_size.width / film_ratio);
-	} else {
-		/* panel is more widescreen than the film; clamp height */
-		out_size.height = video_view_size.height;
-		out_size.width = lrintf (out_size.height * film_ratio);
-	}
+	auto out_size = fit_ratio_within(film_ratio, video_view_size);
 
 	/* Catch silly values */
 	out_size.width = max (64, out_size.width);
