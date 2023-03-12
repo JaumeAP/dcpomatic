@@ -285,9 +285,6 @@ void
 FilmViewer::video_view_sized ()
 {
 	calculate_sizes ();
-	if (!quick_refresh()) {
-		slow_refresh ();
-	}
 }
 
 
