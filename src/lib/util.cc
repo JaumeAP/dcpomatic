@@ -980,25 +980,6 @@ copy_in_bits (boost::filesystem::path from, boost::filesystem::path to, std::fun
 }
 
 
-dcp::Size
-scale_for_display (dcp::Size s, dcp::Size display_container, dcp::Size film_container, PixelQuanta quanta)
-{
-	/* Now scale it down if the display container is smaller than the film container */
-	if (display_container != film_container) {
-		float const scale = min (
-			float (display_container.width) / film_container.width,
-			float (display_container.height) / film_container.height
-			);
-
-		s.width = lrintf (s.width * scale);
-		s.height = lrintf (s.height * scale);
-		s = quanta.round (s);
-	}
-
-	return s;
-}
-
-
 dcp::DecryptedKDM
 decrypt_kdm_with_helpful_error (dcp::EncryptedKDM kdm)
 {

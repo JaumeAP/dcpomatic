@@ -89,7 +89,6 @@ extern std::shared_ptr<AudioBuffers> remap (std::shared_ptr<const AudioBuffers> 
 extern size_t utf8_strlen (std::string s);
 extern void emit_subtitle_image (dcpomatic::ContentTimePeriod period, dcp::SubtitleImage sub, dcp::Size size, std::shared_ptr<TextDecoder> decoder);
 extern void copy_in_bits (boost::filesystem::path from, boost::filesystem::path to, std::function<void (float)>);
-extern dcp::Size scale_for_display (dcp::Size s, dcp::Size display_container, dcp::Size film_container, PixelQuanta quanta);
 extern dcp::DecryptedKDM decrypt_kdm_with_helpful_error (dcp::EncryptedKDM kdm);
 extern boost::filesystem::path default_font_file ();
 extern void start_of_thread (std::string name);

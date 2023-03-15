@@ -1093,12 +1093,7 @@ Player::video (weak_ptr<Piece> weak_piece, ContentVideo video)
 			video.image,
 			content_video->actual_crop(),
 			content_video->fade(film, video.frame),
-			scale_for_display(
-				content_video->scaled_size(film->frame_size()),
-				_video_container_size,
-				film->frame_size(),
-				content_video->pixel_quanta()
-				),
+			content_video->scaled_size(_video_container_size),
 			_video_container_size,
 			eyes,
 			video.part,

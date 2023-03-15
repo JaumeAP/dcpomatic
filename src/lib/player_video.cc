@@ -362,12 +362,7 @@ PlayerVideo::reset_metadata (shared_ptr<const Film> film, dcp::Size player_video
 
 	_crop = content->video->actual_crop();
 	_fade = content->video->fade(film, _video_frame.get());
-	_inter_size = scale_for_display(
-		content->video->scaled_size(film->frame_size()),
-		player_video_container_size,
-		film->frame_size(),
-		content->video->pixel_quanta()
-		);
+	_inter_size = content->video->scaled_size(player_video_container_size);
 	_out_size = player_video_container_size;
 	_colour_conversion = content->video->colour_conversion();
 	_video_range = content->video->range();
