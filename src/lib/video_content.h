@@ -206,7 +206,7 @@ public:
 	/* XXX: names for these? */
 	dcp::Size size_after_3d_split () const;
 	dcp::Size size_after_crop () const;
-	dcp::Size scaled_size (dcp::Size container_size);
+	dcp::Size scaled_size(dcp::Size frame);
 
 	boost::optional<double> fade (std::shared_ptr<const Film> film, Frame) const;
 

@@ -641,32 +641,35 @@ VideoContent::modify_trim_start (ContentTime& trim) const
 }
 
 
-/** @param film_container The size of the container for the DCP that we are working on */
+/** Calculate the size that this content's image should be scaled to if it's being placed
+ *  into a given frame size.  This frame size could be the container of a DCP, for example,
+ *  or the available space in a preview.
+ */
 dcp::Size
-VideoContent::scaled_size (dcp::Size film_container)
+VideoContent::scaled_size(dcp::Size frame)
 {
 	if (_custom_ratio) {
-		return fit_ratio_within(*_custom_ratio, film_container);
+		return fit_ratio_within(*_custom_ratio, frame);
 	}
 
 	if (_custom_size) {
-		if (_custom_size->width <= film_container.width && _custom_size->height <= film_container.height) {
+		if (_custom_size->width <= frame.width && _custom_size->height <= frame.height) {
 			return *_custom_size;
 		}
-		return fit_ratio_within(_custom_size->ratio(), film_container);
+		return fit_ratio_within(_custom_size->ratio(), frame);
 	}
 
 	auto size = size_after_crop ();
 	size.width = std::lrint(size.width * _sample_aspect_ratio.get_value_or(1));
 
 	/* This is what we will return unless there is any legacy stuff to take into account */
-	auto auto_size = fit_ratio_within (size.ratio(), film_container);
+	auto auto_size = fit_ratio_within (size.ratio(), frame);
 
 	if (_legacy_ratio) {
-		if (fit_ratio_within(*_legacy_ratio, film_container) != auto_size) {
+		if (fit_ratio_within(*_legacy_ratio, frame) != auto_size) {
 			_custom_ratio = *_legacy_ratio;
 			_legacy_ratio = optional<float>();
-			return fit_ratio_within(*_custom_ratio, film_container);
+			return fit_ratio_within(*_custom_ratio, frame);
 		}
 		_legacy_ratio = boost::optional<float>();
 	}
