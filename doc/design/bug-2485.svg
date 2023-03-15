@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.1 (3bf5ae0, 2021-09-20)"
+   sodipodi:docname="bug-2485.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:snap-bbox="true"
+     inkscape:bbox-paths="true"
+     inkscape:snap-global="true"
+     inkscape:bbox-nodes="true"
+     inkscape:object-paths="true"
+     inkscape:zoom="0.70710678"
+     inkscape:cx="238.29499"
+     inkscape:cy="613.76869"
+     inkscape:window-width="1920"
+     inkscape:window-height="1052"
+     inkscape:window-x="1920"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible;"
+       id="Arrow1Mend"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.4) rotate(180) translate(10,0)"
+         style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt;"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path51993" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow1Mstart"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mstart"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.4) translate(10,0)"
+         style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path51990" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow1Mstart-6"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mstart"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(0.4,0,0,0.4,4,0)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path51990-7" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow1Mend-5"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path51993-3" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.9389px;line-height:1.25;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="-0.039448321"
+       y="4.8134446"
+       id="text19856"
+       transform="scale(-1,1)"><tspan
+         sodipodi:role="line"
+         id="tspan19854"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="-0.039448321"
+         y="4.8134446" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';stroke-width:0.264583"
+       x="5.6374798"
+       y="8.8842831"
+       id="text36528"><tspan
+         sodipodi:role="line"
+         id="tspan36526"
+         style="stroke-width:0.264583"
+         x="5.6374798"
+         y="8.8842831">The viewer draws the image it is given, and pads outside it with grey.</tspan></text>
+    <g
+       id="g65034"
+       transform="translate(0,2.1104626)">
+      <g
+         id="g65029">
+        <rect
+           style="opacity:0.792898;fill:#cccccc;stroke:none;stroke-width:0.529167;stroke-linecap:round;stop-color:#000000"
+           id="rect46010"
+           width="52.133537"
+           height="34.952057"
+           x="13.868054"
+           y="14.18257" />
+      </g>
+      <rect
+         style="opacity:0.792898;fill:#008000;stroke:none;stroke-width:0.529166;stroke-linecap:round;stop-color:#000000"
+         id="rect45862"
+         width="39.83728"
+         height="28.436924"
+         x="13.868055"
+         y="14.18257" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';stroke-width:0.264583"
+       x="5.6736536"
+       y="61.207695"
+       id="text51442"><tspan
+         sodipodi:role="line"
+         id="tspan51440"
+         style="stroke-width:0.264583"
+         x="5.6736536"
+         y="61.207695">The PlayerVideo produces an image according to _inter_size and _out_size</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="5.6736536"
+         y="67.381325"
+         id="tspan51444">that are calculated as it is created in Player.</tspan></text>
+    <g
+       id="g59008"
+       transform="translate(-3.3999186,-1.5140956)">
+      <text
+         xml:space="preserve"
+         style="font-size:4.9389px;line-height:1.25;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';stroke-width:0.264583"
+         x="52.904301"
+         y="134.15779"
+         id="text54335"><tspan
+           sodipodi:role="line"
+           id="tspan54333"
+           style="stroke-width:0.264583"
+           x="52.904301"
+           y="134.15779">_out_size</tspan></text>
+      <rect
+         style="opacity:0.792898;fill:#000000;stroke:none;stroke-width:0.529167;stroke-linecap:round;stop-color:#000000"
+         id="rect51818"
+         width="92.120697"
+         height="50.249352"
+         x="17.267973"
+         y="76.304169" />
+      <rect
+         style="opacity:0.792898;fill:#008000;stroke:none;stroke-width:0.529166;stroke-linecap:round;stop-color:#000000"
+         id="rect45862-3"
+         width="63.339424"
+         height="50.249352"
+         x="31.658609"
+         y="76.304169" />
+      <path
+         style="fill:#ff0000;stroke:#ff0000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart);marker-end:url(#Arrow1Mend)"
+         d="M 17.789382,129.90721 H 108.86299"
+         id="path51982"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:#ff0000;stroke:#ff0000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart-6);marker-end:url(#Arrow1Mend-5)"
+         d="M 32.180018,113.53676 H 94.470363"
+         id="path51982-5"
+         sodipodi:nodetypes="cc" />
+      <text
+         xml:space="preserve"
+         style="font-size:4.9389px;line-height:1.25;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';stroke-width:0.264583"
+         x="51.533321"
+         y="111.88344"
+         id="text55857"><tspan
+           sodipodi:role="line"
+           id="tspan55855"
+           style="stroke-width:0.264583"
+           x="51.533321"
+           y="111.88344">_inter_size</tspan></text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';stroke-width:0.264583"
+       x="5.6374798"
+       y="143.58781"
+       id="text61344"><tspan
+         sodipodi:role="line"
+         id="tspan61342"
+         style="stroke-width:0.264583"
+         x="5.6374798"
+         y="143.58781">This is often fine, e.g. when we have 1.33:1 in a flat frame.  However, if the image</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="5.6374798"
+         y="149.76144"
+         id="tspan62600">is supposed to fill the frame, _inter_size must = _out_size otherwise we get thin</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="5.6374798"
+         y="155.93506"
+         id="tspan62602">black borders which look bad.</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';stroke-width:0.264583"
+       x="5.6784763"
+       y="165.94589"
+       id="text67406"><tspan
+         sodipodi:role="line"
+         id="tspan67404"
+         style="stroke-width:0.264583"
+         x="5.6784763"
+         y="165.94589">In 2.16.47 _out_size is Player::_video_container_size.  This in turn is the &quot;best fit&quot;</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="5.6784763"
+         y="172.11952"
+         id="tspan72922">of the film frame's ratio inside the available space that the UI gives us (done by</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="5.6784763"
+         y="178.29314"
+         id="tspan72924">fit_ratio_within in FilmViewer::calculate_sizes).  It doesn't really matter what it is,</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="5.6784763"
+         y="184.46677"
+         id="tspan86502">though: only that _inter_size is the same as it if the image is the same size as </tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="5.6784763"
+         y="190.6404"
+         id="tspan88712">the frame.</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';stroke-width:0.264583"
+       x="4.5289984"
+       y="198.38217"
+       id="text102768"><tspan
+         sodipodi:role="line"
+         id="tspan102766"
+         style="stroke-width:0.264583"
+         x="4.5289984"
+         y="198.38217" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';stroke-width:0.264583"
+       x="5.8231707"
+       y="200.65125"
+       id="text105346"><tspan
+         sodipodi:role="line"
+         id="tspan105344"
+         style="stroke-width:0.264583"
+         x="5.8231707"
+         y="200.65125">_inter_size is calculated using scale_for_display, which is different to fit_ratio_within,</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="5.8231707"
+         y="206.82487"
+         id="tspan116668">so a mismatch between _inter_size and _out_size is possible. </tspan></text>
+  </g>
+</svg>
