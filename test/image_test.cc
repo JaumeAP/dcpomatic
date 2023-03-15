@@ -426,6 +426,59 @@ BOOST_AUTO_TEST_CASE (crop_scale_window_test8)
 }
 
 
+
+BOOST_AUTO_TEST_CASE(crop_scale_window_noise_on_edge)
+{
+	auto test = [](dcp::Size in_size, dcp::Size out_size) {
+
+		using namespace boost::filesystem;
+
+		auto image = make_shared<Image>(AV_PIX_FMT_RGB24, in_size, Image::Alignment::PADDED);
+		for (int y = 0; y < in_size.height; ++y) {
+			auto data = image->data()[0] + image->stride()[0] * y;
+			for (int x = 0; x < in_size.width; ++x) {
+				*data++ = 0;
+				*data++ = 255;
+				*data++ = 0;
+			}
+		}
+
+		auto scaled = image->crop_scale_window(
+			Crop(), out_size, out_size, dcp::YUVToRGB::REC709, VideoRange::FULL, AV_PIX_FMT_RGB24, VideoRange::FULL, Image::Alignment::PADDED, false
+			);
+
+		auto const scaled_size = scaled->size();
+
+		for (auto y = 0; y < scaled_size.height; ++y) {
+			auto data = scaled->data()[0] + scaled->stride()[0] * y;
+			for (int x = 0; x < scaled_size.width; ++x) {
+				if (*data++ != 0) {
+					return false;
+				}
+				if (*data++ != 255) {
+					return false;
+				}
+				if (*data++ != 0) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	};
+
+	BOOST_CHECK(test({998, 540}, {441, 239}));
+	BOOST_CHECK(test({998, 541}, {441, 239}));
+	BOOST_CHECK(test({492, 101}, {494, 103}));
+	/* These all fail; there's little bars of "noise" on the right hand side of the image */
+	// BOOST_CHECK(test({999, 540}, {440, 540}));
+	// BOOST_CHECK(test({999, 540}, {432, 540}));
+	// BOOST_CHECK(test({999, 540}, {440, 540}));
+	// BOOST_CHECK(test({999, 540}, {440, 239}));
+}
+
+
+
 BOOST_AUTO_TEST_CASE (as_png_test)
 {
 	auto proxy = make_shared<FFmpegImageProxy>("test/data/3d_test/000001.png");
