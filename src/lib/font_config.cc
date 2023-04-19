@@ -75,6 +75,7 @@ FontConfig::make_font_available(shared_ptr<dcpomatic::Font> font)
 		font->data()->write(font_file);
 	}
 
+	std::cout << "Make " << font_file << " available.\n";
 
 	/* Make this font available to DCP-o-matic */
 	optional<string> font_name;
