@@ -262,7 +262,11 @@ Content::set_trim_start(shared_ptr<const Film> film, ContentTime t)
 
 	{
 		boost::mutex::scoped_lock lm (_mutex);
-		_trim_start = t;
+		if (_trim_start == t) {
+			cc.abort();
+		} else {
+			_trim_start = t;
+		}
 	}
 }
 
