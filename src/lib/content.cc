@@ -257,7 +257,6 @@ Content::set_trim_start(shared_ptr<const Film> film, ContentTime t)
 		audio->modify_trim_start(film, t);
 	}
 
-	std::cout << "TRIM_START from set_trim_start\n";
 	ContentChangeSignaller cc (this, ContentProperty::TRIM_START);
 
 	{
