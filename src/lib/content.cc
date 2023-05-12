@@ -29,6 +29,7 @@
 #include "compose.hpp"
 #include "content.h"
 #include "content_factory.h"
+#include "dcpomatic_log.h"
 #include "exceptions.h"
 #include "film.h"
 #include "job.h"
@@ -562,11 +563,19 @@ Content::changed () const
 {
 	bool write_time_changed = false;
 	for (auto i = 0U; i < _paths.size(); ++i) {
-		if (boost::filesystem::last_write_time(_paths[i]) != last_write_time(i)) {
+		auto const current_last_write_time = boost::filesystem::last_write_time(_paths[i]);
+		if (current_last_write_time != last_write_time(i)) {
+			LOG_GENERAL("Content %1 write time changed from %2 to %3", _paths[i], last_write_time(i), current_last_write_time);
 			write_time_changed = true;
 			break;
 		}
 	}
 
-	return (write_time_changed || calculate_digest() != digest());
+	/* Only check digest if the write time is the same */
+	auto const digest_changed = !write_time_changed && (calculate_digest() != digest());
+	if (digest_changed) {
+		LOG_GENERAL("Content %1 digest changed", _paths[0]);
+	}
+
+	return (write_time_changed || digest_changed);
 }
