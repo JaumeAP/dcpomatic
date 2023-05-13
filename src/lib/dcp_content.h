@@ -223,6 +223,8 @@ private:
 	std::map<dcp::Marker, dcpomatic::ContentTime> _markers;
 	std::vector<dcp::Rating> _ratings;
 	std::vector<std::string> _content_versions;
+
+	boost::optional<boost::filesystem::path> _directory;
 };
 
 

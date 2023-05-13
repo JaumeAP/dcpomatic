@@ -134,10 +134,10 @@ DCPContent::DCPContent (boost::filesystem::path p)
 	, _reference_video (false)
 	, _reference_audio (false)
 	, _three_d (false)
+	, _directory(p)
 {
 	LOG_GENERAL ("Creating DCP content from %1", p.string());
 
-	set_paths(read_directory(p));
 	set_default_colour_conversion ();
 }
 
@@ -232,12 +232,13 @@ DCPContent::examine (shared_ptr<const Film> film, shared_ptr<Job> job)
 	ContentChangeSignaller cc_kdm (this, DCPContentProperty::NEEDS_KDM);
 	ContentChangeSignaller cc_name (this, DCPContentProperty::NAME);
 
+	auto examiner = make_shared<DCPExaminer>(shared_from_this(), film ? film->tolerant() : true, _directory ? read_directory(*_directory) : paths());
+	set_paths(examiner->paths());
+
 	if (job) {
 		job->set_progress_unknown ();
 	}
 	Content::examine (film, job);
-
-	auto examiner = make_shared<DCPExaminer>(shared_from_this(), film ? film->tolerant() : true);
 
 	if (examiner->has_video()) {
 		{
@@ -559,7 +560,7 @@ DCPContent::reels (shared_ptr<const Film> film) const
 	if (reel_lengths.empty()) {
 		/* Old metadata with no reel lengths; get them here instead */
 		try {
-			scoped_ptr<DCPExaminer> examiner (new DCPExaminer(shared_from_this(), film->tolerant()));
+			scoped_ptr<DCPExaminer> examiner(new DCPExaminer(shared_from_this(), film->tolerant(), paths()));
 			reel_lengths = examiner->reel_lengths ();
 		} catch (...) {
 			/* Could not examine the DCP; guess reels */
@@ -864,7 +865,7 @@ DCPContent::check_font_ids()
 		return;
 	}
 
-	DCPExaminer examiner(shared_from_this(), true);
+	DCPExaminer examiner(shared_from_this(), true, paths());
 	add_fonts_from_examiner(text.front(), examiner.fonts());
 }
 

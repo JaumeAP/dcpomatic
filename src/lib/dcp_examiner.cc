@@ -61,11 +61,12 @@ using std::vector;
 using boost::optional;
 
 
-DCPExaminer::DCPExaminer (shared_ptr<const DCPContent> content, bool tolerant)
+DCPExaminer::DCPExaminer (shared_ptr<const DCPContent> content, bool tolerant, vector<boost::filesystem::path> const& paths)
+	: _paths(paths)
 {
 	shared_ptr<dcp::CPL> selected_cpl;
 
-	auto cpls = dcp::find_and_resolve_cpls (content->directories(), tolerant);
+	auto cpls = dcp::find_and_resolve_cpls(dcp::DCP::directories_from_files(_paths), tolerant);
 
 	if (content->cpl ()) {
 		/* Use the CPL that was specified, or that the content was using before */

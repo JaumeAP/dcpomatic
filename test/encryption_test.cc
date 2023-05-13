@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE (smpte_dcp_with_subtitles_can_be_decrypted)
 
 	auto dcp_content = make_shared<DCPContent>(film->dir(film->dcp_name()));
 	dcp_content->add_kdm (kdm);
-	DCPExaminer examiner (dcp_content, false);
+	DCPExaminer examiner(dcp_content, false, content[0]->paths());
 	BOOST_CHECK (examiner.kdm_valid());
 }
 

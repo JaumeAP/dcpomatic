@@ -38,7 +38,7 @@ class DCPContent;
 class DCPExaminer : public VideoExaminer, public AudioExaminer
 {
 public:
-	DCPExaminer(std::shared_ptr<const DCPContent>, bool tolerant);
+	DCPExaminer(std::shared_ptr<const DCPContent>, bool tolerant, std::vector<boost::filesystem::path> const& files);
 
 	bool has_video () const override {
 		return _has_video;
@@ -174,6 +174,10 @@ public:
 		return _fonts;
 	}
 
+	std::vector<boost::filesystem::path> paths() const {
+		return _paths;
+	}
+
 private:
 	boost::optional<double> _video_frame_rate;
 	boost::optional<dcp::Size> _video_size;
@@ -207,4 +211,5 @@ private:
 	Frame _atmos_length = 0;
 	dcp::Fraction _atmos_edit_rate;
 	std::vector<std::vector<std::shared_ptr<dcpomatic::Font>>> _fonts;
+	std::vector<boost::filesystem::path> _paths;
 };
