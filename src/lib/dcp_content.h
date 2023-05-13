@@ -181,8 +181,6 @@ private:
 
 	void add_properties (std::shared_ptr<const Film> film, std::list<UserProperty>& p) const override;
 
-	void read_directory (boost::filesystem::path);
-	void read_sub_directory (boost::filesystem::path);
 	std::list<dcpomatic::DCPTimePeriod> reels (std::shared_ptr<const Film> film) const;
 	bool can_reference (
 		std::shared_ptr<const Film> film,

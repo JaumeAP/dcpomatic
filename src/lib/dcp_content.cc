@@ -75,6 +75,58 @@ int const DCPContentProperty::TEXTS              = 606;
 int const DCPContentProperty::CPL                = 607;
 
 
+static
+void
+read_sub_directory(boost::filesystem::path p, vector<boost::filesystem::path>& contents)
+{
+	using namespace boost::filesystem;
+
+	LOG_GENERAL ("DCPContent::read_sub_directory reads %1", p.string());
+	for (auto i: directory_iterator(p)) {
+		if (is_regular_file(i.path())) {
+			LOG_GENERAL ("Inside there's regular file %1", i.path().string());
+			contents.push_back(i.path());
+		} else if (is_directory(i.path()) && i.path().filename() != ".AppleDouble") {
+			LOG_GENERAL ("Inside there's directory %1", i.path().string());
+			read_sub_directory(i.path(), contents);
+		} else {
+			LOG_GENERAL("Ignoring %1 from inside: status is %2", i.path().string(), static_cast<int>(status(i.path()).type()));
+		}
+	}
+}
+
+
+static
+vector<boost::filesystem::path>
+read_directory(boost::filesystem::path p)
+{
+	using namespace boost::filesystem;
+
+	bool have_assetmap = false;
+	bool have_metadata = false;
+
+	for (auto i: directory_iterator(p)) {
+		if (i.path().filename() == "ASSETMAP" || i.path().filename() == "ASSETMAP.xml") {
+			have_assetmap = true;
+		} else if (i.path().filename() == "metadata.xml") {
+			have_metadata = true;
+		}
+	}
+
+	if (!have_assetmap) {
+		if (!have_metadata) {
+			throw DCPError ("No ASSETMAP or ASSETMAP.xml file found: is this a DCP?");
+		} else {
+			throw ProjectFolderError ();
+		}
+	}
+
+	vector<boost::filesystem::path> contents;
+	read_sub_directory(p, contents);
+	return contents;
+}
+
+
 DCPContent::DCPContent (boost::filesystem::path p)
 	: _encrypted (false)
 	, _needs_assets (false)
@@ -85,7 +137,7 @@ DCPContent::DCPContent (boost::filesystem::path p)
 {
 	LOG_GENERAL ("Creating DCP content from %1", p.string());
 
-	read_directory (p);
+	set_paths(read_directory(p));
 	set_default_colour_conversion ();
 }
 
@@ -159,52 +211,6 @@ DCPContent::DCPContent (cxml::ConstNodePtr node, int version)
 
 	for (auto i: node->node_children("ContentVersion")) {
 		_content_versions.push_back (i->content());
-	}
-}
-
-void
-DCPContent::read_directory (boost::filesystem::path p)
-{
-	using namespace boost::filesystem;
-
-	bool have_assetmap = false;
-	bool have_metadata = false;
-
-	for (auto i: directory_iterator(p)) {
-		if (i.path().filename() == "ASSETMAP" || i.path().filename() == "ASSETMAP.xml") {
-			have_assetmap = true;
-		} else if (i.path().filename() == "metadata.xml") {
-			have_metadata = true;
-		}
-	}
-
-	if (!have_assetmap) {
-		if (!have_metadata) {
-			throw DCPError ("No ASSETMAP or ASSETMAP.xml file found: is this a DCP?");
-		} else {
-			throw ProjectFolderError ();
-		}
-	}
-
-	read_sub_directory (p);
-}
-
-void
-DCPContent::read_sub_directory (boost::filesystem::path p)
-{
-	using namespace boost::filesystem;
-
-	LOG_GENERAL ("DCPContent::read_sub_directory reads %1", p.string());
-	for (auto i: directory_iterator(p)) {
-		if (is_regular_file(i.path())) {
-			LOG_GENERAL ("Inside there's regular file %1", i.path().string());
-			add_path (i.path());
-		} else if (is_directory(i.path()) && i.path().filename() != ".AppleDouble") {
-			LOG_GENERAL ("Inside there's directory %1", i.path().string());
-			read_sub_directory (i.path());
-		} else {
-			LOG_GENERAL("Ignoring %1 from inside: status is %2", i.path().string(), static_cast<int>(status(i.path()).type()));
-		}
 	}
 }
 
