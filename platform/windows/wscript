@@ -485,5 +485,5 @@ def build(bld):
         ('disk', 'Disk Writer'),
     ]
 
-    write_installer(all_tools, 32, bld.env.VERSION, bld.env.DEBUG)
-    write_installer(all_tools, 64, bld.env.VERSION, bld.env.DEBUG)
+    for bits in (32, 64):
+        write_installer(all_tools, bits, bld.env.VERSION, bld.env.DEBUG)
