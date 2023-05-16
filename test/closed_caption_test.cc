@@ -19,6 +19,7 @@
 */
 
 
+#include "lib/dcp_content.h"
 #include "lib/film.h"
 #include "lib/string_text_file_content.h"
 #include "lib/text_content.h"
@@ -116,3 +117,21 @@ BOOST_AUTO_TEST_CASE (closed_caption_test2)
 
 	cl.run ();
 }
+
+
+
+BOOST_AUTO_TEST_CASE(fonts_in_inputs_removed_for_ccaps)
+{
+	auto dcp_with_ccaps = make_shared<DCPContent>("test/data/xml_subtitle_test2");
+	auto film = new_test_film2("fonts_in_inputs_removed_for_ccaps", { dcp_with_ccaps });
+	for (auto i: dcp_with_ccaps->text) {
+		i->set_use(true);
+		i->set_type(TextType::CLOSED_CAPTION);
+	}
+	film->set_interop(true);
+	make_and_verify_dcp(film, { dcp::VerificationNote::Code::INVALID_STANDARD, dcp::VerificationNote::Code::INVALID_SUBTITLE_SPACING });
+
+	auto sub = dcp::file_to_string(find_file(film->dir(film->dcp_name()), "sub_"));
+	BOOST_CHECK(sub.find("Font") == std::string::npos);
+}
+

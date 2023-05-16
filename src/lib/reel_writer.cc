@@ -486,12 +486,16 @@ maybe_add_text (
 	Frame const period_duration = period.duration().frames_round(film->video_frame_rate());
 
 	shared_ptr<Result> reel_asset;
+	auto const font_tags = std::is_same<Result, dcp::ReelClosedCaptionAsset>::value ? dcp::SubtitleAsset::FontTags::OMIT : dcp::SubtitleAsset::FontTags::INCLUDE;
 
 	if (asset) {
 		if (auto interop = dynamic_pointer_cast<dcp::InteropSubtitleAsset>(asset)) {
 			auto directory = output_dcp / interop->id ();
 			boost::filesystem::create_directories (directory);
-			interop->write (directory / subtitle_asset_filename(asset, reel_index, reel_count, content_summary, ".xml"));
+			interop->write(
+				directory / subtitle_asset_filename(asset, reel_index, reel_count, content_summary, ".xml"),
+				font_tags
+				);
 			reel_asset = make_shared<Interop> (
 				interop,
 				dcp::Fraction(film->video_frame_rate(), 1),
@@ -506,7 +510,8 @@ maybe_add_text (
 			*/
 			smpte->set_intrinsic_duration(picture_duration);
 			smpte->write (
-				output_dcp / subtitle_asset_filename(asset, reel_index, reel_count, content_summary, ".mxf")
+				output_dcp / subtitle_asset_filename(asset, reel_index, reel_count, content_summary, ".mxf"),
+				font_tags
 				);
 			reel_asset = make_shared<SMPTE> (
 				smpte,
@@ -951,18 +956,22 @@ ReelWriter::write(PlayerText subs, TextType type, optional<DCPTextTrack> track, 
 		i.set_out (dcp::Time(period.to.seconds() - _period.from.seconds(), tcr));
 		i.set_v_position(convert_vertical_position(i, film()->interop() ? dcp::SubtitleStandard::INTEROP : dcp::SubtitleStandard::SMPTE_2014));
 		auto sub = make_shared<dcp::SubtitleString>(i);
-		/* i.font is a shared_ptr<Font> which uniquely identifies the font we want,
-		 * though if we are Interop we can only have one font, so we'll use the chosen
-		 * one instead.
-		 */
-		auto font = film()->interop() ? chosen_interop_font : i.font;
-		/* We can get the corresponding ID from fonts */
-		auto const font_id_to_use = fonts.get(font);
-		/* Give this subtitle the correct font ID */
-		sub->set_font(font_id_to_use);
+		if (type == TextType::OPEN_SUBTITLE) {
+			/* i.font is a shared_ptr<Font> which uniquely identifies the font we want,
+			 * though if we are Interop we can only have one font, so we'll use the chosen
+			 * one instead.
+			 */
+			auto font = film()->interop() ? chosen_interop_font : i.font;
+			/* We can get the corresponding ID from fonts */
+			auto const font_id_to_use = fonts.get(font);
+			/* Give this subtitle the correct font ID */
+			sub->set_font(font_id_to_use);
+			/* Make sure the asset LoadFonts the font we are about to ask for */
+			asset->ensure_font(font_id_to_use, font->data().get_value_or(_default_font));
+		} else {
+			sub->unset_font();
+		}
 		asset->add(sub);
-		/* Make sure the asset LoadFonts the font we just asked for */
-		asset->ensure_font(font_id_to_use, font->data().get_value_or(_default_font));
 	}
 
 	for (auto i: subs.bitmap) {
