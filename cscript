@@ -659,17 +659,19 @@ def build(target, options, for_package):
         target.command('./waf install')
 
 def package_windows(target):
-    identifier = '%d' % target.bits
-    shutil.copyfile('build/platform/windows/installer.%s.nsi' % identifier, 'build/platform/windows/installer2.%s.nsi' % identifier)
-    target.command('sed -i "s~%%resources%%~%s/platform/windows~g" build/platform/windows/installer2.%s.nsi' % (os.getcwd(), identifier))
-    target.command('sed -i "s~%%graphics%%~%s/graphics~g" build/platform/windows/installer2.%s.nsi' % (os.getcwd(), identifier))
-    target.command('sed -i "s~%%static_deps%%~%s~g" build/platform/windows/installer2.%s.nsi' % (target.windows_prefix, identifier))
-    target.command('sed -i "s~%%cdist_deps%%~%s~g" build/platform/windows/installer2.%s.nsi' % (target.directory, identifier))
-    target.command('sed -i "s~%%mingw%%~%s~g" build/platform/windows/installer2.%s.nsi' % (target.environment_prefix, identifier))
-    target.command('sed -i "s~%%binaries%%~%s/build~g" build/platform/windows/installer2.%s.nsi' % (os.getcwd(), identifier))
-    target.command('sed -i "s~%%bits%%~32~g" build/platform/windows/installer2.%s.nsi' % identifier)
-    target.command('makensis build/platform/windows/installer2.%s.nsi' % identifier)
-    return os.path.abspath(glob.glob('build/platform/windows/*%s*.exe' % target.bits)[0])
+    for installer in ('all', 'player'):
+        name1 = '%s.%s.nsi' % (installer, target.bits)
+        name2 = '%s2.%s.nsi' % (installer, target.bits)
+        shutil.copyfile('build/platform/windows/%s' % name1, 'build/platform/windows/%s' % name2)
+        target.command('sed -i "s~%%resources%%~%s/platform/windows~g" build/platform/windows/%s' % (os.getcwd(), name2))
+        target.command('sed -i "s~%%graphics%%~%s/graphics~g" build/platform/windows/%s' % (os.getcwd(), name2))
+        target.command('sed -i "s~%%static_deps%%~%s~g" build/platform/windows/%s' % (target.windows_prefix, name2))
+        target.command('sed -i "s~%%cdist_deps%%~%s~g" build/platform/windows/%s' % (target.directory, name2))
+        target.command('sed -i "s~%%mingw%%~%s~g" build/platform/windows/%s' % (target.environment_prefix, name2))
+        target.command('sed -i "s~%%binaries%%~%s/build~g" build/platform/windows/%s' % (os.getcwd(), name2))
+        target.command('sed -i "s~%%bits%%~32~g" build/platform/windows/%s' % name2)
+        target.command('makensis build/platform/windows/%s' % name2)
+    return [os.path.abspath(exe) for exe in glob.glob('build/platform/windows/*%s*.exe' % target.bits)]
 
 def package_debian(target, cpu, version, options):
     make_control(target.version, target.bits, 'debian/control', target.debug, options['gui'])
