@@ -341,86 +341,53 @@ File "%cdist_deps%/share/libdcp/tags/variant"
 File "%cdist_deps%/share/libdcp/tags/dcnc"
 SetOutPath "$INSTDIR"
 File "%cdist_deps%/share/libdcp/ratings"
-
-SectionEnd
     """, file=f)
 
     if debug:
-        print('Section "DCP-o-matic 2 debug" SEC_MASTER', file=f)
-    else:
-        print('Section "DCP-o-matic 2" SEC_MASTER', file=f)
-
-    print('SetOutPath "$INSTDIR\\bin"', file=f)
-
-    if debug:
-        print('CreateDirectory "$SMPROGRAMS\\DCP-o-matic 2 debug"', file=f)
-    else:
-        print('CreateDirectory "$SMPROGRAMS\\DCP-o-matic 2"', file=f)
-
-    for s, l in tools:
-        print('File "%%binaries%%/src/tools/dcpomatic2%s.exe"' % name_with_underscore(s), file=f)
-
-    if [t for t in tools if t[0] == 'disk']:
-        print("""
-File "%binaries%/src/tools/dcpomatic2_disk_writer.exe"
-File "%resources%/dcpomatic2_disk_writer.exe.manifest"
-        """, file=f)
-
-    if debug:
-        for s, l in tools:
-            print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2%s debug.lnk" "$INSTDIR\\bin\\dcpomatic2%s_debug.bat" ""' % (name_with_space(l), name_with_underscore(s)), file=f)
         print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\Uninstall DCP-o-matic 2 debug.lnk" "$INSTDIR\\Uninstall.exe"', file=f)
         print('WriteRegStr HKLM "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\DCP-o-matic 2 debug" "DisplayName" "DCP-o-matic 2 debug (remove only)"', file=f)
         print('WriteRegStr HKLM "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\DCP-o-matic 2 debug" "UninstallString" "$INSTDIR\\Uninstall.exe"', file=f)
     else:
-        for s, l in tools:
-            print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2%s.lnk" "$INSTDIR\\bin\\dcpomatic2%s.exe"' % (name_with_space(l), name_with_underscore(s)), file=f)
         print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\Uninstall DCP-o-matic 2.lnk" "$INSTDIR\\Uninstall.exe"', file=f)
         print('WriteRegStr HKLM "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\DCP-o-matic2" "DisplayName" "DCP-o-matic 2 (remove only)"', file=f)
         print('WriteRegStr HKLM "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\DCP-o-matic2" "UninstallString" "$INSTDIR\\Uninstall.exe"', file=f)
 
     print("SectionEnd", file=f)
 
-    if debug:
-        print('Section "DCP-o-matic 2 debug desktop shortcuts" SEC_MASTER_DESKTOP', file=f)
-        for s, l in tools:
-            print('CreateShortCut "$DESKTOP\\DCP-o-matic 2%s debug.lnk" "$INSTDIR\\bin\\dcpomatic2%s_debug.bat" ""' % (name_with_space(l), name_with_underscore(s)), file=f)
-    else:
-        print('Section "DCP-o-matic 2 desktop shortcuts" SEC_MASTER_DESKTOP', file=f)
-        for s, l in tools:
-            print('CreateShortCut "$DESKTOP\\DCP-o-matic 2%s.lnk" "$INSTDIR\\bin\\dcpomatic2%s.exe"' % (name_with_space(l), name_with_underscore(s)), file=f)
+    for short, long in tools:
+        if debug:
+            print('Section %s debug" SEC_%s' % (name_with_space(long), short), file=f)
+        else:
+            print('Section %s" SEC_%s' % (name_with_space(long), short), file=f)
 
-    print("SectionEnd", file=f)
+        print('SetOutPath "$INSTDIR\\bin"', file=f)
 
+        if debug:
+            print('CreateDirectory "$SMPROGRAMS\\DCP-o-matic 2 debug"', file=f)
+        else:
+            print('CreateDirectory "$SMPROGRAMS\\DCP-o-matic 2"', file=f)
+
+        print('File "%%binaries%%/src/tools/dcpomatic2%s.exe"' % name_with_underscore(short), file=f)
+
+        if short == "disk":
+            print("""
+File "%binaries%/src/tools/dcpomatic2_disk_writer.exe"
+File "%resources%/dcpomatic2_disk_writer.exe.manifest"
+            """, file=f)
+
+        if debug:
+            print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2 debug\\DCP-o-matic 2%s debug.lnk" "$INSTDIR\\bin\\dcpomatic2%s_debug.bat" ""' % (name_with_space(long), name_with_underscore(short)), file=f)
+            print('CreateShortCut "$DESKTOP\\DCP-o-matic 2%s debug.lnk" "$INSTDIR\\bin\\dcpomatic2%s_debug.bat" ""' % (name_with_space(long), name_with_underscore(short)), file=f)
+        else:
+            print('CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2%s.lnk" "$INSTDIR\\bin\\dcpomatic2%s.exe"' % (name_with_space(long), name_with_underscore(short)), file=f)
+            print('CreateShortCut "$DESKTOP\\DCP-o-matic 2%s.lnk" "$INSTDIR\\bin\\dcpomatic2%s.exe"' % (name_with_space(long), name_with_underscore(short)), file=f)
+
+        print('SectionEnd', file=f)
+
+    print("!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN", file=f)
+    for short, long in tools:
+        print("!insertmacro MUI_DESCRIPTION_TEXT ${SEC_%s} $(DESC_SEC_%s)" % (short, short), file=f)
     print("""
-Section "Encode server" SEC_SERVER
-SetOutPath "$INSTDIR\\bin"
-CreateDirectory "$SMPROGRAMS\\DCP-o-matic 2"
-File "%binaries%/src/tools/dcpomatic2_server_cli.exe"
-File "%binaries%/src/tools/dcpomatic2_server.exe"
-CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\DCP-o-matic 2 Encode Server.lnk" "$INSTDIR\\bin\\dcpomatic2_server.exe" "" "$INSTDIR\\bin\\dcpomatic2_server.exe" 0
-CreateShortCut "$SMPROGRAMS\\DCP-o-matic 2\\Uninstall DCP-o-matic 2.lnk" "$INSTDIR\\Uninstall.exe" "" "$INSTDIR\\Uninstall.exe" 0
-SectionEnd
-Section "Encode server desktop shortcuts" SEC_SERVER_DESKTOP
-CreateShortCut "$DESKTOP\\DCP-o-matic 2 Encode Server.lnk" "$INSTDIR\\bin\\dcpomatic2_server.exe" ""
-SectionEnd
-    """, file=f)
-
-    if debug:
-        print('LangString DESC_SEC_MASTER ${LANG_ENGLISH} "DCP-o-matic 2 debug"', file=f)
-        print('LangString DESC_SEC_MASTER_DESKTOP ${LANG_ENGLISH} "DCP-o-matic 2 debug desktop shortcuts"', file=f)
-    else:
-        print('LangString DESC_SEC_MASTER ${LANG_ENGLISH} "DCP-o-matic 2"', file=f)
-        print('LangString DESC_SEC_MASTER_DESKTOP ${LANG_ENGLISH} "DCP-o-matic 2 desktop shortcuts"', file=f)
-        print('LangString DESC_SEC_SERVER ${LANG_ENGLISH} "DCP-o-matic 2 Encode Server"', file=f)
-        print('LangString DESC_SEC_SERVER_DESKTOP ${LANG_ENGLISH} "DCP-o-matic 2 Encode Server desktop shortcuts"', file=f)
-
-    print("""
-!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-!insertmacro MUI_DESCRIPTION_TEXT ${SEC_MASTER} $(DESC_SEC_MASTER)
-!insertmacro MUI_DESCRIPTION_TEXT ${SEC_MASTER_DESKTOP} $(DESC_SEC_MASTER_DESKTOP)
-!insertmacro MUI_DESCRIPTION_TEXT ${SEC_SERVER} $(DESC_SEC_SERVER)
-!insertmacro MUI_DESCRIPTION_TEXT ${SEC_SERVER_DESKTOP} $(DESC_SEC_SERVER_DESKTOP)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 !insertmacro MUI_PAGE_INSTFILES
