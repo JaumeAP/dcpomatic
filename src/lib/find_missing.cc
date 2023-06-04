@@ -20,6 +20,7 @@
 
 
 #include "content.h"
+#include "dcpomatic_log.h"
 #include "find_missing.h"
 #include "util.h"
 #include <boost/filesystem.hpp>
@@ -39,6 +40,7 @@ search (Replacements& replacement_paths, boost::filesystem::path directory, int 
 {
 	boost::system::error_code ec;
 	for (auto candidate: boost::filesystem::directory_iterator(directory, ec)) {
+		LOG_GENERAL("Have candidate %1", candidate.path().string());
 		if (boost::filesystem::is_regular_file(candidate.path())) {
 			for (auto& replacement: replacement_paths) {
 				for (auto& path: replacement.second) {
@@ -49,6 +51,8 @@ search (Replacements& replacement_paths, boost::filesystem::path directory, int 
 			}
 		} else if (boost::filesystem::is_directory(candidate.path()) && depth <= 2) {
 			search (replacement_paths, candidate, depth + 1);
+		} else {
+			LOG_GENERAL("Candidate was ignored; depth=%1", candidate.path().string());
 		}
 	}
 
@@ -62,6 +66,14 @@ void
 dcpomatic::find_missing (vector<shared_ptr<Content>> content_to_fix, boost::filesystem::path clue)
 {
 	using namespace boost::filesystem;
+
+	LOG_GENERAL_NC("Find missing to fix:");
+	for (auto content: content_to_fix) {
+		for (auto file: content->paths()) {
+			LOG_GENERAL("  %1", file.string());
+		}
+	}
+	LOG_GENERAL("Clue is %1", clue);
 
 	Replacements replacement_paths;
 	for (auto content: content_to_fix) {
