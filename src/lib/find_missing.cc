@@ -53,7 +53,7 @@ search (Replacements& replacement_paths, boost::filesystem::path directory, int 
 				}
 			}
 		} else if (boost::filesystem::is_directory(candidate.path()) && depth <= 2) {
-			LOG_GENERAL("Recurse into %1", candidate);
+			LOG_GENERAL("Recurse into %1", candidate.path().string());
 			search (replacement_paths, candidate, depth + 1);
 		} else {
 			LOG_GENERAL("Candidate was ignored; depth=%1", candidate.path().string());
@@ -89,8 +89,8 @@ dcpomatic::find_missing (vector<shared_ptr<Content>> content_to_fix, boost::file
 	for (auto content: content_to_fix) {
 		auto const& repl = replacement_paths[content];
 		bool const replacements_exist = std::find_if(repl.begin(), repl.end(), [](path p) { return !exists(p); }) == repl.end();
-		LOG_GENERAL("replacements_exist? %1", replacements_exist);
-		LOG_GENERAL("digest match? %1", simple_digest(replacement_paths[content]) == content->digest());
+		LOG_GENERAL("replacements_exist? %1", replacements_exist ? "yes" : "no");
+		LOG_GENERAL("digest match? %1", simple_digest(replacement_paths[content]) == content->digest() ? "yes" : "no");
 		if (replacements_exist && simple_digest(replacement_paths[content]) == content->digest()) {
 			LOG_GENERAL_NC("Setting content paths:");
 			for (auto const& i: repl) {
