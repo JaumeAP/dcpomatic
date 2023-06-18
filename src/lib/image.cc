@@ -40,6 +40,7 @@
 LIBDCP_DISABLE_WARNINGS
 extern "C" {
 #include <libavutil/frame.h>
+#include <libavutil/opt.h>
 #include <libavutil/pixdesc.h>
 #include <libavutil/pixfmt.h>
 #include <libswscale/swscale.h>
@@ -259,6 +260,17 @@ Image::crop_scale_window (
 		sws_getCoefficients(lut[yuv_to_rgb]), out_video_range == VideoRange::VIDEO ? 0 : 1,
 		0, 1 << 16, 1 << 16
 		);
+
+	static int64_t uniform_color = -1;
+	if (uniform_color == -1) {
+		// auto error = av_opt_get_int(scale_context, "uniform_color", AV_OPT_SEARCH_CHILDREN, &uniform_color);
+		auto option = av_opt_find2(scale_context, "uniform_color", "alphablend", 0, AV_OPT_SEARCH_CHILDREN, nullptr);
+		DCPOMATIC_ASSERT(option->type == AV_OPT_TYPE_CONST);
+		uniform_color = option->default_val.i64;
+		std::cout << "uniform_color=" << uniform_color << "\n";
+	}
+
+	std::cout << "set it: " << av_opt_set_int(scale_context, "alphablend", uniform_color, AV_OPT_SEARCH_CHILDREN) << "\n";
 
 	/* Prepare input data pointers with crop */
 	uint8_t* scale_in_data[planes()];
