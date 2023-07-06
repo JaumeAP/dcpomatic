@@ -1195,6 +1195,7 @@ private:
 		FontConfig::drop();
 
 		ev.Skip ();
+		JobManager::drop ();
 	}
 
 	void active_jobs_changed()
