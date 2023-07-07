@@ -11,13 +11,13 @@
 
 
 static std::vector<std::string>
-get_gpu_names(std::string binary, std::string filename)
+get_gpu_names(boost::filesystem::path binary, boost::filesystem::path filename)
 {
 	// Execute the GPU listing program and redirect its output to a file
-	std::system((binary + " > " + filename).c_str());
+	std::system((binary.string() + " > " + filename.string()).c_str());
 
 	std::vector<std::string> gpu_names;
-	std::ifstream file(filename);
+	std::ifstream file(filename.string());
 	if (file.is_open()) {
 		std::string line;
 		while (std::getline(file, line)) {
@@ -50,9 +50,10 @@ public:
 
 	void update()
 	{
-		auto cfg = Config::instance();
-		auto lister_binary = cfg->gpu_binary_location() + "/" + "gpu_lister";
-		auto lister_file = cfg->gpu_binary_location() + "/" + "gpus.txt";
+		auto binary = Config::instance()->gpu_binary_location();
+		DCPOMATIC_ASSERT(binary);
+		auto lister_binary = *binary / "gpu_lister";
+		auto lister_file = *binary / "gpus.txt";
 		if (boost::filesystem::exists(lister_binary)) {
 			auto gpu_names = get_gpu_names(lister_binary, lister_file);
 
@@ -167,7 +168,11 @@ void GPUPage::config_changed()
 	auto config = Config::instance();
 
 	checked_set(_enable_gpu, config->enable_gpu());
-	_binary_location->SetPath(config->gpu_binary_location());
+	if (auto binary = config->gpu_binary_location()) {
+		_binary_location->SetPath(std_to_wx(binary->string()));
+	} else {
+		_binary_location->SetPath(wxT(""));
+	}
 	_gpu_list_control->update();
 	_gpu_list_control->set_selection(config->selected_gpu());
 	checked_set(_server, config->gpu_license_server());

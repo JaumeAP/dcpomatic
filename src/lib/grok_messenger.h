@@ -699,7 +699,7 @@ struct Messenger
 		return (pid != -1 && kill(pid, SIGKILL) != -1);
 	}
 
-	void launch_grok(const std::string& dir, uint32_t width, uint32_t stride,
+	void launch_grok(const boost::filesystem::path& dir, uint32_t width, uint32_t stride,
 	                 uint32_t height, uint32_t samplesPerPixel, uint32_t depth,
 	                 int device, bool is4K, uint32_t fps, uint32_t bandwidth,
 	                 const std::string server, uint32_t port,
@@ -811,7 +811,7 @@ protected:
 	std::condition_variable clientInitializedCondition_;
 
 private:
-	void launch(const std::string& cmd, const std::string& dir)
+	void launch(const std::string& cmd, const boost::filesystem::path& dir)
 	{
 		// Change the working directory
 		if (!dir.empty()) {

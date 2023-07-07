@@ -618,7 +618,7 @@ public:
 		return _allow_smpte_bv20;
 	}
 
-	std::string gpu_binary_location() const {
+	boost::optional<boost::filesystem::path> gpu_binary_location() const {
 		return _gpu_binary_location;
 	}
 
@@ -1223,7 +1223,7 @@ public:
 		maybe_set(_allow_smpte_bv20, allow, ALLOW_SMPTE_BV20);
 	}
 
-	void set_gpu_binary_location(std::string location) {
+	void set_gpu_binary_location(boost::filesystem::path location) {
 		maybe_set(_gpu_binary_location, location);
 	}
 
@@ -1494,7 +1494,7 @@ private:
 
 	/* GPU */
 	bool _enable_gpu;
-	std::string _gpu_binary_location;
+	boost::optional<boost::filesystem::path> _gpu_binary_location;
 	int _selected_gpu;
 	std::string _gpu_license_server;
 	int _gpu_license_port;

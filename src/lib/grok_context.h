@@ -18,19 +18,26 @@
 
 */
 
+
 #pragma once
 
+
 #include "config.h"
+#include "dcpomatic_assert.h"
 #include "dcpomatic_log.h"
 #include "grok_messenger.h"
 #include "log.h"
 #include "writer.h"
 
+
 class Film;
+
 
 static std::mutex launchMutex;
 
+
 namespace grk_plugin {
+
 
 struct GrokLogger : public MessengerLogger
 {
@@ -111,7 +118,7 @@ struct DcpomaticContext
 		std::shared_ptr<const Film> film_,
 		Writer& writer_,
 		EventHistory& history_,
-		const std::string& location_
+		const boost::optional<boost::filesystem::path>& location_
 		)
 		: film(film_)
 		, writer(writer_)
@@ -131,7 +138,7 @@ struct DcpomaticContext
 	std::shared_ptr<const Film> film;
 	Writer& writer;
 	EventHistory& history;
-	std::string location;
+	boost::optional<boost::filesystem::path> location;
 	uint32_t width;
 	uint32_t height;
 };
@@ -177,11 +184,12 @@ public:
 		};
 
 		if (Config::instance()->enable_gpu()) {
-			boost::filesystem::path folder(_dcpomatic_context.location);
+			DCPOMATIC_ASSERT(_dcpomatic_context.location);
+			boost::filesystem::path folder(*_dcpomatic_context.location);
 			boost::filesystem::path binaryPath = folder / "grk_compress";
 			if (!boost::filesystem::exists(binaryPath)) {
 				get_messenger_logger()->error("Invalid binary location %s",
-				                            _dcpomatic_context.location.c_str());
+				                            _dcpomatic_context.location->c_str());
 				return;
 			}
 			auto proc = [this](const std::string& str) {
@@ -251,7 +259,8 @@ public:
 			auto s = dcpv.get_size();
 			_dcpomatic_context.set_dimensions(s.width, s.height);
 			auto config = Config::instance();
-			_messenger->launch_grok(_dcpomatic_context.location,
+			DCPOMATIC_ASSERT(_dcpomatic_context.location);
+			_messenger->launch_grok(*_dcpomatic_context.location,
 			                        _dcpomatic_context.width, _dcpomatic_context.width,
 			                        _dcpomatic_context.height,
 			                        3, 12, device,

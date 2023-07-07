@@ -213,7 +213,7 @@ Config::set_defaults ()
 	set_notification_email_to_default ();
 	set_cover_sheet_to_default ();
 
-	_gpu_binary_location = "";
+	_gpu_binary_location = {};
 	_enable_gpu = false;
 	_selected_gpu = 0;
 	_gpu_license_server = "";
@@ -642,7 +642,7 @@ try
 	_isdcf_name_part_length = f.optional_number_child<int>("ISDCFNamePartLength").get_value_or(14);
 
 	_enable_gpu = f.optional_bool_child("EnableGpu").get_value_or(false);
-	_gpu_binary_location = f.string_child("GpuBinaryLocation");
+	_gpu_binary_location = f.optional_string_child("GpuBinaryLocation");
 	_selected_gpu = f.number_child<int>("SelectedGpu");
 	_gpu_license_server = f.string_child("GpuLicenseServer");
 	_gpu_license_port = f.number_child<int>("GpuLicensePort");
@@ -1134,7 +1134,9 @@ Config::write_config () const
 	/* [XML] ISDCFNamePartLength Maximum length of the "name" part of an ISDCF name, which should be 14 according to the standard */
 	root->add_child("ISDCFNamePartLength")->add_child_text(raw_convert<string>(_isdcf_name_part_length));
 
-	root->add_child("GpuBinaryLocation")->add_child_text(_gpu_binary_location);
+	if (_gpu_binary_location) {
+		root->add_child("GpuBinaryLocation")->add_child_text(_gpu_binary_location->string());
+	}
 	root->add_child("EnableGpu")->add_child_text((_enable_gpu ? "1" : "0"));
 	root->add_child("SelectedGpu")->add_child_text(raw_convert<string>(_selected_gpu));
 	root->add_child("GpuLicenseServer")->add_child_text(_gpu_license_server);
