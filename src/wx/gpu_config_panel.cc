@@ -185,7 +185,8 @@ GPUPage::setup()
 }
 
 
-void GPUPage::config_changed()
+void
+GPUPage::config_changed()
 {
 	auto config = Config::instance();
 
@@ -203,7 +204,8 @@ void GPUPage::config_changed()
 }
 
 
-void GPUPage::enable_gpu_changed()
+void
+GPUPage::enable_gpu_changed()
 {
 	auto config = Config::instance();
 
@@ -216,26 +218,30 @@ void GPUPage::enable_gpu_changed()
 }
 
 
-void GPUPage::binary_location_changed()
+void
+GPUPage::binary_location_changed()
 {
 	Config::instance()->set_gpu_binary_location(wx_to_std(_binary_location->GetPath()));
 	_gpu_list_control->update();
 }
 
 
-void GPUPage::server_changed()
+void
+GPUPage::server_changed()
 {
 	Config::instance()->set_gpu_license_server(wx_to_std(_server->GetValue()));
 }
 
 
-void GPUPage::port_changed()
+void
+GPUPage::port_changed()
 {
 	Config::instance()->set_gpu_license_port(_port->GetValue());
 }
 
 
-void GPUPage::license_changed()
+void
+GPUPage::license_changed()
 {
 	Config::instance()->set_gpu_license(_license->get());
 }
