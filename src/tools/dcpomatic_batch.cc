@@ -287,7 +287,7 @@ private:
 		}
 
 		ev.Skip ();
-		JobManager::drop ();
+		JobManager::drop();
 	}
 
 	void file_add_film ()

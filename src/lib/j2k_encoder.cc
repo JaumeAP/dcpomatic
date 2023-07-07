@@ -59,11 +59,11 @@ static grk_plugin::GrokInitializer grokInitializer;
  *  @param writer Writer that we are using.
  */
 J2KEncoder::J2KEncoder(shared_ptr<const Film> film, Writer& writer)
-	: _film (film)
-	, _history (200)
-	, _writer (writer) ,
-	dcpomaticContext_(film,writer,_history, Config::instance()->gpu_binary_location ()),
-	context_(Config::instance()->enable_gpu () ? new grk_plugin::GrokContext(dcpomaticContext_) : nullptr)
+	: _film(film)
+	, _history(200)
+	, _writer(writer)
+	, dcpomaticContext_(film, writer, _history, Config::instance()->gpu_binary_location())
+	, context_(Config::instance()->enable_gpu() ? new grk_plugin::GrokContext(dcpomaticContext_) : nullptr)
 {
 	servers_list_changed ();
 }
@@ -74,8 +74,8 @@ J2KEncoder::~J2KEncoder ()
 	_server_found_connection.disconnect();
 
 	{
-	boost::mutex::scoped_lock lm (_threads_mutex);
-	terminate_threads ();
+		boost::mutex::scoped_lock lm(_threads_mutex);
+		terminate_threads();
 	}
 
 	delete context_;
@@ -89,33 +89,37 @@ J2KEncoder::begin ()
 		);
 }
 
-void J2KEncoder::pause(void){
-	if (Config::instance()->enable_gpu ())
+void
+J2KEncoder::pause(void)
+{
+	if (Config::instance()->enable_gpu())
 		end(false);
 }
 
-void J2KEncoder::resume(void){
-	if (Config::instance()->enable_gpu ()) {
+void
+J2KEncoder::resume(void)
+{
+	if (Config::instance()->enable_gpu()) {
 		context_ = new grk_plugin::GrokContext(dcpomaticContext_);
-		servers_list_changed ();
+		servers_list_changed();
 	}
 }
 
 void
-J2KEncoder::end (bool isFinal)
+J2KEncoder::end(bool isFinal)
 {
 	if (isFinal) {
-		boost::mutex::scoped_lock lock (_queue_mutex);
+		boost::mutex::scoped_lock lock(_queue_mutex);
 
-		LOG_GENERAL (N_("Clearing queue of %1"), _queue.size ());
+		LOG_GENERAL(N_("Clearing queue of %1"), _queue.size());
 
 		/* Keep waking workers until the queue is empty */
-			while (!_queue.empty ()) {
-				rethrow ();
-				_empty_condition.notify_all ();
-				_full_condition.wait (lock);
-			}
-		lock.unlock ();
+		while (!_queue.empty()) {
+			rethrow();
+			_empty_condition.notify_all();
+			_full_condition.wait(lock);
+		}
+		lock.unlock();
 	}
 
 	LOG_GENERAL_NC (N_("Terminating encoder threads"));
@@ -131,32 +135,30 @@ J2KEncoder::end (bool isFinal)
 	LOG_GENERAL (N_("Mopping up %1"), _queue.size());
 
 	/* The following sequence of events can occur in the above code:
-		 1. a remote worker takes the last image off the queue
-		 2. the loop above terminates
-		 3. the remote worker fails to encode the image and puts it back on the queue
-		 4. the remote worker is then terminated by terminate_threads
+	         1. a remote worker takes the last image off the queue
+	         2. the loop above terminates
+	         3. the remote worker fails to encode the image and puts it back on the queue
+	         4. the remote worker is then terminated by terminate_threads
 
-		 So just mop up anything left in the queue here.
+	         So just mop up anything left in the queue here.
 	*/
 	if (isFinal) {
-		for (auto & i: _queue) {
-			if (Config::instance()->enable_gpu ()) {
-				if (!context_->scheduleCompress(i)){
-					LOG_GENERAL (N_("[%1] J2KEncoder thread pushes frame %2 back onto queue after failure"), thread_id(), i.index());
+		for (auto& i : _queue) {
+			if (Config::instance()->enable_gpu()) {
+				if (!context_->scheduleCompress(i)) {
+					LOG_GENERAL(N_("[%1] J2KEncoder thread pushes frame %2 back onto queue after failure"), thread_id(), i.index());
 					// handle error
 				}
-			}
-			else {
+			} else {
 				LOG_GENERAL(N_("Encode left-over frame %1"), i.index());
 				try {
 					_writer.write(
-							make_shared<dcp::ArrayData>(i.encode_locally()),
-						i.index(),
-						i.eyes()
-						);
-					frame_done ();
+					    make_shared<dcp::ArrayData>(i.encode_locally()),
+					    i.index(),
+					    i.eyes());
+					frame_done();
 				} catch (std::exception& e) {
-					LOG_ERROR (N_("Local encode failed (%1)"), e.what ());
+					LOG_ERROR(N_("Local encode failed (%1)"), e.what());
 				}
 			}
 		}
@@ -256,13 +258,12 @@ J2KEncoder::encode (shared_ptr<PlayerVideo> pv, DCPTime time)
 		/* Queue this new frame for encoding */
 		LOG_TIMING ("add-frame-to-queue queue=%1", _queue.size ());
 		auto dcpv = DCPVideo(
-				pv,
-				position,
-				_film->video_frame_rate(),
-				_film->j2k_bandwidth(),
-				_film->resolution()
-				);
-		_queue.push_back (dcpv);
+		    pv,
+		    position,
+		    _film->video_frame_rate(),
+		    _film->j2k_bandwidth(),
+		    _film->resolution());
+		_queue.push_back(dcpv);
 
 		/* The queue might not be empty any more, so notify anything which is
 		   waiting on that.
@@ -302,7 +303,7 @@ void
 J2KEncoder::encoder_thread (optional<EncodeServerDescription> server)
 try
 {
-	auto config = Config::instance ();
+	auto config = Config::instance();
 
 	start_of_thread ("J2KEncoder");
 
@@ -369,18 +370,18 @@ try
 			} else {
 				if (context_) {
 					if (!context_->launch(vf, config->selected_gpu()) || !context_->scheduleCompress(vf)) {
-						LOG_GENERAL (N_("[%1] J2KEncoder thread pushes frame %2 back onto queue after failure"), thread_id(), vf.index());
-						_queue.push_front (vf);
+						LOG_GENERAL(N_("[%1] J2KEncoder thread pushes frame %2 back onto queue after failure"), thread_id(), vf.index());
+						_queue.push_front(vf);
 					}
 
 				} else {
 					try {
-						LOG_TIMING ("start-local-encode thread=%1 frame=%2", thread_id(), vf.index());
+						LOG_TIMING("start-local-encode thread=%1 frame=%2", thread_id(), vf.index());
 						encoded = make_shared<dcp::ArrayData>(vf.encode_locally());
-						LOG_TIMING ("finish-local-encode thread=%1 frame=%2", thread_id(), vf.index());
+						LOG_TIMING("finish-local-encode thread=%1 frame=%2", thread_id(), vf.index());
 					} catch (std::exception& e) {
 						/* This is very bad, so don't cope with it, just pass it on */
-						LOG_ERROR (N_("Local encode failed (%1)"), e.what ());
+						LOG_ERROR(N_("Local encode failed (%1)"), e.what());
 						throw;
 					}
 				}
@@ -390,11 +391,11 @@ try
 				_writer.write(encoded, vf.index(), vf.eyes());
 				frame_done ();
 			} else {
-				if (!Config::instance()->enable_gpu ()) {
-					lock.lock ();
-					LOG_GENERAL (N_("[%1] J2KEncoder thread pushes frame %2 back onto queue after failure"), thread_id(), vf.index());
-					_queue.push_front (vf);
-					lock.unlock ();
+				if (!Config::instance()->enable_gpu()) {
+					lock.lock();
+					LOG_GENERAL(N_("[%1] J2KEncoder thread pushes frame %2 back onto queue after failure"), thread_id(), vf.index());
+					_queue.push_front(vf);
+					lock.unlock();
 				}
 			}
 		}

@@ -55,11 +55,12 @@ public:
 		return false;
 	}
 
-	void start ();
+	void start();
+
 	virtual void pause() {}
 	bool pause_by_user ();
 	void pause_by_priority ();
-	virtual void resume ();
+	virtual void resume();
 	void cancel ();
 
 	bool is_new () const;

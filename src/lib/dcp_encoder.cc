@@ -118,11 +118,15 @@ DCPEncoder::go ()
 	_writer.finish(_film->dir(_film->dcp_name()));
 }
 
-void DCPEncoder::pause(void) {
+void
+DCPEncoder::pause(void)
+{
 	_j2k_encoder.pause();
 }
 
-void DCPEncoder::resume(void) {
+void
+DCPEncoder::resume(void)
+{
 	_j2k_encoder.resume();
 }
 void

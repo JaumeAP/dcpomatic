@@ -75,7 +75,7 @@ public:
 	void resume(void);
 
 	/** Called when a processing run has finished */
-	void end (bool isFinal);
+	void end(bool isFinal);
 
 	boost::optional<float> current_encoding_rate () const;
 	int video_frames_enqueued () const;
@@ -113,7 +113,7 @@ private:
 	boost::signals2::scoped_connection _server_found_connection;
 
 	grk_plugin::DcpomaticContext dcpomaticContext_;
-	grk_plugin::GrokContext *context_;
+	grk_plugin::GrokContext* context_;
 };
 
 

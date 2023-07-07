@@ -119,23 +119,24 @@ DCPVideo::convert_to_xyz (shared_ptr<const PlayerVideo> frame, dcp::NoteHandler 
 }
 
 dcp::Size
-DCPVideo::get_size(void) {
-	auto image = _frame->image (bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
+DCPVideo::get_size(void)
+{
+	auto image = _frame->image(bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
 	return image->size();
 }
 
 void
-DCPVideo::convert_to_xyz (uint16_t *dst) {
+DCPVideo::convert_to_xyz(uint16_t* dst)
+{
 
-	auto image = _frame->image (bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
+	auto image = _frame->image(bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
 	if (_frame->colour_conversion()) {
-		dcp::rgb_to_xyz (
-			image->data()[0],
-			dst,
-			image->size(),
-			image->stride()[0],
-			_frame->colour_conversion().get()
-			);
+		dcp::rgb_to_xyz(
+		    image->data()[0],
+		    dst,
+		    image->size(),
+		    image->stride()[0],
+		    _frame->colour_conversion().get());
 	}
 }
 

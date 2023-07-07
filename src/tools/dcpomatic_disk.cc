@@ -268,7 +268,7 @@ private:
 		}
 
 		ev.Skip ();
-		JobManager::drop ();
+		JobManager::drop();
 	}
 
 	void copy ()
