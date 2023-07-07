@@ -133,7 +133,7 @@ static IMessengerLogger* sLogger = nullptr;
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 static void
-setMessengerLogger(IMessengerLogger* logger)
+set_messenger_logger(IMessengerLogger* logger)
 {
 	delete sLogger;
 	sLogger = logger;
@@ -142,7 +142,7 @@ setMessengerLogger(IMessengerLogger* logger)
 #pragma GCC diagnostic pop
 #endif
 static IMessengerLogger*
-getMessengerLogger()
+get_messenger_logger()
 {
 	return sLogger;
 }
@@ -237,7 +237,7 @@ struct Synch
 		auto sem = (dir == SYNCH_SENT ? sentSem_ : receiveReadySem_);
 		int rc = sem_post(sem);
 		if (rc) {
-			getMessengerLogger()->error("Error posting to semaphore: %s", strerror(errno));
+			get_messenger_logger()->error("Error posting to semaphore: %s", strerror(errno));
 		}
 	}
 
@@ -246,7 +246,7 @@ struct Synch
 		auto sem = dir == SYNCH_SENT ? sentSem_ : receiveReadySem_;
 		int rc = sem_wait(sem);
 		if (rc) {
-			getMessengerLogger()->error("Error waiting for semaphore: %s", strerror(errno));
+			get_messenger_logger()->error("Error waiting for semaphore: %s", strerror(errno));
 		}
 	}
 
@@ -254,11 +254,11 @@ struct Synch
 	{
 		sentSem_ = sem_open(_sent_sem_name.c_str(), O_CREAT, 0666, 0);
 		if (!sentSem_) {
-			getMessengerLogger()->error("Error opening shared memory: %s", strerror(errno));
+			get_messenger_logger()->error("Error opening shared memory: %s", strerror(errno));
 		}
 		receiveReadySem_ = sem_open(_receive_ready_sem_name.c_str(), O_CREAT, 0666, 1);
 		if (!receiveReadySem_) {
-			getMessengerLogger()->error("Error opening shared memory: %s", strerror(errno));
+			get_messenger_logger()->error("Error opening shared memory: %s", strerror(errno));
 		}
 	}
 
@@ -266,12 +266,12 @@ struct Synch
 	{
 		int rc = sem_close(sentSem_);
 		if (rc) {
-			getMessengerLogger()->error("Error closing semaphore %s: %s", _sent_sem_name.c_str(),
+			get_messenger_logger()->error("Error closing semaphore %s: %s", _sent_sem_name.c_str(),
 			                            strerror(errno));
 		}
 		rc = sem_close(receiveReadySem_);
 		if (rc) {
-			getMessengerLogger()->error("Error closing semaphore %s: %s",
+			get_messenger_logger()->error("Error closing semaphore %s: %s",
 			                            _receive_ready_sem_name.c_str(), strerror(errno));
 		}
 	}
@@ -280,12 +280,12 @@ struct Synch
 	{
 		int rc = sem_unlink(_sent_sem_name.c_str());
 		if (rc == -1 && errno != ENOENT) {
-			getMessengerLogger()->error("Error unlinking semaphore %s: %s", _sent_sem_name.c_str(),
+			get_messenger_logger()->error("Error unlinking semaphore %s: %s", _sent_sem_name.c_str(),
 			                            strerror(errno));
 		}
 		rc = sem_unlink(_receive_ready_sem_name.c_str());
 		if (rc == -1 && errno != ENOENT) {
-			getMessengerLogger()->error("Error unlinking semaphore %s: %s",
+			get_messenger_logger()->error("Error unlinking semaphore %s: %s",
 			                            _receive_ready_sem_name.c_str(), strerror(errno));
 		}
 	}
@@ -304,32 +304,32 @@ struct SharedMemoryManager
 	{
 		*shm_fd = shm_open(name.c_str(), O_CREAT | O_RDWR, 0666);
 		if (*shm_fd < 0) {
-			getMessengerLogger()->error("Error opening shared memory: %s", strerror(errno));
+			get_messenger_logger()->error("Error opening shared memory: %s", strerror(errno));
 			return false;
 		}
 		int rc = ftruncate(*shm_fd, sizeof(char) * len);
 		if (rc) {
-			getMessengerLogger()->error("Error truncating shared memory: %s", strerror(errno));
+			get_messenger_logger()->error("Error truncating shared memory: %s", strerror(errno));
 			rc = close(*shm_fd);
 			if (rc) {
-				getMessengerLogger()->error("Error closing shared memory: %s", strerror(errno));
+				get_messenger_logger()->error("Error closing shared memory: %s", strerror(errno));
 			}
 			rc = shm_unlink(name.c_str());
 			if (rc) {
-				getMessengerLogger()->error("Error unlinking shared memory: %s", strerror(errno));
+				get_messenger_logger()->error("Error unlinking shared memory: %s", strerror(errno));
 			}
 			return false;
 		}
 		*buffer = static_cast<char*>(mmap(0, len, PROT_WRITE, MAP_SHARED, *shm_fd, 0));
 		if (!*buffer) {
-			getMessengerLogger()->error("Error mapping shared memory: %s", strerror(errno));
+			get_messenger_logger()->error("Error mapping shared memory: %s", strerror(errno));
 			rc = close(*shm_fd);
 			if (rc) {
-				getMessengerLogger()->error("Error closing shared memory: %s", strerror(errno));
+				get_messenger_logger()->error("Error closing shared memory: %s", strerror(errno));
 			}
 			rc = shm_unlink(name.c_str());
 			if (rc) {
-				getMessengerLogger()->error("Error unlinking shared memory: %s", strerror(errno));
+				get_messenger_logger()->error("Error unlinking shared memory: %s", strerror(errno));
 			}
 		}
 
@@ -345,12 +345,12 @@ struct SharedMemoryManager
 		int rc = munmap(*buffer, len);
 		*buffer = nullptr;
 		if (rc) {
-			getMessengerLogger()->error("Error unmapping shared memory %s: %s", name.c_str(), strerror(errno));
+			get_messenger_logger()->error("Error unmapping shared memory %s: %s", name.c_str(), strerror(errno));
 		}
 		rc = close(shm_fd);
 		shm_fd = 0;
 		if (rc) {
-			getMessengerLogger()->error("Error closing shared memory %s: %s", name.c_str(), strerror(errno));
+			get_messenger_logger()->error("Error closing shared memory %s: %s", name.c_str(), strerror(errno));
 		}
 		rc = shm_unlink(name.c_str());
 		if (rc) {
@@ -816,7 +816,7 @@ private:
 		// Change the working directory
 		if (!dir.empty()) {
 			if (chdir(dir.c_str()) != 0) {
-				getMessengerLogger()->error("Error: failed to change the working directory");
+				get_messenger_logger()->error("Error: failed to change the working directory");
 				return;
 			}
 		}
@@ -903,7 +903,7 @@ struct Msg
 	std::string next()
 	{
 		if (ct_ == cs_.size()) {
-			getMessengerLogger()->error("Msg: comma separated list exhausted. returning empty.");
+			get_messenger_logger()->error("Msg: comma separated list exhausted. returning empty.");
 			return "";
 		}
 		return cs_[ct_++];
@@ -1056,10 +1056,10 @@ struct ScheduledMessenger : public Messenger
 			send(GRK_MSGR_BATCH_SHUTDOWN);
 			int result = async_result_.get();
 			if (result != 0) {
-				getMessengerLogger()->error("Accelerator failed with return code: %d\n", result);
+				get_messenger_logger()->error("Accelerator failed with return code: %d\n", result);
 			}
 		} catch (std::exception& ex) {
-			getMessengerLogger()->error("%s", ex.what());
+			get_messenger_logger()->error("%s", ex.what());
 		}
 	}
 

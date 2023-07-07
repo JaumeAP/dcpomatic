@@ -70,7 +70,7 @@ struct GrokInitializer
 {
 	GrokInitializer()
 	{
-		setMessengerLogger(new GrokLogger("[GROK] "));
+		set_messenger_logger(new GrokLogger("[GROK] "));
 	}
 
 	~GrokInitializer() = default;
@@ -180,7 +180,7 @@ public:
 			boost::filesystem::path folder(_dcpomatic_context.location);
 			boost::filesystem::path binaryPath = folder / "grk_compress";
 			if (!boost::filesystem::exists(binaryPath)) {
-				getMessengerLogger()->error("Invalid binary location %s",
+				get_messenger_logger()->error("Invalid binary location %s",
 				                            _dcpomatic_context.location.c_str());
 				return;
 			}
@@ -216,7 +216,7 @@ public:
 						}
 					}
 				} catch (std::exception& ex) {
-					getMessengerLogger()->error("%s", ex.what());
+					get_messenger_logger()->error("%s", ex.what());
 				}
 			};
 			auto clientInit =
