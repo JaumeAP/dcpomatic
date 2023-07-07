@@ -122,6 +122,7 @@ sources = """
           font_id_map.cc
           frame_interval_checker.cc
           frame_rate_change.cc
+          grok_context.cc
           guess_crop.cc
           hints.cc
           internet.cc
