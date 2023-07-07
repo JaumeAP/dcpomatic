@@ -119,13 +119,13 @@ DCPEncoder::go ()
 }
 
 void
-DCPEncoder::pause(void)
+DCPEncoder::pause()
 {
 	_j2k_encoder.pause();
 }
 
 void
-DCPEncoder::resume(void)
+DCPEncoder::resume()
 {
 	_j2k_encoder.resume();
 }

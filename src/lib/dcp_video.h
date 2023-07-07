@@ -49,7 +49,7 @@ class PlayerVideo;
 class DCPVideo
 {
 public:
-	DCPVideo(void)
+	DCPVideo()
 		: DCPVideo(nullptr, 0, 0, 0, Resolution::TWO_K)
 	{
 	}
@@ -73,7 +73,7 @@ public:
 	static std::shared_ptr<dcp::OpenJPEGImage> convert_to_xyz (std::shared_ptr<const PlayerVideo> frame, dcp::NoteHandler note);
 
 	void convert_to_xyz(uint16_t* dst);
-	dcp::Size get_size(void);
+	dcp::Size get_size();
 
 private:
 

@@ -119,7 +119,7 @@ DCPVideo::convert_to_xyz (shared_ptr<const PlayerVideo> frame, dcp::NoteHandler 
 }
 
 dcp::Size
-DCPVideo::get_size(void)
+DCPVideo::get_size()
 {
 	auto image = _frame->image(bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
 	return image->size();

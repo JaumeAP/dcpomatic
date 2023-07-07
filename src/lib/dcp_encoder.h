@@ -53,8 +53,8 @@ public:
 		return _finishing;
 	}
 
-	void pause(void) override;
-	void resume(void) override;
+	void pause() override;
+	void resume() override;
 
 private:
 

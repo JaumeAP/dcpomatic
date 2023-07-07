@@ -70,7 +70,7 @@ struct GrokLogger : public MessengerLogger
 
 struct GrokInitializer
 {
-	GrokInitializer(void)
+	GrokInitializer()
 	{
 		setMessengerLogger(new GrokLogger("[GROK] "));
 	}
@@ -80,7 +80,7 @@ struct GrokInitializer
 
 struct FrameProxy
 {
-	FrameProxy(void)
+	FrameProxy()
 		: FrameProxy(0, Eyes::LEFT, DCPVideo())
 	{
 	}
@@ -97,7 +97,7 @@ struct FrameProxy
 		return index_;
 	}
 
-	Eyes eyes(void) const
+	Eyes eyes() const
 	{
 		return eyes_;
 	}
@@ -120,7 +120,7 @@ struct DcpomaticContext
 	{
 	}
 
-	void setDimensions(uint32_t w, uint32_t h)
+	void set_dimensions(uint32_t w, uint32_t h)
 	{
 		width_ = w;
 		height_ = h;
@@ -138,9 +138,9 @@ class GrokContext
 {
 public:
 	explicit GrokContext(const DcpomaticContext& dcpomaticContext)
-		: dcpomaticContext_(dcpomaticContext)
-		, messenger_(nullptr)
-		, launched_(false)
+		: _dcpomatic_context(dcpomaticContext)
+		, _messenger(nullptr)
+		, _launched(false)
 	{
 		struct CompressedData : public dcp::Data
 		{
@@ -150,7 +150,7 @@ public:
 			{
 			}
 
-			~CompressedData(void)
+			~CompressedData()
 			{
 				delete[] data_;
 			}
@@ -175,11 +175,11 @@ public:
 		};
 
 		if (Config::instance()->enable_gpu()) {
-			boost::filesystem::path folder(dcpomaticContext_.location_);
+			boost::filesystem::path folder(_dcpomatic_context.location_);
 			boost::filesystem::path binaryPath = folder / "grk_compress";
 			if (!boost::filesystem::exists(binaryPath)) {
 				getMessengerLogger()->error("Invalid binary location %s",
-				                            dcpomaticContext_.location_.c_str());
+				                            _dcpomatic_context.location_.c_str());
 				return;
 			}
 			auto proc = [this](const std::string& str) {
@@ -187,28 +187,29 @@ public:
 					Msg msg(str);
 					auto tag = msg.next();
 					if (tag == GRK_MSGR_BATCH_SUBMIT_COMPRESSED) {
-						auto clientFrameId = msg.nextUint();
-						auto compressedFrameId = msg.nextUint();
+						auto clientFrameId = msg.next_uint();
+						auto compressedFrameId = msg.next_uint();
 						(void)compressedFrameId;
-						auto compressedFrameLength = msg.nextUint();
+						auto compressedFrameLength = msg.next_uint();
 						auto processor =
 						    [this](FrameProxy srcFrame, uint8_t* compressed, uint32_t compressedFrameLength) {
 							    auto compressedData = std::make_shared<CompressedData>(compressedFrameLength);
 							    memcpy(compressedData->data_, compressed, compressedFrameLength);
-							    dcpomaticContext_.writer_.write(compressedData, srcFrame.index(), srcFrame.eyes());
+							    _dcpomatic_context.writer_.write(compressedData, srcFrame.index(), srcFrame.eyes());
 							    frame_done();
 						    };
 						int const minimum_size = 16384;
 						bool needsRecompression = compressedFrameLength < minimum_size;
-						messenger_->processCompressed(str, processor, needsRecompression);
+						_messenger->process_compressed(str, processor, needsRecompression);
 						if (needsRecompression) {
 							bool success = false;
-							auto fp = messenger_->retrieve(clientFrameId, success);
-							if (!success)
+							auto fp = _messenger->retrieve(clientFrameId, success);
+							if (!success) {
 								return;
+}
 
 							auto encoded = std::make_shared<dcp::ArrayData>(fp.vf.encode_locally());
-							dcpomaticContext_.writer_.write(encoded, fp.vf.index(), fp.vf.eyes());
+							_dcpomatic_context.writer_.write(encoded, fp.vf.index(), fp.vf.eyes());
 							frame_done();
 						}
 					}
@@ -220,82 +221,90 @@ public:
 			    MessengerInit(clientToGrokMessageBuf, clientSentSynch, grokReceiveReadySynch,
 			                  grokToClientMessageBuf, grokSentSynch, clientReceiveReadySynch, proc,
 			                  std::thread::hardware_concurrency());
-			messenger_ = new ScheduledMessenger<FrameProxy>(clientInit);
+			_messenger = new ScheduledMessenger<FrameProxy>(clientInit);
 		}
 	}
 
-	~GrokContext(void)
+	~GrokContext()
 	{
 		shutdown();
 	}
 
 	bool launch(DCPVideo dcpv, int device)
 	{
-		if (!messenger_)
+		if (!_messenger) {
 			return false;
-		if (launched_)
+}
+		if (_launched) {
 			return true;
+}
 		std::unique_lock<std::mutex> lk_global(launchMutex);
-		if (!messenger_)
+		if (!_messenger) {
 			return false;
-		if (launched_)
+}
+		if (_launched) {
 			return true;
-		if (MessengerInit::firstLaunch(true)) {
+}
+		if (MessengerInit::first_launch(true)) {
 			auto s = dcpv.get_size();
-			dcpomaticContext_.setDimensions(s.width, s.height);
+			_dcpomatic_context.set_dimensions(s.width, s.height);
 			auto config = Config::instance();
-			messenger_->launchGrok(dcpomaticContext_.location_,
-			                       dcpomaticContext_.width_, dcpomaticContext_.width_,
-			                       dcpomaticContext_.height_,
+			_messenger->launch_grok(_dcpomatic_context.location_,
+			                       _dcpomatic_context.width_, _dcpomatic_context.width_,
+			                       _dcpomatic_context.height_,
 			                       3, 12, device,
-			                       dcpomaticContext_.film_->resolution() == Resolution::FOUR_K,
-			                       dcpomaticContext_.film_->video_frame_rate(),
-			                       dcpomaticContext_.film_->j2k_bandwidth(),
+			                       _dcpomatic_context.film_->resolution() == Resolution::FOUR_K,
+			                       _dcpomatic_context.film_->video_frame_rate(),
+			                       _dcpomatic_context.film_->j2k_bandwidth(),
 			                       config->gpu_license_server(),
 			                       config->gpu_license_port(),
 			                       config->gpu_license());
 		}
-		launched_ = messenger_->waitForClientInit();
+		_launched = _messenger->wait_for_client_init();
 
-		return launched_;
+		return _launched;
 	}
 
-	bool scheduleCompress(const DCPVideo& vf)
+	bool schedule_compress(const DCPVideo& vf)
 	{
-		if (!messenger_)
+		if (!_messenger) {
 			return false;
+}
 
 		auto fp = FrameProxy(vf.index(), vf.eyes(), vf);
 		auto cvt = [this, &fp](BufferSrc src) {
 			// xyz conversion
 			fp.vf.convert_to_xyz((uint16_t*)src.framePtr_);
 		};
-		return messenger_->scheduleCompress(fp, cvt);
+		return _messenger->schedule_compress(fp, cvt);
 	}
 
-	void shutdown(void)
+	void shutdown()
 	{
-		if (!messenger_)
+		if (!_messenger) {
 			return;
+}
 
 		std::unique_lock<std::mutex> lk_global(launchMutex);
-		if (!messenger_)
+		if (!_messenger) {
 			return;
-		if (launched_)
-			messenger_->shutdown();
-		delete messenger_;
-		messenger_ = nullptr;
+}
+		if (_launched) {
+			_messenger->shutdown();
+}
+		delete _messenger;
+		_messenger = nullptr;
 	}
 
 	void frame_done()
 	{
-		dcpomaticContext_.history_.event();
+		_dcpomatic_context.history_.event();
 	}
 
 private:
-	DcpomaticContext dcpomaticContext_;
-	ScheduledMessenger<FrameProxy>* messenger_;
-	bool launched_;
+	DcpomaticContext _dcpomatic_context;
+	ScheduledMessenger<FrameProxy>* _messenger;
+	bool _launched;
 };
 
 } // namespace grk_plugin

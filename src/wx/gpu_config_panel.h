@@ -10,8 +10,9 @@ get_gpu_names(std::string binary, std::string filename)
 	std::ifstream file(filename);
 	if (file.is_open()) {
 		std::string line;
-		while (std::getline(file, line))
+		while (std::getline(file, line)) {
 			gpu_names.push_back(line);
+}
 		file.close();
 	}
 
@@ -23,20 +24,20 @@ class GpuList : public wxPanel
 public:
 	GpuList(wxPanel* parent)
 		: wxPanel(parent, wxID_ANY)
-		, selection(0)
+		, _selection(0)
 	{
-		comboBox = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxSize(400, -1));
-		comboBox->Bind(wxEVT_COMBOBOX, &GpuList::OnComboBox, this);
+		_combo_box = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxSize(400, -1));
+		_combo_box->Bind(wxEVT_COMBOBOX, &GpuList::on_combo_box, this);
 		update();
 
 		wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
 
-		sizer->Add(comboBox, 0, wxALIGN_CENTER_VERTICAL); // Vertically center the comboBox
+		sizer->Add(_combo_box, 0, wxALIGN_CENTER_VERTICAL); // Vertically center the comboBox
 
 		this->SetSizerAndFit(sizer);
 	}
 
-	void update(void)
+	void update()
 	{
 		auto cfg = Config::instance();
 		auto lister_binary = cfg->gpu_binary_location() + "/" + "gpu_lister";
@@ -44,33 +45,36 @@ public:
 		if (boost::filesystem::exists(lister_binary)) {
 			auto gpu_names = get_gpu_names(lister_binary, lister_file);
 
-			comboBox->Clear();
-			for (const auto& name : gpu_names)
-				comboBox->Append(name);
+			_combo_box->Clear();
+			for (const auto& name : gpu_names) {
+				_combo_box->Append(name);
+}
 		}
 	}
 
-	int getSelection(void)
+	int get_selection()
 	{
-		return selection;
+		return _selection;
 	}
 
-	void setSelection(int sel)
+	void set_selection(int sel)
 	{
-		if ((int)comboBox->GetCount() > sel)
-			comboBox->SetSelection(sel);
+		if ((int)_combo_box->GetCount() > sel) {
+			_combo_box->SetSelection(sel);
+}
 	}
 
 private:
-	void OnComboBox([[maybe_unused]] wxCommandEvent& event)
+	void on_combo_box([[maybe_unused]] wxCommandEvent& event)
 	{
-		selection = comboBox->GetSelection();
-		if (selection != wxNOT_FOUND)
-			Config::instance()->set_selected_gpu(selection);
+		_selection = _combo_box->GetSelection();
+		if (_selection != wxNOT_FOUND) {
+			Config::instance()->set_selected_gpu(_selection);
+}
 	}
 
-	wxComboBox* comboBox;
-	int selection;
+	wxComboBox* _combo_box;
+	int _selection;
 };
 
 class GPUPage : public Page
@@ -149,7 +153,7 @@ private:
 		checked_set(_enable_gpu, config->enable_gpu());
 		_binary_location->SetPath(config->gpu_binary_location());
 		_gpu_list_control->update();
-		_gpu_list_control->setSelection(config->selected_gpu());
+		_gpu_list_control->set_selection(config->selected_gpu());
 		checked_set(_server, config->gpu_license_server());
 		checked_set(_port, config->gpu_license_port());
 		checked_set(_license, config->gpu_license());

@@ -59,9 +59,9 @@ public:
 	virtual Frame frames_done () const = 0;
 	virtual bool finishing() const = 0;
 
-	virtual void pause(void) {}
+	virtual void pause() {}
 
-	virtual void resume(void) {}
+	virtual void resume() {}
 
 protected:
 	std::shared_ptr<const Film> _film;
