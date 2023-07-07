@@ -107,29 +107,33 @@ struct FrameProxy
 
 struct DcpomaticContext
 {
-	DcpomaticContext(std::shared_ptr<const Film> film, Writer& writer,
-	                 EventHistory& history, const std::string& location)
-		: film_(film)
-		, writer_(writer)
-		, history_(history)
-		, location_(location)
-		, width_(0)
-		, height_(0)
+	DcpomaticContext(
+		std::shared_ptr<const Film> film_,
+		Writer& writer_,
+		EventHistory& history_,
+		const std::string& location_
+		)
+		: film(film_)
+		, writer(writer_)
+		, history(history_)
+		, location(location_)
+		, width(0)
+		, height(0)
 	{
 	}
 
 	void set_dimensions(uint32_t w, uint32_t h)
 	{
-		width_ = w;
-		height_ = h;
+		width = w;
+		height = h;
 	}
 
-	std::shared_ptr<const Film> film_;
-	Writer& writer_;
-	EventHistory& history_;
-	std::string location_;
-	uint32_t width_;
-	uint32_t height_;
+	std::shared_ptr<const Film> film;
+	Writer& writer;
+	EventHistory& history;
+	std::string location;
+	uint32_t width;
+	uint32_t height;
 };
 
 class GrokContext
@@ -173,11 +177,11 @@ public:
 		};
 
 		if (Config::instance()->enable_gpu()) {
-			boost::filesystem::path folder(_dcpomatic_context.location_);
+			boost::filesystem::path folder(_dcpomatic_context.location);
 			boost::filesystem::path binaryPath = folder / "grk_compress";
 			if (!boost::filesystem::exists(binaryPath)) {
 				getMessengerLogger()->error("Invalid binary location %s",
-				                            _dcpomatic_context.location_.c_str());
+				                            _dcpomatic_context.location.c_str());
 				return;
 			}
 			auto proc = [this](const std::string& str) {
@@ -193,7 +197,7 @@ public:
 						    [this](FrameProxy srcFrame, uint8_t* compressed, uint32_t compressedFrameLength) {
 							    auto compressedData = std::make_shared<CompressedData>(compressedFrameLength);
 							    memcpy(compressedData->data_, compressed, compressedFrameLength);
-							    _dcpomatic_context.writer_.write(compressedData, srcFrame.index(), srcFrame.eyes());
+							    _dcpomatic_context.writer.write(compressedData, srcFrame.index(), srcFrame.eyes());
 							    frame_done();
 						    };
 						int const minimum_size = 16384;
@@ -207,7 +211,7 @@ public:
 							}
 
 							auto encoded = std::make_shared<dcp::ArrayData>(fp.vf.encode_locally());
-							_dcpomatic_context.writer_.write(encoded, fp.vf.index(), fp.vf.eyes());
+							_dcpomatic_context.writer.write(encoded, fp.vf.index(), fp.vf.eyes());
 							frame_done();
 						}
 					}
@@ -247,13 +251,13 @@ public:
 			auto s = dcpv.get_size();
 			_dcpomatic_context.set_dimensions(s.width, s.height);
 			auto config = Config::instance();
-			_messenger->launch_grok(_dcpomatic_context.location_,
-			                        _dcpomatic_context.width_, _dcpomatic_context.width_,
-			                        _dcpomatic_context.height_,
+			_messenger->launch_grok(_dcpomatic_context.location,
+			                        _dcpomatic_context.width, _dcpomatic_context.width,
+			                        _dcpomatic_context.height,
 			                        3, 12, device,
-			                        _dcpomatic_context.film_->resolution() == Resolution::FOUR_K,
-			                        _dcpomatic_context.film_->video_frame_rate(),
-			                        _dcpomatic_context.film_->j2k_bandwidth(),
+			                        _dcpomatic_context.film->resolution() == Resolution::FOUR_K,
+			                        _dcpomatic_context.film->video_frame_rate(),
+			                        _dcpomatic_context.film->j2k_bandwidth(),
 			                        config->gpu_license_server(),
 			                        config->gpu_license_port(),
 			                        config->gpu_license());
@@ -296,7 +300,7 @@ public:
 
 	void frame_done()
 	{
-		_dcpomatic_context.history_.event();
+		_dcpomatic_context.history.event();
 	}
 
 private:
