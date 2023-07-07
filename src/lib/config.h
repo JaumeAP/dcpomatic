@@ -630,7 +630,7 @@ public:
 		return _selected_gpu;
 	}
 
-	std::string gpu_license_server() const {
+	boost::optional<std::string> gpu_license_server() const {
 		return _gpu_license_server;
 	}
 
@@ -638,7 +638,7 @@ public:
 		return _gpu_license_port;
 	}
 
-	std::string gpu_license() const {
+	boost::optional<std::string> gpu_license() const {
 		return _gpu_license;
 	}
 
@@ -1496,9 +1496,9 @@ private:
 	bool _enable_gpu;
 	boost::optional<boost::filesystem::path> _gpu_binary_location;
 	int _selected_gpu;
-	std::string _gpu_license_server;
+	boost::optional<std::string> _gpu_license_server;
 	int _gpu_license_port;
-	std::string _gpu_license;
+	boost::optional<std::string> _gpu_license;
 
 	ExportConfig _export;
 

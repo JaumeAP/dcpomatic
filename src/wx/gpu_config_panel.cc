@@ -198,9 +198,9 @@ GPUPage::config_changed()
 	}
 	_gpu_list_control->update();
 	_gpu_list_control->set_selection(config->selected_gpu());
-	checked_set(_server, config->gpu_license_server());
+	checked_set(_server, std_to_wx(config->gpu_license_server().get_value_or("")));
 	checked_set(_port, config->gpu_license_port());
-	checked_set(_license, config->gpu_license());
+	checked_set(_license, config->gpu_license().get_value_or(""));
 }
 
 

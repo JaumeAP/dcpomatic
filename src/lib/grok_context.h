@@ -260,6 +260,8 @@ public:
 			_dcpomatic_context.set_dimensions(s.width, s.height);
 			auto config = Config::instance();
 			DCPOMATIC_ASSERT(_dcpomatic_context.location);
+			DCPOMATIC_ASSERT(config->gpu_license_server());
+			DCPOMATIC_ASSERT(config->gpu_license());
 			_messenger->launch_grok(*_dcpomatic_context.location,
 			                        _dcpomatic_context.width, _dcpomatic_context.width,
 			                        _dcpomatic_context.height,
@@ -267,9 +269,9 @@ public:
 			                        _dcpomatic_context.film->resolution() == Resolution::FOUR_K,
 			                        _dcpomatic_context.film->video_frame_rate(),
 			                        _dcpomatic_context.film->j2k_bandwidth(),
-			                        config->gpu_license_server(),
+			                        *config->gpu_license_server(),
 			                        config->gpu_license_port(),
-			                        config->gpu_license());
+			                        *config->gpu_license());
 		}
 		_launched = _messenger->wait_for_client_init();
 
