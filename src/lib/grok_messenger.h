@@ -169,7 +169,7 @@ struct MessengerInit
 	{
 		if (first_launch(true)) {
 			unlink();
-}
+		}
 	}
 
 	void unlink()
@@ -220,7 +220,7 @@ struct Synch
 		// unlink semaphores in case of previous crash
 		if (MessengerInit::first_launch(true)) {
 			unlink();
-}
+		}
 		open();
 	}
 
@@ -229,7 +229,7 @@ struct Synch
 		close();
 		if (MessengerInit::first_launch(true)) {
 			unlink();
-}
+		}
 	}
 
 	void post(SynchDirection dir)
@@ -238,7 +238,7 @@ struct Synch
 		int rc = sem_post(sem);
 		if (rc) {
 			getMessengerLogger()->error("Error posting to semaphore: %s", strerror(errno));
-}
+		}
 	}
 
 	void wait(SynchDirection dir)
@@ -247,7 +247,7 @@ struct Synch
 		int rc = sem_wait(sem);
 		if (rc) {
 			getMessengerLogger()->error("Error waiting for semaphore: %s", strerror(errno));
-}
+		}
 	}
 
 	void open()
@@ -255,11 +255,11 @@ struct Synch
 		sentSem_ = sem_open(_sent_sem_name.c_str(), O_CREAT, 0666, 0);
 		if (!sentSem_) {
 			getMessengerLogger()->error("Error opening shared memory: %s", strerror(errno));
-}
+		}
 		receiveReadySem_ = sem_open(_receive_ready_sem_name.c_str(), O_CREAT, 0666, 1);
 		if (!receiveReadySem_) {
 			getMessengerLogger()->error("Error opening shared memory: %s", strerror(errno));
-}
+		}
 	}
 
 	void close()
@@ -268,12 +268,12 @@ struct Synch
 		if (rc) {
 			getMessengerLogger()->error("Error closing semaphore %s: %s", _sent_sem_name.c_str(),
 			                            strerror(errno));
-}
+		}
 		rc = sem_close(receiveReadySem_);
 		if (rc) {
 			getMessengerLogger()->error("Error closing semaphore %s: %s",
 			                            _receive_ready_sem_name.c_str(), strerror(errno));
-}
+		}
 	}
 
 	void unlink()
@@ -282,12 +282,12 @@ struct Synch
 		if (rc == -1 && errno != ENOENT) {
 			getMessengerLogger()->error("Error unlinking semaphore %s: %s", _sent_sem_name.c_str(),
 			                            strerror(errno));
-}
+		}
 		rc = sem_unlink(_receive_ready_sem_name.c_str());
 		if (rc == -1 && errno != ENOENT) {
 			getMessengerLogger()->error("Error unlinking semaphore %s: %s",
 			                            _receive_ready_sem_name.c_str(), strerror(errno));
-}
+		}
 	}
 
 	sem_t* sentSem_;
@@ -313,11 +313,11 @@ struct SharedMemoryManager
 			rc = close(*shm_fd);
 			if (rc) {
 				getMessengerLogger()->error("Error closing shared memory: %s", strerror(errno));
-}
+			}
 			rc = shm_unlink(name.c_str());
 			if (rc) {
 				getMessengerLogger()->error("Error unlinking shared memory: %s", strerror(errno));
-}
+			}
 			return false;
 		}
 		*buffer = static_cast<char*>(mmap(0, len, PROT_WRITE, MAP_SHARED, *shm_fd, 0));
@@ -326,11 +326,11 @@ struct SharedMemoryManager
 			rc = close(*shm_fd);
 			if (rc) {
 				getMessengerLogger()->error("Error closing shared memory: %s", strerror(errno));
-}
+			}
 			rc = shm_unlink(name.c_str());
 			if (rc) {
 				getMessengerLogger()->error("Error unlinking shared memory: %s", strerror(errno));
-}
+			}
 		}
 
 		return *buffer != nullptr;
@@ -340,22 +340,22 @@ struct SharedMemoryManager
 	{
 		if (!*buffer || !shm_fd) {
 			return true;
-}
+		}
 
 		int rc = munmap(*buffer, len);
 		*buffer = nullptr;
 		if (rc) {
 			getMessengerLogger()->error("Error unmapping shared memory %s: %s", name.c_str(), strerror(errno));
-}
+		}
 		rc = close(shm_fd);
 		shm_fd = 0;
 		if (rc) {
 			getMessengerLogger()->error("Error closing shared memory %s: %s", name.c_str(), strerror(errno));
-}
+		}
 		rc = shm_unlink(name.c_str());
 		if (rc) {
 			fprintf(stderr, "Error unlinking shared memory %s : %s\n", name.c_str(), strerror(errno));
-}
+		}
 
 		return true;
 	}
@@ -389,7 +389,7 @@ public:
 			_active = false;
 			while (!_queue.empty()) {
 				_queue.pop();
-}
+			}
 		}
 
 		// release all waiting threads
@@ -412,7 +412,7 @@ public:
 		}
 		if (rc) {
 			_can_pop.notify_one();
-}
+		}
 
 		return rc;
 	}
@@ -424,7 +424,7 @@ public:
 			std::unique_lock<std::mutex> lk(_mutex);
 			if (!_active) {
 				return false;
-}
+			}
 			// in case of spurious wakeup, loop until predicate in lambda
 			// is satisfied.
 			_can_push.wait(lk, [this] { return _queue.size() < _max_size || !_active; });
@@ -432,7 +432,7 @@ public:
 		}
 		if (rc) {
 			_can_pop.notify_one();
-}
+		}
 
 		return rc;
 	}
@@ -446,7 +446,7 @@ public:
 		}
 		if (rc) {
 			_can_push.notify_one();
-}
+		}
 
 		return rc;
 	}
@@ -458,7 +458,7 @@ public:
 			std::unique_lock<std::mutex> lk(_mutex);
 			if (!_active) {
 				return false;
-}
+			}
 			// in case of spurious wakeup, loop until predicate in lambda
 			// is satisfied.
 			_can_pop.wait(lk, [this] { return !_queue.empty() || !_active; });
@@ -466,7 +466,7 @@ public:
 		}
 		if (rc) {
 			_can_push.notify_one();
-}
+		}
 
 		return rc;
 	}
@@ -476,7 +476,7 @@ private:
 	{
 		if (_queue.size() == _max_size || !_active) {
 			return false;
-}
+		}
 		_queue.push(value);
 
 		return true;
@@ -486,7 +486,7 @@ private:
 	{
 		if (_queue.empty() || !_active) {
 			return false;
-}
+		}
 		value = _queue.front();
 		_queue.pop();
 
@@ -582,7 +582,7 @@ struct Messenger
 
 		for (auto& p : _processors) {
 			p.join();
-}
+		}
 
 		delete _outbound_synch;
 		delete _inbound_synch;
@@ -602,7 +602,7 @@ struct Messenger
 
 		for (size_t i = 0; i < init_.numProcessingThreads_; ++i) {
 			_processors.push_back(std::thread(processorThread, this, init_.processor_));
-}
+		}
 	}
 
 	size_t serialize(const std::string& dir, size_t clientFrameId, uint8_t* compressedPtr,
@@ -611,12 +611,12 @@ struct Messenger
 		char fname[512];
 		if (!compressedPtr || !compressedLength) {
 			return 0;
-}
+		}
 		sprintf(fname, "%s/test_%d.j2k", dir.c_str(), (int)clientFrameId);
 		auto fp = fopen(fname, "wb");
 		if (!fp) {
 			return 0;
-}
+		}
 		size_t written = fwrite(compressedPtr, 1, compressedLength, fp);
 		if (written != compressedLength) {
 			fclose(fp);
@@ -633,13 +633,13 @@ struct Messenger
 		bool rc = true;
 		if (init_.uncompressedFrameSize_) {
 			rc = rc && SharedMemoryManager::init_shm(grokUncompressedBuf,
-			                                        init_.uncompressedFrameSize_ * init_.numFrames_,
-			                                        &_uncompressed_fd, &_uncompressed_buffer);
+			                                         init_.uncompressedFrameSize_ * init_.numFrames_,
+			                                         &_uncompressed_fd, &_uncompressed_buffer);
 		}
 		if (init_.compressedFrameSize_) {
 			rc = rc && SharedMemoryManager::init_shm(grokCompressedBuf,
-			                                        init_.compressedFrameSize_ * init_.numFrames_,
-			                                        &_compressed_fd, &_compressed_buffer);
+			                                         init_.compressedFrameSize_ * init_.numFrames_,
+			                                         &_compressed_fd, &_compressed_buffer);
 		}
 
 		return rc;
@@ -648,11 +648,11 @@ struct Messenger
 	bool deinit_shm()
 	{
 		bool rc = SharedMemoryManager::deinit_shm(grokUncompressedBuf,
-		                                         init_.uncompressedFrameSize_ * init_.numFrames_,
-		                                         _uncompressed_fd, &_uncompressed_buffer);
+		                                          init_.uncompressedFrameSize_ * init_.numFrames_,
+		                                          _uncompressed_fd, &_uncompressed_buffer);
 		rc = rc && SharedMemoryManager::deinit_shm(grokCompressedBuf,
-		                                          init_.compressedFrameSize_ * init_.numFrames_,
-		                                          _compressed_fd, &_compressed_buffer);
+		                                           init_.compressedFrameSize_ * init_.numFrames_,
+		                                           _compressed_fd, &_compressed_buffer);
 
 		return rc;
 	}
@@ -675,11 +675,11 @@ struct Messenger
 		auto pgrep = popen(command, "r");
 		if (!pgrep) {
 			return -1;
-}
+		}
 		pid_t pid;
 		if (fscanf(pgrep, "%d", &pid) != 1) {
 			pid = -1;
-}
+		}
 		pclose(pgrep);
 
 		return pid;
@@ -700,19 +700,19 @@ struct Messenger
 	}
 
 	void launch_grok(const std::string& dir, uint32_t width, uint32_t stride,
-	                uint32_t height, uint32_t samplesPerPixel, uint32_t depth,
-	                int device, bool is4K, uint32_t fps, uint32_t bandwidth,
-	                const std::string server, uint32_t port,
-	                const std::string license)
+	                 uint32_t height, uint32_t samplesPerPixel, uint32_t depth,
+	                 int device, bool is4K, uint32_t fps, uint32_t bandwidth,
+	                 const std::string server, uint32_t port,
+	                 const std::string license)
 	{
 
 		std::unique_lock<std::mutex> lk(shutdownMutex_);
 		if (async_result_.valid()) {
 			return;
-}
+		}
 		if (MessengerInit::first_launch(true)) {
 			init_.unlink();
-}
+		}
 		start_threads();
 		char _cmd[4096];
 		auto fullServer = server + ":" + std::to_string(port);
@@ -747,14 +747,14 @@ struct Messenger
 	{
 		if (initialized_) {
 			return true;
-}
+		}
 
 		std::unique_lock<std::mutex> lk(shutdownMutex_);
 		if (initialized_) {
 			return true;
 		} else if (shutdown_) {
 			return false;
-}
+		}
 		clientInitializedCondition_.wait(lk, [this] { return initialized_ || shutdown_; });
 
 		return initialized_ && !shutdown_;
@@ -780,7 +780,7 @@ struct Messenger
 		assert(frameId < init_.numFrames_);
 		if (frameId >= init_.numFrames_) {
 			return nullptr;
-}
+		}
 
 		return (uint8_t*)(_uncompressed_buffer + frameId * init_.uncompressedFrameSize_);
 	}
@@ -790,7 +790,7 @@ struct Messenger
 		assert(frameId < init_.numFrames_);
 		if (frameId >= init_.numFrames_) {
 			return nullptr;
-}
+		}
 
 		return (uint8_t*)(_compressed_buffer + frameId * init_.compressedFrameSize_);
 	}
@@ -847,19 +847,19 @@ outboundThread(Messenger* messenger, const std::string& sendBuf, Synch* synch)
 
 	if (!SharedMemoryManager::init_shm(sendBuf, messageBufferLen, &shm_fd, &send_buffer)) {
 		return;
-}
+	}
 	while (messenger->running) {
 		synch->wait(SYNCH_RECEIVE_READY);
 		if (!messenger->running) {
 			break;
-}
+		}
 		std::string message;
 		if (!messenger->sendQueue.wait_and_pop(message)) {
 			break;
-}
+		}
 		if (!messenger->running) {
 			break;
-}
+		}
 		memcpy(send_buffer, message.c_str(), message.size() + 1);
 		synch->post(SYNCH_SENT);
 	}
@@ -874,12 +874,12 @@ inboundThread(Messenger* messenger, const std::string& receiveBuf, Synch* synch)
 
 	if (!SharedMemoryManager::init_shm(receiveBuf, messageBufferLen, &shm_fd, &receive_buffer)) {
 		return;
-}
+	}
 	while (messenger->running) {
 		synch->wait(SYNCH_SENT);
 		if (!messenger->running) {
 			break;
-}
+		}
 		auto message = std::string(receive_buffer);
 		synch->post(SYNCH_RECEIVE_READY);
 		messenger->receiveQueue.push(message);
@@ -925,10 +925,10 @@ processorThread(Messenger* messenger, std::function<void(std::string)> processor
 		std::string message;
 		if (!messenger->receiveQueue.wait_and_pop(message)) {
 			break;
-}
+		}
 		if (!messenger->running) {
 			break;
-}
+		}
 		Msg msg(message);
 		auto tag = msg.next();
 		if (tag == GRK_MSGR_BATCH_COMPRESS_INIT) {
@@ -962,7 +962,7 @@ struct ScheduledFrames
 		auto it = _map.find(val.index());
 		if (it == _map.end()) {
 			_map[val.index()] = val;
-}
+		}
 	}
 
 	F retrieve(size_t index, bool& success)
@@ -972,7 +972,7 @@ struct ScheduledFrames
 		auto it = _map.find(index);
 		if (it == _map.end()) {
 			return F();
-}
+		}
 
 		success = true;
 		F val = it->second;
@@ -1008,7 +1008,7 @@ struct ScheduledMessenger : public Messenger
 		BufferSrc src;
 		if (!availableBuffers_.wait_and_pop(src)) {
 			return false;
-}
+		}
 		converter(src);
 		_scheduled_frames.store(proxy);
 		_frames_scheduled++;
@@ -1029,14 +1029,14 @@ struct ScheduledMessenger : public Messenger
 			auto srcFrame = _scheduled_frames.retrieve(clientFrameId, success);
 			if (!success) {
 				return;
-}
+			}
 			processor(srcFrame, get_compressed_frame(compressedFrameId), compressedFrameLength);
 		}
 		++_frames_compressed;
 		send(GRK_MSGR_BATCH_PROCESSSED_COMPRESSED, compressedFrameId);
 		if (shutdown_ && _frames_compressed == _frames_scheduled) {
 			shutdownCondition_.notify_all();
-}
+		}
 	}
 
 	void shutdown()
@@ -1045,7 +1045,7 @@ struct ScheduledMessenger : public Messenger
 			std::unique_lock<std::mutex> lk(shutdownMutex_);
 			if (!async_result_.valid()) {
 				return;
-}
+			}
 			shutdown_ = true;
 			if (_frames_scheduled) {
 				uint32_t scheduled = _frames_scheduled;
@@ -1057,7 +1057,7 @@ struct ScheduledMessenger : public Messenger
 			int result = async_result_.get();
 			if (result != 0) {
 				getMessengerLogger()->error("Accelerator failed with return code: %d\n", result);
-}
+			}
 		} catch (std::exception& ex) {
 			getMessengerLogger()->error("%s", ex.what());
 		}

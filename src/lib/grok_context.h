@@ -206,7 +206,7 @@ public:
 							auto fp = _messenger->retrieve(clientFrameId, success);
 							if (!success) {
 								return;
-}
+							}
 
 							auto encoded = std::make_shared<dcp::ArrayData>(fp.vf.encode_locally());
 							_dcpomatic_context.writer_.write(encoded, fp.vf.index(), fp.vf.eyes());
@@ -234,31 +234,31 @@ public:
 	{
 		if (!_messenger) {
 			return false;
-}
+		}
 		if (_launched) {
 			return true;
-}
+		}
 		std::unique_lock<std::mutex> lk_global(launchMutex);
 		if (!_messenger) {
 			return false;
-}
+		}
 		if (_launched) {
 			return true;
-}
+		}
 		if (MessengerInit::first_launch(true)) {
 			auto s = dcpv.get_size();
 			_dcpomatic_context.set_dimensions(s.width, s.height);
 			auto config = Config::instance();
 			_messenger->launch_grok(_dcpomatic_context.location_,
-			                       _dcpomatic_context.width_, _dcpomatic_context.width_,
-			                       _dcpomatic_context.height_,
-			                       3, 12, device,
-			                       _dcpomatic_context.film_->resolution() == Resolution::FOUR_K,
-			                       _dcpomatic_context.film_->video_frame_rate(),
-			                       _dcpomatic_context.film_->j2k_bandwidth(),
-			                       config->gpu_license_server(),
-			                       config->gpu_license_port(),
-			                       config->gpu_license());
+			                        _dcpomatic_context.width_, _dcpomatic_context.width_,
+			                        _dcpomatic_context.height_,
+			                        3, 12, device,
+			                        _dcpomatic_context.film_->resolution() == Resolution::FOUR_K,
+			                        _dcpomatic_context.film_->video_frame_rate(),
+			                        _dcpomatic_context.film_->j2k_bandwidth(),
+			                        config->gpu_license_server(),
+			                        config->gpu_license_port(),
+			                        config->gpu_license());
 		}
 		_launched = _messenger->wait_for_client_init();
 
@@ -269,7 +269,7 @@ public:
 	{
 		if (!_messenger) {
 			return false;
-}
+		}
 
 		auto fp = FrameProxy(vf.index(), vf.eyes(), vf);
 		auto cvt = [this, &fp](BufferSrc src) {
@@ -283,15 +283,15 @@ public:
 	{
 		if (!_messenger) {
 			return;
-}
+		}
 
 		std::unique_lock<std::mutex> lk_global(launchMutex);
 		if (!_messenger) {
 			return;
-}
+		}
 		if (_launched) {
 			_messenger->shutdown();
-}
+		}
 		delete _messenger;
 		_messenger = nullptr;
 	}

@@ -12,7 +12,7 @@ get_gpu_names(std::string binary, std::string filename)
 		std::string line;
 		while (std::getline(file, line)) {
 			gpu_names.push_back(line);
-}
+		}
 		file.close();
 	}
 
@@ -48,7 +48,7 @@ public:
 			_combo_box->Clear();
 			for (const auto& name : gpu_names) {
 				_combo_box->Append(name);
-}
+			}
 		}
 	}
 
@@ -61,7 +61,7 @@ public:
 	{
 		if ((int)_combo_box->GetCount() > sel) {
 			_combo_box->SetSelection(sel);
-}
+		}
 	}
 
 private:
@@ -70,7 +70,7 @@ private:
 		_selection = _combo_box->GetSelection();
 		if (_selection != wxNOT_FOUND) {
 			Config::instance()->set_selected_gpu(_selection);
-}
+		}
 	}
 
 	wxComboBox* _combo_box;

@@ -94,7 +94,7 @@ J2KEncoder::pause()
 {
 	if (Config::instance()->enable_gpu()) {
 		end(false);
-}
+	}
 }
 
 void
@@ -219,7 +219,7 @@ J2KEncoder::encode (shared_ptr<PlayerVideo> pv, DCPTime time)
 			threads = _threads->size();
 		} else {
 			threads = std::thread::hardware_concurrency();
-}
+		}
 	}
 
 	boost::mutex::scoped_lock queue_lock (_queue_mutex);
