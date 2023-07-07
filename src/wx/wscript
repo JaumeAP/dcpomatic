@@ -84,6 +84,7 @@ sources = """
           gain_calculator_dialog.cc
           gdc_certificate_panel.cc
           gl_video_view.cc
+          gpu_config_panel.cc
           hints_dialog.cc
           html_dialog.cc
           i18n_hook.cc
