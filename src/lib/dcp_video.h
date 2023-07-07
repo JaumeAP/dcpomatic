@@ -72,7 +72,7 @@ public:
 
 	static std::shared_ptr<dcp::OpenJPEGImage> convert_to_xyz (std::shared_ptr<const PlayerVideo> frame, dcp::NoteHandler note);
 
-	void convert_to_xyz(uint16_t* dst);
+	void convert_to_xyz(uint16_t* dst) const;
 	dcp::Size get_size();
 
 private:

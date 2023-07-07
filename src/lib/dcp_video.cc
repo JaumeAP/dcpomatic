@@ -125,10 +125,10 @@ DCPVideo::get_size()
 	return image->size();
 }
 
-void
-DCPVideo::convert_to_xyz(uint16_t* dst)
-{
 
+void
+DCPVideo::convert_to_xyz(uint16_t* dst) const
+{
 	auto image = _frame->image(bind(&PlayerVideo::keep_xyz_or_rgb, _1), VideoRange::FULL, false);
 	if (_frame->colour_conversion()) {
 		dcp::rgb_to_xyz(
@@ -139,6 +139,7 @@ DCPVideo::convert_to_xyz(uint16_t* dst)
 		    _frame->colour_conversion().get());
 	}
 }
+
 
 /** J2K-encode this frame on the local host.
  *  @return Encoded data.
