@@ -151,8 +151,7 @@ GrokContext::GrokContext(const DcpomaticContext& dcpomaticContext)
 		boost::filesystem::path folder(*_dcpomatic_context.location);
 		boost::filesystem::path binaryPath = folder / "grk_compress";
 		if (!boost::filesystem::exists(binaryPath)) {
-			get_messenger_logger()->error("Invalid binary location %s",
-						    _dcpomatic_context.location->c_str());
+			get_messenger_logger()->error("Invalid binary location %s", _dcpomatic_context.location->c_str());
 			return;
 		}
 		auto proc = [this](const std::string& str) {
@@ -190,10 +189,16 @@ GrokContext::GrokContext(const DcpomaticContext& dcpomaticContext)
 				get_messenger_logger()->error("%s", ex.what());
 			}
 		};
-		auto clientInit =
-		    MessengerInit(clientToGrokMessageBuf, clientSentSynch, grokReceiveReadySynch,
-				  grokToClientMessageBuf, grokSentSynch, clientReceiveReadySynch, proc,
-				  std::thread::hardware_concurrency());
+		auto clientInit = MessengerInit(
+			    clientToGrokMessageBuf,
+			    clientSentSynch,
+			    grokReceiveReadySynch,
+			    grokToClientMessageBuf,
+			    grokSentSynch,
+			    clientReceiveReadySynch,
+			    proc,
+			    std::thread::hardware_concurrency()
+			    );
 		_messenger = new ScheduledMessenger<FrameProxy>(clientInit);
 	}
 }
@@ -228,16 +233,21 @@ GrokContext::launch(DCPVideo dcpv, int device)
 		DCPOMATIC_ASSERT(_dcpomatic_context.location);
 		DCPOMATIC_ASSERT(config->gpu_license_server());
 		DCPOMATIC_ASSERT(config->gpu_license());
-		_messenger->launch_grok(*_dcpomatic_context.location,
-					_dcpomatic_context.width, _dcpomatic_context.width,
-					_dcpomatic_context.height,
-					3, 12, device,
-					_dcpomatic_context.film->resolution() == Resolution::FOUR_K,
-					_dcpomatic_context.film->video_frame_rate(),
-					_dcpomatic_context.film->j2k_bandwidth(),
-					*config->gpu_license_server(),
-					config->gpu_license_port(),
-					*config->gpu_license());
+		_messenger->launch_grok(
+			*_dcpomatic_context.location,
+			_dcpomatic_context.width,
+			_dcpomatic_context.width,
+			_dcpomatic_context.height,
+			3,
+			12,
+			device,
+			_dcpomatic_context.film->resolution() == Resolution::FOUR_K,
+			_dcpomatic_context.film->video_frame_rate(),
+			_dcpomatic_context.film->j2k_bandwidth(),
+			*config->gpu_license_server(),
+			config->gpu_license_port(),
+			*config->gpu_license()
+			);
 	}
 	_launched = _messenger->wait_for_client_init();
 
