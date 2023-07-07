@@ -5,6 +5,7 @@
 
 
 class CheckBox;
+class DirPickerCtrl;
 class GPUList;
 class wxTextCtrl;
 
@@ -30,7 +31,7 @@ private:
 	void license_changed();
 
 	CheckBox* _enable_gpu;
-	wxDirPickerCtrl* _binary_location;
+	DirPickerCtrl* _binary_location;
 	GPUList* _gpu_list_control;
 	wxTextCtrl* _server;
 	wxSpinCtrl* _port;

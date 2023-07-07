@@ -1,5 +1,6 @@
 
 #include "check_box.h"
+#include "dir_picker_ctrl.h"
 #include "gpu_config_panel.h"
 #include "password_entry.h"
 #include <wx/panel.h>
@@ -129,7 +130,7 @@ GPUPage::setup()
 	_panel->GetSizer()->Add(table, 1, wxALL | wxEXPAND, _border);
 
 	add_label_to_sizer(table, _panel, _("Acceleration binary folder"), true, 0, wxLEFT | wxLEFT | wxALIGN_CENTRE_VERTICAL);
-	_binary_location = new wxDirPickerCtrl(_panel, wxDD_DIR_MUST_EXIST);
+	_binary_location = new DirPickerCtrl(_panel);
 	table->Add(_binary_location, 1, wxEXPAND);
 
 	add_label_to_sizer(table, _panel, _("GPU selection"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
