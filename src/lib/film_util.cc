@@ -32,3 +32,18 @@ channel_is_mapped(shared_ptr<const Film> film, dcp::Channel channel)
 	auto const mapped = film->mapped_audio_channels();
 	return std::find(mapped.begin(), mapped.end(), static_cast<int>(channel)) != mapped.end();
 }
+
+
+int
+audio_channels_to_write_to_mxf(shared_ptr<const Film> film)
+{
+	if (film->interop()) {
+		return film->audio_channels();
+	}
+
+	/* Compromise to try and avoid validation errors in some cases with DCPs that
+	 * don't have 8 or 16 channels (see bug #2443).
+	 */
+	return film->audio_channels() > 8 ? 16 : 8;
+}
+

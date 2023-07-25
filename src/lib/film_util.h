@@ -26,3 +26,5 @@ class Film;
 
 
 bool channel_is_mapped(std::shared_ptr<const Film> film, dcp::Channel channel);
+int audio_channels_to_write_to_mxf(std::shared_ptr<const Film> film);
+
