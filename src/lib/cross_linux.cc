@@ -157,6 +157,12 @@ openssl_path ()
 		return p;
 	}
 
+	/* flatpak */
+	p = directory_containing_executable() / "openssl";
+	if (boost::filesystem::is_regular_file(p)) {
+		return p;
+	}
+
 	return "dcpomatic2_openssl";
 }
 
