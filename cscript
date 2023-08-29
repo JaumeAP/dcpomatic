@@ -569,19 +569,6 @@ def build(target, options, for_package):
         prefix = 'https://dcpomatic.com/deps/linux'
         modules = []
 
-        def module(name, version, sha256, buildsystem, extension='xz', config_opts=None):
-            desc = {'name': name,
-                    'buildsystem': buildsystem,
-                    'sources': [{'type': 'archive',
-                                 'url': '%s/%s-%s.tar.%s' % (prefix, name, version, extension),
-                                 'sha256': sha256}]}
-            if buildsystem == 'cmake':
-                desc['builddir'] = True
-            if config_opts:
-                desc['config-opts'] = config_opts
-            print(desc)
-            modules.append(desc)
-
         def waf(name, config=''):
             modules.append({'name': name,
                             'buildsystem': 'simple',
@@ -592,48 +579,6 @@ def build(target, options, for_package):
                                 './waf install',
                             ]})
 
-        module('libzip', '1.4.0', 'e508aba025f5f94b267d5120fc33761bcd98440ebe49dbfe2ed3df3afeacc7b1', 'cmake')
-        module('mm-common', '1.0.2', 'a2a99f3fa943cf662f189163ed39a2cfc19a428d906dd4f92b387d3659d1641d', 'meson')
-        module('libsigc++', '2.10.6', 'dda176dc4681bda9d5a2ac1bc55273bdd381662b7a6d49e918267d13e8774e1b', 'autotools')
-        module('glibmm', '2.64.5', '508fc86e2c9141198aa16c225b16fd6b911917c0d3817602652844d0973ea386', 'meson')
-        module('cairomm', '1.12.2', '45c47fd4d0aa77464a75cdca011143fea3ef795c4753f6e860057da5fb8bd599', 'autotools', extension='gz')
-        module('pangomm', '2.42.2', '1b24c92624ae1275ccb57758175d35f7c39ad3342d8c0b4ba60f0d9849d2d08a', 'meson')
-        module('libxml++', '2.40.1', '4ad4abdd3258874f61c2e2a41d08e9930677976d303653cd1670d3e9f35463e9', 'autotools')
-        module('xmlsec1', '1.2.25', '967ca83edf25ccb5b48a3c4a09ad3405a63365576503bf34290a42de1b92fcd2', 'autotools', extension='gz')
-        module('xerces-c', '3.2.3', '12fc99a9fc1d1a79bd0e927b8b5637a576d6656f45b0d5e70ee3694d379cc149', 'autotools')
-        module('glu', '9.0.3', 'bd43fe12f374b1192eb15fe20e45ff456b9bc26ab57f0eee919f96ca0f8a330f', 'meson')
-        module('x264', 'snapshot-20170705-2245', '633d72105a67ce034355a7f2c5fc7646c06c32063841c4d71b292656996b48bf', 'autotools', extension='bz2', config_opts=['--enable-pic', '--enable-static', '--disable-shared'])
-        module(
-                'ImageMagick', '7.0.10-31', 'c0d2b79dc959bb5f20c90596b41ac9baad34f659d9192f2abb3c06a0778f47d1', 'autotools',
-                config_opts=['--without-x', '--disable-opencl', '--disable-dependency-tracking', '--disable-openmp', '--with-png=yes', '--with-tiff=yes']
-        )
-        modules.append({'name': 'openssl',
-                        'buildsystem': 'simple',
-                        'build-commands': [
-                            './config --prefix=/app',
-                            'make -j16',
-                            'make install',
-                        ],
-                        'sources': [
-                            {
-                                'type': 'dir',
-                                'path': '../../openssl'
-                            },
-                        ]})
-        modules.append({'name': 'boost',
-                        'buildsystem': 'simple',
-                        'build-commands': [
-                            './bootstrap.sh --prefix=/app',
-                            './b2 --with-filesystem --with-thread --with-regex --with-date_time --with-locale install',
-                        ],
-                        'sources': [
-                            { 'type': 'archive',
-                              'url': '%s/boost_1_66_0.tar.bz2' % prefix,
-                              'sha256': '5721818253e6a0989583192f96782c4a98eb6204965316df9f5ad75819225ca9'
-                            },
-                        ]})
-        module('wxWidgets', '3.0.3', '08c8033f48ec1b23520f036cde37b5ae925a6a65f137ded665633ca159b9307b', 'autotools', extension='bz2')
-        module('libssh', '0.9.5', 'acffef2da98e761fc1fd9c4fddde0f3af60ab44c4f5af05cd1b2d60a3fa08718', 'cmake')
         waf('leqm-nrt', '--without-libsndfile')
         waf('libcxml', '--disable-tests')
         modules.append({'name': 'openjpeg',
@@ -661,6 +606,7 @@ def build(target, options, for_package):
         desc = {'app-id': 'com.dcpomatic.DCP-o-matic',
                 'runtime': 'org.gnome.Sdk',
                 'runtime-version': '3.38',
+                'base': 'com.dcpomatic.Base',
                 'sdk': 'org.gnome.Sdk',
                 'command': 'dcpomatic2',
                 'finish-args': ['--socket=x11', '--share=ipc', '--share=network', '--socket=pulseaudio', '--filesystem=host'],
