@@ -614,7 +614,6 @@ def build(target, options, for_package):
         os.makedirs('build/platform')
         with open('build/com.dcpomatic.DCP-o-matic.json', 'w') as outfile:
             json.dump(desc, outfile)
-        target.command('%s install /opt/dcpomatic_base_1.flatpak' % target.flatpak())
         target.command('%s -v --user --repo=build/platform/repo build/platform/flatpak --gpg-sign 70AAE40A90A2466AD8C57ADEF85070CB89F81088 --gpg-homedir=/tmp/gpg build/com.dcpomatic.DCP-o-matic.json' % target.flatpak_builder())
     elif target.platform != 'linux' or target.detail == 'appimage' or not for_package:
         target.command('./waf configure --prefix=%s %s' % (target.directory, configure_options(target, options, for_package)))
