@@ -100,27 +100,20 @@ LIBDCP_ENABLE_WARNINGS
 #include "i18n.h"
 
 
-using std::bad_alloc;
 using std::cout;
 using std::endl;
-using std::istream;
 using std::list;
 using std::make_pair;
 using std::make_shared;
-using std::map;
+using std::max;
 using std::min;
-using std::ostream;
 using std::pair;
 using std::set_terminate;
 using std::shared_ptr;
 using std::string;
 using std::vector;
 using std::wstring;
-using boost::thread;
 using boost::optional;
-using boost::lexical_cast;
-using boost::bad_lexical_cast;
-using boost::scoped_array;
 using dcp::Size;
 using dcp::raw_convert;
 using dcp::locale_convert;
