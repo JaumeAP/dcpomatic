@@ -155,3 +155,23 @@ BOOST_AUTO_TEST_CASE(word_wrap_test)
 	BOOST_CHECK(word_wrap("hello this is a longer bit of text and it should be word-wrapped", 31) == string{"hello this is a longer bit of \ntext and it should be word-\nwrapped\n"});
 	BOOST_CHECK_EQUAL(word_wrap("hellocan'twrapthissadly", 5), "hello\ncan't\nwrapt\nhissa\ndly\n");
 }
+
+
+BOOST_AUTO_TEST_CASE(scale_for_display_test)
+{
+	/* 1998x1076 image in a flat frame, displayed in 1104x596.
+	 * In the DCP there will be 2px black top and bottom.
+	 * So the display width should definitely be 1104, and it then follows that
+	 * the display height should be scaled by the same factor as the width has been.
+	 */
+	BOOST_CHECK(scale_for_display(dcp::Size(1998, 1076), dcp::Size(1104, 596), dcp::Size(1998, 1080), PixelQuanta(2, 2)) == dcp::Size(1104, 594));
+
+	/* 1800x1080 image in a flat frame, displayed in 1104x596.
+	 * In the DCP there should be 99px black left and right.
+	 * So the display height should definitely be 596.
+	 */
+	BOOST_CHECK(scale_for_display(dcp::Size(1800, 1080), dcp::Size(1104, 596), dcp::Size(1998, 1080), PixelQuanta(2, 2)) == dcp::Size(994, 596));
+
+	/* This happens sometimes as windows are getting resized */
+	BOOST_CHECK(scale_for_display(dcp::Size(1998, 1076), dcp::Size(64, 64), dcp::Size(1998, 1080), PixelQuanta(2, 2)) == dcp::Size(64, 34));
+}

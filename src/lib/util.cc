@@ -982,19 +982,25 @@ copy_in_bits (boost::filesystem::path from, boost::filesystem::path to, std::fun
 dcp::Size
 scale_for_display (dcp::Size s, dcp::Size display_container, dcp::Size film_container, PixelQuanta quanta)
 {
-	/* Now scale it down if the display container is smaller than the film container */
-	if (display_container != film_container) {
-		float const scale = min (
-			float (display_container.width) / film_container.width,
-			float (display_container.height) / film_container.height
+	if (std::abs(display_container.ratio() - film_container.ratio()) < 0.01) {
+		/* The display ratio is very close to what it should be, but it might not be exactly the same.
+		 * Allow the image to stretch slightly (differently in x and y) so that we are less likely
+		 * to get single pixel gaps in the preview.
+		 */
+		return quanta.round(
+			static_cast<float>(s.width) * display_container.width / film_container.width,
+			static_cast<float>(s.height) * display_container.height / film_container.height
 			);
-
-		s.width = lrintf (s.width * scale);
-		s.height = lrintf (s.height * scale);
-		s = quanta.round (s);
+	} else {
+		/* The display ratio is quite different to the film, so scale it so that the dimension
+		 * that needs to fit does fit.
+		 */
+		auto const scale = min(
+			static_cast<float>(display_container.width) / film_container.width,
+			static_cast<float>(display_container.height) / film_container.height
+			);
+		return quanta.round(s.width * scale, s.height * scale);
 	}
-
-	return s;
 }
 
 
