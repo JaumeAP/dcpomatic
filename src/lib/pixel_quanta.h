@@ -55,6 +55,7 @@ public:
 	int round_x (int x_) const;
 	int round_y (int y_) const;
 	dcp::Size round (dcp::Size size) const;
+	dcp::Size round(float x, float y) const;
 
 	int x;
 	int y;

@@ -60,6 +60,19 @@ PixelQuanta::round (dcp::Size size) const
 }
 
 
+dcp::Size
+PixelQuanta::round(float x_, float y_) const
+{
+	auto round_one = [](float v, int q) {
+		return q == 1
+			? static_cast<int>(std::lround(v))
+			: (static_cast<int>(v) + static_cast<int>(v) % q);
+	};
+
+	return { round_one(x_, x), round_one(y_, y) };
+}
+
+
 PixelQuanta
 max (PixelQuanta const& a, PixelQuanta const& b)
 {
