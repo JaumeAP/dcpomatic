@@ -53,6 +53,10 @@ public:
 
 	void run () override;
 
+	int frames_encoded() const {
+		return _frames_encoded;
+	}
+
 private:
 	void handle (std::shared_ptr<Socket>) override;
 	void worker_thread ();
@@ -67,6 +71,7 @@ private:
 	bool _verbose;
 	int _num_threads;
 	Waker _waker;
+	boost::atomic<int> _frames_encoded;
 
 	struct Broadcast {
 

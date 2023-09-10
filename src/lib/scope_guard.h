@@ -43,13 +43,21 @@ public:
 	ScopeGuard (ScopeGuard const&) = delete;
 	ScopeGuard& operator=(ScopeGuard const&) = delete;
 
+	void cancel()
+	{
+		_cancelled = true;
+	}
+
 	~ScopeGuard ()
 	{
-		_function();
+		if (!_cancelled) {
+			_function();
+		}
 	}
 
 private:
 	std::function<void()> _function;
+	bool _cancelled = false;
 };
 
 

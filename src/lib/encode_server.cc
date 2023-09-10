@@ -165,6 +165,8 @@ EncodeServer::process (shared_ptr<Socket> socket, struct timeval& after_read, st
 		throw;
 	}
 
+	++_frames_encoded;
+
 	return dcp_video_frame.index ();
 }
 

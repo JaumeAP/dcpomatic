@@ -26,6 +26,7 @@
 
 #include "compose.hpp"
 #include "config.h"
+#include "cpu_j2k_encoder_thread.h"
 #include "cross.h"
 #include "dcp_video.h"
 #include "dcpomatic_log.h"
@@ -33,8 +34,10 @@
 #include "encode_server_finder.h"
 #include "film.h"
 #include "j2k_encoder.h"
+#include "j2k_encoder_thread.h"
 #include "log.h"
 #include "player_video.h"
+#include "remote_j2k_encoder_thread.h"
 #include "util.h"
 #include "writer.h"
 #include <libcxml/cxml.h>
@@ -44,11 +47,13 @@
 
 
 using std::cout;
+using std::dynamic_pointer_cast;
 using std::exception;
 using std::list;
 using std::make_shared;
 using std::shared_ptr;
 using std::weak_ptr;
+using std::vector;
 using boost::optional;
 using dcp::Data;
 using namespace dcpomatic;
@@ -70,8 +75,17 @@ J2KEncoder::~J2KEncoder ()
 {
 	_server_found_connection.disconnect();
 
-	boost::mutex::scoped_lock lm (_threads_mutex);
 	terminate_threads ();
+}
+
+
+void
+J2KEncoder::servers_list_changed()
+{
+	remake_threads(
+		Config::instance()->only_servers_encode() ? 0 : Config::instance()->master_encoding_threads(),
+		EncodeServerFinder::instance()->servers()
+		);
 }
 
 
@@ -94,7 +108,6 @@ J2KEncoder::end ()
 	/* Keep waking workers until the queue is empty */
 	while (!_queue.empty ()) {
 		rethrow ();
-		_empty_condition.notify_all ();
 		_full_condition.wait (lock);
 	}
 
@@ -102,10 +115,7 @@ J2KEncoder::end ()
 
 	LOG_GENERAL_NC (N_("Terminating encoder threads"));
 
-	{
-		boost::mutex::scoped_lock lm (_threads_mutex);
-		terminate_threads ();
-	}
+	terminate_threads();
 
 	/* Something might have been thrown during terminate_threads */
 	rethrow ();
@@ -183,7 +193,7 @@ J2KEncoder::encode (shared_ptr<PlayerVideo> pv, DCPTime time)
 	size_t threads = 0;
 	{
 		boost::mutex::scoped_lock lm (_threads_mutex);
-		threads = _threads->size();
+		threads = _threads.size();
 	}
 
 	boost::mutex::scoped_lock queue_lock (_queue_mutex);
@@ -242,170 +252,119 @@ J2KEncoder::encode (shared_ptr<PlayerVideo> pv, DCPTime time)
 }
 
 
-/** Caller must hold a lock on _threads_mutex */
 void
 J2KEncoder::terminate_threads ()
 {
+	boost::mutex::scoped_lock lm(_threads_mutex);
 	boost::this_thread::disable_interruption dis;
 
-	if (!_threads) {
+	for (auto& thread: _threads) {
+		thread->stop();
+	}
+
+	_threads.clear();
+	_ending = true;
+}
+
+
+void
+J2KEncoder::remake_threads(int local, list<EncodeServerDescription> servers)
+{
+	boost::mutex::scoped_lock lm (_threads_mutex);
+	if (_ending) {
 		return;
 	}
 
-	_threads->interrupt_all ();
-	try {
-		_threads->join_all ();
-	} catch (exception& e) {
-		LOG_ERROR ("join() threw an exception: %1", e.what());
-	} catch (...) {
-		LOG_ERROR_NC ("join() threw an exception");
-	}
-
-	_threads.reset ();
-}
-
-
-void
-J2KEncoder::encoder_thread (optional<EncodeServerDescription> server)
-try
-{
-	start_of_thread ("J2KEncoder");
-
-	if (server) {
-		LOG_TIMING ("start-encoder-thread thread=%1 server=%2", thread_id (), server->host_name ());
-	} else {
-		LOG_TIMING ("start-encoder-thread thread=%1 server=localhost", thread_id ());
-	}
-
-	/* Number of seconds that we currently wait between attempts
-	   to connect to the server; not relevant for localhost
-	   encodings.
-	*/
-	int remote_backoff = 0;
-
-	while (true) {
-
-		LOG_TIMING ("encoder-sleep thread=%1", thread_id ());
-		boost::mutex::scoped_lock lock (_queue_mutex);
-		while (_queue.empty ()) {
-			_empty_condition.wait (lock);
-		}
-
-		LOG_TIMING ("encoder-wake thread=%1 queue=%2", thread_id(), _queue.size());
-		auto vf = _queue.front ();
-
-		/* We're about to commit to either encoding this frame or putting it back onto the queue,
-		   so we must not be interrupted until one or other of these things have happened.  This
-		   block has thread interruption disabled.
-		*/
-		{
-			boost::this_thread::disable_interruption dis;
-
-			LOG_TIMING ("encoder-pop thread=%1 frame=%2 eyes=%3", thread_id(), vf.index(), static_cast<int>(vf.eyes()));
-			_queue.pop_front ();
-
-			lock.unlock ();
-
-			shared_ptr<Data> encoded;
-
-			/* We need to encode this input */
-			if (server) {
-				try {
-					encoded = make_shared<dcp::ArrayData>(vf.encode_remotely(server.get()));
-
-					if (remote_backoff > 0) {
-						LOG_GENERAL ("%1 was lost, but now she is found; removing backoff", server->host_name ());
-					}
-
-					/* This job succeeded, so remove any backoff */
-					remote_backoff = 0;
-
-				} catch (std::exception& e) {
-					if (remote_backoff < 60) {
-						/* back off more */
-						remote_backoff += 10;
-					}
-					LOG_ERROR (
-						N_("Remote encode of %1 on %2 failed (%3); thread sleeping for %4s"),
-						vf.index(), server->host_name(), e.what(), remote_backoff
-						);
-				}
-
-			} else {
-				try {
-					LOG_TIMING ("start-local-encode thread=%1 frame=%2", thread_id(), vf.index());
-					encoded = make_shared<dcp::ArrayData>(vf.encode_locally());
-					LOG_TIMING ("finish-local-encode thread=%1 frame=%2", thread_id(), vf.index());
-				} catch (std::exception& e) {
-					/* This is very bad, so don't cope with it, just pass it on */
-					LOG_ERROR (N_("Local encode failed (%1)"), e.what ());
-					throw;
-				}
-			}
-
-			if (encoded) {
-				_writer.write(encoded, vf.index(), vf.eyes());
-				frame_done ();
-			} else {
-				lock.lock ();
-				LOG_GENERAL (N_("[%1] J2KEncoder thread pushes frame %2 back onto queue after failure"), thread_id(), vf.index());
-				_queue.push_front (vf);
-				lock.unlock ();
+	auto remove_threads = [this](int wanted, int current, std::function<bool (shared_ptr<J2KEncoderThread>)> predicate) {
+		for (auto i = wanted; i < current; ++i) {
+			auto iter = std::find_if(_threads.begin(), _threads.end(), predicate);
+			if (iter != _threads.end()) {
+				(*iter)->stop();
+				_threads.erase(iter);
 			}
 		}
-
-		if (remote_backoff > 0) {
-			boost::this_thread::sleep (boost::posix_time::seconds (remote_backoff));
-		}
-
-		/* The queue might not be full any more, so notify anything that is waiting on that */
-		lock.lock ();
-		_full_condition.notify_all ();
-	}
-}
-catch (boost::thread_interrupted& e) {
-	/* Ignore these and just stop the thread */
-	_full_condition.notify_all ();
-}
-catch (...)
-{
-	store_current ();
-	/* Wake anything waiting on _full_condition so it can see the exception */
-	_full_condition.notify_all ();
-}
+	};
 
 
-void
-J2KEncoder::servers_list_changed ()
-{
-	boost::mutex::scoped_lock lm (_threads_mutex);
+	auto const current_threads = std::count_if(_threads.begin(), _threads.end(), [](shared_ptr<J2KEncoderThread> thread) {
+		return static_cast<bool>(dynamic_pointer_cast<CPUJ2KEncoderThread>(thread));
+	});
 
-	terminate_threads ();
-	_threads = make_shared<boost::thread_group>();
-
-	/* XXX: could re-use threads */
-
-	if (!Config::instance()->only_servers_encode ()) {
-		for (int i = 0; i < Config::instance()->master_encoding_threads (); ++i) {
-#ifdef DCPOMATIC_LINUX
-			auto t = _threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, optional<EncodeServerDescription>()));
-			pthread_setname_np (t->native_handle(), "encode-worker");
-#else
-			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, optional<EncodeServerDescription>()));
-#endif
-		}
+	for (auto i = current_threads; i < local; ++i) {
+		auto thread = make_shared<CPUJ2KEncoderThread>(*this);
+		thread->start();
+		_threads.push_back(thread);
 	}
 
-	for (auto i: EncodeServerFinder::instance()->servers()) {
-		if (!i.current_link_version()) {
+	remove_threads(local, current_threads, [](shared_ptr<J2KEncoderThread> thread) {
+		return static_cast<bool>(dynamic_pointer_cast<CPUJ2KEncoderThread>(thread));
+	});
+
+
+	for (auto const& server: servers) {
+		if (!server.current_link_version()) {
 			continue;
 		}
 
-		LOG_GENERAL (N_("Adding %1 worker threads for remote %2"), i.threads(), i.host_name ());
-		for (int j = 0; j < i.threads(); ++j) {
-			_threads->create_thread(boost::bind(&J2KEncoder::encoder_thread, this, i));
+		auto const current_threads = std::count_if(_threads.begin(), _threads.end(), [server](shared_ptr<J2KEncoderThread> thread) {
+			auto remote = dynamic_pointer_cast<RemoteJ2KEncoderThread>(thread);
+			return remote && remote->server().host_name() == server.host_name();
+		});
+
+		auto const wanted_threads = server.threads();
+
+		if (wanted_threads > current_threads) {
+			LOG_GENERAL(N_("Adding %1 worker threads for remote %2"), wanted_threads - current_threads, server.host_name());
+		} else if (wanted_threads < current_threads) {
+			LOG_GENERAL(N_("Removing %1 worker threads for remote %2"), current_threads - wanted_threads, server.host_name());
 		}
+
+		for (auto i = current_threads; i < wanted_threads; ++i) {
+			auto thread = make_shared<RemoteJ2KEncoderThread>(*this, server);
+			thread->start();
+			_threads.push_back(thread);
+		}
+
+		remove_threads(wanted_threads, current_threads, [server](shared_ptr<J2KEncoderThread> thread) {
+			auto remote = dynamic_pointer_cast<RemoteJ2KEncoderThread>(thread);
+			return remote && remote->server().host_name() == server.host_name();
+		});
 	}
 
-	_writer.set_encoder_threads(_threads->size());
+	_writer.set_encoder_threads(_threads.size());
+}
+
+
+DCPVideo
+J2KEncoder::pop()
+{
+	boost::mutex::scoped_lock lock(_queue_mutex);
+	while (_queue.empty()) {
+		_empty_condition.wait (lock);
+	}
+
+	LOG_TIMING("encoder-wake thread=%1 queue=%2", thread_id(), _queue.size());
+
+	auto vf = _queue.front();
+	_queue.pop_front();
+
+	_full_condition.notify_all();
+	return vf;
+}
+
+
+void
+J2KEncoder::retry(DCPVideo video)
+{
+	boost::mutex::scoped_lock lock(_queue_mutex);
+	_queue.push_front(video);
+	_empty_condition.notify_all();
+}
+
+
+void
+J2KEncoder::write(shared_ptr<const dcp::Data> data, int index, Eyes eyes)
+{
+	_writer.write(data, index, eyes);
+	frame_done();
 }

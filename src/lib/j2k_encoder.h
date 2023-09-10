@@ -32,6 +32,7 @@
 #include "enum_indexed_vector.h"
 #include "event_history.h"
 #include "exception_store.h"
+#include "types.h"
 #include "writer.h"
 #include <boost/optional.hpp>
 #include <boost/signals2.hpp>
@@ -45,8 +46,13 @@
 class DCPVideo;
 class EncodeServerDescription;
 class Film;
+class J2KEncoderThread;
 class Job;
 class PlayerVideo;
+
+struct local_threads_created_and_destroyed;
+struct remote_threads_created_and_destroyed;
+struct frames_not_lost_when_threads_disappear;
 
 
 /** @class J2KEncoder
@@ -76,14 +82,21 @@ public:
 	boost::optional<float> current_encoding_rate () const;
 	int video_frames_enqueued () const;
 
-	void servers_list_changed ();
+	DCPVideo pop();
+	void retry(DCPVideo frame);
+	void write(std::shared_ptr<const dcp::Data> data, int index, Eyes eyes);
 
 private:
 
-	void frame_done ();
+	friend struct ::local_threads_created_and_destroyed;
+	friend struct ::remote_threads_created_and_destroyed;
+	friend struct ::frames_not_lost_when_threads_disappear;
 
-	void encoder_thread (boost::optional<EncodeServerDescription>);
+	void frame_done ();
 	void terminate_threads ();
+
+	void servers_list_changed ();
+	void remake_threads(int local, std::list<EncodeServerDescription> servers);
 
 	/** Film that we are encoding */
 	std::shared_ptr<const Film> _film;
@@ -91,7 +104,11 @@ private:
 	EventHistory _history;
 
 	boost::mutex _threads_mutex;
-	std::shared_ptr<boost::thread_group> _threads;
+	std::list<std::shared_ptr<J2KEncoderThread>> _threads;
+	/** true if we shouldn't make any more threads, even if remake_threads()
+	 *  or servers_list_changed() is called.
+	 */
+	bool _ending = false;
 
 	mutable boost::mutex _queue_mutex;
 	std::list<DCPVideo> _queue;

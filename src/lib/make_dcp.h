@@ -22,8 +22,9 @@
 #include "transcode_job.h"
 
 
+class DCPTranscodeJob;
 class Film;
 
 
-void make_dcp (std::shared_ptr<Film> film, TranscodeJob::ChangedBehaviour behaviour);
+std::shared_ptr<DCPTranscodeJob> make_dcp(std::shared_ptr<Film> film, TranscodeJob::ChangedBehaviour behaviour);
 
