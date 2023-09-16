@@ -1393,19 +1393,20 @@ Config::save_template (shared_ptr<const Film> film, string name) const
 }
 
 
-list<string>
+vector<string>
 Config::templates () const
 {
 	if (!boost::filesystem::exists(read_path("templates"))) {
 		return {};
 	}
 
-	list<string> n;
+	vector<string> n;
 	for (auto const& i: boost::filesystem::directory_iterator(read_path("templates"))) {
 		n.push_back (i.path().filename().string());
 	}
 	return n;
 }
+
 
 bool
 Config::existing_template (string name) const
