@@ -195,10 +195,6 @@ public:
 		return _default_still_length;
 	}
 
-	int default_dcp_audio_channels () const {
-		return _default_dcp_audio_channels;
-	}
-
 	std::string dcp_issuer () const {
 		return _dcp_issuer;
 	}
@@ -736,10 +732,6 @@ public:
 
 	void set_default_still_length (int s) {
 		maybe_set (_default_still_length, s);
-	}
-
-	void set_default_dcp_audio_channels (int c) {
-		maybe_set (_default_dcp_audio_channels, c);
 	}
 
 	void set_dcp_issuer (std::string i) {
@@ -1322,7 +1314,6 @@ private:
 	boost::optional<std::string> _language;
  	/** Default length of still image content (seconds) */
 	int _default_still_length;
-	int _default_dcp_audio_channels;
 	std::string _dcp_issuer;
 	std::string _dcp_creator;
 	std::string _dcp_company_name;

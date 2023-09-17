@@ -304,10 +304,6 @@ private:
 #endif
 		table->Add (_directory, 1, wxEXPAND);
 
-		add_label_to_sizer (table, _panel, _("Default DCP audio channels"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-		_dcp_audio_channels = new wxChoice (_panel, wxID_ANY);
-		table->Add (_dcp_audio_channels);
-
 		{
 			add_label_to_sizer (table, _panel, _("Default JPEG2000 bandwidth"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 			auto s = new wxBoxSizer (wxHORIZONTAL);
@@ -390,10 +386,6 @@ private:
 
 		_use_isdcf_name_by_default->bind(&DefaultsPage::use_isdcf_name_by_default_changed, this);
 
-		setup_audio_channels_choice (_dcp_audio_channels, 2);
-
-		_dcp_audio_channels->Bind (wxEVT_CHOICE, boost::bind (&DefaultsPage::dcp_audio_channels_changed, this));
-
 		_j2k_bandwidth->SetRange (50, 250);
 		_j2k_bandwidth->Bind (wxEVT_SPINCTRL, boost::bind (&DefaultsPage::j2k_bandwidth_changed, this));
 
@@ -430,7 +422,6 @@ private:
 		checked_set (_use_isdcf_name_by_default, config->use_isdcf_name_by_default());
 		checked_set (_j2k_bandwidth, config->default_j2k_bandwidth() / 1000000);
 		_j2k_bandwidth->SetRange (50, config->maximum_j2k_bandwidth() / 1000000);
-		checked_set (_dcp_audio_channels, locale_convert<string> (config->default_dcp_audio_channels()));
 		checked_set (_audio_delay, config->default_audio_delay ());
 		checked_set (_standard, config->default_interop() ? 1 : 0);
 		auto dal = config->default_audio_language();
@@ -512,16 +503,6 @@ private:
 	void audio_delay_changed ()
 	{
 		Config::instance()->set_default_audio_delay (_audio_delay->GetValue());
-	}
-
-	void dcp_audio_channels_changed ()
-	{
-		int const s = _dcp_audio_channels->GetSelection ();
-		if (s != wxNOT_FOUND) {
-			Config::instance()->set_default_dcp_audio_channels (
-				locale_convert<int>(string_client_data(_dcp_audio_channels->GetClientObject(s)))
-				);
-		}
 	}
 
 	void directory_changed ()
@@ -619,7 +600,6 @@ private:
 	wxSpinCtrl* _kdm_duration;
 	wxChoice* _kdm_duration_unit;
 	CheckBox* _use_isdcf_name_by_default;
-	wxChoice* _dcp_audio_channels;
 	wxChoice* _standard;
 	CheckBox* _enable_audio_language;
 	LanguageTagWidget* _audio_language;

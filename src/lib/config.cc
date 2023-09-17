@@ -105,7 +105,6 @@ Config::set_defaults ()
 	_show_experimental_audio_processors = false;
 	_language = optional<string> ();
 	_default_still_length = 10;
-	_default_dcp_audio_channels = 8;
 	_default_j2k_bandwidth = 150000000;
 	_default_audio_delay = 0;
 	_default_interop = false;
@@ -337,8 +336,6 @@ try
 	_tms_password = f.string_child ("TMSPassword");
 
 	_language = f.optional_string_child ("Language");
-
-	_default_dcp_audio_channels = f.optional_number_child<int>("DefaultDCPAudioChannels").get_value_or (6);
 
 	if (f.optional_string_child ("DCPMetadataIssuer")) {
 		_dcp_issuer = f.string_child ("DCPMetadataIssuer");
@@ -755,8 +752,6 @@ Config::write_config () const
 		/* [XML:opt] Language Language to use in the GUI e.g. <code>fr_FR</code>. */
 		root->add_child("Language")->add_child_text (_language.get());
 	}
-	/* [XML] DefaultDCPAudioChannels Default number of audio channels to use when creating new films. */
-	root->add_child("DefaultDCPAudioChannels")->add_child_text (raw_convert<string> (_default_dcp_audio_channels));
 	/* [XML] DCPIssuer Issuer text to write into CPL files. */
 	root->add_child("DCPIssuer")->add_child_text (_dcp_issuer);
 	/* [XML] DCPCreator Creator text to write into CPL files. */
