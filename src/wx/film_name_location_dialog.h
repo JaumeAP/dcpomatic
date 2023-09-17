@@ -40,10 +40,9 @@ public:
 
 	boost::filesystem::path path () const;
 	bool check_path ();
-	boost::optional<std::string> template_name () const;
+	std::string template_name() const;
 
 private:
-	void use_template_clicked ();
 	void setup_sensitivity ();
 	void folder_changed ();
 
@@ -53,7 +52,6 @@ private:
 #else
 	wxDirPickerCtrl* _folder;
 #endif
-	CheckBox* _use_template;
 	Choice* _template_name;
 	static boost::optional<boost::filesystem::path> _directory;
 };

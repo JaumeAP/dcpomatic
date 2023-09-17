@@ -1882,8 +1882,14 @@ Film::content_summary (DCPTimePeriod period) const
 void
 Film::use_template (string name)
 {
-	_template_film->read_metadata (Config::instance()->template_read_path(name));
 	_template_film = std::make_shared<Film>(optional<boost::filesystem::path>());
+	auto const path = Config::instance()->template_read_path(name);
+	if (!path) {
+		/* Probably the default template, and the user hasn't saved one yet */
+		return;
+	}
+
+	_template_film->read_metadata(path);
 	_use_isdcf_name = _template_film->_use_isdcf_name;
 	_dcp_content_type = _template_film->_dcp_content_type;
 	_container = _template_film->_container;

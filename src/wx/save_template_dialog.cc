@@ -18,11 +18,13 @@
 
 */
 
+
 #include "check_box.h"
 #include "dcpomatic_choice.h"
 #include "save_template_dialog.h"
 #include "wx_util.h"
 #include "lib/config.h"
+
 
 using std::string;
 using boost::optional;
@@ -39,7 +41,7 @@ SaveTemplateDialog::SaveTemplateDialog(wxWindow* parent, optional<string> last_t
 	_existing = new Choice(this);
 	add(_existing);
 
-	auto const existing_templates = Config::instance()->templates();
+	const auto existing_templates = Config::instance()->templates();
 	for (auto i: existing_templates) {
 		_existing->add(i);
 	}
@@ -59,8 +61,9 @@ SaveTemplateDialog::SaveTemplateDialog(wxWindow* parent, optional<string> last_t
 			_as_existing->SetValue(true);
 			_existing->set(std::distance(existing_templates.begin(), iter));
 		}
-	} else if (!existing_templates.empty()) {
+	} else {
 		_new->SetValue(true);
+		_existing->set(0);
 	}
 
 

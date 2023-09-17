@@ -88,6 +88,7 @@
 #include "lib/text_content.h"
 #include "lib/transcode_job.h"
 #include "lib/update_checker.h"
+#include "lib/util.h"
 #include "lib/version.h"
 #include "lib/video_content.h"
 #include <dcp/exceptions.h>
@@ -440,12 +441,10 @@ public:
 		}
 	}
 
-	void new_film (boost::filesystem::path path, optional<string> template_name)
+	void new_film(boost::filesystem::path path, string template_name)
 	{
 		auto film = make_shared<Film>(path);
-		if (template_name) {
-			film->use_template (template_name.get());
-		}
+		film->use_template(template_name);
 		_last_template = template_name;
 		film->set_name (path.filename().generic_string());
 		film->write_metadata ();
@@ -1687,7 +1686,7 @@ private:
 			}
 
 			if (!_film_to_create.empty ()) {
-				_frame->new_film (_film_to_create, optional<string>());
+				_frame->new_film(_film_to_create, default_template_name());
 				if (!_content_to_add.empty()) {
 					for (auto i: content_factory(_content_to_add)) {
 						_frame->film()->examine_and_add_content(i);

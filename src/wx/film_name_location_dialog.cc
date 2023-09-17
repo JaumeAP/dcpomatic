@@ -64,8 +64,7 @@ FilmNameLocationDialog::FilmNameLocationDialog (wxWindow* parent, wxString title
 	add (_folder);
 
 	if (offer_templates) {
-		_use_template = new CheckBox (this, _("From template"));
-		add (_use_template);
+		add(_("From template"), true);
 		_template_name = new Choice(this);
 		add (_template_name);
 	}
@@ -73,13 +72,10 @@ FilmNameLocationDialog::FilmNameLocationDialog (wxWindow* parent, wxString title
 	_name->SetFocus ();
 
 	if (offer_templates) {
-		_template_name->Enable (false);
-
-		for (auto i: Config::instance()->templates ()) {
+		for (auto i: Config::instance()->templates()) {
 			_template_name->add(i);
 		}
-
-		_use_template->bind(&FilmNameLocationDialog::use_template_clicked, this);
+		_template_name->set(0);
 	}
 
 	layout ();
@@ -100,13 +96,6 @@ FilmNameLocationDialog::setup_sensitivity ()
 
 
 void
-FilmNameLocationDialog::use_template_clicked ()
-{
-	_template_name->Enable (_use_template->GetValue());
-}
-
-
-void
 FilmNameLocationDialog::folder_changed ()
 {
 	_directory = wx_to_std (_folder->GetPath());
@@ -123,14 +112,11 @@ FilmNameLocationDialog::path () const
 }
 
 
-optional<string>
+string
 FilmNameLocationDialog::template_name () const
 {
-	if (!_use_template->GetValue() || _template_name->GetSelection() == -1) {
-		return {};
-	}
-
-	return wx_to_std (_template_name->GetString(_template_name->GetSelection()));
+	DCPOMATIC_ASSERT(_template_name->get());
+	return wx_to_std(_template_name->GetString(*_template_name->get()));
 }
 
 

@@ -1404,6 +1404,11 @@ Config::templates () const
 	for (auto const& i: boost::filesystem::directory_iterator(read_path("templates"))) {
 		n.push_back (i.path().filename().string());
 	}
+
+	/* Make sure that the default exists, and is the first thing on the list */
+	n.erase(std::remove(n.begin(), n.end(), default_template_name()), n.end());
+	n.insert(n.begin(), default_template_name());
+
 	return n;
 }
 
@@ -1411,14 +1416,19 @@ Config::templates () const
 bool
 Config::existing_template (string name) const
 {
-	return boost::filesystem::exists (template_read_path(name));
+	return name == default_template_name() || template_read_path(name);
 }
 
 
-boost::filesystem::path
+optional<boost::filesystem::path>
 Config::template_read_path (string name) const
 {
-	return read_path("templates") / tidy_for_filename (name);
+	auto const path = read_path("templates") / tidy_for_filename(name);
+	if (!boost::filesystem::exists(path)) {
+		return {};
+	}
+
+	return path;
 }
 
 
@@ -1432,7 +1442,9 @@ Config::template_write_path (string name) const
 void
 Config::rename_template (string old_name, string new_name) const
 {
-	boost::filesystem::rename (template_read_path(old_name), template_write_path(new_name));
+	if (auto read_path = template_read_path(old_name)) {
+		boost::filesystem::rename(*read_path, template_write_path(new_name));
+	}
 }
 
 void
