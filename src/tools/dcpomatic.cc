@@ -446,6 +446,7 @@ public:
 		if (template_name) {
 			film->use_template (template_name.get());
 		}
+		_last_template = template_name;
 		film->set_name (path.filename().generic_string());
 		film->write_metadata ();
 		set_film (film);
@@ -606,7 +607,7 @@ private:
 
 	void file_save_as_template ()
 	{
-		SaveTemplateDialog dialog(this);
+		SaveTemplateDialog dialog(this, _last_template);
 		if (dialog.ShowModal() == wxID_OK) {
 			try {
 				Config::instance()->save_template(_film, dialog.name());
@@ -1558,6 +1559,7 @@ private:
 	bool _update_news_requested = false;
 	shared_ptr<Content> _clipboard;
 	bool _first_shown_called = false;
+	optional<string> _last_template;
 };
 
 

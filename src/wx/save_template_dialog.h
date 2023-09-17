@@ -18,12 +18,18 @@
 
 */
 
+
 #include "table_dialog.h"
+
+
+class CheckBox;
+class Choice;
+
 
 class SaveTemplateDialog : public TableDialog
 {
 public:
-	explicit SaveTemplateDialog (wxWindow* parent);
+	SaveTemplateDialog(wxWindow* parent, boost::optional<std::string> last_template);
 
 	std::string name () const;
 
@@ -32,4 +38,7 @@ private:
 	void check (wxCommandEvent& ev);
 
 	wxTextCtrl* _name;
+	wxRadioButton* _as_existing;
+	Choice* _existing;
+	wxRadioButton* _new;
 };
