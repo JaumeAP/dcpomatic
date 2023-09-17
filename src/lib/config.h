@@ -223,10 +223,6 @@ public:
 		return _default_audio_delay;
 	}
 
-	bool default_interop () const {
-		return _default_interop;
-	}
-
 	boost::optional<dcp::LanguageTag> default_audio_language() const {
 		return _default_audio_language;
 	}
@@ -756,10 +752,6 @@ public:
 
 	void set_default_audio_delay (int d) {
 		maybe_set (_default_audio_delay, d);
-	}
-
-	void set_default_interop (bool i) {
-		maybe_set (_default_interop, i);
 	}
 
 	void set_default_audio_language(dcp::LanguageTag tag) {
@@ -1313,7 +1305,6 @@ private:
 	std::string _dcp_product_version;
 	std::string _dcp_j2k_comment;
 	int _default_audio_delay;
-	bool _default_interop;
 	boost::optional<dcp::LanguageTag> _default_audio_language;
 	boost::optional<dcp::LanguageTag::RegionSubtag> _default_territory;
 	std::map<std::string, std::string> _default_metadata;
