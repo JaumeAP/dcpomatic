@@ -20,6 +20,7 @@
 
 
 #include "check_box.h"
+#include "dcpomatic_choice.h"
 #include "film_name_location_dialog.h"
 #include "wx_util.h"
 /* This must come after wx_util.h as it defines DCPOMATIC_USE_OWN_PICKER */
@@ -65,7 +66,7 @@ FilmNameLocationDialog::FilmNameLocationDialog (wxWindow* parent, wxString title
 	if (offer_templates) {
 		_use_template = new CheckBox (this, _("From template"));
 		add (_use_template);
-		_template_name = new wxChoice (this, wxID_ANY);
+		_template_name = new Choice(this);
 		add (_template_name);
 	}
 
@@ -75,7 +76,7 @@ FilmNameLocationDialog::FilmNameLocationDialog (wxWindow* parent, wxString title
 		_template_name->Enable (false);
 
 		for (auto i: Config::instance()->templates ()) {
-			_template_name->Append (std_to_wx(i));
+			_template_name->add(i);
 		}
 
 		_use_template->bind(&FilmNameLocationDialog::use_template_clicked, this);
