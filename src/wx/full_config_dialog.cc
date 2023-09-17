@@ -305,15 +305,6 @@ private:
 		table->Add (_directory, 1, wxEXPAND);
 
 		{
-			add_label_to_sizer (table, _panel, _("Default JPEG2000 bandwidth"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-			auto s = new wxBoxSizer (wxHORIZONTAL);
-			_j2k_bandwidth = new wxSpinCtrl (_panel);
-			s->Add (_j2k_bandwidth);
-			add_label_to_sizer (s, _panel, _("Mbit/s"), false, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-			table->Add (s, 1);
-		}
-
-		{
 			add_label_to_sizer (table, _panel, _("Default audio delay"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 			auto s = new wxBoxSizer (wxHORIZONTAL);
 			_audio_delay = new wxSpinCtrl (_panel);
@@ -386,9 +377,6 @@ private:
 
 		_use_isdcf_name_by_default->bind(&DefaultsPage::use_isdcf_name_by_default_changed, this);
 
-		_j2k_bandwidth->SetRange (50, 250);
-		_j2k_bandwidth->Bind (wxEVT_SPINCTRL, boost::bind (&DefaultsPage::j2k_bandwidth_changed, this));
-
 		_audio_delay->SetRange (-1000, 1000);
 		_audio_delay->Bind (wxEVT_SPINCTRL, boost::bind (&DefaultsPage::audio_delay_changed, this));
 
@@ -420,8 +408,6 @@ private:
 		_kdm_directory->SetPath (std_to_wx (config->default_kdm_directory_or (wx_to_std (wxStandardPaths::Get().GetDocumentsDir())).string ()));
 		_kdm_type->set (config->default_kdm_type());
 		checked_set (_use_isdcf_name_by_default, config->use_isdcf_name_by_default());
-		checked_set (_j2k_bandwidth, config->default_j2k_bandwidth() / 1000000);
-		_j2k_bandwidth->SetRange (50, config->maximum_j2k_bandwidth() / 1000000);
 		checked_set (_audio_delay, config->default_audio_delay ());
 		checked_set (_standard, config->default_interop() ? 1 : 0);
 		auto dal = config->default_audio_language();
@@ -493,11 +479,6 @@ private:
 			break;
 		}
 		config->set_default_kdm_duration (RoughDuration(duration, unit));
-	}
-
-	void j2k_bandwidth_changed ()
-	{
-		Config::instance()->set_default_j2k_bandwidth (_j2k_bandwidth->GetValue() * 1000000);
 	}
 
 	void audio_delay_changed ()
@@ -586,7 +567,6 @@ private:
 		}
 	}
 
-	wxSpinCtrl* _j2k_bandwidth;
 	wxSpinCtrl* _audio_delay;
 	wxSpinCtrl* _still_length;
 #ifdef DCPOMATIC_USE_OWN_PICKER

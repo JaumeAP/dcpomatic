@@ -105,7 +105,6 @@ Config::set_defaults ()
 	_show_experimental_audio_processors = false;
 	_language = optional<string> ();
 	_default_still_length = 10;
-	_default_j2k_bandwidth = 150000000;
 	_default_audio_delay = 0;
 	_default_interop = false;
 	_default_metadata.clear ();
@@ -355,7 +354,6 @@ try
 	_dcp_j2k_comment = f.optional_string_child("DCPJ2KComment").get_value_or("");
 
 	_default_still_length = f.optional_number_child<int>("DefaultStillLength").get_value_or (10);
-	_default_j2k_bandwidth = f.optional_number_child<int>("DefaultJ2KBandwidth").get_value_or (200000000);
 	_default_audio_delay = f.optional_number_child<int>("DefaultAudioDelay").get_value_or (0);
 	_default_interop = f.optional_bool_child("DefaultInterop").get_value_or (false);
 
@@ -769,8 +767,6 @@ Config::write_config () const
 
 	/* [XML] DefaultStillLength Default length (in seconds) for still images in new films. */
 	root->add_child("DefaultStillLength")->add_child_text (raw_convert<string> (_default_still_length));
-	/* [XML] DefaultJ2KBandwidth Default bitrate (in bits per second) for JPEG2000 data in new films. */
-	root->add_child("DefaultJ2KBandwidth")->add_child_text (raw_convert<string> (_default_j2k_bandwidth));
 	/* [XML] DefaultAudioDelay Default delay to apply to audio (positive moves audio later) in milliseconds. */
 	root->add_child("DefaultAudioDelay")->add_child_text (raw_convert<string> (_default_audio_delay));
 	/* [XML] DefaultInterop 1 to default new films to Interop, 0 for SMPTE. */

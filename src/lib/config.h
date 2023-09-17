@@ -219,10 +219,6 @@ public:
 		return _dcp_j2k_comment;
 	}
 
-	int default_j2k_bandwidth () const {
-		return _default_j2k_bandwidth;
-	}
-
 	int default_audio_delay () const {
 		return _default_audio_delay;
 	}
@@ -756,10 +752,6 @@ public:
 
 	void set_dcp_j2k_comment (std::string c) {
 		maybe_set (_dcp_j2k_comment, c);
-	}
-
-	void set_default_j2k_bandwidth (int b) {
-		maybe_set (_default_j2k_bandwidth, b);
 	}
 
 	void set_default_audio_delay (int d) {
@@ -1320,7 +1312,6 @@ private:
 	std::string _dcp_product_name;
 	std::string _dcp_product_version;
 	std::string _dcp_j2k_comment;
-	int _default_j2k_bandwidth;
 	int _default_audio_delay;
 	bool _default_interop;
 	boost::optional<dcp::LanguageTag> _default_audio_language;
