@@ -1112,3 +1112,12 @@ word_wrap(string input, int columns)
 	return output;
 }
 
+
+
+string
+default_template_name()
+{
+	/// TRANSLATORS: this is the name of the template that will be used by default when
+	/// creating a new film.
+	return _("Default");
+}
