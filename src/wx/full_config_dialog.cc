@@ -304,10 +304,6 @@ private:
 #endif
 		table->Add (_directory, 1, wxEXPAND);
 
-		add_label_to_sizer (table, _panel, _("Default content type"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-		_dcp_content_type = new wxChoice (_panel, wxID_ANY);
-		table->Add (_dcp_content_type);
-
 		add_label_to_sizer (table, _panel, _("Default DCP audio channels"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
 		_dcp_audio_channels = new wxChoice (_panel, wxID_ANY);
 		table->Add (_dcp_audio_channels);
@@ -394,13 +390,8 @@ private:
 
 		_use_isdcf_name_by_default->bind(&DefaultsPage::use_isdcf_name_by_default_changed, this);
 
-		for (auto i: DCPContentType::all()) {
-			_dcp_content_type->Append (std_to_wx (i->pretty_name ()));
-		}
-
 		setup_audio_channels_choice (_dcp_audio_channels, 2);
 
-		_dcp_content_type->Bind (wxEVT_CHOICE, boost::bind (&DefaultsPage::dcp_content_type_changed, this));
 		_dcp_audio_channels->Bind (wxEVT_CHOICE, boost::bind (&DefaultsPage::dcp_audio_channels_changed, this));
 
 		_j2k_bandwidth->SetRange (50, 250);
@@ -431,13 +422,6 @@ private:
 	void config_changed () override
 	{
 		auto config = Config::instance ();
-
-		auto const ct = DCPContentType::all ();
-		for (size_t i = 0; i < ct.size(); ++i) {
-			if (ct[i] == config->default_dcp_content_type()) {
-				_dcp_content_type->SetSelection (i);
-			}
-		}
 
 		checked_set (_still_length, config->default_still_length ());
 		_directory->SetPath (std_to_wx (config->default_directory_or (wx_to_std (wxStandardPaths::Get().GetDocumentsDir())).string ()));
@@ -565,12 +549,6 @@ private:
 		Config::instance()->set_default_still_length (_still_length->GetValue ());
 	}
 
-	void dcp_content_type_changed ()
-	{
-		auto ct = DCPContentType::all ();
-		Config::instance()->set_default_dcp_content_type (ct[_dcp_content_type->GetSelection()]);
-	}
-
 	void standard_changed ()
 	{
 		Config::instance()->set_default_interop (_standard->GetSelection() == 1);
@@ -641,7 +619,6 @@ private:
 	wxSpinCtrl* _kdm_duration;
 	wxChoice* _kdm_duration_unit;
 	CheckBox* _use_isdcf_name_by_default;
-	wxChoice* _dcp_content_type;
 	wxChoice* _dcp_audio_channels;
 	wxChoice* _standard;
 	CheckBox* _enable_audio_language;

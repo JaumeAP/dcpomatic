@@ -105,7 +105,6 @@ Config::set_defaults ()
 	_show_experimental_audio_processors = false;
 	_language = optional<string> ();
 	_default_still_length = 10;
-	_default_dcp_content_type = DCPContentType::from_isdcf_name ("FTR");
 	_default_dcp_audio_channels = 8;
 	_default_j2k_bandwidth = 150000000;
 	_default_audio_delay = 0;
@@ -339,7 +338,6 @@ try
 
 	_language = f.optional_string_child ("Language");
 
-	_default_dcp_content_type = DCPContentType::from_isdcf_name(f.optional_string_child("DefaultDCPContentType").get_value_or("FTR"));
 	_default_dcp_audio_channels = f.optional_number_child<int>("DefaultDCPAudioChannels").get_value_or (6);
 
 	if (f.optional_string_child ("DCPMetadataIssuer")) {
@@ -756,12 +754,6 @@ Config::write_config () const
 	if (_language) {
 		/* [XML:opt] Language Language to use in the GUI e.g. <code>fr_FR</code>. */
 		root->add_child("Language")->add_child_text (_language.get());
-	}
-	if (_default_dcp_content_type) {
-		/* [XML:opt] DefaultDCPContentType Default content type to use when creating new films (<code>FTR</code>, <code>SHR</code>,
-		   <code>TLR</code>, <code>TST</code>, <code>XSN</code>, <code>RTG</code>, <code>TSR</code>, <code>POL</code>,
-		   <code>PSA</code> or <code>ADV</code>). */
-		root->add_child("DefaultDCPContentType")->add_child_text (_default_dcp_content_type->isdcf_name ());
 	}
 	/* [XML] DefaultDCPAudioChannels Default number of audio channels to use when creating new films. */
 	root->add_child("DefaultDCPAudioChannels")->add_child_text (raw_convert<string> (_default_dcp_audio_channels));

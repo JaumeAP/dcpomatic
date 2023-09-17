@@ -195,10 +195,6 @@ public:
 		return _default_still_length;
 	}
 
-	DCPContentType const * default_dcp_content_type () const {
-		return _default_dcp_content_type;
-	}
-
 	int default_dcp_audio_channels () const {
 		return _default_dcp_audio_channels;
 	}
@@ -740,10 +736,6 @@ public:
 
 	void set_default_still_length (int s) {
 		maybe_set (_default_still_length, s);
-	}
-
-	void set_default_dcp_content_type (DCPContentType const * t) {
-		maybe_set (_default_dcp_content_type, t);
 	}
 
 	void set_default_dcp_audio_channels (int c) {
@@ -1330,7 +1322,6 @@ private:
 	boost::optional<std::string> _language;
  	/** Default length of still image content (seconds) */
 	int _default_still_length;
-	DCPContentType const * _default_dcp_content_type;
 	int _default_dcp_audio_channels;
 	std::string _dcp_issuer;
 	std::string _dcp_creator;
