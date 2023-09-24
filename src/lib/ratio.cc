@@ -43,6 +43,7 @@ Ratio::setup_ratios ()
 	DCPOMATIC_ASSERT (_ratios.empty());
 
 	_ratios.push_back (Ratio(float(1290) / 1080, "119", _("1.19"),              {},                      "119"));
+	_ratios.push_back (Ratio(float(1420) / 1080, "131", _("1.315"),             {},                      "131"));
 	_ratios.push_back (Ratio(float(1440) / 1080, "133", _("1.33 (4:3)"),        {},                      "133"));
 	_ratios.push_back (Ratio(float(1485) / 1080, "138", _("1.38 (Academy)"),    {},                      "137"));
 	_ratios.push_back (Ratio(float(1544) / 1080, "143", _("1.43 (IMAX)"),       {},                      "143"));
