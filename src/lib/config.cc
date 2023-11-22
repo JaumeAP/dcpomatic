@@ -291,7 +291,7 @@ Config::read_config()
 try
 {
 	cxml::Document f ("Config");
-	f.read_file(dcp::filesystem::fix_long_path(config_read_file()));
+	f.read_file(config_read_file());
 
 	auto version = f.optional_number_child<int> ("Version");
 	if (version && *version < _current_version) {
