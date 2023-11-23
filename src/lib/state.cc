@@ -65,6 +65,8 @@ State::read_path (string file)
 		auto full = config_path_or_override(i) / file;
 		if (dcp::filesystem::exists(full)) {
 			return full;
+		} else {
+			std::cout << full << " does not exist.\n";
 		}
 	}
 

@@ -290,8 +290,11 @@ void
 Config::read_config()
 try
 {
+	std::cout << "=> Config::read_config()\n";
+	std::cout << "config_read_file()=" << config_read_file() << "\n";
 	cxml::Document f ("Config");
 	f.read_file(config_read_file());
+	std::cout << "back from read_file\n";
 
 	auto version = f.optional_number_child<int> ("Version");
 	if (version && *version < _current_version) {
@@ -1449,6 +1452,7 @@ config_file (boost::filesystem::path main)
 	cxml::Document f ("Config");
 	if (!dcp::filesystem::exists(main)) {
 		/* It doesn't exist, so there can't be any links; just return it */
+		std::cout << main << " doesn't exist.\n";
 		return main;
 	}
 
