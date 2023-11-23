@@ -648,6 +648,8 @@ catch (...) {
 	/* And similar for decryption of KDMs */
 	_decryption_chain = create_certificate_chain ();
 	write_config();
+
+	throw;
 }
 
 
