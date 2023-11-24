@@ -130,7 +130,7 @@ Config::set_defaults ()
 	_analyse_ebur128 = true;
 	_automatic_audio_analysis = false;
 #ifdef DCPOMATIC_WINDOWS
-	_win32_console = false;
+	_win32_console = true;
 #endif
 	/* At the moment we don't write these files anywhere new after a version change, so they will be read from
 	 * ~/.config/dcpomatic2 (or equivalent) and written back there.
@@ -449,7 +449,7 @@ try
 	_analyse_ebur128 = f.optional_bool_child("AnalyseEBUR128").get_value_or (true);
 	_automatic_audio_analysis = f.optional_bool_child ("AutomaticAudioAnalysis").get_value_or (false);
 #ifdef DCPOMATIC_WINDOWS
-	_win32_console = f.optional_bool_child ("Win32Console").get_value_or (false);
+	_win32_console = true;
 #endif
 
 	for (auto i: f.node_children("History")) {
