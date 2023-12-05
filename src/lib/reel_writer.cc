@@ -39,7 +39,7 @@
 #include <dcp/cpl.h>
 #include <dcp/dcp.h>
 #include <dcp/filesystem.h>
-#include <dcp/interop_subtitle_asset.h>
+#include <dcp/interop_text_asset.h>
 #include <dcp/mono_picture_asset.h>
 #include <dcp/raw_convert.h>
 #include <dcp/reel.h>
@@ -52,7 +52,7 @@
 #include <dcp/reel_smpte_subtitle_asset.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/reel_stereo_picture_asset.h>
-#include <dcp/smpte_subtitle_asset.h>
+#include <dcp/smpte_text_asset.h>
 #include <dcp/sound_asset.h>
 #include <dcp/sound_asset_writer.h>
 #include <dcp/stereo_picture_asset.h>
@@ -465,7 +465,7 @@ ReelWriter::finish (boost::filesystem::path output_dcp)
 template <class Interop, class SMPTE, class Result>
 shared_ptr<Result>
 maybe_add_text (
-	shared_ptr<dcp::SubtitleAsset> asset,
+	shared_ptr<dcp::TextAsset> asset,
 	int64_t picture_duration,
 	shared_ptr<dcp::Reel> reel,
 	int reel_index,
@@ -483,7 +483,7 @@ maybe_add_text (
 	shared_ptr<Result> reel_asset;
 
 	if (asset) {
-		if (auto interop = dynamic_pointer_cast<dcp::InteropSubtitleAsset>(asset)) {
+		if (auto interop = dynamic_pointer_cast<dcp::InteropTextAsset>(asset)) {
 			auto directory = output_dcp / interop->id ();
 			dcp::filesystem::create_directories(directory);
 			interop->write (directory / subtitle_asset_filename(asset, reel_index, reel_count, content_summary, ".xml"));
@@ -493,7 +493,7 @@ maybe_add_text (
 				picture_duration,
 				0
 				);
-		} else if (auto smpte = dynamic_pointer_cast<dcp::SMPTESubtitleAsset>(asset)) {
+		} else if (auto smpte = dynamic_pointer_cast<dcp::SMPTETextAsset>(asset)) {
 			/* All our assets should be the same length; use the picture asset length here
 			   as a reference to set the subtitle one.  We'll use the duration rather than
 			   the intrinsic duration; we don't care if the picture asset has been trimmed, we're
@@ -832,15 +832,15 @@ ReelWriter::write (shared_ptr<const AudioBuffers> audio)
 }
 
 
-shared_ptr<dcp::SubtitleAsset>
+shared_ptr<dcp::TextAsset>
 ReelWriter::empty_text_asset (TextType type, optional<DCPTextTrack> track, bool with_dummy) const
 {
-	shared_ptr<dcp::SubtitleAsset> asset;
+	shared_ptr<dcp::TextAsset> asset;
 	optional<string> font;
 
 	auto lang = film()->subtitle_languages();
 	if (film()->interop()) {
-		auto s = make_shared<dcp::InteropSubtitleAsset>();
+		auto s = make_shared<dcp::InteropTextAsset>();
 		s->set_movie_title (film()->name());
 		if (type == TextType::OPEN_SUBTITLE) {
 			s->set_language (lang.first ? lang.first->to_string() : "Unknown");
@@ -850,7 +850,7 @@ ReelWriter::empty_text_asset (TextType type, optional<DCPTextTrack> track, bool 
 		s->set_reel_number (raw_convert<string> (_reel_index + 1));
 		asset = s;
 	} else {
-		auto s = make_shared<dcp::SMPTESubtitleAsset>();
+		auto s = make_shared<dcp::SMPTETextAsset>();
 		s->set_content_title_text (film()->name());
 		s->set_metadata (mxf_metadata());
 		if (type == TextType::OPEN_SUBTITLE && lang.first) {
@@ -870,7 +870,7 @@ ReelWriter::empty_text_asset (TextType type, optional<DCPTextTrack> track, bool 
 
 	if (with_dummy) {
 		asset->add(
-			std::make_shared<dcp::SubtitleString>(
+			std::make_shared<dcp::TextString>(
 				font,
 				false,
 				false,
@@ -908,7 +908,7 @@ ReelWriter::empty_text_asset (TextType type, optional<DCPTextTrack> track, bool 
 
 
 float
-ReelWriter::convert_vertical_position(StringText const& subtitle, dcp::SubtitleStandard to) const
+ReelWriter::convert_vertical_position(StringText const& subtitle, dcp::TextStandard to) const
 {
 	if (dcp::uses_baseline(subtitle.valign_standard) == dcp::uses_baseline(to)) {
 		/* The from and to standards use the same alignment reference */
@@ -938,7 +938,7 @@ ReelWriter::convert_vertical_position(StringText const& subtitle, dcp::SubtitleS
 void
 ReelWriter::write(PlayerText subs, TextType type, optional<DCPTextTrack> track, DCPTimePeriod period, FontIdMap const& fonts, shared_ptr<dcpomatic::Font> chosen_interop_font)
 {
-	shared_ptr<dcp::SubtitleAsset> asset;
+	shared_ptr<dcp::TextAsset> asset;
 
 	switch (type) {
 	case TextType::OPEN_SUBTITLE:
@@ -974,8 +974,8 @@ ReelWriter::write(PlayerText subs, TextType type, optional<DCPTextTrack> track, 
 	for (auto i: subs.string) {
 		i.set_in  (dcp::Time(period.from.seconds() - _period.from.seconds(), tcr));
 		i.set_out (dcp::Time(period.to.seconds() - _period.from.seconds(), tcr));
-		i.set_v_position(convert_vertical_position(i, film()->interop() ? dcp::SubtitleStandard::INTEROP : dcp::SubtitleStandard::SMPTE_2014));
-		auto sub = make_shared<dcp::SubtitleString>(i);
+		i.set_v_position(convert_vertical_position(i, film()->interop() ? dcp::TextStandard::INTEROP : dcp::TextStandard::SMPTE_2014));
+		auto sub = make_shared<dcp::TextString>(i);
 		/* i.font is a shared_ptr<Font> which uniquely identifies the font we want,
 		 * though if we are Interop we can only have one font, so we'll use the chosen
 		 * one instead.

@@ -48,7 +48,7 @@
 #include <dcp/stereo_picture_asset.h>
 #include <dcp/stereo_picture_asset_reader.h>
 #include <dcp/stereo_picture_frame.h>
-#include <dcp/subtitle_asset.h>
+#include <dcp/text_asset.h>
 #include <iostream>
 
 #include "i18n.h"
@@ -326,7 +326,7 @@ DCPExaminer::DCPExaminer (shared_ptr<const DCPContent> content, bool tolerant)
 					LOG_GENERAL_NC ("Subtitle has no key");
 					break;
 				}
-				sub->subtitles ();
+				sub->texts();
 			}
 
 			if (i->atmos()) {

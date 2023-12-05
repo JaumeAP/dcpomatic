@@ -24,7 +24,7 @@
 #include "util.h"
 #include <dcp/cpl.h>
 #include <dcp/dcp.h>
-#include <dcp/interop_subtitle_asset.h>
+#include <dcp/interop_text_asset.h>
 #include <dcp/filesystem.h>
 #include <dcp/font_asset.h>
 #include <dcp/mono_picture_asset.h>
@@ -35,7 +35,7 @@
 #include <dcp/reel_picture_asset.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/reel_subtitle_asset.h>
-#include <dcp/smpte_subtitle_asset.h>
+#include <dcp/smpte_text_asset.h>
 #include <dcp/sound_asset.h>
 #include <dcp/stereo_picture_asset.h>
 #include <boost/optional.hpp>
@@ -277,15 +277,15 @@ map_cli(int argc, char* argv[], std::function<void (string)> out)
 		}
 	};
 
-	auto maybe_copy_font_and_images = [&maybe_copy, output_dir, copy](shared_ptr<const dcp::SubtitleAsset> asset, bool rename, bool hard_link, bool soft_link) {
-		auto interop = dynamic_pointer_cast<const dcp::InteropSubtitleAsset>(asset);
+	auto maybe_copy_font_and_images = [&maybe_copy, output_dir, copy](shared_ptr<const dcp::TextAsset> asset, bool rename, bool hard_link, bool soft_link) {
+		auto interop = dynamic_pointer_cast<const dcp::InteropTextAsset>(asset);
 		boost::optional<boost::filesystem::path> extra;
 		if (interop) {
 			extra = interop->id();
 			for (auto font_asset: interop->font_assets()) {
 				maybe_copy(font_asset->id(), rename, hard_link, soft_link, extra);
 			}
-			for (auto subtitle: interop->subtitles()) {
+			for (auto subtitle: interop->texts()) {
 				if (auto image = dynamic_pointer_cast<const dcp::SubtitleImage>(subtitle)) {
 					auto const output_path = *output_dir / asset->id() / image->file()->filename();
 					copy(*image->file(), output_path, hard_link, soft_link);

@@ -31,7 +31,7 @@
 
 namespace dcp {
 	class Reel;
-	class SubtitleAsset;
+	class TextAsset;
 }
 
 
@@ -68,7 +68,7 @@ public:
 	std::string font_id(int reel_index, std::string asset_id, std::string font_id) const;
 
 private:
-	void add_fonts_from_asset(int reel_index, std::shared_ptr<const dcp::SubtitleAsset> asset);
+	void add_fonts_from_asset(int reel_index, std::shared_ptr<const dcp::TextAsset> asset);
 
 	struct Font
 	{

@@ -23,8 +23,8 @@
 #include "film.h"
 #include "text_content.h"
 #include <dcp/raw_convert.h>
-#include <dcp/interop_subtitle_asset.h>
-#include <dcp/smpte_subtitle_asset.h>
+#include <dcp/interop_text_asset.h>
+#include <dcp/smpte_text_asset.h>
 #include <dcp/interop_load_font_node.h>
 #include <libxml++/libxml++.h>
 
@@ -59,8 +59,8 @@ DCPSubtitleContent::examine (shared_ptr<const Film> film, shared_ptr<Job> job)
 
 	auto subtitle_asset = load(path(0));
 
-	auto iop = dynamic_pointer_cast<dcp::InteropSubtitleAsset>(subtitle_asset);
-	auto smpte = dynamic_pointer_cast<dcp::SMPTESubtitleAsset>(subtitle_asset);
+	auto iop = dynamic_pointer_cast<dcp::InteropTextAsset>(subtitle_asset);
+	auto smpte = dynamic_pointer_cast<dcp::SMPTETextAsset>(subtitle_asset);
 	if (smpte) {
 		set_video_frame_rate(film, smpte->edit_rate().numerator);
 	}
@@ -70,7 +70,7 @@ DCPSubtitleContent::examine (shared_ptr<const Film> film, shared_ptr<Job> job)
 	/* Default to turning these subtitles on */
 	only_text()->set_use (true);
 
-	_length = ContentTime::from_seconds(subtitle_asset->latest_subtitle_out().as_seconds());
+	_length = ContentTime::from_seconds(subtitle_asset->latest_text_out().as_seconds());
 
 	subtitle_asset->fix_empty_font_ids();
 

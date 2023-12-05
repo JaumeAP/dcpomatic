@@ -25,7 +25,7 @@
 #include "font.h"
 #include "text_content.h"
 #include "util.h"
-#include <dcp/interop_subtitle_asset.h>
+#include <dcp/interop_text_asset.h>
 #include <dcp/load_font_node.h>
 
 
@@ -45,10 +45,10 @@ DCPSubtitleDecoder::DCPSubtitleDecoder (shared_ptr<const Film> film, shared_ptr<
 	/* Load the XML or MXF file */
 	auto const asset = load (content->path(0));
 	asset->fix_empty_font_ids ();
-	_subtitles = asset->subtitles ();
+	_subtitles = asset->texts();
 	_next = _subtitles.begin ();
 
-	_subtitle_standard = asset->subtitle_standard();
+	_subtitle_standard = asset->text_standard();
 
 	text.push_back (make_shared<TextDecoder>(this, content->only_text()));
 	update_position();
@@ -84,12 +84,12 @@ DCPSubtitleDecoder::pass ()
 	   time of emitting the first.
 	*/
 
-	vector<dcp::SubtitleString> s;
+	vector<dcp::TextString> s;
 	vector<dcp::SubtitleImage> i;
 	auto const p = content_time_period (*_next);
 
 	while (_next != _subtitles.end () && content_time_period (*_next) == p) {
-		auto ns = dynamic_pointer_cast<const dcp::SubtitleString>(*_next);
+		auto ns = dynamic_pointer_cast<const dcp::TextString>(*_next);
 		if (ns) {
 			s.push_back (*ns);
 			++_next;
@@ -115,7 +115,7 @@ DCPSubtitleDecoder::pass ()
 
 
 ContentTimePeriod
-DCPSubtitleDecoder::content_time_period (shared_ptr<const dcp::Subtitle> s) const
+DCPSubtitleDecoder::content_time_period(shared_ptr<const dcp::Text> s) const
 {
 	return {
 		ContentTime::from_seconds(s->in().as_seconds()),

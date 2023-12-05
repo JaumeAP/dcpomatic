@@ -52,7 +52,7 @@ namespace dcp {
 	class SoundAssetWriter;
 	class StereoPictureAsset;
 	class StereoPictureAssetWriter;
-	class SubtitleAsset;
+	class TextAsset;
 }
 
 
@@ -104,7 +104,7 @@ private:
 	long frame_info_position (Frame frame, Eyes eyes) const;
 	Frame check_existing_picture_asset (boost::filesystem::path asset);
 	bool existing_picture_frame_ok (dcp::File& asset_file, std::shared_ptr<InfoFileHandle> info_file, Frame frame) const;
-	std::shared_ptr<dcp::SubtitleAsset> empty_text_asset (TextType type, boost::optional<DCPTextTrack> track, bool with_dummy) const;
+	std::shared_ptr<dcp::TextAsset> empty_text_asset(TextType type, boost::optional<DCPTextTrack> track, bool with_dummy) const;
 
 	std::shared_ptr<dcp::ReelPictureAsset> create_reel_picture (std::shared_ptr<dcp::Reel> reel, std::list<ReferencedReelAsset> const & refs) const;
 	void create_reel_sound (std::shared_ptr<dcp::Reel> reel, std::list<ReferencedReelAsset> const & refs) const;
@@ -117,7 +117,7 @@ private:
 		std::set<DCPTextTrack> ensure_closed_captions
 		) const;
 	void create_reel_markers (std::shared_ptr<dcp::Reel> reel) const;
-	float convert_vertical_position(StringText const& subtitle, dcp::SubtitleStandard to) const;
+	float convert_vertical_position(StringText const& subtitle, dcp::TextStandard to) const;
 
 	dcpomatic::DCPTimePeriod _period;
 	/** the first picture frame index that does not already exist in our MXF */
@@ -139,8 +139,8 @@ private:
 	std::shared_ptr<dcp::PictureAssetWriter> _picture_asset_writer;
 	std::shared_ptr<dcp::SoundAsset> _sound_asset;
 	std::shared_ptr<dcp::SoundAssetWriter> _sound_asset_writer;
-	std::shared_ptr<dcp::SubtitleAsset> _subtitle_asset;
-	std::map<DCPTextTrack, std::shared_ptr<dcp::SubtitleAsset>> _closed_caption_assets;
+	std::shared_ptr<dcp::TextAsset> _subtitle_asset;
+	std::map<DCPTextTrack, std::shared_ptr<dcp::TextAsset>> _closed_caption_assets;
 	std::shared_ptr<dcp::AtmosAsset> _atmos_asset;
 	std::shared_ptr<dcp::AtmosAssetWriter> _atmos_asset_writer;
 

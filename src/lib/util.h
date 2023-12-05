@@ -49,7 +49,7 @@
 namespace dcp {
 	class PictureAsset;
 	class SoundAsset;
-	class SubtitleAsset;
+	class TextAsset;
 }
 
 extern std::string program_name;
@@ -81,7 +81,7 @@ extern dcp::Size fit_ratio_within (float ratio, dcp::Size);
 extern void set_backtrace_file (boost::filesystem::path);
 extern std::string video_asset_filename (std::shared_ptr<dcp::PictureAsset> asset, int reel_index, int reel_count, boost::optional<std::string> content_summary);
 extern std::string audio_asset_filename (std::shared_ptr<dcp::SoundAsset> asset, int reel_index, int reel_count, boost::optional<std::string> content_summary);
-extern std::string subtitle_asset_filename (std::shared_ptr<dcp::SubtitleAsset> asset, int reel_index, int reel_count, boost::optional<std::string> content_summary, std::string extension);
+extern std::string subtitle_asset_filename(std::shared_ptr<dcp::TextAsset> asset, int reel_index, int reel_count, boost::optional<std::string> content_summary, std::string extension);
 extern std::string atmos_asset_filename (std::shared_ptr<dcp::AtmosAsset> asset, int reel_index, int reel_count, boost::optional<std::string> content_summary);
 extern std::string careful_string_filter (std::string);
 extern std::pair<int, int> audio_channel_types (std::list<int> mapped, int channels);

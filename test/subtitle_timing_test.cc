@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE (test_subtitle_timing_with_frame_rate_change)
 	BOOST_REQUIRE(reel->main_subtitle());
 	BOOST_REQUIRE(reel->main_subtitle()->asset());
 
-	auto subs = reel->main_subtitle()->asset()->subtitles();
+	auto subs = reel->main_subtitle()->asset()->texts();
 	int index = 0;
 	for (auto i: subs) {
 		auto error = std::abs(i->in().as_seconds() - (index * content_frame_rate / dcp_frame_rate));

@@ -25,9 +25,9 @@
 #include "lib/make_dcp.h"
 #include "lib/text_content.h"
 #include "test.h"
-#include <dcp/interop_subtitle_asset.h>
+#include <dcp/interop_text_asset.h>
 #include <dcp/language_tag.h>
-#include <dcp/smpte_subtitle_asset.h>
+#include <dcp/smpte_text_asset.h>
 #include <boost/test/unit_test.hpp>
 #include <vector>
 
@@ -55,8 +55,8 @@ BOOST_AUTO_TEST_CASE(srt_correctly_placed_in_interop)
 
 	auto output = subtitle_file(film);
 
-	dcp::InteropSubtitleAsset asset(output);
-	auto output_subs = asset.subtitles();
+	dcp::InteropTextAsset asset(output);
+	auto output_subs = asset.texts();
 	BOOST_REQUIRE_EQUAL(output_subs.size(), 1U);
 
 	BOOST_CHECK(output_subs[0]->v_align() == dcp::VAlign::BOTTOM);
@@ -83,8 +83,8 @@ BOOST_AUTO_TEST_CASE(srt_correctly_placed_in_smpte)
 
 	auto output = subtitle_file(film);
 
-	dcp::SMPTESubtitleAsset asset(output);
-	auto output_subs = asset.subtitles();
+	dcp::SMPTETextAsset asset(output);
+	auto output_subs = asset.texts();
 	BOOST_REQUIRE_EQUAL(output_subs.size(), 1U);
 
 	BOOST_CHECK(output_subs[0]->v_align() == dcp::VAlign::BOTTOM);
@@ -95,18 +95,18 @@ BOOST_AUTO_TEST_CASE(srt_correctly_placed_in_smpte)
 /** Make a DCP from some DCP subtitles and check the vertical alignment */
 static
 void
-vpos_test(dcp::VAlign reference, float position, dcp::SubtitleStandard from, dcp::Standard to)
+vpos_test(dcp::VAlign reference, float position, dcp::TextStandard from, dcp::Standard to)
 {
 	string standard;
 	switch (from) {
-		case dcp::SubtitleStandard::SMPTE_2007:
-		case dcp::SubtitleStandard::SMPTE_2010:
+		case dcp::TextStandard::SMPTE_2007:
+		case dcp::TextStandard::SMPTE_2010:
 			standard = "smpte_2010";
 			break;
-		case dcp::SubtitleStandard::INTEROP:
+		case dcp::TextStandard::INTEROP:
 			standard = "interop";
 			break;
-		case dcp::SubtitleStandard::SMPTE_2014:
+		case dcp::TextStandard::SMPTE_2014:
 			standard = "smpte_2014";
 			break;
 	}
@@ -122,13 +122,13 @@ vpos_test(dcp::VAlign reference, float position, dcp::SubtitleStandard from, dcp
 	BOOST_REQUIRE(!wait_for_jobs());
 
 	auto out = subtitle_file(film);
-	vector<shared_ptr<const dcp::Subtitle>> subtitles;
+	vector<shared_ptr<const dcp::Text>> subtitles;
 	if (to == dcp::Standard::INTEROP) {
-		dcp::InteropSubtitleAsset asset(out);
-		subtitles = asset.subtitles();
+		dcp::InteropTextAsset asset(out);
+		subtitles = asset.texts();
 	} else {
-		dcp::SMPTESubtitleAsset asset(out);
-		subtitles = asset.subtitles();
+		dcp::SMPTETextAsset asset(out);
+		subtitles = asset.texts();
 	}
 
 	BOOST_REQUIRE_EQUAL(subtitles.size(), 1U);
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(subtitles_correctly_placed_with_all_references)
 	constexpr auto height = 0.0462963;
 
 	/* Interop source */
-	auto from = dcp::SubtitleStandard::INTEROP;
+	auto from = dcp::TextStandard::INTEROP;
 
 	// -> Interop
 	vpos_test(dcp::VAlign::TOP, 0.2, from, dcp::Standard::INTEROP);
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(subtitles_correctly_placed_with_all_references)
 	vpos_test(dcp::VAlign::BOTTOM, 0.08, from, dcp::Standard::SMPTE);
 
 	/* SMPTE 2010 source */
-	from = dcp::SubtitleStandard::SMPTE_2010;
+	from = dcp::TextStandard::SMPTE_2010;
 
 	// -> Interop
 	vpos_test(dcp::VAlign::TOP, 0.1 + height - baseline_to_bottom, from, dcp::Standard::INTEROP);
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(subtitles_correctly_placed_with_all_references)
 	vpos_test(dcp::VAlign::BOTTOM, 0.10 + baseline_to_bottom, from, dcp::Standard::SMPTE);
 
 	/* SMPTE 2014 source */
-	from = dcp::SubtitleStandard::SMPTE_2014;
+	from = dcp::TextStandard::SMPTE_2014;
 
 	// -> Interop
 	vpos_test(dcp::VAlign::TOP, 0.2, from, dcp::Standard::INTEROP);

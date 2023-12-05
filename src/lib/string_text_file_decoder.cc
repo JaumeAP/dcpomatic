@@ -23,7 +23,7 @@
 #include "string_text_file_content.h"
 #include "text_content.h"
 #include "text_decoder.h"
-#include <dcp/subtitle_string.h>
+#include <dcp/text_string.h>
 #include <iostream>
 
 

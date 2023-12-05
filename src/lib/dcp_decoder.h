@@ -30,7 +30,7 @@
 #include <dcp/mono_picture_asset_reader.h>
 #include <dcp/stereo_picture_asset_reader.h>
 #include <dcp/sound_asset_reader.h>
-#include <dcp/subtitle_asset.h>
+#include <dcp/text_asset.h>
 
 
 namespace dcp {
@@ -77,7 +77,7 @@ private:
 	void pass_texts (dcpomatic::ContentTime next, dcp::Size size);
 	void pass_texts (
 		dcpomatic::ContentTime next,
-		std::shared_ptr<dcp::SubtitleAsset> asset,
+		std::shared_ptr<dcp::TextAsset> asset,
 		bool reference,
 		int64_t entry_point,
 		std::shared_ptr<TextDecoder> decoder,

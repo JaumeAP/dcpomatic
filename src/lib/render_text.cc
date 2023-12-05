@@ -242,12 +242,12 @@ x_position(dcp::HAlign align, float position, int target_width, int layout_width
  *  @return y position of the top of the subtitle bounding box (in pixels) from the top of the screen.
  */
 static int
-y_position(dcp::SubtitleStandard standard, dcp::VAlign align, float position, int target_height, int baseline_to_bottom, int layout_height)
+y_position(dcp::TextStandard standard, dcp::VAlign align, float position, int target_height, int baseline_to_bottom, int layout_height)
 {
 	int y = 0;
 	switch (standard) {
-	case dcp::SubtitleStandard::INTEROP:
-	case dcp::SubtitleStandard::SMPTE_2014:
+	case dcp::TextStandard::INTEROP:
+	case dcp::TextStandard::SMPTE_2014:
 		switch (align) {
 		case dcp::VAlign::TOP:
 			/* position is distance from top of frame to subtitle baseline */
@@ -263,8 +263,8 @@ y_position(dcp::SubtitleStandard standard, dcp::VAlign align, float position, in
 			break;
 		}
 		break;
-	case dcp::SubtitleStandard::SMPTE_2007:
-	case dcp::SubtitleStandard::SMPTE_2010:
+	case dcp::TextStandard::SMPTE_2007:
+	case dcp::TextStandard::SMPTE_2010:
 		switch (align) {
 		case dcp::VAlign::TOP:
 			/* v_position is distance from top of frame to top of subtitle */
@@ -452,7 +452,7 @@ render_text(vector<StringText> subtitles, dcp::Size target, DCPTime time, int fr
 
 
 vector<dcpomatic::Rect<int>>
-bounding_box(vector<StringText> subtitles, dcp::Size target, optional<dcp::SubtitleStandard> override_standard)
+bounding_box(vector<StringText> subtitles, dcp::Size target, optional<dcp::TextStandard> override_standard)
 {
 	vector<StringText> pending;
 	vector<dcpomatic::Rect<int>> rects;

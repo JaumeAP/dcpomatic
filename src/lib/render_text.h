@@ -34,7 +34,7 @@ namespace dcpomatic {
 
 std::string marked_up(std::vector<StringText> subtitles, int target_height, float fade_factor, std::string font_name);
 std::vector<PositionImage> render_text(std::vector<StringText>, dcp::Size, dcpomatic::DCPTime, int);
-std::vector<dcpomatic::Rect<int>> bounding_box(std::vector<StringText> subtitles, dcp::Size target, boost::optional<dcp::SubtitleStandard> override_standard = boost::none);
+std::vector<dcpomatic::Rect<int>> bounding_box(std::vector<StringText> subtitles, dcp::Size target, boost::optional<dcp::TextStandard> override_standard = boost::none);
 
 
 class FontMetrics

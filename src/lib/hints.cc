@@ -351,7 +351,7 @@ Hints::check_loudness ()
 
 static
 bool
-subtitle_mxf_too_big (shared_ptr<dcp::SubtitleAsset> asset)
+subtitle_mxf_too_big(shared_ptr<dcp::TextAsset> asset)
 {
 	return asset && asset->file() && dcp::filesystem::file_size(*asset->file()) >= (MAX_TEXT_MXF_SIZE - SIZE_SLACK);
 }

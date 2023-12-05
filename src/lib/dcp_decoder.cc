@@ -281,7 +281,7 @@ DCPDecoder::pass_texts (ContentTime next, dcp::Size size)
 
 void
 DCPDecoder::pass_texts (
-	ContentTime next, shared_ptr<dcp::SubtitleAsset> asset, bool reference, int64_t entry_point, shared_ptr<TextDecoder> decoder, dcp::Size size
+	ContentTime next, shared_ptr<dcp::TextAsset> asset, bool reference, int64_t entry_point, shared_ptr<TextDecoder> decoder, dcp::Size size
 	)
 {
 	auto const vfr = _dcp_content->active_video_frame_rate (film());
@@ -289,16 +289,16 @@ DCPDecoder::pass_texts (
 	auto const frame = next.frames_round (vfr);
 
 	if (_decode_referenced || !reference) {
-		auto subs = asset->subtitles_during (
+		auto subs = asset->texts_during(
 			dcp::Time (entry_point + frame, vfr, vfr),
 			dcp::Time (entry_point + frame + 1, vfr, vfr),
 			true
 			);
 
-		vector<dcp::SubtitleString> strings;
+		vector<dcp::TextString> strings;
 
 		for (auto i: subs) {
-			auto is = dynamic_pointer_cast<const dcp::SubtitleString>(i);
+			auto is = dynamic_pointer_cast<const dcp::TextString>(i);
 			if (is) {
 				if (!strings.empty() && (strings.back().in() != is->in() || strings.back().out() != is->out())) {
 					auto b = strings.back();
@@ -308,12 +308,12 @@ DCPDecoder::pass_texts (
 							ContentTime::from_frames(_offset - entry_point, vfr) + ContentTime::from_seconds(b.out().as_seconds())
 							),
 						strings,
-						asset->subtitle_standard()
+						asset->text_standard()
 						);
 					strings.clear ();
 				}
 
-				dcp::SubtitleString is_copy = *is;
+				dcp::TextString is_copy = *is;
 				is_copy.set_font(_font_id_allocator.font_id(_reel - _reels.begin(), asset->id(), is_copy.font().get_value_or("")));
 				strings.push_back(is_copy);
 			}
@@ -344,7 +344,7 @@ DCPDecoder::pass_texts (
 					ContentTime::from_frames(_offset - entry_point, vfr) + ContentTime::from_seconds(b.out().as_seconds())
 					),
 				strings,
-				asset->subtitle_standard()
+				asset->text_standard()
 				);
 			strings.clear ();
 		}
