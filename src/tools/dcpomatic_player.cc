@@ -1248,6 +1248,8 @@ private:
 				LOG_DEBUG_PLAYER ("Failed to start play server (%1)", e.what());
 			}
 
+			throw std::runtime_error("whoopee");
+
 			if (!_dcp_to_load.empty() && dcp::filesystem::is_directory(_dcp_to_load)) {
 				try {
 					_frame->load_dcp (_dcp_to_load);
