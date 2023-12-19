@@ -880,19 +880,13 @@ private:
 				std::cout << "  Primary? " << wxDisplay(index).IsPrimary() << "\n";
 			}
 			if (wxDisplay::GetCount() > 1) {
-				switch (Config::instance()->image_display()) {
-				case 0:
-					std::cout << "Display on 0: move controls to " << wxDisplay(0U).GetClientArea().GetWidth() << "\n";
-					_dual_screen->Move (0, 0);
-					Move (wxDisplay(0U).GetClientArea().GetWidth(), 0);
-					break;
-				case 1:
-					std::cout << "Display on 1: move screen to " << wxDisplay(0U).GetClientArea().GetWidth() << "\n";
-					_dual_screen->Move (wxDisplay(0U).GetClientArea().GetWidth(), 0);
-					// (0, 0) doesn't seem to work for some strange reason
-					Move (8, 8);
-					break;
-				}
+				wxRect geometry[2] = {
+					wxDisplay(0U).GetGeometry(),
+					wxDisplay(1U).GetGeometry()
+				};
+				auto const image_display = Config::instance()->image_display();
+				_dual_screen->Move(geometry[image_display].GetX(), geometry[image_display].GetY());
+				Move(geometry[1 - image_display].GetX(), geometry[1 - image_display].GetY());
 			}
 			_dual_screen->Bind(wxEVT_CHAR_HOOK, boost::bind(&DOMFrame::dual_screen_key_press, this, _1));
 		} else {
