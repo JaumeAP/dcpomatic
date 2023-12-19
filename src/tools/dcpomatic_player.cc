@@ -886,6 +886,7 @@ private:
 				};
 				auto const image_display = Config::instance()->image_display();
 				_dual_screen->Move(geometry[image_display].GetX(), geometry[image_display].GetY());
+				_viewer.panel()->SetSize(geometry[image_display].GetWidth(), geometry[image_display].GetHeight());
 				Move(geometry[1 - image_display].GetX(), geometry[1 - image_display].GetY());
 			}
 			_dual_screen->Bind(wxEVT_CHAR_HOOK, boost::bind(&DOMFrame::dual_screen_key_press, this, _1));
