@@ -862,19 +862,32 @@ private:
 		_viewer.set_pad_black(_mode != Config::PLAYER_MODE_WINDOW);
 
 		if (_mode == Config::PLAYER_MODE_DUAL) {
+			std::cout << "Set up dual screen mode: " << wxDisplay::GetCount() << " displays.\n";
 			_dual_screen = new wxFrame (this, wxID_ANY, wxT(""));
 			_dual_screen->SetBackgroundColour (wxColour(0, 0, 0));
 			_dual_screen->ShowFullScreen (true);
 			_viewer.panel()->Reparent(_dual_screen);
 			_viewer.panel()->SetFocus();
 			_dual_screen->Show ();
+			for (auto index = 0U; index < wxDisplay::GetCount(); ++index) {
+				auto client = wxDisplay(index).GetClientArea();
+				auto mode = wxDisplay(index).GetCurrentMode();
+				auto geometry = wxDisplay(index).GetGeometry();
+				std::cout << "Display " << index << "\n";
+				std::cout << "  ClientArea (" << client.GetX() << ", " << client.GetY() << ") (" << client.GetWidth() << ", " << client.GetHeight() << ")\n";
+				std::cout << "  Geometry   (" << geometry.GetX() << ", " << geometry.GetY() << ") (" << geometry.GetWidth() << ", " << geometry.GetHeight() << ")\n";
+				std::cout << "  Mode       (" << mode.GetWidth() << ", " << mode.GetHeight() << ")\n";
+				std::cout << "  Primary? " << wxDisplay(index).IsPrimary() << "\n";
+			}
 			if (wxDisplay::GetCount() > 1) {
 				switch (Config::instance()->image_display()) {
 				case 0:
+					std::cout << "Display on 0: move controls to " << wxDisplay(0U).GetClientArea().GetWidth() << "\n";
 					_dual_screen->Move (0, 0);
 					Move (wxDisplay(0U).GetClientArea().GetWidth(), 0);
 					break;
 				case 1:
+					std::cout << "Display on 1: move screen to " << wxDisplay(0U).GetClientArea().GetWidth() << "\n";
 					_dual_screen->Move (wxDisplay(0U).GetClientArea().GetWidth(), 0);
 					// (0, 0) doesn't seem to work for some strange reason
 					Move (8, 8);
