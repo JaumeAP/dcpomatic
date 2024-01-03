@@ -100,6 +100,9 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 		if (note.note()) {
 			message.Replace("%n", std_to_wx(note.note().get()));
 		}
+		if (note.frame()) {
+			message.Replace("%frame", std_to_wx(dcp::raw_convert<string>(note.frame().get())));
+		}
 		if (note.file()) {
 			message.Replace("%f", std_to_wx(note.file()->filename().string()));
 		}
@@ -120,6 +123,10 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 		}
 		if (note.other_id()) {
 			message.Replace("%other_id", std_to_wx(note.other_id().get()));
+		}
+		if (note.frame() && note.frame_rate()) {
+			auto frame_rate = note.frame_rate().get();
+			message.Replace("%timecode", std_to_wx(dcp::Time(note.frame().get(), frame_rate, frame_rate).as_string(dcp::Standard::SMPTE)));
 		}
 		add_bullet (note.type(), message);
 	};
@@ -178,10 +185,10 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 			add(i, _("The asset %n has a duration of less than 1 second, which is invalid."));
 			break;
 		case dcp::VerificationNote::Code::INVALID_PICTURE_FRAME_SIZE_IN_BYTES:
-			add(i, _("At least one frame of the video asset %f is over the limit of 250Mbit/s."));
+			add(i, _("Frame %timecode (timecode %timecode) in asset %f is over the limit of 250Mbit/s."));
 			break;
 		case dcp::VerificationNote::Code::NEARLY_INVALID_PICTURE_FRAME_SIZE_IN_BYTES:
-			add(i, _("At least one frame of the video asset %f is close to the limit of 250MBit/s."));
+			add(i, _("Frame %frame (timecode %timecode) in asset %f is close to the limit of 250Mbit/s."));
 			break;
 		case dcp::VerificationNote::Code::EXTERNAL_ASSET:
 			add(i, _("This DCP refers to at the asset %n in another DCP (and perhaps others), so it is a \"version file\" (VF)"));
