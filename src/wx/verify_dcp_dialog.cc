@@ -39,6 +39,10 @@ using std::string;
 using std::vector;
 
 
+/* Maximum number of errors to show */
+auto constexpr max_errors_or_warnings = 100;
+
+
 VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job)
 	: wxDialog (parent, wxID_ANY, _("DCP verification"), wxDefaultPosition, {600, 400})
 {
@@ -88,6 +92,11 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 	};
 
 	auto add = [&counts, &add_bullet](dcp::VerificationNote note, wxString message) {
+		counts[note.type()]++;
+		if (counts[note.type()] > max_errors_or_warnings) {
+			return;
+		}
+
 		if (note.note()) {
 			message.Replace("%n", std_to_wx(note.note().get()));
 		}
@@ -113,7 +122,6 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 			message.Replace("%other_id", std_to_wx(note.other_id().get()));
 		}
 		add_bullet (note.type(), message);
-		counts[note.type()]++;
 	};
 
 	if (job->finished_in_error() && job->error_summary() != "") {
@@ -444,27 +452,45 @@ VerifyDCPDialog::VerifyDCPDialog (wxWindow* parent, shared_ptr<VerifyDCPJob> job
 
 	if (counts[dcp::VerificationNote::Type::ERROR] == 1) {
 		/// TRANSLATORS: this will be used at the start of a string like "1 error, 2 Bv2.1 errors and 3 warnings."
-		summary_text = _("1 error, ");
+		summary_text = _("1 error");
 	} else {
 		/// TRANSLATORS: this will be used at the start of a string like "1 error, 2 Bv2.1 errors and 3 warnings."
-		summary_text = wxString::Format("%d errors, ", counts[dcp::VerificationNote::Type::ERROR]);
+		summary_text = wxString::Format("%d errors", counts[dcp::VerificationNote::Type::ERROR]);
+		if (counts[dcp::VerificationNote::Type::ERROR] > max_errors_or_warnings) {
+			summary_text += wxString::Format(_(" (only first %d shown)"), max_errors_or_warnings);
+		}
 	}
+
+	/// TRANSLATORS: this joins two clauses of a sentence.
+	summary_text += _(", ");
 
 	if (counts[dcp::VerificationNote::Type::BV21_ERROR] == 1) {
 		/// TRANSLATORS: this will be used in the middle of a string like "1 error, 2 Bv2.1 errors and 3 warnings."
-		summary_text += _("1 Bv2.1 error, ");
+		summary_text += _("1 Bv2.1 error");
 	} else {
 		/// TRANSLATORS: this will be used in the middle of a string like "1 error, 2 Bv2.1 errors and 3 warnings."
-		summary_text += wxString::Format("%d Bv2.1 errors, ", counts[dcp::VerificationNote::Type::BV21_ERROR]);
+		summary_text += wxString::Format("%d Bv2.1 errors", counts[dcp::VerificationNote::Type::BV21_ERROR]);
+		if (counts[dcp::VerificationNote::Type::BV21_ERROR] > max_errors_or_warnings) {
+			summary_text += wxString::Format(_(" (only first %d shown)"), max_errors_or_warnings);
+		}
 	}
+
+	/// TRANSLATORS: this joins two clauses of a sentence.
+	summary_text += _(", ");
 
 	if (counts[dcp::VerificationNote::Type::WARNING] == 1) {
 		/// TRANSLATORS: this will be used at the end of a string like "1 error, 2 Bv2.1 errors and 3 warnings."
-		summary_text += _("and 1 warning.");
+		summary_text += _("and 1 warning");
 	} else {
 		/// TRANSLATORS: this will be used at the end of a string like "1 error, 2 Bv2.1 errors and 3 warnings."
-		summary_text += wxString::Format("and %d warnings.", counts[dcp::VerificationNote::Type::WARNING]);
+		summary_text += wxString::Format("and %d warnings", counts[dcp::VerificationNote::Type::WARNING]);
+		if (counts[dcp::VerificationNote::Type::WARNING] > max_errors_or_warnings) {
+			summary_text += wxString::Format(_(" (only first %d shown)"), max_errors_or_warnings);
+		}
 	}
+
+	/// TRANSLATORS: this ends a sentence.
+	summary_text += _(".");
 
 	summary->SetLabel(summary_text);
 
