@@ -23,6 +23,12 @@ if [ "$(uname)" == "Linux" ]; then
   if [ -f /src/backports/dcp_inspect ]; then
     export DCPOMATIC_DCP_INSPECT=/src/backports/dcp_inspect
   fi
+  set +e
+  python3 -m clairmeta.cli --help > /dev/null 2>&1
+  if [ "$?" == "0" ]; then
+    export DCPOMATIC_CLAIRMETA=1
+  fi
+  set -e
 fi
 
 if [ "$(uname)" == "Darwin" ]; then
