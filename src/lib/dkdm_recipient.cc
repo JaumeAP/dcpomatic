@@ -52,11 +52,11 @@ DKDMRecipient::as_xml (xmlpp::Element* node) const
 	KDMRecipient::as_xml (node);
 
 	for (auto i: emails) {
-		node->add_child("Email")->add_child_text(i);
+		cxml::add_text_child(node, "Email", i);
 	}
 
-	node->add_child("UTCOffsetHour")->add_child_text(raw_convert<string>(utc_offset_hour));
-	node->add_child("UTCOffsetMinute")->add_child_text(raw_convert<string>(utc_offset_minute));
+	cxml::add_text_child(node, "UTCOffsetHour", raw_convert<string>(utc_offset_hour));
+	cxml::add_text_child(node, "UTCOffsetMinute", raw_convert<string>(utc_offset_minute));
 }
 
 
