@@ -18,7 +18,9 @@ export LD_LIBRARY_PATH=$DIR/../../../lib:$DIR/../../../lib64:$LD_LIBRARY_PATH
 if [ "$1" == "--debug" ]; then
     shift
     if [[ "$(uname)" == Darwin ]]; then
-        /Applications/Xcode.app/Contents/Developer/usr/bin/lldb $binary $*
+        # /Applications/Xcode.app/Contents/Developer/usr/bin/lldb $binary $*
+        /Applications/Xcode/14.3.1/Xcode.app/Contents/Developer/usr/bin/lldb $binary $*
+        # lldb $binary $*
     else
         gdb --args $binary $*
     fi

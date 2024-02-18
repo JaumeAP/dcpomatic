@@ -30,7 +30,7 @@ try:
 except ImportError:
     # python 3
     from urllib.parse import urlencode
-from waflib import Logs, Context
+from waflib import Logs, Context, TaskGen
 
 APPNAME = 'dcpomatic'
 libdcp_version = '1.9.22'
@@ -49,6 +49,10 @@ if this_version == '':
     VERSION = git_head.strip()
 else:
     VERSION = this_version[1:].strip()
+
+@TaskGen.extension('.mm')
+def mm_hook(self, node):
+    return self.create_compiled_task('cxx', node)
 
 def options(opt):
     opt.load('compiler_cxx')

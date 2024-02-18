@@ -127,6 +127,8 @@ sources = """
           markers_panel.cc
           message_dialog.cc
           metadata_dialog.cc
+          metal_video_view.cc
+          metal_video_view.mm
           move_to_dialog.cc
           nag_dialog.cc
           name_format_editor.cc
@@ -335,6 +337,8 @@ def configure(conf):
                        define_name='DCPOMATIC_HAVE_GLX_SWAP_INTERVAL_EXT',
                        mandatory=False)
 
+    conf.env.CXXFLAGS.extend(["-I../metal-cpp", "-I../metal-cpp-extensions"])
+
 
 def build(bld):
     if bld.env.STATIC_DCPOMATIC:
@@ -353,7 +357,7 @@ def build(bld):
         obj.uselib += 'WINSOCK2 OLE32 DSOUND WINMM KSUSER GL GLU GLEW '
         obj.source += ' i18n_setup_windows.cc'
     if bld.env.TARGET_OSX:
-        obj.framework = ['CoreAudio', 'OpenGL']
+        obj.framework = ['AppKit', 'CoreAudio', 'Metal', 'OpenGL', 'QuartzCore']
         obj.source += ' i18n_setup_osx.cc'
     obj.use = 'libdcpomatic2'
     obj.target = 'dcpomatic2-wx'

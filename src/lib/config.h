@@ -563,7 +563,12 @@ public:
 
 	enum VideoViewType {
 		VIDEO_VIEW_SIMPLE,
+#ifdef DCPOMATIC_OSX
+		VIDEO_VIEW_OPENGL,
+		VIDEO_VIEW_METAL
+#else
 		VIDEO_VIEW_OPENGL
+#endif
 	};
 
 	VideoViewType video_view_type() const {

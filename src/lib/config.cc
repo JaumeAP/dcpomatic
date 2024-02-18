@@ -616,6 +616,10 @@ try
 		_video_view_type = VIDEO_VIEW_OPENGL;
 	} else if (vc && *vc == "simple") {
 		_video_view_type = VIDEO_VIEW_SIMPLE;
+#ifdef DCPOMATIC_OSX
+	} else if (vc && *vc == "metal") {
+		_video_view_type = VIDEO_VIEW_METAL;
+#endif
 	}
 	_respect_kdm_validity_periods = f.optional_bool_child("RespectKDMValidityPeriods").get_value_or(true);
 	_player_debug_log_file = f.optional_string_child("PlayerDebugLogFile");
@@ -1092,6 +1096,11 @@ Config::write_config() const
 	case VIDEO_VIEW_OPENGL:
 		cxml::add_text_child(root, "VideoViewType", "opengl");
 		break;
+#ifdef DCPOMATIC_OSX
+	case VIDEO_VIEW_METAL:
+		cxml::add_text_child(root, "VideoViewType", "metal");
+		break;
+#endif
 	}
 	/* [XML] RespectKDMValidityPeriods 1 to refuse to use KDMs that are out of date, 0 to ignore KDM dates. */
 	cxml::add_text_child(root, "RespectKDMValidityPeriods", _respect_kdm_validity_periods ? "1" : "0");

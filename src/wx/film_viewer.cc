@@ -28,6 +28,9 @@
 #include "closed_captions_dialog.h"
 #include "film_viewer.h"
 #include "gl_video_view.h"
+#ifdef DCPOMATIC_OSX
+#include "metal_video_view.h"
+#endif
 #include "nag_dialog.h"
 #include "playhead_to_frame_dialog.h"
 #include "playhead_to_timecode_dialog.h"
@@ -97,6 +100,11 @@ FilmViewer::FilmViewer(wxWindow* p, bool wake)
 	case Config::VIDEO_VIEW_SIMPLE:
 		_video_view = std::make_shared<SimpleVideoView>(this, p, wake);
 		break;
+#ifdef DCPOMATIC_OSX
+	case Config::VIDEO_VIEW_METAL:
+		_video_view = std::make_shared<MetalVideoView>(this, p);
+		break;
+#endif
 	}
 #else
 	_video_view = std::make_shared<SimpleVideoView>(this, p, wake);

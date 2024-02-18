@@ -1311,7 +1311,10 @@ private:
 #if wxCHECK_VERSION(3, 1, 0)
 		_video_display_mode->Append(_("OpenGL (faster)"));
 #endif
-		_video_display_mode->Bind(wxEVT_CHOICE, boost::bind(&AdvancedPage::video_display_mode_changed, this));
+#ifdef DCPOMATIC_OSX
+		_video_display_mode->Append(_("Metal (faster)"));
+#endif
+		_video_display_mode->Bind (wxEVT_CHOICE, boost::bind(&AdvancedPage::video_display_mode_changed, this));
 		_show_experimental_audio_processors->bind(&AdvancedPage::show_experimental_audio_processors_changed, this);
 		_only_servers_encode->bind(&AdvancedPage::only_servers_encode_changed, this);
 		_layout_for_short_screen->bind(&AdvancedPage::layout_for_short_screen_changed, this);
@@ -1344,6 +1347,11 @@ private:
 		case Config::VIDEO_VIEW_OPENGL:
 			checked_set(_video_display_mode, 1);
 			break;
+#ifdef DCPOMATIC_OSX
+		case Config::VIDEO_VIEW_METAL:
+			checked_set(_video_display_mode, 2);
+			break;
+#endif
 		}
 		checked_set(_show_experimental_audio_processors, config->show_experimental_audio_processors());
 		checked_set(_only_servers_encode, config->only_servers_encode());
@@ -1368,8 +1376,12 @@ private:
 	{
 		if (_video_display_mode->GetSelection() == 0) {
 			Config::instance()->set_video_view_type(Config::VIDEO_VIEW_SIMPLE);
-		} else {
+		} else if (_video_display_mode->GetSelection() == 1) {
 			Config::instance()->set_video_view_type(Config::VIDEO_VIEW_OPENGL);
+#ifdef DCPOMATIC_OSX
+		} else if (_video_display_mode->GetSelection() == 2) {
+			Config::instance()->set_video_view_type(Config::VIDEO_VIEW_METAL);
+#endif
 		}
 	}
 

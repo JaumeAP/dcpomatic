@@ -125,6 +125,9 @@ private:
 		_video_display_mode = new wxChoice(_panel, wxID_ANY);
 		_video_display_mode->Append(_("Simple (safer)"));
 		_video_display_mode->Append(_("OpenGL (faster)"));
+#ifdef DCPOMATIC_OSX
+		_video_display_mode->Append(_("Metal (faster)"));
+#endif
 		table->Add(_video_display_mode, wxGBPosition(r, 1));
 		++r;
 
@@ -181,6 +184,11 @@ private:
 		case Config::VIDEO_VIEW_OPENGL:
 			checked_set(_video_display_mode, 1);
 			break;
+#ifdef DCPOMATIC_OSX
+		case Config::VIDEO_VIEW_METAL:
+			checked_set(_video_display_mode, 2);
+			break;
+#endif
 		}
 
 		checked_set(_image_display, config->image_display());
@@ -218,10 +226,16 @@ private:
 
 	void video_display_mode_changed()
 	{
-		if (_video_display_mode->GetSelection() == 0) {
+		switch (_video_display_mode->GetSelection()) {
+		case 0:
 			Config::instance()->set_video_view_type(Config::VIDEO_VIEW_SIMPLE);
-		} else {
+			break;
+		case 1:
 			Config::instance()->set_video_view_type(Config::VIDEO_VIEW_OPENGL);
+			break;
+		case 2:
+			Config::instance()->set_video_view_type(Config::VIDEO_VIEW_METAL);
+			break;
 		}
 	}
 
