@@ -21,6 +21,7 @@
 
 #include "audio_processor.h"
 #include "config.h"
+#include "make_centre.h"
 #include "mid_side_decoder.h"
 #include "upmixer_a.h"
 #include "upmixer_b.h"
@@ -39,6 +40,7 @@ void
 AudioProcessor::setup_audio_processors ()
 {
 	_non_experimental.push_back (unique_ptr<AudioProcessor>(new MidSideDecoder()));
+	_non_experimental.push_back (unique_ptr<AudioProcessor>(new MakeCentre()));
 
 	_experimental.push_back (unique_ptr<AudioProcessor>(new UpmixerA(48000)));
 	_experimental.push_back (unique_ptr<AudioProcessor>(new UpmixerB(48000)));

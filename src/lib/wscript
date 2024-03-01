@@ -145,6 +145,7 @@ sources = """
           kdm_util.cc
           log.cc
           log_entry.cc
+          make_centre.cc
           make_dcp.cc
           map_cli.cc
           maths_util.cc
