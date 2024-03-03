@@ -31,9 +31,9 @@ class Image;
 class BitmapText
 {
 public:
-	BitmapText (std::shared_ptr<const Image> i, dcpomatic::Rect<double> r)
-		: image (i)
-		, rectangle (r)
+	BitmapText(std::shared_ptr<const Image> image_, dcpomatic::Rect<double> rectangle_)
+		: image(image_)
+		, rectangle(rectangle_)
 	{}
 
 	std::shared_ptr<const Image> image;
