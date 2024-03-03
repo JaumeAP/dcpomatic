@@ -23,6 +23,7 @@
 
 
 #include "rect.h"
+#include <dcp/types.h>
 #include <memory>
 
 
@@ -31,11 +32,14 @@ class Image;
 class BitmapText
 {
 public:
-	BitmapText(std::shared_ptr<const Image> image_, dcpomatic::Rect<double> rectangle_)
-		: image(image_)
+	BitmapText(dcp::Size parent_size_, std::shared_ptr<const Image> image_, dcpomatic::Rect<double> rectangle_)
+		: parent_size(parent_size_)
+		, image(image_)
 		, rectangle(rectangle_)
 	{}
 
+	/** Size of the image that this subtitle has come from, with any crop already applied */
+	dcp::Size parent_size;
 	std::shared_ptr<const Image> image;
 	/** Area that the subtitle covers on its corresponding video, expressed in
 	 *  proportions of the image size; e.g. rectangle.x = 0.5 would mean that

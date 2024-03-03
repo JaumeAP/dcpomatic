@@ -1233,7 +1233,8 @@ Player::bitmap_text_start (weak_ptr<Piece> weak_piece, weak_ptr<const TextConten
 
 	auto piece = weak_piece.lock ();
 	auto content = weak_content.lock ();
-	if (!piece || !content) {
+	auto film = _film.lock();
+	if (!piece || !content || !film) {
 		return;
 	}
 
@@ -1254,15 +1255,16 @@ Player::bitmap_text_start (weak_ptr<Piece> weak_piece, weak_ptr<const TextConten
 
 		auto image = sub.image;
 
-		/* We will scale the subtitle up to fit _video_container_size */
-		int const width = sub.rectangle.width * _video_container_size.load().width;
-		int const height = sub.rectangle.height * _video_container_size.load().height;
+		auto const inter_size = scale_for_display(sub.parent_size, _video_container_size.load(), film->frame_size(), {});
+
+		int const width = sub.rectangle.width * inter_size.width;
+		int const height = sub.rectangle.height * inter_size.height;
 		if (width == 0 || height == 0) {
 			return;
 		}
 
 		dcp::Size scaled_size (width, height);
-		ps.bitmap.push_back (BitmapText(image->scale(scaled_size, dcp::YUVToRGB::REC601, image->pixel_format(), Image::Alignment::PADDED, _fast), sub.rectangle));
+		ps.bitmap.push_back(BitmapText(sub.parent_size, image->scale(scaled_size, dcp::YUVToRGB::REC601, image->pixel_format(), Image::Alignment::PADDED, _fast), sub.rectangle));
 	}
 
 	DCPTime from(content_time_to_dcp(piece, subtitle.from()));

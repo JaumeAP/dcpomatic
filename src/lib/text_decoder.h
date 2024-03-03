@@ -51,7 +51,7 @@ public:
 	}
 
 	void emit_bitmap_start (ContentBitmapText const& bitmap);
-	void emit_bitmap (dcpomatic::ContentTimePeriod period, std::shared_ptr<const Image> image, dcpomatic::Rect<double> rect);
+	void emit_bitmap(dcpomatic::ContentTimePeriod period, dcp::Size parent_size, std::shared_ptr<const Image> image, dcpomatic::Rect<double> rect);
 	void emit_plain_start(dcpomatic::ContentTime from, std::vector<dcp::SubtitleString> s, dcp::SubtitleStandard valign_standard);
 	void emit_plain_start (dcpomatic::ContentTime from, sub::Subtitle const & subtitle);
 	void emit_plain(dcpomatic::ContentTimePeriod period, std::vector<dcp::SubtitleString> s, dcp::SubtitleStandard valign_standard);

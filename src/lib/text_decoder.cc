@@ -352,9 +352,9 @@ TextDecoder::emit_plain (ContentTimePeriod period, sub::Subtitle const& subtitle
  *  of the video frame)
  */
 void
-TextDecoder::emit_bitmap (ContentTimePeriod period, shared_ptr<const Image> image, dcpomatic::Rect<double> rect)
+TextDecoder::emit_bitmap(ContentTimePeriod period, dcp::Size parent_size, shared_ptr<const Image> image, dcpomatic::Rect<double> rect)
 {
-	emit_bitmap_start ({ period.from, image, rect });
+	emit_bitmap_start ({ period.from, parent_size, image, rect });
 	emit_stop (period.to);
 }
 

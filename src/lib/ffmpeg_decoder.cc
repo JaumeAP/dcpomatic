@@ -770,39 +770,41 @@ FFmpegDecoder::process_bitmap_subtitle (AVSubtitleRect const * rect)
 		out_p += image->stride()[0];
 	}
 
-	int target_width = subtitle_codec_context()->width;
-	if (target_width == 0 && video_codec_context()) {
-		/* subtitle_codec_context()->width == 0 has been seen in the wild but I don't
-		   know if it's supposed to mean something from FFmpeg's point of view.
-		*/
-		target_width = video_codec_context()->width;
+	optional<dcp::Size> video_size;
+	if (_ffmpeg_content->video) {
+		video_size = _ffmpeg_content->video->size();
 	}
-	int target_height = subtitle_codec_context()->height;
-	if (target_height == 0 && video_codec_context()) {
-		target_height = video_codec_context()->height;
+
+	dcp::Size target_size = { subtitle_codec_context()->width, subtitle_codec_context()->height };
+	if (target_size.width == 0 || target_size.height == 0 || (video_size && *video_size == target_size)) {
+		/* Either the subtitle codec has no specified size, or it's the same as the video.
+		 * In either case we'll use the target size once it has been cropped etc. as we
+		 * assume that whatever happens to the video should also be done to the subtitles.
+		 */
+		if (auto s = ffmpeg_content()->video->scaled_size(film()->frame_size())) {
+			target_size = *s;
+		}
 	}
 
 	int x_offset = 0;
 	int y_offset = 0;
 	if (_ffmpeg_content->video && _ffmpeg_content->video->use()) {
 		auto const crop = _ffmpeg_content->video->actual_crop();
-		target_width -= crop.left + crop.right;
-		target_height -= crop.top + crop.bottom;
 		x_offset = -crop.left;
 		y_offset = -crop.top;
 	}
 
-	DCPOMATIC_ASSERT(target_width > 0);
-	DCPOMATIC_ASSERT(target_height > 0);
+	DCPOMATIC_ASSERT(target_size.width > 0);
+	DCPOMATIC_ASSERT(target_size.height > 0);
 
 	dcpomatic::Rect<double> const scaled_rect (
-		static_cast<double>(rect->x + x_offset) / target_width,
-		static_cast<double>(rect->y + y_offset) / target_height,
-		static_cast<double>(rect->w) / target_width,
-		static_cast<double>(rect->h) / target_height
+		static_cast<double>(rect->x + x_offset) / target_size.width,
+		static_cast<double>(rect->y + y_offset) / target_size.height,
+		static_cast<double>(rect->w) / target_size.width,
+		static_cast<double>(rect->h) / target_size.height
 		);
 
-	return { image, scaled_rect };
+	return { target_size, image, scaled_rect };
 }
 
 

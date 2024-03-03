@@ -57,9 +57,9 @@ public:
 		: ContentText(from)
 	{}
 
-	ContentBitmapText(dcpomatic::ContentTime from, std::shared_ptr<const Image> image, dcpomatic::Rect<double> rect)
+	ContentBitmapText(dcpomatic::ContentTime from, dcp::Size parent_size, std::shared_ptr<const Image> image, dcpomatic::Rect<double> rect)
 		: ContentText(from)
-		, subs{ {image, rect} }
+		, subs{ { parent_size, image, rect } }
 	{}
 
 	/* Our texts, with their rectangles unmodified by any offsets or scales that the content specifies */
