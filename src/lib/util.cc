@@ -908,15 +908,15 @@ utf8_strlen (string s)
 }
 
 
-/** @param size Size of picture that the subtitle will be overlaid onto */
+/** @param parent_size Size of picture that the subtitle will be overlaid onto */
 void
-emit_subtitle_image (ContentTimePeriod period, dcp::SubtitleImage sub, dcp::Size size, shared_ptr<TextDecoder> decoder)
+emit_subtitle_image(ContentTimePeriod period, dcp::SubtitleImage sub, dcp::Size parent_size, shared_ptr<TextDecoder> decoder)
 {
 	/* XXX: this is rather inefficient; decoding the image just to get its size */
 	FFmpegImageProxy proxy (sub.png_image());
 	auto image = proxy.image(Image::Alignment::PADDED).image;
 	/* set up rect with height and width */
-	dcpomatic::Rect<double> rect(0, 0, image->size().width / double(size.width), image->size().height / double(size.height));
+	dcpomatic::Rect<double> rect(0, 0, image->size().width / double(parent_size.width), image->size().height / double(parent_size.height));
 
 	/* add in position */
 
@@ -944,7 +944,7 @@ emit_subtitle_image (ContentTimePeriod period, dcp::SubtitleImage sub, dcp::Size
 		break;
 	}
 
-	decoder->emit_bitmap (period, image, rect);
+	decoder->emit_bitmap(period, parent_size, image, rect);
 }
 
 

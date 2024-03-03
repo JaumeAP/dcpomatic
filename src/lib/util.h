@@ -87,7 +87,7 @@ extern std::string careful_string_filter (std::string);
 extern std::pair<int, int> audio_channel_types (std::list<int> mapped, int channels);
 extern std::shared_ptr<AudioBuffers> remap (std::shared_ptr<const AudioBuffers> input, int output_channels, AudioMapping map);
 extern size_t utf8_strlen (std::string s);
-extern void emit_subtitle_image (dcpomatic::ContentTimePeriod period, dcp::SubtitleImage sub, dcp::Size size, std::shared_ptr<TextDecoder> decoder);
+extern void emit_subtitle_image(dcpomatic::ContentTimePeriod period, dcp::SubtitleImage sub, dcp::Size parent_size, std::shared_ptr<TextDecoder> decoder);
 extern void copy_in_bits (boost::filesystem::path from, boost::filesystem::path to, std::function<void (float)>);
 extern dcp::Size scale_for_display (dcp::Size s, dcp::Size display_container, dcp::Size film_container, PixelQuanta quanta);
 extern dcp::DecryptedKDM decrypt_kdm_with_helpful_error (dcp::EncryptedKDM kdm);
