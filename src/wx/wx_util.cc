@@ -447,7 +447,7 @@ dcpomatic_setup_i18n()
 #if wxCHECK_VERSION(3, 1, 6)
 			translations->SetLanguage(info->GetCanonicalWithRegion());
 #else
-			translations->SetLanguage(info->CanonicalRef.empty() ? info->CanonicalName : info->CanonicalRef);
+			translations->SetLanguage(info->CanonicalName);
 #endif
 		}
 	}
