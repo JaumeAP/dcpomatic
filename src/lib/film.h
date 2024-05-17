@@ -37,6 +37,7 @@
 #include "named_channel.h"
 #include "resolution.h"
 #include "signaller.h"
+#include "smpte_flavour.h"
 #include "territory_type.h"
 #include "transcode_job.h"
 #include "types.h"
@@ -275,8 +276,8 @@ public:
 		return _interop;
 	}
 
-	bool limit_to_smpte_bv20() const {
-		return _limit_to_smpte_bv20;
+	dcp::SMPTEFlavour smpte_flavour() const {
+		return _smpte_flavour;
 	}
 
 	AudioProcessor const * audio_processor () const {
@@ -404,7 +405,7 @@ public:
 	void set_isdcf_date_today ();
 	void set_sequence (bool);
 	void set_interop (bool);
-	void set_limit_to_smpte_bv20(bool);
+	void set_smpte_flavour(dcp::SMPTEFlavour flavour);
 	void set_audio_processor (AudioProcessor const * processor);
 	void set_reel_type (ReelType);
 	void set_reel_length (int64_t);
@@ -519,7 +520,7 @@ private:
 	bool _three_d;
 	bool _sequence;
 	bool _interop;
-	bool _limit_to_smpte_bv20;
+	dcp::SMPTEFlavour _smpte_flavour = dcp::SMPTEFlavour::BV21;
 	AudioProcessor const * _audio_processor;
 	ReelType _reel_type;
 	/** Desired reel length in bytes, if _reel_type == REELTYPE_BY_LENGTH */

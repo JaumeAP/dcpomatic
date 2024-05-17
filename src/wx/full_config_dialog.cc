@@ -1547,7 +1547,7 @@ private:
 
 		checkbox(_("Allow creation of DCPs with 96kHz audio"), _allow_96khz_audio);
 		checkbox(_("Allow mapping to all audio channels"), _use_all_audio_channels);
-		checkbox(_("Allow use of SMPTE Bv2.0"), _allow_smpte_bv20);
+		checkbox(_("Allow use of SMPTE flavours"), _allow_smpte_flavours);
 
 		{
 			add_label_to_sizer(table, _panel, _("ISDCF name part length"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
@@ -1563,7 +1563,7 @@ private:
 		_allow_any_container->bind(&NonStandardPage::allow_any_container_changed, this);
 		_allow_96khz_audio->bind(&NonStandardPage::allow_96khz_audio_changed, this);
 		_use_all_audio_channels->bind(&NonStandardPage::use_all_channels_changed, this);
-		_allow_smpte_bv20->bind(&NonStandardPage::allow_smpte_bv20_changed, this);
+		_allow_smpte_flavours->bind(&NonStandardPage::allow_smpte_flavours_changed, this);
 		_isdcf_name_part_length->SetRange(1, 256);
 		_isdcf_name_part_length->Bind(wxEVT_SPINCTRL, boost::bind(&NonStandardPage::isdcf_name_part_length_changed, this));
 	}
@@ -1577,7 +1577,7 @@ private:
 		checked_set(_allow_any_container, config->allow_any_container());
 		checked_set(_allow_96khz_audio, config->allow_96khz_audio());
 		checked_set(_use_all_audio_channels, config->use_all_audio_channels());
-		checked_set(_allow_smpte_bv20, config->allow_smpte_bv20());
+		checked_set(_allow_smpte_flavours, config->allow_smpte_flavours());
 		checked_set(_isdcf_name_part_length, config->isdcf_name_part_length());
 	}
 
@@ -1606,9 +1606,9 @@ private:
 		Config::instance()->set_use_all_audio_channels(_use_all_audio_channels->GetValue());
 	}
 
-	void allow_smpte_bv20_changed()
+	void allow_smpte_flavours_changed()
 	{
-		Config::instance()->set_allow_smpte_bv20(_allow_smpte_bv20->GetValue());
+		Config::instance()->set_allow_smpte_flavours(_allow_smpte_flavours->GetValue());
 	}
 
 	void isdcf_name_part_length_changed()
@@ -1621,7 +1621,7 @@ private:
 	CheckBox* _allow_any_container = nullptr;
 	CheckBox* _allow_96khz_audio = nullptr;
 	CheckBox* _use_all_audio_channels = nullptr;
-	CheckBox* _allow_smpte_bv20 = nullptr;
+	CheckBox* _allow_smpte_flavours = nullptr;
 	wxSpinCtrl* _isdcf_name_part_length = nullptr;
 };
 

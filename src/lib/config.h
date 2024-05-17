@@ -95,7 +95,7 @@ public:
 		SHOW_EXPERIMENTAL_AUDIO_PROCESSORS,
 		AUDIO_MAPPING,
 		AUTO_CROP_THRESHOLD,
-		ALLOW_SMPTE_BV20,
+		ALLOW_SMPTE_FLAVOURS,
 		ISDCF_NAME_PART_LENGTH,
 		OTHER
 	};
@@ -617,8 +617,8 @@ public:
 		return _default_add_file_location;
 	}
 
-	bool allow_smpte_bv20() const {
-		return _allow_smpte_bv20;
+	bool allow_smpte_flavours() const {
+		return _allow_smpte_flavours;
 	}
 
 	int isdcf_name_part_length() const {
@@ -1198,8 +1198,8 @@ public:
 		maybe_set(_default_add_file_location, location);
 	}
 
-	void set_allow_smpte_bv20(bool allow) {
-		maybe_set(_allow_smpte_bv20, allow, ALLOW_SMPTE_BV20);
+	void set_allow_smpte_flavours(bool allow) {
+		maybe_set(_allow_smpte_flavours, allow, ALLOW_SMPTE_FLAVOURS);
 	}
 
 	void set_isdcf_name_part_length(int length) {
@@ -1444,7 +1444,7 @@ private:
 	boost::optional<int> _main_divider_sash_position;
 	boost::optional<int> _main_content_divider_sash_position;
 	DefaultAddFileLocation _default_add_file_location;
-	bool _allow_smpte_bv20;
+	bool _allow_smpte_flavours;
 	int _isdcf_name_part_length;
 
 	ExportConfig _export;

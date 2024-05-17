@@ -59,7 +59,6 @@ def build(bld):
                  audio_ring_buffers_test.cc
                  burnt_subtitle_test.cc
                  butler_test.cc
-                 bv20_test.cc
                  cinema_sound_processor_test.cc
                  client_server_test.cc
                  closed_caption_test.cc
@@ -145,6 +144,7 @@ def build(bld):
                  silence_padding_test.cc
                  shuffler_test.cc
                  skip_frame_test.cc
+                 smpte_flavour_test.cc
                  socket_test.cc
                  srt_subtitle_test.cc
                  ssa_subtitle_test.cc

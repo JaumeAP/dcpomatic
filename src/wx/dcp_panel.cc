@@ -167,8 +167,11 @@ void
 DCPPanel::add_standards()
 {
 	_standard->add(_("SMPTE"), N_("smpte"));
-	if (Config::instance()->allow_smpte_bv20() || (_film && _film->limit_to_smpte_bv20())) {
+	if (Config::instance()->allow_smpte_flavours() || (_film && _film->smpte_flavour() == dcp::SMPTEFlavour::BV20)) {
 		_standard->add(_("SMPTE (Bv2.0 only)"), N_("smpte-bv20"));
+	}
+	if (Config::instance()->allow_smpte_flavours() || (_film && _film->smpte_flavour() == dcp::SMPTEFlavour::A)) {
+		_standard->add(_("SMPTE (A only)"), N_("smpte-a"));
 	}
 	_standard->add(_("Interop"), N_("interop"));
 	_sizer->Layout();
@@ -179,12 +182,21 @@ void
 DCPPanel::set_standard()
 {
 	DCPOMATIC_ASSERT(_film);
-	DCPOMATIC_ASSERT(!_film->limit_to_smpte_bv20() || _standard->GetCount() == 3);
 
 	if (_film->interop()) {
 		checked_set(_standard, "interop");
 	} else {
-		checked_set(_standard, _film->limit_to_smpte_bv20() ? "smpte-bv20" : "smpte");
+		switch (_film->smpte_flavour()) {
+		case dcp::SMPTEFlavour::A:
+			checked_set(_standard, "smpte-a");
+			break;
+		case dcp::SMPTEFlavour::BV20:
+			checked_set(_standard, "smpte-bv20");
+			break;
+		case dcp::SMPTEFlavour::BV21:
+			checked_set(_standard, "smpte");
+			break;
+		}
 	}
 }
 
@@ -203,13 +215,16 @@ DCPPanel::standard_changed ()
 
 	if (*data == N_("interop")) {
 		_film->set_interop(true);
-		_film->set_limit_to_smpte_bv20(false);
+		_film->set_smpte_flavour(dcp::SMPTEFlavour::BV21);
 	} else if (*data == N_("smpte")) {
 		_film->set_interop(false);
-		_film->set_limit_to_smpte_bv20(false);
+		_film->set_smpte_flavour(dcp::SMPTEFlavour::BV21);
 	} else if (*data == N_("smpte-bv20")) {
 		_film->set_interop(false);
-		_film->set_limit_to_smpte_bv20(true);
+		_film->set_smpte_flavour(dcp::SMPTEFlavour::BV20);
+	} else if (*data == N_("smpte-a")) {
+		_film->set_interop(false);
+		_film->set_smpte_flavour(dcp::SMPTEFlavour::A);
 	}
 }
 
@@ -476,10 +491,11 @@ DCPPanel::film_changed(FilmProperty p)
 	case FilmProperty::INTEROP:
 		set_standard();
 		setup_dcp_name ();
-		_markers->Enable (!_film->interop());
+		setup_sensitivity();
 		break;
-	case FilmProperty::LIMIT_TO_SMPTE_BV20:
+	case FilmProperty::SMPTE_FLAVOUR:
 		set_standard();
+		setup_sensitivity();
 		break;
 	case FilmProperty::AUDIO_PROCESSOR:
 		if (_film->audio_processor()) {
@@ -656,7 +672,7 @@ DCPPanel::set_film (shared_ptr<Film> film)
 	film_changed(FilmProperty::REENCODE_J2K);
 	film_changed(FilmProperty::AUDIO_LANGUAGE);
 	film_changed(FilmProperty::AUDIO_FRAME_RATE);
-	film_changed(FilmProperty::LIMIT_TO_SMPTE_BV20);
+	film_changed(FilmProperty::SMPTE_FLAVOUR);
 
 	set_general_sensitivity(static_cast<bool>(_film));
 }
@@ -683,7 +699,7 @@ DCPPanel::setup_sensitivity ()
 	_encrypted->Enable              (_generally_sensitive);
 	_reel_type->Enable              (_generally_sensitive && _film && !_film->references_dcp_video() && !_film->references_dcp_audio());
 	_reel_length->Enable            (_generally_sensitive && _film && _film->reel_type() == ReelType::BY_LENGTH);
-	_markers->Enable                (_generally_sensitive && _film && !_film->interop());
+	_markers->Enable                (_generally_sensitive && _film && !_film->interop() && _film->smpte_flavour() != dcp::SMPTEFlavour::A);
 	_metadata->Enable               (_generally_sensitive);
 	_frame_rate_choice->Enable      (_generally_sensitive && _film && !_film->references_dcp_video() && !_film->contains_atmos_content());
 	_frame_rate_spin->Enable        (_generally_sensitive && _film && !_film->references_dcp_video() && !_film->contains_atmos_content());
@@ -781,12 +797,12 @@ DCPPanel::config_changed (Config::Property p)
 		if (_film) {
 			film_changed(FilmProperty::AUDIO_PROCESSOR);
 		}
-	} else if (p == Config::ALLOW_SMPTE_BV20) {
+	} else if (p == Config::ALLOW_SMPTE_FLAVOURS) {
 		_standard->Clear();
 		add_standards();
 		if (_film) {
 			film_changed(FilmProperty::INTEROP);
-			film_changed(FilmProperty::LIMIT_TO_SMPTE_BV20);
+			film_changed(FilmProperty::SMPTE_FLAVOUR);
 		}
 	} else if (p == Config::ISDCF_NAME_PART_LENGTH) {
 		setup_dcp_name();

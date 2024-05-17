@@ -205,7 +205,7 @@ Config::set_defaults ()
 	_default_kdm_duration = RoughDuration(1, RoughDuration::Unit::WEEKS);
 	_auto_crop_threshold = 0.1;
 	_last_release_notes_version = boost::none;
-	_allow_smpte_bv20 = false;
+	_allow_smpte_flavours = false;
 	_isdcf_name_part_length = 14;
 
 	_allowed_dcp_frame_rates.clear ();
@@ -639,7 +639,12 @@ try
 		}
 	}
 
-	_allow_smpte_bv20 = f.optional_bool_child("AllowSMPTEBv20").get_value_or(false);
+	if (auto old = f.optional_bool_child("AllowSMPTEBv20")) {
+		_allow_smpte_flavours = *old;
+	} else {
+		_allow_smpte_flavours = f.optional_bool_child("AllowSMPTEFlavours").get_value_or(false);
+	}
+
 	_isdcf_name_part_length = f.optional_number_child<int>("ISDCFNamePartLength").get_value_or(14);
 
 	_export.read(f.optional_node_child("Export"));
@@ -1123,8 +1128,8 @@ Config::write_config () const
 		_default_add_file_location == DefaultAddFileLocation::SAME_AS_LAST_TIME ? "last" : "project"
 		);
 
-	/* [XML] AllowSMPTEBv20 1 to allow the user to choose SMPTE (Bv2.0 only) as a standard, otherwise 0 */
-	root->add_child("AllowSMPTEBv20")->add_child_text(_allow_smpte_bv20 ? "1" : "0");
+	/* [XML] AllowSMPTEFlavours 1 to allow the user to choose SMPTE A or Bv2.0 only as a standard, otherwise 0 */
+	root->add_child("AllowSMPTEFlavours")->add_child_text(_allow_smpte_flavours ? "1" : "0");
 	/* [XML] ISDCFNamePartLength Maximum length of the "name" part of an ISDCF name, which should be 14 according to the standard */
 	root->add_child("ISDCFNamePartLength")->add_child_text(raw_convert<string>(_isdcf_name_part_length));
 
@@ -1659,7 +1664,7 @@ Config::load_from_zip(boost::filesystem::path zip_file)
 	changed(Property::SHOW_EXPERIMENTAL_AUDIO_PROCESSORS);
 	changed(Property::AUDIO_MAPPING);
 	changed(Property::AUTO_CROP_THRESHOLD);
-	changed(Property::ALLOW_SMPTE_BV20);
+	changed(Property::ALLOW_SMPTE_FLAVOURS);
 	changed(Property::ISDCF_NAME_PART_LENGTH);
 	changed(Property::OTHER);
 }

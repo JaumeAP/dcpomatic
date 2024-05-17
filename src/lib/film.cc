@@ -167,7 +167,6 @@ Film::Film (optional<boost::filesystem::path> dir)
 	, _three_d (false)
 	, _sequence (true)
 	, _interop (Config::instance()->default_interop ())
-	, _limit_to_smpte_bv20(false)
 	, _audio_processor (0)
 	, _reel_type (ReelType::SINGLE)
 	, _reel_length (2000000000)
@@ -251,10 +250,16 @@ Film::video_identifier () const
 		s += "_I";
 	} else {
 		s += "_S";
-		if (_limit_to_smpte_bv20) {
+		switch (_smpte_flavour) {
+		case dcp::SMPTEFlavour::A:
+			s += "_LA";
+			break;
+		case dcp::SMPTEFlavour::BV20:
 			s += "_L20";
-		} else {
+			break;
+		case dcp::SMPTEFlavour::BV21:
 			s += "_L21";
+			break;
 		}
 	}
 
@@ -403,7 +408,7 @@ Film::metadata (bool with_content_paths) const
 	root->add_child("ThreeD")->add_child_text (_three_d ? "1" : "0");
 	root->add_child("Sequence")->add_child_text (_sequence ? "1" : "0");
 	root->add_child("Interop")->add_child_text (_interop ? "1" : "0");
-	root->add_child("LimitToSMPTEBv20")->add_child_text(_limit_to_smpte_bv20 ? "1" : "0");
+	root->add_child("SMPTEFlavour")->add_child_text(smpte_flavour_to_string(_smpte_flavour));
 	root->add_child("Encrypted")->add_child_text (_encrypted ? "1" : "0");
 	root->add_child("Key")->add_child_text (_key.hex ());
 	root->add_child("ContextID")->add_child_text (_context_id);
@@ -580,7 +585,13 @@ Film::read_metadata (optional<boost::filesystem::path> path)
 
 	_three_d = f.bool_child ("ThreeD");
 	_interop = f.bool_child ("Interop");
-	_limit_to_smpte_bv20 = f.optional_bool_child("LimitToSMPTEBv20").get_value_or(false);
+
+	if (auto old = f.optional_bool_child("LimitToSMPTEBv20")) {
+		_smpte_flavour = dcp::SMPTEFlavour::BV20;
+	} else if (auto flavour = f.optional_string_child("SMPTEFlavour")) {
+		_smpte_flavour = string_to_smpte_flavour(*flavour);
+	}
+
 	_key = dcp::Key (f.string_child ("Key"));
 	_context_id = f.optional_string_child("ContextID").get_value_or (dcp::make_uuid ());
 
@@ -1198,10 +1209,10 @@ Film::set_interop (bool i)
 
 
 void
-Film::set_limit_to_smpte_bv20(bool limit)
+Film::set_smpte_flavour(dcp::SMPTEFlavour flavour)
 {
-	FilmChangeSignaller ch(this, FilmProperty::LIMIT_TO_SMPTE_BV20);
-	_limit_to_smpte_bv20 = limit;
+	FilmChangeSignaller ch(this, FilmProperty::SMPTE_FLAVOUR);
+	_smpte_flavour = flavour;
 }
 
 

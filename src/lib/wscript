@@ -175,6 +175,7 @@ sources = """
           send_problem_report_job.cc
           server.cc
           shuffler.cc
+          smpte_flavour.cc
           spl.cc
           spl_entry.cc
           state.cc
