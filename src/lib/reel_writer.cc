@@ -31,6 +31,7 @@
 #include "frame_info.h"
 #include "image.h"
 #include "image_png.h"
+#include "info_file_checker.h"
 #include "job.h"
 #include "log.h"
 #include "reel_writer.h"
@@ -758,10 +759,23 @@ try
 	}
 
 	int64_t total_done = 0;
+
+	auto progress = [&total_done, total_size, set_progress](int64_t done, int64_t) {
+		set_progress(total_done + done, total_size);
+	};
+
 	for (auto asset: assets) {
-		asset->hash([&total_done, total_size, set_progress](int64_t done, int64_t) {
-			set_progress(total_done + done, total_size);
-		});
+		if (asset == _j2k_picture_asset && Config::instance()->check_disk_writes()) {
+			try {
+				InfoFileChecker checker(film()->info_file_handle(_period, true));
+				asset->hash(progress, boost::bind(&InfoFileChecker::check, &checker, _1, _2, _3));
+			} catch (OpenFileError&) {
+				LOG_ERROR_NC("Could not open info file to check disk writes");
+				asset->hash(progress);
+			}
+		} else {
+			asset->hash(progress);
+		}
 		total_done += asset->file() ? boost::filesystem::file_size(*asset->file()) : 0;
 	}
 

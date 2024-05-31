@@ -115,6 +115,7 @@ public:
 		AUDIO_MAPPING,
 		AUTO_CROP_THRESHOLD,
 		ALLOW_SMPTE_BV20,
+		CHECK_DISK_WRITES,
 		ISDCF_NAME_PART_LENGTH,
 		ALLOW_ANY_CONTAINER,
 #ifdef DCPOMATIC_GROK
@@ -642,6 +643,10 @@ public:
 
 	bool allow_smpte_bv20() const {
 		return _allow_smpte_bv20;
+	}
+
+	bool check_disk_writes() const {
+		return _check_disk_writes;
 	}
 
 #ifdef DCPOMATIC_GROK
@@ -1209,6 +1214,10 @@ public:
 		maybe_set(_allow_smpte_bv20, allow, ALLOW_SMPTE_BV20);
 	}
 
+	void set_check_disk_writes(bool allow) {
+		maybe_set(_check_disk_writes, allow, CHECK_DISK_WRITES);
+	}
+
 #ifdef DCPOMATIC_GROK
 	void set_grok(Grok const& grok);
 #endif
@@ -1462,6 +1471,7 @@ private:
 	boost::optional<int> _main_content_divider_sash_position;
 	DefaultAddFileLocation _default_add_file_location;
 	bool _allow_smpte_bv20;
+	bool _check_disk_writes;
 	int _isdcf_name_part_length;
 	bool _enable_player_http_server;
 	int _player_http_server_port;

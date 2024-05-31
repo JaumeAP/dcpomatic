@@ -26,6 +26,7 @@
 
 
 #include "lib/audio_content.h"
+#include "lib/config.h"
 #include "lib/film.h"
 #include "lib/dcp_content_type.h"
 #include "lib/content_factory.h"
@@ -138,6 +139,10 @@ BOOST_AUTO_TEST_CASE (content_test5)
 BOOST_AUTO_TEST_CASE (content_test6)
 {
 	Cleanup cl;
+	ConfigRestorer cr;
+
+	/* Use this one to test the disk write checking */
+	Config::instance()->set_check_disk_writes(true);
 
 	auto film = new_test_film(
 		"content_test6",

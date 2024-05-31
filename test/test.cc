@@ -137,6 +137,7 @@ setup_test_config ()
 	config->set_dcp_asset_filename_format(dcp::NameFormat("%t"));
 	config->set_cinemas_file("build/test/cinemas.sqlite3");
 	config->set_dkdm_recipients_file("build/test/dkdm_recipients.sqlite3");
+	config->set_check_disk_writes(false);
 }
 
 

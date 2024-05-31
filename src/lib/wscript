@@ -139,6 +139,7 @@ sources = """
           image_png.cc
           image_proxy.cc
           image_store.cc
+          info_file_checker.cc
           info_file_handle.cc
           internal_player_server.cc
           j2k_image_proxy.cc

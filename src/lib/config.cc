@@ -213,6 +213,7 @@ Config::set_defaults ()
 	_auto_crop_threshold = 0.1;
 	_last_release_notes_version = boost::none;
 	_allow_smpte_bv20 = false;
+	_check_disk_writes = false;
 	_isdcf_name_part_length = 14;
 	_enable_player_http_server = false;
 	_player_http_server_port = 8080;
@@ -652,6 +653,7 @@ try
 	}
 
 	_allow_smpte_bv20 = f.optional_bool_child("AllowSMPTEBv20").get_value_or(false);
+	_check_disk_writes = f.optional_bool_child("CheckDiskWrites").get_value_or(false);
 	_isdcf_name_part_length = f.optional_number_child<int>("ISDCFNamePartLength").get_value_or(14);
 	_enable_player_http_server = f.optional_bool_child("EnablePlayerHTTPServer").get_value_or(false);
 	_player_http_server_port = f.optional_number_child<int>("PlayerHTTPServerPort").get_value_or(8080);
@@ -1124,6 +1126,8 @@ Config::write_config () const
 
 	/* [XML] AllowSMPTEBv20 1 to allow the user to choose SMPTE (Bv2.0 only) as a standard, otherwise 0 */
 	cxml::add_text_child(root, "AllowSMPTEBv20", _allow_smpte_bv20 ? "1" : "0");
+	/* [XML] CheckDiskWrites 1 to check for disk corruption when creating MXF hashes, otherwise 0 */
+	cxml::add_text_child(root, "CheckDiskWrites", _check_disk_writes ? "1" : "0");
 	/* [XML] ISDCFNamePartLength Maximum length of the "name" part of an ISDCF name, which should be 14 according to the standard */
 	cxml::add_text_child(root, "ISDCFNamePartLength", raw_convert<string>(_isdcf_name_part_length));
 	/* [XML] EnablePlayerHTTPServer 1 to enable a HTTP server to control the player, otherwise 0 */
