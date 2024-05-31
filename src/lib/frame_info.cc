@@ -20,6 +20,7 @@
 
 
 #include "frame_info.h"
+#include "info_file_handle.h"
 #include <string>
 
 
@@ -41,14 +42,27 @@ J2KFrameInfo::J2KFrameInfo(dcp::J2KFrameInfo const& info)
 }
 
 
+J2KFrameInfo::J2KFrameInfo(shared_ptr<InfoFileHandle> info_file)
+{
+	read(info_file->get());
+}
+
+
 J2KFrameInfo::J2KFrameInfo(shared_ptr<InfoFileHandle> info_file, Frame frame, Eyes eyes)
 {
 	info_file->get().seek(position(frame, eyes), SEEK_SET);
-	info_file->get().checked_read(&offset, sizeof(offset));
-	info_file->get().checked_read(&size, sizeof(size));
+	read(info_file->get());
+}
+
+
+void
+J2KFrameInfo::read(dcp::File& file)
+{
+	file.checked_read(&offset, sizeof(offset));
+	file.checked_read(&size, sizeof(size));
 
 	char hash_buffer[33];
-	info_file->get().checked_read(hash_buffer, 32);
+	file.checked_read(hash_buffer, 32);
 	hash_buffer[32] = '\0';
 	hash = hash_buffer;
 }

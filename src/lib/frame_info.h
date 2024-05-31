@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_FRAME_INFO_H
+#define DCPOMATIC_FRAME_INFO_H
+
+
 #include "film.h"
 #include <dcp/frame_info.h>
 #include <memory>
@@ -29,6 +33,7 @@ class J2KFrameInfo : public dcp::J2KFrameInfo
 public:
 	J2KFrameInfo(dcp::J2KFrameInfo const& info);
 	J2KFrameInfo(uint64_t offset_, uint64_t size_, std::string hash_);
+	explicit J2KFrameInfo(std::shared_ptr<InfoFileHandle> info_file);
 	J2KFrameInfo(std::shared_ptr<InfoFileHandle> info_file, Frame frame, Eyes eyes);
 
 	void write(std::shared_ptr<InfoFileHandle> info_file, Frame frame, Eyes eyes) const;
@@ -38,8 +43,11 @@ public:
 	}
 
 private:
+	void read(dcp::File& file);
 	long position(Frame frame, Eyes eyes) const;
 
 	static constexpr auto _size_on_disk = 32 + sizeof(dcp::J2KFrameInfo::offset) + sizeof(dcp::J2KFrameInfo::size);
 };
 
+
+#endif
