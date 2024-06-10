@@ -171,7 +171,13 @@ FFmpegImageProxy::image (Image::Alignment alignment, optional<dcp::Size>) const
 		throw DecodeError (N_("avcodec_find_stream_info"), name_for_errors, r, *_path);
 	}
 
-	DCPOMATIC_ASSERT (format_context->nb_streams == 1);
+	if (format_context->nb_streams != 1) {
+		if (_path) {
+			throw DecodeError("FFmpegProxy::image", String::compose("stream count %1", format_context->nb_streams), *_path);
+		} else {
+			throw DecodeError("FFmpegProxy::image", String::compose("stream count %1", format_context->nb_streams));
+		}
+	}
 
 	auto frame = av_frame_alloc ();
 	if (!frame) {
