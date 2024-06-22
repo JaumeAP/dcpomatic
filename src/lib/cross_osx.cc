@@ -342,7 +342,7 @@ Drive::get ()
 	auto run_loop = CFRunLoopGetCurrent ();
 	DASessionScheduleWithRunLoop (session, run_loop, kCFRunLoopDefaultMode);
 	CFRunLoopStop (run_loop);
-	CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.05, 0);
+	CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.5, 0);
 	DAUnregisterCallback(session, (void *) disk_appeared, &disks);
 	CFRelease(session);
 
