@@ -253,7 +253,7 @@ def configure(conf):
                        uselib_store='ICU')
 
     # If ICU version > 75 we need stdc++17, otherwise we stick with stdc++11
-    if (conf.check_cfg(modversion='icu-i18n') >= '75'):
+    if conf.check_cfg(modversion='icu-i18n') >= '75':
         conf.env.append_value('CXXFLAGS', '-std=c++17')
     else:
         conf.env.append_value('CXXFLAGS', '-std=c++11')
