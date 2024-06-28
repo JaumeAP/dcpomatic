@@ -46,11 +46,11 @@
 #include <dcp/raw_convert.h>
 #include <dcp/reel.h>
 #include <dcp/reel_atmos_asset.h>
-#include <dcp/reel_interop_closed_caption_asset.h>
+#include <dcp/reel_interop_caption_asset.h>
 #include <dcp/reel_interop_subtitle_asset.h>
 #include <dcp/reel_markers_asset.h>
 #include <dcp/reel_mono_picture_asset.h>
-#include <dcp/reel_smpte_closed_caption_asset.h>
+#include <dcp/reel_smpte_caption_asset.h>
 #include <dcp/reel_smpte_subtitle_asset.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/reel_stereo_picture_asset.h>
@@ -631,7 +631,7 @@ ReelWriter::create_reel_text (
 	}
 
 	for (auto const& i: _closed_caption_assets) {
-		auto a = maybe_add_text<dcp::ReelInteropClosedCaptionAsset, dcp::ReelSMPTEClosedCaptionAsset, dcp::ReelClosedCaptionAsset> (
+		auto a = maybe_add_text<dcp::ReelInteropCaptionAsset, dcp::ReelSMPTECaptionAsset, dcp::ReelCaptionAsset> (
 			i.second, duration, reel, _reel_index, _reel_count, _content_summary, refs, film(), _period, output_dcp, _text_only
 			);
 		DCPOMATIC_ASSERT (a);
@@ -645,7 +645,7 @@ ReelWriter::create_reel_text (
 
 	/* Make empty tracks for anything we've been asked to ensure but that we haven't added */
 	for (auto i: ensure_closed_captions) {
-		auto a = maybe_add_text<dcp::ReelInteropClosedCaptionAsset, dcp::ReelSMPTEClosedCaptionAsset, dcp::ReelClosedCaptionAsset> (
+		auto a = maybe_add_text<dcp::ReelInteropCaptionAsset, dcp::ReelSMPTECaptionAsset, dcp::ReelCaptionAsset> (
 			empty_text_asset(TextType::CLOSED_CAPTION, i, true),
 			duration,
 			reel,

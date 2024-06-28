@@ -24,7 +24,7 @@
 #include "dcpomatic_assert.h"
 #include "font_id_allocator.h"
 #include <dcp/reel.h>
-#include <dcp/reel_closed_caption_asset.h>
+#include <dcp/reel_caption_asset.h>
 #include <dcp/reel_subtitle_asset.h>
 #include <dcp/subtitle_asset.h>
 #include <set>

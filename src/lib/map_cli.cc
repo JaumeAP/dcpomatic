@@ -30,7 +30,7 @@
 #include <dcp/mono_j2k_picture_asset.h>
 #include <dcp/reel.h>
 #include <dcp/reel_atmos_asset.h>
-#include <dcp/reel_closed_caption_asset.h>
+#include <dcp/reel_caption_asset.h>
 #include <dcp/reel_file_asset.h>
 #include <dcp/reel_picture_asset.h>
 #include <dcp/reel_sound_asset.h>

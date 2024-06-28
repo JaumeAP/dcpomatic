@@ -54,7 +54,7 @@
 #include "timer.h"
 #include "video_decoder.h"
 #include <dcp/reel.h>
-#include <dcp/reel_closed_caption_asset.h>
+#include <dcp/reel_caption_asset.h>
 #include <dcp/reel_picture_asset.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/reel_subtitle_asset.h>
@@ -1295,6 +1295,7 @@ Player::plain_text_start (weak_ptr<Piece> weak_piece, weak_ptr<const TextContent
 	PlayerText ps;
 	DCPTime const from (content_time_to_dcp (piece, subtitle.from()));
 
+	std::cout << "_____________________________ plain text start!!\n";
 	if (from > piece->content->end(film)) {
 		return;
 	}

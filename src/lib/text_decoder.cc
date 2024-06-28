@@ -141,6 +141,7 @@ TextDecoder::emit_plain_start(ContentTime from, vector<dcp::SubtitleString> subt
 		string_texts.push_back(string_text);
 	}
 
+	std::cout << "PlainStart FUCKAS\n";
 	PlainStart(ContentStringText(from, string_texts));
 	maybe_set_position(from);
 }
@@ -324,6 +325,7 @@ TextDecoder::emit_plain_start (ContentTime from, sub::Subtitle const & sub_subti
 		}
 	}
 
+	std::cout << "PlainStart FUCKAS\n";
 	PlainStart(ContentStringText(from, string_texts));
 	maybe_set_position(from);
 }

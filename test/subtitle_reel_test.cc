@@ -29,7 +29,7 @@
 #include <dcp/cpl.h>
 #include <dcp/reel.h>
 #include <dcp/interop_subtitle_asset.h>
-#include <dcp/reel_closed_caption_asset.h>
+#include <dcp/reel_caption_asset.h>
 #include <dcp/reel_subtitle_asset.h>
 #include <boost/test/unit_test.hpp>
 

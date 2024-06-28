@@ -36,7 +36,7 @@
 #include <dcp/dcp.h>
 #include <dcp/raw_convert.h>
 #include <dcp/exceptions.h>
-#include <dcp/reel_closed_caption_asset.h>
+#include <dcp/reel_caption_asset.h>
 #include <dcp/reel_picture_asset.h>
 #include <dcp/reel_subtitle_asset.h>
 #include <dcp/reel.h>
@@ -124,9 +124,13 @@ DCPContent::DCPContent (cxml::ConstNodePtr node, int version)
 	_reference_audio = node->optional_bool_child ("ReferenceAudio").get_value_or (false);
 	if (version >= 37) {
 		_reference_text[TextType::OPEN_SUBTITLE] = node->optional_bool_child("ReferenceOpenSubtitle").get_value_or(false);
+		_reference_text[TextType::OPEN_CAPTION] = node->optional_bool_child("ReferenceOpenCaption").get_value_or(false);
+		_reference_text[TextType::CLOSED_SUBTITLE] = node->optional_bool_child("ReferenceClosedSubtitle").get_value_or(false);
 		_reference_text[TextType::CLOSED_CAPTION] = node->optional_bool_child("ReferenceClosedCaption").get_value_or(false);
 	} else {
 		_reference_text[TextType::OPEN_SUBTITLE] = node->optional_bool_child("ReferenceSubtitle").get_value_or(false);
+		_reference_text[TextType::OPEN_CAPTION] = false;
+		_reference_text[TextType::CLOSED_SUBTITLE] = false;
 		_reference_text[TextType::CLOSED_CAPTION] = false;
 	}
 	if (node->optional_string_child("Standard")) {
@@ -296,9 +300,25 @@ DCPContent::examine (shared_ptr<const Film> film, shared_ptr<Job> job)
 		new_text.push_back (c);
 	}
 
+	for (int i = 0; i < examiner->text_count(TextType::OPEN_CAPTION); ++i) {
+		auto c = make_shared<TextContent>(this, TextType::OPEN_CAPTION, TextType::OPEN_CAPTION);
+		c->set_language (examiner->open_caption_language());
+		examiner->add_fonts(c);
+		new_text.push_back(c);
+	}
+
+	int index = 0;
+
+	for (int i = 0; i < examiner->text_count(TextType::CLOSED_SUBTITLE); ++i) {
+		auto c = make_shared<TextContent>(this, TextType::CLOSED_SUBTITLE, TextType::CLOSED_SUBTITLE);
+		c->set_dcp_track (examiner->dcp_text_track(index++));
+		examiner->add_fonts(c);
+		new_text.push_back(c);
+	}
+
 	for (int i = 0; i < examiner->text_count(TextType::CLOSED_CAPTION); ++i) {
 		auto c = make_shared<TextContent>(this, TextType::CLOSED_CAPTION, TextType::CLOSED_CAPTION);
-		c->set_dcp_track (examiner->dcp_text_track(i));
+		c->set_dcp_track (examiner->dcp_text_track(index++));
 		examiner->add_fonts(c);
 		new_text.push_back (c);
 	}
@@ -765,9 +785,21 @@ DCPContent::can_reference_text (shared_ptr<const Film> film, TextType type, stri
 		return false;
 	}
 
+	if (_has_non_zero_entry_point[TextType::OPEN_CAPTION]) {
+		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+		why_not = _("one of its caption reels has a non-zero entry point so it must be re-written.");
+		return false;
+	}
+
+	if (_has_non_zero_entry_point[TextType::CLOSED_SUBTITLE]) {
+		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+		why_not = _("one of its closed subtitles has a non-zero entry point so it must be re-written.");
+		return false;
+        }
+
 	if (_has_non_zero_entry_point[TextType::CLOSED_CAPTION]) {
 		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-		why_not = _("one of its closed caption has a non-zero entry point so it must be re-written.");
+		why_not = _("one of its closed captions has a non-zero entry point so it must be re-written.");
 		return false;
         }
 

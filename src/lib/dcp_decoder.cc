@@ -45,7 +45,7 @@
 #include <dcp/mono_mpeg2_picture_asset.h>
 #include <dcp/reel.h>
 #include <dcp/reel_atmos_asset.h>
-#include <dcp/reel_closed_caption_asset.h>
+#include <dcp/reel_caption_asset.h>
 #include <dcp/reel_picture_asset.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/reel_subtitle_asset.h>
@@ -308,6 +308,25 @@ DCPDecoder::pass_texts (ContentTime next, dcp::Size size)
 		++decoder;
 	}
 
+	if ((*_reel)->main_caption()) {
+		pass_texts (
+			next,
+			(*_reel)->main_caption()->asset(),
+			_dcp_content->reference_text(TextType::OPEN_CAPTION),
+			(*_reel)->main_caption()->entry_point().get_value_or(0),
+			*decoder,
+			size
+			);
+		++decoder;
+	}
+
+	for (auto i: (*_reel)->closed_subtitles()) {
+		pass_texts (
+			next, i->asset(), _dcp_content->reference_text(TextType::CLOSED_SUBTITLE), i->entry_point().get_value_or(0), *decoder, size
+			);
+		++decoder;
+	}
+
 	for (auto i: (*_reel)->closed_captions()) {
 		pass_texts (
 			next, i->asset(), _dcp_content->reference_text(TextType::CLOSED_CAPTION), i->entry_point().get_value_or(0), *decoder, size
@@ -332,13 +351,20 @@ DCPDecoder::pass_texts (
 			true
 			);
 
+		if (subs.size() > 0) {
+			std::cout << "found " << subs.size() << "\n";
+			std::cout << typeid(subs[0]).name() << "\n";
+		}
+
 		vector<dcp::SubtitleString> strings;
 
 		for (auto i: subs) {
 			auto is = dynamic_pointer_cast<const dcp::SubtitleString>(i);
 			if (is) {
+				std::cout << "oh fuck fuckety fuck\n";
 				if (!strings.empty() && (strings.back().in() != is->in() || strings.back().out() != is->out())) {
 					auto b = strings.back();
+					std::cout << "emit_plain all up in yo'ass\n";
 					decoder->emit_plain (
 						ContentTimePeriod (
 							ContentTime::from_frames(_offset - entry_point, vfr) + ContentTime::from_seconds(b.in().as_seconds()),
@@ -356,7 +382,10 @@ DCPDecoder::pass_texts (
 				} else {
 					is_copy.set_font(_font_id_allocator.default_font_id());
 				}
+				std::cout << "store it\n";
 				strings.push_back(is_copy);
+			} else {
+				std::cout << "massive cahoonas\n";
 			}
 
 			/* XXX: perhaps these image subs should also be collected together like the string ones are;

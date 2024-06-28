@@ -117,6 +117,10 @@ public:
 		return _open_subtitle_language;
 	}
 
+	boost::optional<dcp::LanguageTag> open_caption_language() const {
+		return _open_caption_language;
+	}
+
 	DCPTextTrack dcp_text_track (int i) const {
 		DCPOMATIC_ASSERT (i >= 0 && i < static_cast<int>(_dcp_text_tracks.size()));
 		return _dcp_text_tracks[i];
@@ -198,7 +202,8 @@ private:
 	/** number of different assets of each type (OCAP/CCAP) */
 	EnumIndexedVector<int, TextType> _text_count;
 	boost::optional<dcp::LanguageTag> _open_subtitle_language;
-	/** the DCPTextTracks for each of our CCAPs */
+	boost::optional<dcp::LanguageTag> _open_caption_language;
+	/** the DCPTextTracks for each of our closed captions/subtitles */
 	std::vector<DCPTextTrack> _dcp_text_tracks;
 	bool _encrypted = false;
 	bool _needs_assets = false;

@@ -43,7 +43,7 @@
 #include <dcp/mono_mpeg2_picture_frame.h>
 #include <dcp/locale_convert.h>
 #include <dcp/raw_convert.h>
-#include <dcp/reel_closed_caption_asset.h>
+#include <dcp/reel_caption_asset.h>
 #include <dcp/reel_file_asset.h>
 #include <dcp/reel_subtitle_asset.h>
 #include <cerrno>
@@ -947,7 +947,7 @@ Writer::write (ReferencedReelAsset asset)
 
 	if (dynamic_pointer_cast<dcp::ReelSubtitleAsset>(asset.asset)) {
 		_have_subtitles = true;
-	} else if (auto ccap = dynamic_pointer_cast<dcp::ReelClosedCaptionAsset>(asset.asset)) {
+	} else if (auto ccap = dynamic_pointer_cast<dcp::ReelCaptionAsset>(asset.asset)) {
 		/* This feels quite fragile. We have a referenced reel and want to know if it's
 		 * part of a given closed-caption track so that we can fill if it has any
 		 * missing reels.  I guess for that purpose almost any DCPTextTrack values are
