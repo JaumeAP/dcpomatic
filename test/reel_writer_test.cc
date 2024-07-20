@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE (write_frame_info_test)
 
 	/* Write the first one */
 
-	J2KFrameInfo info1(0, 123, "12345678901234567890123456789012");
+	J2KFrameInfo info1(0, 123, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 });
 	info1.write(film->info_file_handle(period, false), 0, Eyes::LEFT);
 	{
 		auto file = film->info_file_handle(period, true);
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE (write_frame_info_test)
 
 	/* Write some more */
 
-	J2KFrameInfo info2(596, 14921, "123acb789f1234ae782012n456339522");
+	J2KFrameInfo info2(596, 14921, { 0x12, 0x3a, 0xcb, 0x78, 0x9f, 0x12, 0x34, 0xae, 0x78, 0x20, 0x12, 0x14, 0x56, 0x33, 0x95, 0x22 });
 	info2.write(film->info_file_handle(period, false), 5, Eyes::RIGHT);
 
 	{
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE (write_frame_info_test)
 		BOOST_CHECK(equal(info2, file, 5, Eyes::RIGHT));
 	}
 
-	J2KFrameInfo info3(12494, 99157123, "xxxxyyyyabc12356ffsfdsf456339522");
+	J2KFrameInfo info3(12494, 99157123, { 0x12, 0x34, 0x9a, 0x4d, 0x22, 0xae, 0x91, 0x8f, 0x55, 0xaa, 0xee, 0xdd, 0xaa, 0x11, 0x97, 0x56 });
 	info3.write(film->info_file_handle(period, false), 10, Eyes::LEFT);
 
 	{
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE (write_frame_info_test)
 
 	/* Overwrite one */
 
-	J2KFrameInfo info4(55512494, 123599157123, "ABCDEFGyabc12356ffsfdsf4563395ZZ");
+	J2KFrameInfo info4(55512494, 123599157123, { 0x81, 0x42, 0xf2, 0xe9, 0xd4, 0x81, 0xef, 0x22, 0x89, 0x18, 0xbc, 0xad, 0x7f, 0x6f, 0x2e, 0x8 });
 	info4.write(film->info_file_handle(period, false), 5, Eyes::RIGHT);
 
 	{

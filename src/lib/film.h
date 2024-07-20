@@ -456,6 +456,7 @@ public:
 
 	/** Current version number of the state file */
 	static int const current_state_version;
+	static int const current_frame_info_version;
 
 private:
 

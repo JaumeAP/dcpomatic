@@ -32,7 +32,7 @@ class J2KFrameInfo : public dcp::J2KFrameInfo
 {
 public:
 	J2KFrameInfo(dcp::J2KFrameInfo const& info);
-	J2KFrameInfo(uint64_t offset_, uint64_t size_, std::string hash_);
+	J2KFrameInfo(uint64_t offset_, uint64_t size_, std::vector<unsigned char> hash_);
 	explicit J2KFrameInfo(std::shared_ptr<InfoFileHandle> info_file);
 	J2KFrameInfo(std::shared_ptr<InfoFileHandle> info_file, Frame frame, Eyes eyes);
 
@@ -46,7 +46,7 @@ private:
 	void read(dcp::File& file);
 	long position(Frame frame, Eyes eyes) const;
 
-	static constexpr auto _size_on_disk = 32 + sizeof(dcp::J2KFrameInfo::offset) + sizeof(dcp::J2KFrameInfo::size);
+	static constexpr auto _size_on_disk = 16 + sizeof(dcp::J2KFrameInfo::offset) + sizeof(dcp::J2KFrameInfo::size);
 };
 
 
