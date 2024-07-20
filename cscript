@@ -534,7 +534,7 @@ def make_spec(filename, version, target, options, requires=None):
     print('/usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :', file=f)
 
 def dependencies(target, options):
-    deps = [('libdcp', 'e21dc264ac980b42395d6f23b6eccf378c842205', {'c++17': target.platform == 'osx'})]
+    deps = [('libdcp', 'a035981d701c72f5ef29b445a3695f2abb3fdfa9', {'c++17': target.platform == 'osx'})]
     deps.append(('libsub', '1c8d18d45dcb823d99f0f57200eaee8e1f2d9998'))
     deps.append(('leqm-nrt', '30dcaea1373ac62fba050e02ce5b0c1085797a23'))
     deps.append(('rtaudio', 'f619b76'))
