@@ -72,7 +72,6 @@ def options(opt):
     opt.add_option('--static-dcp',        action='store_true', default=False, help='link statically to libdcp')
     opt.add_option('--static-sub',        action='store_true', default=False, help='link statically to libsub')
     opt.add_option('--static-curl',       action='store_true', default=False, help='link statically to libcurl')
-    opt.add_option('--workaround-gssapi', action='store_true', default=False, help='link to gssapi_krb5')
     opt.add_option('--use-lld',           action='store_true', default=False, help='use lld linker')
     opt.add_option('--enable-disk',       action='store_true', default=False, help='build dcpomatic2_disk tool; requires Boost process, lwext4 and nanomsg libraries')
     opt.add_option('--enable-grok',       action='store_true', default=False, help='build with support for grok J2K encoder')
@@ -246,27 +245,30 @@ def configure(conf):
     # Dependencies.
     #
 
-    # It should be possible to use check_cfg for both dynamic and static linking, but
-    # e.g. pkg-config --libs --static foo returns some libraries that should be statically
-    # linked and others that should be dynamic.  This doesn't work too well with waf
-    # as it wants them separate.
+    # pkg-config --static doesn't work for us as it assumes all dependencies should be
+    # statically linked.  Instead here we use pkg-config without --static and then
+    # move specific libraries from the dynamic to the static list
 
-    def check_via_pkg_config(conf, package, uselib_store, mandatory, static, minimum_version):
+    def check_via_pkg_config(conf, package, uselib_store, mandatory, minimum_version):
         args = package if minimum_version is None else '%s >= %s' % (package, minimum_version)
-        args += ' --cflags'
-        if not static:
-            args += ' --libs'
+        args += ' --cflags --libs'
         msg = 'Checking for %s' % package
         if minimum_version is not None:
             msg += ' >= %s' % minimum_version
         conf.check_cfg(package=package, args=args, uselib_store=uselib_store, mandatory=mandatory, msg=msg)
 
+    def make_static(package, libraries):
+        for library in libraries:
+            getattr(conf.env, 'LIB_' + package.upper()).remove(library)
+        setattr(conf.env, 'STLIB_' + package.upper(), libraries)
+
+    def maybe_make_static(package, libraries):
+        if getattr(conf.options, 'static_' + package):
+            make_static(package, libraries)
+
     # libcurl
-    if conf.options.static_curl:
-        conf.env.STLIB_CURL = ['curl']
-        conf.env.LIB_CURL = ['ssh2', 'idn']
-    else:
-        conf.check_cfg(package='libcurl', args='libcurl >= 7.19.1 --cflags --libs', uselib_store='CURL', mandatory=True)
+    conf.check_cfg(package='libcurl', args='libcurl >= 7.19.1 --cflags --libs', uselib_store='CURL', mandatory=True)
+    maybe_make_static('curl', ['curl'])
 
     # libicu
     if conf.check_cfg(package='icu-i18n', args='--cflags --libs', uselib_store='ICU', mandatory=False) is None:
@@ -362,55 +364,36 @@ def configure(conf):
     conf.check_cfg(package='leqm_nrt', args='--cflags --libs', uselib_store='LEQM_NRT', mandatory=True)
 
     # libcxml
-    if conf.options.static_cxml:
-        conf.check_cfg(package='libcxml', args='libcxml >= 0.17.0 --cflags', uselib_store='CXML', mandatory=True)
-        conf.env.STLIB_CXML = ['cxml']
-    else:
-        conf.check_cfg(package='libcxml', args='libcxml >= 0.16.0 --cflags --libs', uselib_store='CXML', mandatory=True)
+    conf.check_cfg(package='libcxml', args='libcxml >= 0.16.0 --cflags --libs', uselib_store='CXML', mandatory=True)
+    maybe_make_static('cxml', ['cxml'])
 
     # libssh
-    if conf.options.static_ssh:
-        conf.env.STLIB_SSH = ['ssh']
-        if conf.options.workaround_gssapi:
-            conf.env.LIB_SSH = ['gssapi_krb5']
-    else:
-        conf.check_cxx(fragment="""
-                               #include <libssh/libssh.h>\n
-                               int main () {\n
-                               ssh_new ();\n
-                               return 0;\n
-                               }
-                               """,
-                      msg='Checking for library libssh',
-                      mandatory=True,
-                      lib='ssh',
-                      uselib_store='SSH')
+    conf.check_cxx(fragment="""
+                           #include <libssh/libssh.h>\n
+                           int main () {\n
+                           ssh_new ();\n
+                           return 0;\n
+                           }
+                           """,
+                  msg='Checking for library libssh',
+                  mandatory=True,
+                  lib='ssh',
+                  uselib_store='SSH')
+    maybe_make_static('ssh', ['ssh'])
 
     # libdcp
-    if conf.options.static_dcp:
-        check_via_pkg_config(conf, 'libdcp-1.0', 'DCP', mandatory=True, static=True, minimum_version=libdcp_version)
-        conf.env.DEFINES_DCP = [f.replace('\\', '') for f in conf.env.DEFINES_DCP]
-        conf.env.STLIB_DCP = ['dcp-1.0', 'asdcp-dcpomatic', 'kumu-dcpomatic', 'openjp2']
-        conf.env.LIB_DCP = ['glibmm-2.4', 'ssl', 'crypto', 'bz2', 'xslt', 'xerces-c']
-    else:
-        check_via_pkg_config(conf, 'libdcp-1.0', 'DCP', mandatory=True, static=False, minimum_version=libdcp_version)
-        conf.env.DEFINES_DCP = [f.replace('\\', '') for f in conf.env.DEFINES_DCP]
+    check_via_pkg_config(conf, 'libdcp-1.0', uselib_store='DCP', mandatory=True, minimum_version=libdcp_version)
+    conf.env.DEFINES_DCP = [f.replace('\\', '') for f in conf.env.DEFINES_DCP]
+    maybe_make_static('dcp', ['dcp-1.0', 'asdcp-dcpomatic', 'kumu-dcpomatic', 'openjp2'])
 
     # libsub
-    if conf.options.static_sub:
-        conf.check_cfg(package='libsub-1.0', args='libsub-1.0 >= %s --cflags' % libsub_version, uselib_store='SUB', mandatory=True)
-        conf.env.DEFINES_SUB = [f.replace('\\', '') for f in conf.env.DEFINES_SUB]
-        conf.env.STLIB_SUB = ['sub-1.0']
-    else:
-        conf.check_cfg(package='libsub-1.0', args='libsub-1.0 >= %s --cflags --libs' % libsub_version, uselib_store='SUB', mandatory=True)
-        conf.env.DEFINES_SUB = [f.replace('\\', '') for f in conf.env.DEFINES_SUB]
+    conf.check_cfg(package='libsub-1.0', args='libsub-1.0 >= %s --cflags --libs' % libsub_version, uselib_store='SUB', mandatory=True)
+    conf.env.DEFINES_SUB = [f.replace('\\', '') for f in conf.env.DEFINES_SUB]
+    maybe_make_static('sub', ['sub-1.0'])
 
     # libxml++
-    if conf.options.static_xmlpp:
-        conf.env.STLIB_XMLPP = ['xml++-' + conf.env.XMLPP_API]
-        conf.env.LIB_XMLPP = ['xml2']
-    else:
-        conf.check_cfg(package='libxml++-' + conf.env.XMLPP_API, args='--cflags --libs', uselib_store='XMLPP', mandatory=True)
+    conf.check_cfg(package='libxml++-' + conf.env.XMLPP_API, args='--cflags --libs', uselib_store='XMLPP', mandatory=True)
+    maybe_make_static('xmlpp', ['xml++-' + conf.env.XMLPP_API])
 
     # libxmlsec
     if conf.options.static_xmlsec:
@@ -460,37 +443,12 @@ def configure(conf):
             conf.env.LIB_NANOMSG.append('anl')
 
     # FFmpeg
-    if conf.options.static_ffmpeg:
-        names = ['avformat', 'avfilter', 'avcodec', 'avutil', 'swscale', 'postproc', 'swresample']
-        for name in names:
-            static = subprocess.Popen(shlex.split('pkg-config --static --libs lib%s' % name), stdout=subprocess.PIPE).communicate()[0].decode('utf-8')
-            libs = []
-            stlibs = []
-            include = []
-            libpath = []
-            for s in static.split():
-                if s.startswith('-L'):
-                    libpath.append(s[2:])
-                elif s.startswith('-I'):
-                    include.append(s[2:])
-                elif s.startswith('-l'):
-                    if s[2:] not in names:
-                        libs.append(s[2:])
-                    else:
-                        stlibs.append(s[2:])
-
-            conf.env['LIB_%s' % name.upper()] = libs
-            conf.env['STLIB_%s' % name.upper()] = stlibs
-            conf.env['INCLUDES_%s' % name.upper()] = include
-            conf.env['LIBPATH_%s' % name.upper()] = libpath
-    else:
-        conf.check_cfg(package='libavformat', args='--cflags --libs', uselib_store='AVFORMAT', mandatory=True)
-        conf.check_cfg(package='libavfilter', args='--cflags --libs', uselib_store='AVFILTER', mandatory=True)
-        conf.check_cfg(package='libavcodec', args='--cflags --libs', uselib_store='AVCODEC', mandatory=True)
-        conf.check_cfg(package='libavutil', args='--cflags --libs', uselib_store='AVUTIL', mandatory=True)
-        conf.check_cfg(package='libswscale', args='--cflags --libs', uselib_store='SWSCALE', mandatory=True)
-        conf.check_cfg(package='libpostproc', args='--cflags --libs', uselib_store='POSTPROC', mandatory=True)
-        conf.check_cfg(package='libswresample', args='--cflags --libs', uselib_store='SWRESAMPLE', mandatory=True)
+    names = ['avformat', 'avfilter', 'avcodec', 'avutil', 'swscale', 'postproc', 'swresample']
+    for name in names:
+        conf.check_cfg(package='lib' + name, args='--cflags --libs', uselib_store=name.upper(), mandatory=True)
+        if conf.options.static_ffmpeg:
+            conf.env['LIB_' + name.upper()].remove(name)
+            conf.env.append_value('STLIB_' + name.upper(), name)
 
     # Check to see if we have our version of FFmpeg that allows us to get at EBUR128 results
     conf.check_cxx(fragment="""
@@ -557,81 +515,80 @@ def configure(conf):
     # on Centos 7, but it's good if we can use 1.61 for boost::dll::program_location()
     boost_version = ('1.45', '104500') if conf.env.TARGET_LINUX else ('1.61', '106800')
 
-    # Boost
+    conf.check_cxx(fragment="""
+                        #include <boost/version.hpp>\n
+                        #if BOOST_VERSION < %s\n
+                        #error boost too old\n
+                        #endif\n
+                        int main(void) { return 0; }\n
+                        """ % boost_version[1],
+                   mandatory=True,
+                   msg='Checking for boost library >= %s' % boost_version[0],
+                   okmsg='yes',
+                   errmsg='too old\nPlease install boost version %s or higher.' % boost_version[0])
+
+    conf.check_cxx(fragment="""
+               #include <boost/thread.hpp>\n
+               int main() { boost::thread t; }\n
+               """,
+                   msg='Checking for boost threading library',
+                   lib=[boost_thread, 'boost_system%s' % boost_lib_suffix],
+                   uselib_store='BOOST_THREAD')
+
+    conf.check_cxx(fragment="""
+               #include <boost/filesystem.hpp>\n
+               int main() { boost::filesystem::copy_file ("a", "b"); }\n
+               """,
+                   msg='Checking for boost filesystem library',
+                   lib=['boost_filesystem%s' % boost_lib_suffix, 'boost_system%s' % boost_lib_suffix],
+                   uselib_store='BOOST_FILESYSTEM')
+
+    conf.check_cxx(fragment="""
+               #include <boost/date_time.hpp>\n
+               int main() { boost::gregorian::day_clock::local_day(); }\n
+               """,
+                   msg='Checking for boost datetime library',
+                   lib=['boost_date_time%s' % boost_lib_suffix, 'boost_system%s' % boost_lib_suffix],
+                   uselib_store='BOOST_DATETIME')
+
+    conf.check_cxx(fragment="""
+               #include <boost/signals2.hpp>\n
+               int main() { boost::signals2::signal<void (int)> x; }\n
+               """,
+                   msg='Checking for boost signals2 library',
+                   uselib_store='BOOST_SIGNALS2')
+
+    conf.check_cxx(fragment="""
+               #include <boost/regex.hpp>\n
+               int main() { boost::regex re ("foo"); }\n
+               """,
+                   msg='Checking for boost regex library',
+                   lib=['boost_regex%s' % boost_lib_suffix],
+                   uselib_store='BOOST_REGEX')
+
     if conf.options.static_boost:
-        conf.env.STLIB_BOOST_THREAD = ['boost_thread']
-        conf.env.STLIB_BOOST_FILESYSTEM = ['boost_filesystem%s' % boost_lib_suffix]
-        conf.env.STLIB_BOOST_DATETIME = ['boost_date_time%s' % boost_lib_suffix, 'boost_system%s' % boost_lib_suffix]
-        conf.env.STLIB_BOOST_SIGNALS2 = ['boost_signals2']
-        conf.env.STLIB_BOOST_SYSTEM = ['boost_system']
-        conf.env.STLIB_BOOST_REGEX = ['boost_regex']
-    else:
-        conf.check_cxx(fragment="""
-                            #include <boost/version.hpp>\n
-                            #if BOOST_VERSION < %s\n
-                            #error boost too old\n
-                            #endif\n
-                            int main(void) { return 0; }\n
-                            """ % boost_version[1],
-                       mandatory=True,
-                       msg='Checking for boost library >= %s' % boost_version[0],
-                       okmsg='yes',
-                       errmsg='too old\nPlease install boost version %s or higher.' % boost_version[0])
+        make_static('boost_thread', ['boost_thread'])
+        make_static('boost_filesystem', ['boost_filesystem%s' % boost_lib_suffix])
+        make_static('boost_datetime', ['boost_date_time%s' % boost_lib_suffix, 'boost_system%s' % boost_lib_suffix])
+        make_static('boost_signals2', ['boost_signals2'])
+        make_static('boost_system', ['boost_system'])
+        make_static('boost_regex', ['boost_regex'])
 
+    # Really just checking for the header here (there's no associated library) but the test
+    # program has to link with boost_system so I'm doing it this way.
+    if conf.options.enable_disk:
+        deps = ['boost_system%s' % boost_lib_suffix]
+        if conf.env.TARGET_WINDOWS_64 or conf.env.TARGET_WINDOWS_32:
+            deps.append('ws2_32')
+            deps.append('boost_filesystem%s' % boost_lib_suffix)
         conf.check_cxx(fragment="""
-    			    #include <boost/thread.hpp>\n
-			    int main() { boost::thread t; }\n
-			    """,
-                       msg='Checking for boost threading library',
-                       lib=[boost_thread, 'boost_system%s' % boost_lib_suffix],
-                       uselib_store='BOOST_THREAD')
-
-        conf.check_cxx(fragment="""
-    			    #include <boost/filesystem.hpp>\n
-    			    int main() { boost::filesystem::copy_file ("a", "b"); }\n
-			    """,
-                       msg='Checking for boost filesystem library',
-                       lib=['boost_filesystem%s' % boost_lib_suffix, 'boost_system%s' % boost_lib_suffix],
-                       uselib_store='BOOST_FILESYSTEM')
-
-        conf.check_cxx(fragment="""
-    			    #include <boost/date_time.hpp>\n
-    			    int main() { boost::gregorian::day_clock::local_day(); }\n
-			    """,
-                       msg='Checking for boost datetime library',
-                       lib=['boost_date_time%s' % boost_lib_suffix, 'boost_system%s' % boost_lib_suffix],
-                       uselib_store='BOOST_DATETIME')
-
-        conf.check_cxx(fragment="""
-    			    #include <boost/signals2.hpp>\n
-    			    int main() { boost::signals2::signal<void (int)> x; }\n
-			    """,
-                       msg='Checking for boost signals2 library',
-                       uselib_store='BOOST_SIGNALS2')
-
-        conf.check_cxx(fragment="""
-    			    #include <boost/regex.hpp>\n
-    			    int main() { boost::regex re ("foo"); }\n
-			    """,
-                       msg='Checking for boost regex library',
-                       lib=['boost_regex%s' % boost_lib_suffix],
-                       uselib_store='BOOST_REGEX')
-
-        # Really just checking for the header here (there's no associated library) but the test
-        # program has to link with boost_system so I'm doing it this way.
-        if conf.options.enable_disk:
-            deps = ['boost_system%s' % boost_lib_suffix]
-            if conf.env.TARGET_WINDOWS_64 or conf.env.TARGET_WINDOWS_32:
-                deps.append('ws2_32')
-                deps.append('boost_filesystem%s' % boost_lib_suffix)
-            conf.check_cxx(fragment="""
-                                #include <boost/process.hpp>\n
-                                int main() { new boost::process::child("foo"); }\n
-                                """,
-                           cxxflags='-Wno-unused-parameter',
-                           msg='Checking for boost process library',
-                           lib=deps,
-                           uselib_store='BOOST_PROCESS')
+                            #include <boost/process.hpp>\n
+                            int main() { new boost::process::child("foo"); }\n
+                            """,
+                       cxxflags='-Wno-unused-parameter',
+                       msg='Checking for boost process library',
+                       lib=deps,
+                       uselib_store='BOOST_PROCESS')
 
     # sqlite3
     conf.check_cfg(package="sqlite3", args='--cflags --libs', uselib_store='SQLITE3', mandatory=True)
