@@ -22,6 +22,7 @@
 #include <nettle/md5.h>
 #include <boost/optional.hpp>
 #include <string>
+#include <vector>
 
 
 class Digester
@@ -46,9 +47,11 @@ public:
 
 	void get (uint8_t* buffer) const;
 
+	std::vector<unsigned char> get_vector() const;
+
 	int size () const;
 
 private:
 	mutable md5_ctx _context;
-	mutable boost::optional<std::string> _digest;
+	mutable std::vector<unsigned char> _digest;
 };

@@ -58,29 +58,37 @@ Digester::add (string const & s)
 }
 
 
-string
-Digester::get () const
+std::vector<unsigned char>
+Digester::get_vector() const
 {
-	if (!_digest) {
-		unsigned char digest[MD5_DIGEST_SIZE];
-		md5_digest (&_context, MD5_DIGEST_SIZE, digest);
-
-		char hex[MD5_DIGEST_SIZE * 2 + 1];
-		for (int i = 0; i < MD5_DIGEST_SIZE; ++i) {
-			snprintf(hex + i * 2, 3, "%02x", digest[i]);
-		}
-
-		_digest = hex;
+	if (_digest.empty()) {
+		_digest.resize(MD5_DIGEST_SIZE);
+		md5_digest(&_context, MD5_DIGEST_SIZE, _digest.data());
 	}
 
-	return _digest.get ();
+	return _digest;
+}
+
+
+string
+Digester::get() const
+{
+	auto const digest = get_vector();
+
+	char hex[MD5_DIGEST_SIZE * 2 + 1];
+	for (int i = 0; i < MD5_DIGEST_SIZE; ++i) {
+		snprintf(hex + i * 2, 3, "%02x", digest[i]);
+	}
+
+	return hex;
 }
 
 
 void
 Digester::get (uint8_t* buffer) const
 {
-	md5_digest (&_context, MD5_DIGEST_SIZE, buffer);
+	auto const digest = get_vector();
+	memcpy(buffer, digest.data(), digest.size());
 }
 
 
