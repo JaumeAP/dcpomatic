@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_DIGESTER_H
+#define DCPOMATIC_DIGESTER_H
+
+
 #include <nettle/md5.h>
 #include <boost/optional.hpp>
 #include <string>
@@ -32,6 +36,9 @@ public:
 
 	Digester (Digester const&) = delete;
 	Digester& operator= (Digester const&) = delete;
+
+	Digester(Digester&& other) = default;
+	Digester& operator=(Digester&& other) = default;
 
 	void add (void const * data, size_t size);
 
@@ -54,3 +61,6 @@ private:
 	mutable md5_ctx _context;
 	mutable std::vector<unsigned char> _digest;
 };
+
+
+#endif
