@@ -72,6 +72,7 @@ class AudioProcessor;
 class Content;
 class DCPContentType;
 class Film;
+class InfoFileHandle;
 class Job;
 class Log;
 class Playlist;
@@ -82,23 +83,6 @@ struct isdcf_name_with_atmos;
 struct isdcf_name_with_ccap;
 struct ov_subs_in_vf_name;
 struct recover_test_2d_encrypted;
-
-
-class InfoFileHandle
-{
-public:
-	InfoFileHandle (boost::mutex& mutex, boost::filesystem::path file, bool read);
-
-	dcp::File& get () {
-		return _file;
-	}
-
-private:
-	friend class Film;
-
-	boost::mutex::scoped_lock _lock;
-	dcp::File _file;
-};
 
 
 /** @class Film

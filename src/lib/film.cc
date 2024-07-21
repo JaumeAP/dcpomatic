@@ -47,6 +47,7 @@
 #include "file_log.h"
 #include "film.h"
 #include "font.h"
+#include "info_file_handle.h"
 #include "job.h"
 #include "job_manager.h"
 #include "kdm_with_metadata.h"
@@ -2180,15 +2181,6 @@ shared_ptr<InfoFileHandle>
 Film::info_file_handle (DCPTimePeriod period, bool read) const
 {
 	return std::make_shared<InfoFileHandle>(_info_file_mutex, info_file(period), read);
-}
-
-InfoFileHandle::InfoFileHandle (boost::mutex& mutex, boost::filesystem::path path, bool read)
-	: _lock (mutex)
-	, _file(path, read ? "rb" : (dcp::filesystem::exists(path) ? "r+b" : "wb"))
-{
-	if (!_file) {
-		throw OpenFileError(path, errno, read ? OpenFileError::READ : (dcp::filesystem::exists(path) ? OpenFileError::READ_WRITE : OpenFileError::WRITE));
-	}
 }
 
 
