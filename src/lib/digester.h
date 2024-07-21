@@ -29,7 +29,6 @@ class Digester
 {
 public:
 	Digester ();
-	~Digester ();
 
 	Digester (Digester const&) = delete;
 	Digester& operator= (Digester const&) = delete;

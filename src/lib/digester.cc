@@ -37,13 +37,6 @@ Digester::Digester ()
 	md5_init (&_context);
 }
 
-
-Digester::~Digester ()
-{
-	get ();
-}
-
-
 void
 Digester::add (void const * data, size_t size)
 {
