@@ -51,8 +51,6 @@ public:
 
 	std::string get () const;
 
-	void get (uint8_t* buffer) const;
-
 	std::vector<unsigned char> get_vector() const;
 
 	int size () const;
