@@ -117,25 +117,26 @@ boost::filesystem::path TestPaths::xsd ()
 static void
 setup_test_config ()
 {
-	Config::instance()->set_master_encoding_threads (boost::thread::hardware_concurrency() / 2);
-	Config::instance()->set_server_encoding_threads (1);
-	Config::instance()->set_server_port_base (61921);
-	Config::instance()->set_default_audio_delay (0);
-	Config::instance()->set_default_still_length (10);
-	Config::instance()->set_log_types (
+	auto config = Config::instance();
+	config->set_master_encoding_threads (boost::thread::hardware_concurrency() / 2);
+	config->set_server_encoding_threads (1);
+	config->set_server_port_base (61921);
+	config->set_default_audio_delay (0);
+	config->set_default_still_length (10);
+	config->set_log_types (
 		LogEntry::TYPE_GENERAL | LogEntry::TYPE_WARNING |
 		LogEntry::TYPE_ERROR | LogEntry::TYPE_DISK
 		);
-	Config::instance()->set_automatic_audio_analysis (false);
+	config->set_automatic_audio_analysis (false);
 	auto signer = make_shared<dcp::CertificateChain>(dcp::file_to_string("test/data/signer_chain"));
 	signer->set_key(dcp::file_to_string("test/data/signer_key"));
-	Config::instance()->set_signer_chain (signer);
+	config->set_signer_chain (signer);
 	auto decryption = make_shared<dcp::CertificateChain>(dcp::file_to_string("test/data/decryption_chain"));
 	decryption->set_key(dcp::file_to_string("test/data/decryption_key"));
-	Config::instance()->set_decryption_chain (decryption);
-	Config::instance()->set_dcp_asset_filename_format(dcp::NameFormat("%t"));
-	Config::instance()->set_cinemas_file("build/test/cinemas.sqlite3");
-	Config::instance()->set_dkdm_recipients_file("build/test/dkdm_recipients.sqlite3");
+	config->set_decryption_chain (decryption);
+	config->set_dcp_asset_filename_format(dcp::NameFormat("%t"));
+	config->set_cinemas_file("build/test/cinemas.sqlite3");
+	config->set_dkdm_recipients_file("build/test/dkdm_recipients.sqlite3");
 }
 
 
