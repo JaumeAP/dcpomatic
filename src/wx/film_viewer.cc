@@ -213,6 +213,8 @@ FilmViewer::set_film (shared_ptr<Film> film)
 
 	calculate_sizes ();
 	slow_refresh ();
+
+	config_changed (Config::SOUND_OUTPUT);
 }
 
 
@@ -709,7 +711,11 @@ FilmViewer::config_changed (Config::Property p)
 				_("Could not set up audio output.  There will be no audio during the preview."), std_to_wx(e.what())
 				);
 		}
-		LOG_GENERAL("RT: Set up audio stream with block=%1 channels=%2 deviceId=%3", _audio_block_size, _audio_channels, *chosen_device_id);
+		if (chosen_device_id) {
+			LOG_GENERAL("RT: Finished set up of audio stream with block=%1 channels=%2 stream=%3 deviceId=%4", _audio_block_size, _audio_channels, st, *chosen_device_id);
+		} else {
+			LOG_GENERAL("RT: Finished set up of audio stream with block=%1 channels=%2 stream=%3 deviceId=default", _audio_block_size, _audio_channels, st);
+		}
 #endif
 		destroy_and_maybe_create_butler();
 
@@ -754,10 +760,13 @@ FilmViewer::time () const
 int
 FilmViewer::audio_callback (void* out_p, unsigned int frames)
 {
+	static int success = 0;
+
 	while (true) {
 		auto t = _butler->get_audio (Butler::Behaviour::NON_BLOCKING, reinterpret_cast<float*> (out_p), frames);
 		if (!t || DCPTime(uncorrected_time() - *t) < one_video_frame()) {
 			/* There was an underrun or this audio is on time; carry on */
+			++success;
 			break;
 		}
 		LOG_GENERAL_NC("RT: Audio late and dropped");
@@ -771,6 +780,10 @@ FilmViewer::audio_callback (void* out_p, unsigned int frames)
                         _latency_history.pop_front ();
                 }
         }
+
+	if ((success % 10) == 0) {
+		LOG_GENERAL("%1 successful audio callbacks", success);
+	}
 
 	return 0;
 }
