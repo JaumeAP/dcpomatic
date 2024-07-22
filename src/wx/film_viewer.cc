@@ -84,6 +84,13 @@ rtaudio_callback (void* out, void *, unsigned int frames, double, RtAudioStreamS
 	return reinterpret_cast<FilmViewer*>(data)->audio_callback (out, frames);
 }
 
+static
+void
+rtaudio_error_callback(RtAudioError::Type type, const std::string& errorText)
+{
+	LOG_GENERAL("RT: error callback called with %1 %2", (int)type, errorText);
+}
+
 
 FilmViewer::FilmViewer (wxWindow* p)
 #if (RTAUDIO_VERSION_MAJOR >= 6)
@@ -618,13 +625,17 @@ FilmViewer::config_changed (Config::Property p)
 		return;
 	}
 
+	LOG_GENERAL("RT: FilmViewer::config_changed: sound enabled=%1 devices=%2", Config::instance()->sound() ? 1 : 0, _audio.getDeviceCount());
+
 	if (_audio.isStreamOpen ()) {
+		LOG_GENERAL_NC("RT: Closing existing open stream");
 		_audio.closeStream ();
 	}
 
 	if (Config::instance()->sound() && _audio.getDeviceCount() > 0) {
 		optional<unsigned int> chosen_device_id;
 #if (RTAUDIO_VERSION_MAJOR >= 6)
+		LOG_GENERAL_NC("RT: RTAUDIO_VERSION_MAJOR >= 6");
 		if (Config::instance()->sound_output()) {
 			for (auto device_id: _audio.getDeviceIds()) {
 				if (_audio.getDeviceInfo(device_id).name == Config::instance()->sound_output().get()) {
@@ -649,15 +660,19 @@ FilmViewer::config_changed (Config::Property p)
 				_("Could not set up audio output.  There will be no audio during the preview."), std_to_wx(last_rtaudio_error())
 				);
 		}
+		LOG_GENERAL("RT: Set up audio stream with block=%1 channels=%2 deviceId=%3", _audio_block_size, _audio_channels, *chosen_device_id);
 #else
+		LOG_GENERAL_NC("RT: RTAUDIO_VERSION_MAJOR < 6");
 		unsigned int st = 0;
 		if (Config::instance()->sound_output()) {
+			LOG_GENERAL_NC("RT: Sound enabled");
 			while (st < _audio.getDeviceCount()) {
 				try {
 					if (_audio.getDeviceInfo(st).name == Config::instance()->sound_output().get()) {
 						break;
 					}
-				} catch (RtAudioError&) {
+				} catch (RtAudioError& e) {
+					LOG_GENERAL("RT: device %1 failed with %2", st, e.what());
 					/* Something went wrong with that device so we don't want to use it anyway */
 				}
 				++st;
@@ -665,7 +680,8 @@ FilmViewer::config_changed (Config::Property p)
 			if (st == _audio.getDeviceCount()) {
 				try {
 					st = _audio.getDefaultOutputDevice();
-				} catch (RtAudioError&) {
+				} catch (RtAudioError& e) {
+					LOG_GENERAL("RT: default device %1 failed with %2", st, e.what());
 					/* Something went wrong with that device so we don't want to use it anyway */
 				}
 			}
@@ -677,13 +693,15 @@ FilmViewer::config_changed (Config::Property p)
 			}
 		}
 
+		LOG_GENERAL("Going to try and open a stream for %1", st);
+
 		try {
 			_audio_channels = _audio.getDeviceInfo(st).outputChannels;
 			RtAudio::StreamParameters sp;
 			sp.deviceId = st;
 			sp.nChannels = _audio_channels;
 			sp.firstChannel = 0;
-			_audio.openStream (&sp, 0, RTAUDIO_FLOAT32, 48000, &_audio_block_size, &rtaudio_callback, this);
+			_audio.openStream(&sp, 0, RTAUDIO_FLOAT32, 48000, &_audio_block_size, &rtaudio_callback, this, nullptr, &rtaudio_error_callback);
 		} catch (RtAudioError& e) {
 			_audio_channels = 0;
 			error_dialog (
@@ -691,6 +709,7 @@ FilmViewer::config_changed (Config::Property p)
 				_("Could not set up audio output.  There will be no audio during the preview."), std_to_wx(e.what())
 				);
 		}
+		LOG_GENERAL("RT: Set up audio stream with block=%1 channels=%2 deviceId=%3", _audio_block_size, _audio_channels, *chosen_device_id);
 #endif
 		destroy_and_maybe_create_butler();
 
@@ -716,6 +735,7 @@ optional<DCPTime>
 FilmViewer::audio_time () const
 {
 	if (!_audio.isStreamRunning()) {
+		LOG_GENERAL_NC("RT: Audio stream is not running");
 		return {};
 	}
 
@@ -740,6 +760,7 @@ FilmViewer::audio_callback (void* out_p, unsigned int frames)
 			/* There was an underrun or this audio is on time; carry on */
 			break;
 		}
+		LOG_GENERAL_NC("RT: Audio late and dropped");
 		/* The audio we just got was (very) late; drop it and get some more. */
 	}
 
