@@ -714,7 +714,7 @@ def build(target, options, for_package):
         target.command('%s --repo=build/platform/repo build/platform/flatpak build/com.dcpomatic.DCP-o-matic.json' % target.flatpak_builder())
     elif target.platform != 'linux' or target.detail == 'appimage' or not for_package:
         target.command('./waf configure --prefix=%s %s' % (target.directory, configure_options(target, options, for_package)))
-        target.command('./waf')
+        target.command('./waf -v')
         target.command('./waf install')
 
 def package_windows(target):
