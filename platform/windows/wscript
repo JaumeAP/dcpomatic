@@ -236,6 +236,7 @@ File "%cdist_deps%/bin/sub-1.0.dll"
 File "%cdist_deps%/bin/ffprobe.exe"
 File "%cdist_deps%/src/openssl/apps/openssl.exe"
 File "%cdist_deps%/bin/libopenjp2.dll"
+File "%cdist_deps%/bin/librtaudio-7.dll"
     """, file=f)
 
     if debug:
