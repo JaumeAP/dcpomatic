@@ -537,7 +537,7 @@ def dependencies(target, options):
     deps = [('libdcp', 'v1.9.12', {'c++17': target.platform == 'osx'})]
     deps.append(('libsub', 'v1.6.49'))
     deps.append(('leqm-nrt', '30dcaea1373ac62fba050e02ce5b0c1085797a23'))
-    deps.append(('rtaudio', '0058f195f6262703602399f0a78214076d1f3b20'))
+    deps.append(('rtaudio', '3a866b9ad5e684bc322a9998861c5ed29ab370da'))
     # We get our OpenSSL libraries from the environment, but we
     # also need a patched openssl binary to make certificates.
     # This dependency is to get that binary, which is added into
