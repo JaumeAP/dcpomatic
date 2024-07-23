@@ -288,9 +288,6 @@ def configure(conf):
     # Some rtaudio-configs don't include rtaudio as a link library.  Go figure.
     conf.env.LIB_RTAUDIO.append('rtaudio')
     if conf.env.TARGET_WINDOWS_64 or conf.env.TARGET_WINDOWS_32:
-        # Don't explicitly link with pthread on Windows
-        conf.env.CFLAGS_RTAUDIO.remove('-pthread')
-        conf.env.LINKFLAGS_RTAUDIO.remove('-pthread')
         # We need some libraries for WASAPI
         conf.env.LIB_RTAUDIO.append('mfplat')
         conf.env.LIB_RTAUDIO.append('mfuuid')
