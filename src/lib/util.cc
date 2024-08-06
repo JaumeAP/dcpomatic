@@ -61,7 +61,7 @@
 #include <dcp/raw_convert.h>
 #include <dcp/scope_guard.h>
 #include <dcp/sound_asset.h>
-#include <dcp/subtitle_asset.h>
+#include <dcp/text_asset.h>
 #include <dcp/util.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -763,7 +763,7 @@ audio_asset_filename (shared_ptr<dcp::SoundAsset> asset, int reel_index, int ree
 
 
 string
-subtitle_asset_filename (shared_ptr<dcp::SubtitleAsset> asset, int reel_index, int reel_count, optional<string> summary, string extension)
+subtitle_asset_filename (shared_ptr<dcp::TextAsset> asset, int reel_index, int reel_count, optional<string> summary, string extension)
 {
 	return asset_filename(asset, "sub", reel_index, reel_count, summary, extension);
 }
@@ -910,7 +910,7 @@ utf8_strlen (string s)
 
 /** @param size Size of picture that the subtitle will be overlaid onto */
 void
-emit_subtitle_image (ContentTimePeriod period, dcp::SubtitleImage sub, dcp::Size size, shared_ptr<TextDecoder> decoder)
+emit_subtitle_image(ContentTimePeriod period, dcp::TextImage sub, dcp::Size size, shared_ptr<TextDecoder> decoder)
 {
 	/* XXX: this is rather inefficient; decoding the image just to get its size */
 	FFmpegImageProxy proxy (sub.png_image());
