@@ -95,7 +95,7 @@ ClosedCaptionsDialog::shown (wxShowEvent ev)
 void
 ClosedCaptionsDialog::track_selected ()
 {
-	_current = optional<TextRingBuffers::Data> ();
+	_current = {};
 	_viewer->slow_refresh ();
 	update ();
 }
@@ -118,7 +118,7 @@ ClosedCaptionsDialog::paint ()
 		wxString const good = _lines[i].Left (MAX_CLOSED_CAPTION_LENGTH);
 		dc.DrawText (good, 8, line_height * i);
 		if (_lines[i].Length() > MAX_CLOSED_CAPTION_LENGTH) {
-			wxString const bad = _lines[i].Right (_lines[i].Length() - MAX_CLOSED_CAPTION_LENGTH);
+			auto const bad = _lines[i].Right(_lines[i].Length() - MAX_CLOSED_CAPTION_LENGTH);
 			wxSize size = dc.GetTextExtent (good);
 			dc.SetTextForeground (*wxRED);
 			dc.DrawText (bad, 8 + size.GetWidth(), line_height * i);
@@ -167,7 +167,7 @@ ClosedCaptionsDialog::update ()
 			_lines[j] = "";
 		}
 		Refresh ();
-		_current = optional<TextRingBuffers::Data>();
+		_current = {};
 	}
 
 	if (!_current && !_tracks.empty()) {
@@ -178,7 +178,7 @@ ClosedCaptionsDialog::update ()
 		auto track = _tracks[_track->GetSelection()];
 		if (butler) {
 			while (true) {
-				optional<TextRingBuffers::Data> d = butler->get_closed_caption ();
+				auto d = butler->get_closed_caption();
 				if (!d) {
 					break;
 				}
@@ -225,7 +225,7 @@ ClosedCaptionsDialog::update ()
 void
 ClosedCaptionsDialog::clear ()
 {
-	_current = optional<TextRingBuffers::Data>();
+	_current = {};
 	_current_in_lines = false;
 	Refresh ();
 }
