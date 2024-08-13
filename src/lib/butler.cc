@@ -481,3 +481,10 @@ Butler::Error::summary () const
 	return "";
 }
 
+
+Frame
+Butler::video_frames_in_buffer() const
+{
+	return _video.size();
+}
+

@@ -94,6 +94,7 @@ public:
 	boost::optional<TextRingBuffers::Data> get_closed_caption ();
 
 	std::pair<size_t, std::string> memory_used () const;
+	Frame video_frames_in_buffer() const;
 
 private:
 	void thread ();
