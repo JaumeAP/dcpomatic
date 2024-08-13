@@ -36,7 +36,7 @@
 BOOST_AUTO_TEST_CASE(closed_text_display_test1)
 {
 	auto text = content_factory("test/data/frames.srt");
-	auto film = new_test_film("closed_text_display_test1", text);
+	auto film = new_test_film2("closed_text_display_test1", text);
 
 	DCPTextTrack track("test", dcp::LanguageTag("de-DE"));
 	text[0]->text[0]->set_type(TextType::CLOSED_CAPTION);
