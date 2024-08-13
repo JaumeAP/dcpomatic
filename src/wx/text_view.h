@@ -49,7 +49,7 @@ private:
 	wxListCtrl* _list;
 	int _subs;
 	boost::optional<FrameRateChange> _frc;
-	boost::optional<int> _last_count;
+	boost::optional<int> _last_start;
 	std::vector<dcpomatic::ContentTime> _start_times;
 	std::weak_ptr<Content> _content;
 	FilmViewer& _film_viewer;

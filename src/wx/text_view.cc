@@ -110,29 +110,28 @@ TextView::TextView (
 void
 TextView::data_start (ContentStringText cts)
 {
+	bool first = true;
 	for (auto const& i: cts.subs) {
 		wxListItem list_item;
 		list_item.SetId (_subs);
 		_list->InsertItem (list_item);
-		_list->SetItem (_subs, 0, std_to_wx (cts.from().timecode (_frc->source)));
+		if (first) {
+			_list->SetItem(_subs, 0, std_to_wx(cts.from().timecode(_frc->source)));
+			_last_start = _subs;
+			first = false;
+		}
 		_list->SetItem (_subs, 2, std_to_wx (i.text ()));
 		_start_times.push_back (cts.from ());
 		++_subs;
 	}
-
-	_last_count = cts.subs.size ();
 }
 
 
 void
 TextView::data_stop (ContentTime time)
 {
-	if (!_last_count) {
-		return;
-	}
-
-	for (int i = _subs - *_last_count; i < _subs; ++i) {
-		_list->SetItem (i, 1, std_to_wx (time.timecode (_frc->source)));
+	if (_last_start) {
+		_list->SetItem(*_last_start, 1, std_to_wx(time.timecode(_frc->source)));
 	}
 }
 
