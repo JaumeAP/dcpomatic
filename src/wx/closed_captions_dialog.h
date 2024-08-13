@@ -19,12 +19,14 @@
 */
 
 
+#include "lib/closed_text_display.h"
 #include "lib/dcpomatic_time.h"
 #include "lib/text_ring_buffers.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
+
 
 class Butler;
 class FilmViewer;
@@ -46,12 +48,10 @@ private:
 	void track_selected ();
 
 	FilmViewer* _viewer;
-	wxPanel* _display;
+	wxPanel* _display_panel;
 	wxChoice* _track;
-	boost::optional<TextRingBuffers::Data> _current;
-	bool _current_in_lines;
-	std::vector<wxString> _lines;
 	std::vector<DCPTextTrack> _tracks;
 	std::weak_ptr<Butler> _butler;
 	wxTimer _timer;
+	ClosedTextDisplay _display;
 };

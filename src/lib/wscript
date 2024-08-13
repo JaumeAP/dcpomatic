@@ -52,6 +52,7 @@ sources = """
           cinema.cc
           cinema_sound_processor.cc
           change_signaller.cc
+          closed_text_display.cc
           collator.cc
           colour_conversion.cc
           config.cc
