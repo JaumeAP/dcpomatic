@@ -67,7 +67,7 @@ public:
 
 			_combo_box->Clear();
 			for (auto const& name: gpu_names) {
-				_combo_box->Append(name);
+				_combo_box->Append(std_to_wx(name));
 			}
 		}
 	}
@@ -214,7 +214,7 @@ private:
 	void licence_changed()
 	{
 		auto grok = Config::instance()->grok().get_value_or({});
-		grok.licence = wx_to_std(_licence->get());
+		grok.licence = _licence->get();
 		Config::instance()->set_grok(grok);
 	}
 
