@@ -48,7 +48,7 @@ public:
 	GpuList(wxPanel* parent)
 		: wxPanel(parent, wxID_ANY)
 	{
-		_combo_box = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxSize(400, -1));
+		_combo_box = new wxComboBox(this, wxID_ANY, wxString{}, wxDefaultPosition, wxSize(400, -1));
 		_combo_box->Bind(wxEVT_COMBOBOX, &GpuList::OnComboBox, this);
 		update();
 
