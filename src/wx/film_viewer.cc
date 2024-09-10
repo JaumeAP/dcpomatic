@@ -710,6 +710,9 @@ FilmViewer::time () const
 		return _video_view->position();
 	}
 
+	/* The audio coming out of the outputs will be older than what we're sending
+	 * because of the output latency.
+	 */
 	return DCPTime::from_seconds(audio.getStreamTime()) -
 		DCPTime::from_frames (average_latency(), _film->audio_frame_rate());
 }
