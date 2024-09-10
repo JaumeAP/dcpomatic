@@ -693,11 +693,11 @@ FilmViewer::uncorrected_time () const
 {
 	auto& audio = AudioBackend::instance()->rtaudio();
 
-	if (audio.isStreamRunning()) {
-		return DCPTime::from_seconds(audio.getStreamTime());
+	if (!audio.isStreamRunning()) {
+		return _video_view->position();
 	}
 
-	return _video_view->position();
+	return DCPTime::from_seconds(audio.getStreamTime());
 }
 
 
