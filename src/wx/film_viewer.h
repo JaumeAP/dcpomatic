@@ -105,6 +105,9 @@ public:
 
 	void slow_refresh ();
 
+	/** @return time of the audio that should be coming out of the audio output
+	 *  and video that should be coming out of the video output.
+	 */
 	dcpomatic::DCPTime time () const;
 	boost::optional<dcpomatic::DCPTime> audio_time () const;
 
