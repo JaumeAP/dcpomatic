@@ -115,7 +115,7 @@ VideoView::time_until_next_frame () const
 	}
 
 	auto const next = position() + one_video_frame();
-	auto const time = _viewer->audio_time().get_value_or(position());
+	auto const time = _viewer->time();
 	if (next < time) {
 		return 0;
 	}
