@@ -85,7 +85,7 @@ AudioBackend::instance()
 
 
 vector<string>
-AudioBackend::output_device_names()
+AudioBackend::device_names()
 {
 	vector<string> names;
 
