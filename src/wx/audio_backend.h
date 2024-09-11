@@ -23,6 +23,7 @@
 LIBDCP_DISABLE_WARNINGS
 #include <RtAudio.h>
 LIBDCP_ENABLE_WARNINGS
+#include <wx/wx.h>
 #include <boost/optional.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -48,6 +49,8 @@ public:
 	boost::optional<std::string> start_stream();
 
 	int stream_latency() const;
+
+	wxString current_api_name() const;
 
 #if (RTAUDIO_VERSION_MAJOR >= 6)
 	std::string last_rtaudio_error() const;

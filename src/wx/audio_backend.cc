@@ -20,6 +20,7 @@
 
 
 #include "audio_backend.h"
+#include "wx_util.h"
 #include <boost/bind/bind.hpp>
 
 
@@ -189,5 +190,33 @@ int
 AudioBackend::stream_latency() const
 {
 	return const_cast<RtAudio&>(_rtaudio).getStreamLatency();
+}
+
+
+wxString
+AudioBackend::current_api_name() const
+{
+	switch (const_cast<RtAudio&>(_rtaudio).getCurrentApi()) {
+	case RtAudio::MACOSX_CORE:
+		return _("CoreAudio");
+	case RtAudio::WINDOWS_ASIO:
+		return _("ASIO");
+	case RtAudio::WINDOWS_DS:
+		return _("Direct Sound");
+	case RtAudio::WINDOWS_WASAPI:
+		return _("WASAPI");
+	case RtAudio::UNIX_JACK:
+		return _("JACK");
+	case RtAudio::LINUX_ALSA:
+		return _("ALSA");
+	case RtAudio::LINUX_PULSE:
+		return _("PulseAudio");
+	case RtAudio::LINUX_OSS:
+		return _("OSS");
+	case RtAudio::RTAUDIO_DUMMY:
+		return _("Dummy");
+	default:
+		DCPOMATIC_ASSERT(false);
+	}
 }
 
