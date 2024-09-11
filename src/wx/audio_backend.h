@@ -37,10 +37,6 @@ public:
 	AudioBackend(AudioBackend const&) = delete;
 	AudioBackend& operator=(AudioBackend const&) = delete;
 
-	RtAudio& rtaudio() {
-		return _rtaudio;
-	}
-
 	std::vector<std::string> device_names();
 	boost::optional<std::string> default_device_name();
 	boost::optional<int> device_channels(std::string name);
