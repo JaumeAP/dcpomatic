@@ -634,7 +634,7 @@ FilmViewer::config_changed (Config::Property p)
 			_audio_channels = 0;
 			error_dialog(
 				_video_view->get(),
-				_("Could not set up audio output.  There will be no audio during the preview."), std_to_wx(backend->last_rtaudio_error())
+				_("Could not set up audio output.  There will be no audio during the preview."), std_to_wx(backend->last_error())
 				);
 		}
 #else

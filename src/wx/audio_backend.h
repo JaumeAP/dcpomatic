@@ -53,7 +53,7 @@ public:
 	wxString current_api_name() const;
 
 #if (RTAUDIO_VERSION_MAJOR >= 6)
-	std::string last_rtaudio_error() const;
+	std::string last_error() const;
 #endif
 
 	static AudioBackend* instance();
@@ -65,8 +65,8 @@ private:
 
 #if (RTAUDIO_VERSION_MAJOR >= 6)
 	void rtaudio_error_callback(std::string const& error);
-	mutable boost::mutex _last_rtaudio_error_mutex;
-	std::string _last_rtaudio_error;
+	mutable boost::mutex _last_error_mutex;
+	std::string _last_error;
 #endif
 };
 
