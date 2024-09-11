@@ -40,7 +40,7 @@ public:
 		return _rtaudio;
 	}
 
-	std::vector<std::string> output_device_names();
+	std::vector<std::string> device_names();
 	boost::optional<std::string> default_device_name();
 	boost::optional<int> device_output_channels(std::string name);
 

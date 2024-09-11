@@ -883,7 +883,7 @@ SoundPage::setup ()
 	font.SetPointSize (font.GetPointSize() - 1);
 	_sound_output_details->SetFont (font);
 
-	for (auto name: AudioBackend::instance()->output_device_names()) {
+	for (auto name: AudioBackend::instance()->device_names()) {
 		_sound_output->Append(std_to_wx(name));
 	}
 
