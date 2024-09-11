@@ -23,6 +23,7 @@
 LIBDCP_DISABLE_WARNINGS
 #include <RtAudio.h>
 LIBDCP_ENABLE_WARNINGS
+#include <wx/wx.h>
 #include <boost/optional.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -36,16 +37,23 @@ public:
 	AudioBackend(AudioBackend const&) = delete;
 	AudioBackend& operator=(AudioBackend const&) = delete;
 
-	RtAudio& rtaudio() {
-		return _rtaudio;
-	}
-
 	std::vector<std::string> device_names();
 	boost::optional<std::string> default_device_name();
 	boost::optional<int> device_channels(std::string name);
 
-	void abort_stream_if_running();
+	bool open_stream(RtAudioCallback callback, void* context, int* channels, unsigned int* block_size, boost::optional<std::string> output);
 	boost::optional<std::string> start_stream();
+	void abort_stream_if_running();
+	void close_stream();
+
+	bool stream_open() const;
+	bool stream_running() const;
+	double stream_time() const;
+	int64_t stream_latency() const;
+
+	void set_stream_time(double time);
+
+	wxString current_api_name() const;
 
 #if (RTAUDIO_VERSION_MAJOR >= 6)
 	std::string last_error() const;

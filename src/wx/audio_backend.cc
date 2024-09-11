@@ -20,9 +20,12 @@
 
 
 #include "audio_backend.h"
+#include "wx_util.h"
 #include <boost/bind/bind.hpp>
 
 
+
+using std::map;
 using std::string;
 using std::vector;
 using boost::optional;
@@ -183,4 +186,146 @@ AudioBackend::start_stream()
 	return {};
 }
 
+
+bool
+AudioBackend::stream_open() const
+{
+	return _rtaudio.isStreamOpen();
+}
+
+
+bool
+AudioBackend::stream_running() const
+{
+	return _rtaudio.isStreamRunning();
+}
+
+
+double
+AudioBackend::stream_time() const
+{
+	return const_cast<RtAudio&>(_rtaudio).getStreamTime();
+}
+
+
+wxString
+AudioBackend::current_api_name() const
+{
+	switch (const_cast<RtAudio&>(_rtaudio).getCurrentApi()) {
+	case RtAudio::MACOSX_CORE:
+		return _("CoreAudio");
+	case RtAudio::WINDOWS_ASIO:
+		return _("ASIO");
+	case RtAudio::WINDOWS_DS:
+		return _("Direct Sound");
+	case RtAudio::WINDOWS_WASAPI:
+		return _("WASAPI");
+	case RtAudio::UNIX_JACK:
+		return _("JACK");
+	case RtAudio::LINUX_ALSA:
+		return _("ALSA");
+	case RtAudio::LINUX_PULSE:
+		return _("PulseAudio");
+	case RtAudio::LINUX_OSS:
+		return _("OSS");
+	case RtAudio::RTAUDIO_DUMMY:
+		return _("Dummy");
+	default:
+		DCPOMATIC_ASSERT(false);
+	}
+}
+
+
+int64_t
+AudioBackend::stream_latency() const
+{
+	return const_cast<RtAudio&>(_rtaudio).getStreamLatency();
+}
+
+
+void
+AudioBackend::set_stream_time(double time)
+{
+	_rtaudio.setStreamTime(time);
+}
+
+
+void
+AudioBackend::close_stream()
+{
+	_rtaudio.closeStream();
+}
+
+
+bool
+AudioBackend::open_stream(RtAudioCallback callback, void* context, int* channels, unsigned int* block_size, optional<string> output)
+{
+	optional<unsigned int> chosen_device_id;
+#if (RTAUDIO_VERSION_MAJOR >= 6)
+	if (output) {
+		for (auto device_id: _rtaudio.getDeviceIds()) {
+			if (_rtaudio.getDeviceInfo(device_id).name == *output) {
+				chosen_device_id = device_id;
+				break;
+			}
+		}
+	}
+
+	if (!chosen_device_id) {
+		chosen_device_id = _rtaudio.getDefaultOutputDevice();
+	}
+	*channels = _rtaudio.getDeviceInfo(*chosen_device_id).outputChannels;
+	RtAudio::StreamParameters sp;
+	sp.deviceId = *chosen_device_id;
+	sp.nChannels = *channels;
+	sp.firstChannel = 0;
+	if (_rtaudio.openStream(&sp, 0, RTAUDIO_FLOAT32, 48000, block_size, callback, context) != RTAUDIO_NO_ERROR) {
+		*channels = 0;
+		return false;
+	}
+#else
+	unsigned int st = 0;
+	if (output) {
+		while (st < _rtaudio.getDeviceCount()) {
+			try {
+				if (_rtaudio.getDeviceInfo(st).name == *output) {
+					break;
+				}
+			} catch (RtAudioError&) {
+				/* Something went wrong with that device so we don't want to use it anyway */
+			}
+			++st;
+		}
+		if (st == _rtaudio.getDeviceCount()) {
+			try {
+				st = _rtaudio.getDefaultOutputDevice();
+			} catch (RtAudioError&) {
+				/* Something went wrong with that device so we don't want to use it anyway */
+			}
+		}
+	} else {
+		try {
+			st = _rtaudio.getDefaultOutputDevice();
+		} catch (RtAudioError&) {
+			/* Something went wrong with that device so we don't want to use it anyway */
+		}
+	}
+
+	try {
+		*channels = audio.getDeviceInfo(st).outputChannels;
+		RtAudio::StreamParameters sp;
+		sp.deviceId = st;
+		sp.nChannels = *channels;
+		sp.firstChannel = 0;
+		_rtaudio.openStream(&sp, 0, RTAUDIO_FLOAT32, 48000, block_size, callback, context);
+	} catch (RtAudioError& e) {
+		boost::mutex::scoped_lock lm(_last_error_mutex);
+		_last_error = e.what();
+		*channels = 0;
+		return false;
+	}
+#endif
+
+	return true;
+}
 

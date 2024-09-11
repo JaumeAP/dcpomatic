@@ -934,13 +934,13 @@ SoundPage::config_changed ()
 	auto const current_so = get_sound_output ();
 	optional<string> configured_so;
 
-	auto& audio = AudioBackend::instance()->rtaudio();
+	auto audio = AudioBackend::instance();
 
 	if (config->sound_output()) {
 		configured_so = config->sound_output().get();
 	} else {
 		/* No configured output means we should use the default */
-		configured_so = AudioBackend::instance()->default_device_name();
+		configured_so = audio->default_device_name();
 	}
 
 	if (configured_so && current_so != configured_so) {
@@ -955,21 +955,10 @@ SoundPage::config_changed ()
 		}
 	}
 
-	map<int, wxString> apis;
-	apis[RtAudio::MACOSX_CORE]    = _("CoreAudio");
-	apis[RtAudio::WINDOWS_ASIO]   = _("ASIO");
-	apis[RtAudio::WINDOWS_DS]     = _("Direct Sound");
-	apis[RtAudio::WINDOWS_WASAPI] = _("WASAPI");
-	apis[RtAudio::UNIX_JACK]      = _("JACK");
-	apis[RtAudio::LINUX_ALSA]     = _("ALSA");
-	apis[RtAudio::LINUX_PULSE]    = _("PulseAudio");
-	apis[RtAudio::LINUX_OSS]      = _("OSS");
-	apis[RtAudio::RTAUDIO_DUMMY]  = _("Dummy");
-
-	int const channels = configured_so ? AudioBackend::instance()->device_output_channels(*configured_so).get_value_or(0) : 0;
+	int const channels = configured_so ? AudioBackend::instance()->device_channels(*configured_so).get_value_or(0) : 0;
 
 	_sound_output_details->SetLabel (
-		wxString::Format(_("%d channels on %s"), channels, apis[audio.getCurrentApi()])
+		wxString::Format(_("%d channels on %s"), channels, audio->current_api_name())
 		);
 
 	_map->set (Config::instance()->audio_mapping(channels));
