@@ -130,7 +130,7 @@ AudioBackend::default_device_name()
 
 
 optional<int>
-AudioBackend::device_output_channels(string name)
+AudioBackend::device_channels(string name)
 {
 #if (RTAUDIO_VERSION_MAJOR >= 6)
 	for (auto device_id: _rtaudio.getDeviceIds()) {
