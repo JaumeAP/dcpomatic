@@ -691,10 +691,10 @@ FilmViewer::config_changed (Config::Property p)
 DCPTime
 FilmViewer::uncorrected_time () const
 {
-	auto& audio = AudioBackend::instance()->rtaudio();
+	auto audio = AudioBackend::instance();
 
-	if (audio.isStreamRunning()) {
-		return DCPTime::from_seconds(audio.getStreamTime());
+	if (audio->stream_running()) {
+		return DCPTime::from_seconds(audio->stream_time());
 	}
 
 	return _video_view->position();
@@ -704,13 +704,13 @@ FilmViewer::uncorrected_time () const
 optional<DCPTime>
 FilmViewer::audio_time () const
 {
-	auto& audio = AudioBackend::instance()->rtaudio();
+	auto audio = AudioBackend::instance();
 
-	if (!audio.isStreamRunning()) {
+	if (!audio->stream_running()) {
 		return {};
 	}
 
-	return DCPTime::from_seconds(audio.getStreamTime()) -
+	return DCPTime::from_seconds(audio->stream_time()) -
 		DCPTime::from_frames (average_latency(), _film->audio_frame_rate());
 }
 

@@ -234,3 +234,17 @@ AudioBackend::stream_open() const
 	return _rtaudio.isStreamOpen();
 }
 
+
+bool
+AudioBackend::stream_running() const
+{
+	return _rtaudio.isStreamRunning();
+}
+
+
+double
+AudioBackend::stream_time() const
+{
+	return const_cast<RtAudio&>(_rtaudio).getStreamTime();
+}
+

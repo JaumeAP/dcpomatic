@@ -50,6 +50,8 @@ public:
 
 	int stream_latency() const;
 	bool stream_open() const;
+	bool stream_running() const;
+	double stream_time() const;
 
 	void set_stream_time(double time);
 
