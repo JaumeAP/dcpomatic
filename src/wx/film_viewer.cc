@@ -603,10 +603,9 @@ FilmViewer::config_changed (Config::Property p)
 	}
 
 	auto backend = AudioBackend::instance();
-	auto& audio = backend->rtaudio();
 
 	if (backend->stream_open()) {
-		audio.closeStream();
+		backend->close_stream();
 	}
 
 	if (Config::instance()->sound() && backend->device_count() > 0) {

@@ -49,6 +49,7 @@ public:
 	bool open_stream(boost::optional<std::string> name, RtAudioCallback callback, void* context, int* channels, unsigned int* block_size);
 	void abort_stream_if_running();
 	boost::optional<std::string> start_stream();
+	void close_stream();
 
 	int stream_latency() const;
 	bool stream_open() const;

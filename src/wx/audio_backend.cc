@@ -325,3 +325,11 @@ AudioBackend::open_stream(optional<string> name, RtAudioCallback callback, void*
 
 	return true;
 }
+
+
+void
+AudioBackend::close_stream()
+{
+	_rtaudio.closeStream();
+}
+
