@@ -184,3 +184,10 @@ AudioBackend::start_stream()
 }
 
 
+
+int
+AudioBackend::stream_latency() const
+{
+	return const_cast<RtAudio&>(_rtaudio).getStreamLatency();
+}
+
