@@ -966,7 +966,7 @@ SoundPage::config_changed ()
 	apis[RtAudio::LINUX_OSS]      = _("OSS");
 	apis[RtAudio::RTAUDIO_DUMMY]  = _("Dummy");
 
-	int const channels = configured_so ? AudioBackend::instance()->device_output_channels(*configured_so).get_value_or(0) : 0;
+	int const channels = configured_so ? AudioBackend::instance()->device_channels(*configured_so).get_value_or(0) : 0;
 
 	_sound_output_details->SetLabel (
 		wxString::Format(_("%d channels on %s"), channels, apis[audio.getCurrentApi()])

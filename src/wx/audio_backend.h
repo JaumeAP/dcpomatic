@@ -42,7 +42,7 @@ public:
 
 	std::vector<std::string> device_names();
 	boost::optional<std::string> default_device_name();
-	boost::optional<int> device_output_channels(std::string name);
+	boost::optional<int> device_channels(std::string name);
 
 	void abort_stream_if_running();
 	boost::optional<std::string> start_stream();
