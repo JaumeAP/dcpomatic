@@ -888,9 +888,9 @@ SoundPage::setup ()
 	}
 
 	_sound->bind(&SoundPage::sound_changed, this);
-	_sound_output->Bind (wxEVT_CHOICE,   bind(&SoundPage::sound_output_changed, this));
-	_map->Changed.connect (bind(&SoundPage::map_changed, this, _1));
-	_reset_to_default->Bind (wxEVT_BUTTON,   bind(&SoundPage::reset_to_default, this));
+	_sound_output->Bind(wxEVT_CHOICE, bind(&SoundPage::sound_output_changed, this));
+	_map->Changed.connect(bind(&SoundPage::map_changed, this, _1));
+	_reset_to_default->Bind(wxEVT_BUTTON, bind(&SoundPage::reset_to_default, this));
 }
 
 void
