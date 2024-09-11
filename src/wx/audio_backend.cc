@@ -60,15 +60,15 @@ AudioBackend::AudioBackend()
 void
 AudioBackend::rtaudio_error_callback(string const& error)
 {
-	boost::mutex::scoped_lock lm(_last_rtaudio_error_mutex);
-	_last_rtaudio_error = error;
+	boost::mutex::scoped_lock lm(_last_error_mutex);
+	_last_error = error;
 }
 
 string
-AudioBackend::last_rtaudio_error() const
+AudioBackend::last_error() const
 {
-	boost::mutex::scoped_lock lm(_last_rtaudio_error_mutex);
-	return _last_rtaudio_error;
+	boost::mutex::scoped_lock lm(_last_error_mutex);
+	return _last_error;
 }
 #endif
 
@@ -170,7 +170,7 @@ AudioBackend::start_stream()
 {
 #if (RTAUDIO_VERSION_MAJOR >= 6)
 	if (_rtaudio.startStream() != RTAUDIO_NO_ERROR) {
-		return last_rtaudio_error();
+		return last_error();
 	}
 #else
 	try {
