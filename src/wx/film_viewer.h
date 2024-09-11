@@ -35,7 +35,6 @@
 #include "lib/timer.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
-#include <RtAudio.h>
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
 #include <vector>

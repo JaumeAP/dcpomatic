@@ -42,7 +42,6 @@ LIBDCP_DISABLE_WARNINGS
 #include <wx/preferences.h>
 #include <wx/spinctrl.h>
 #include <wx/stdpaths.h>
-#include <RtAudio.h>
 LIBDCP_ENABLE_WARNINGS
 #include <boost/filesystem.hpp>
 
