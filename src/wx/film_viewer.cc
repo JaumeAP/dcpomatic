@@ -609,7 +609,7 @@ FilmViewer::config_changed (Config::Property p)
 		audio.closeStream();
 	}
 
-	if (Config::instance()->sound() && audio.getDeviceCount() > 0) {
+	if (Config::instance()->sound() && backend->device_count() > 0) {
 		optional<unsigned int> chosen_device_id;
 #if (RTAUDIO_VERSION_MAJOR >= 6)
 		if (Config::instance()->sound_output()) {

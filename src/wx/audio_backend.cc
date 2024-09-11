@@ -248,3 +248,10 @@ AudioBackend::stream_time() const
 	return const_cast<RtAudio&>(_rtaudio).getStreamTime();
 }
 
+
+int
+AudioBackend::device_count() const
+{
+	return const_cast<RtAudio&>(_rtaudio).getDeviceCount();
+}
+
