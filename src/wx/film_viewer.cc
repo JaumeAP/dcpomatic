@@ -610,81 +610,17 @@ FilmViewer::config_changed (Config::Property p)
 	}
 
 	if (Config::instance()->sound() && backend->device_count() > 0) {
-		optional<unsigned int> chosen_device_id;
-#if (RTAUDIO_VERSION_MAJOR >= 6)
-		if (Config::instance()->sound_output()) {
-			for (auto device_id: audio.getDeviceIds()) {
-				if (audio.getDeviceInfo(device_id).name == Config::instance()->sound_output().get()) {
-					chosen_device_id = device_id;
-					break;
-				}
-			}
-		}
-
-		if (!chosen_device_id) {
-			chosen_device_id = audio.getDefaultOutputDevice();
-		}
-		_audio_channels = audio.getDeviceInfo(*chosen_device_id).outputChannels;
-		RtAudio::StreamParameters sp;
-		sp.deviceId = *chosen_device_id;
-		sp.nChannels = _audio_channels;
-		sp.firstChannel = 0;
-		if (audio.openStream(&sp, 0, RTAUDIO_FLOAT32, 48000, &_audio_block_size, &rtaudio_callback, this) != RTAUDIO_NO_ERROR) {
-			_audio_channels = 0;
+		if (!backend->open_stream(Config::instance()->sound_output(), rtaudio_callback, this, &_audio_channels, &_audio_block_size)) {
 			error_dialog(
 				_video_view->get(),
 				_("Could not set up audio output.  There will be no audio during the preview."), std_to_wx(backend->last_error())
 				);
 		}
-#else
-		unsigned int st = 0;
-		if (Config::instance()->sound_output()) {
-			while (st < audio.getDeviceCount()) {
-				try {
-					if (audio.getDeviceInfo(st).name == Config::instance()->sound_output().get()) {
-						break;
-					}
-				} catch (RtAudioError&) {
-					/* Something went wrong with that device so we don't want to use it anyway */
-				}
-				++st;
-			}
-			if (st == audio.getDeviceCount()) {
-				try {
-					st = audio.getDefaultOutputDevice();
-				} catch (RtAudioError&) {
-					/* Something went wrong with that device so we don't want to use it anyway */
-				}
-			}
-		} else {
-			try {
-				st = audio.getDefaultOutputDevice();
-			} catch (RtAudioError&) {
-				/* Something went wrong with that device so we don't want to use it anyway */
-			}
-		}
-
-		try {
-			_audio_channels = audio.getDeviceInfo(st).outputChannels;
-			RtAudio::StreamParameters sp;
-			sp.deviceId = st;
-			sp.nChannels = _audio_channels;
-			sp.firstChannel = 0;
-			audio.openStream(&sp, 0, RTAUDIO_FLOAT32, 48000, &_audio_block_size, &rtaudio_callback, this);
-		} catch (RtAudioError& e) {
-			_audio_channels = 0;
-			error_dialog (
-				_video_view->get(),
-				_("Could not set up audio output.  There will be no audio during the preview."), std_to_wx(e.what())
-				);
-		}
-#endif
-		destroy_and_maybe_create_butler();
-
 	} else {
 		_audio_channels = 0;
-		destroy_and_maybe_create_butler();
 	}
+
+	destroy_and_maybe_create_butler();
 }
 
 

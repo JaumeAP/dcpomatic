@@ -46,6 +46,7 @@ public:
 	boost::optional<int> device_channels(std::string name);
 	int device_count() const;
 
+	bool open_stream(boost::optional<std::string> name, RtAudioCallback callback, void* context, int* channels, unsigned int* block_size);
 	void abort_stream_if_running();
 	boost::optional<std::string> start_stream();
 

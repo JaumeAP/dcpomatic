@@ -255,3 +255,73 @@ AudioBackend::device_count() const
 	return const_cast<RtAudio&>(_rtaudio).getDeviceCount();
 }
 
+
+bool
+AudioBackend::open_stream(optional<string> name, RtAudioCallback callback, void* context, int* channels, unsigned int* block_size)
+{
+	optional<unsigned int> chosen_device_id;
+#if (RTAUDIO_VERSION_MAJOR >= 6)
+	if (name) {
+		for (auto device_id: _rtaudio.getDeviceIds()) {
+			if (_rtaudio.getDeviceInfo(device_id).name == *name) {
+				chosen_device_id = device_id;
+				break;
+			}
+		}
+	}
+
+	if (!chosen_device_id) {
+		chosen_device_id = _rtaudio.getDefaultOutputDevice();
+	}
+	*channels = _rtaudio.getDeviceInfo(*chosen_device_id).outputChannels;
+	RtAudio::StreamParameters sp;
+	sp.deviceId = *chosen_device_id;
+	sp.nChannels = *channels;
+	sp.firstChannel = 0;
+	if (_rtaudio.openStream(&sp, 0, RTAUDIO_FLOAT32, 48000, block_size, callback, context) != RTAUDIO_NO_ERROR) {
+		*channels = 0;
+		return false;
+	}
+#else
+	unsigned int st = 0;
+	if (name) {
+		while (st < _rtaudio.getDeviceCount()) {
+			try {
+				if (_rtaudio.getDeviceInfo(st).name == *name) {
+					break;
+				}
+			} catch (RtAudioError&) {
+				/* Something went wrong with that device so we don't want to use it anyway */
+			}
+			++st;
+		}
+		if (st == audio.getDeviceCount()) {
+			try {
+				st = _rtaudio.getDefaultOutputDevice();
+			} catch (RtAudioError&) {
+				/* Something went wrong with that device so we don't want to use it anyway */
+			}
+		}
+	} else {
+		try {
+			st = _rtaudio.getDefaultOutputDevice();
+		} catch (RtAudioError&) {
+			/* Something went wrong with that device so we don't want to use it anyway */
+		}
+	}
+
+	try {
+		*channels = audio.getDeviceInfo(st).outputChannels;
+		RtAudio::StreamParameters sp;
+		sp.deviceId = st;
+		sp.nChannels = *channels;
+		sp.firstChannel = 0;
+		audio.openStream(&sp, 0, RTAUDIO_FLOAT32, 48000, block_size, callback, context);
+	} catch (RtAudioError& e) {
+		*channels = 0;
+		return false;
+	}
+#endif
+
+	return true;
+}
