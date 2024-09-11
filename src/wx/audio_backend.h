@@ -50,6 +50,8 @@ public:
 
 	int stream_latency() const;
 
+	void set_stream_time(double time);
+
 	wxString current_api_name() const;
 
 #if (RTAUDIO_VERSION_MAJOR >= 6)

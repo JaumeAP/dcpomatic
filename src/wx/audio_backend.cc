@@ -220,3 +220,10 @@ AudioBackend::current_api_name() const
 	}
 }
 
+
+void
+AudioBackend::set_stream_time(double time)
+{
+	_rtaudio.setStreamTime(time);
+}
+

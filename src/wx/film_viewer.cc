@@ -353,7 +353,7 @@ FilmViewer::start_audio_stream_if_open ()
 	auto& audio = AudioBackend::instance()->rtaudio();
 
 	if (audio.isStreamOpen()) {
-		audio.setStreamTime(_video_view->position().seconds());
+		AudioBackend::instance()->set_stream_time(_video_view->position().seconds());
 		auto error = AudioBackend::instance()->start_stream();
 		if (error) {
 			_audio_channels = 0;
