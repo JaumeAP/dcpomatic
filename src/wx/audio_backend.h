@@ -49,6 +49,7 @@ public:
 	boost::optional<std::string> start_stream();
 
 	int stream_latency() const;
+	bool stream_open() const;
 
 	void set_stream_time(double time);
 

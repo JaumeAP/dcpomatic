@@ -239,7 +239,7 @@ FilmViewer::create_butler()
 
 	DCPOMATIC_ASSERT(_player);
 
-	auto& audio = AudioBackend::instance()->rtaudio();
+	auto audio = AudioBackend::instance();
 
 	_butler = std::make_shared<Butler>(
 		_film,
@@ -251,7 +251,7 @@ FilmViewer::create_butler()
 		(opengl && _optimisation != Optimisation::NONE) ? Image::Alignment::COMPACT : Image::Alignment::PADDED,
 		true,
 		opengl && _optimisation == Optimisation::JPEG2000,
-		(Config::instance()->sound() && audio.isStreamOpen()) ? Butler::Audio::ENABLED : Butler::Audio::DISABLED
+		(Config::instance()->sound() && audio->stream_open()) ? Butler::Audio::ENABLED : Butler::Audio::DISABLED
 		);
 
 	_closed_captions_dialog->set_butler (_butler);
@@ -350,12 +350,11 @@ FilmViewer::suspend ()
 void
 FilmViewer::start_audio_stream_if_open ()
 {
-	auto& audio = AudioBackend::instance()->rtaudio();
+	auto audio = AudioBackend::instance();
 
-	if (audio.isStreamOpen()) {
-		AudioBackend::instance()->set_stream_time(_video_view->position().seconds());
-		auto error = AudioBackend::instance()->start_stream();
-		if (error) {
+	if (audio->stream_open()) {
+		audio->set_stream_time(_video_view->position().seconds());
+		if (auto error = audio->start_stream()) {
 			_audio_channels = 0;
 			error_dialog(
 				_video_view->get(),
@@ -606,7 +605,7 @@ FilmViewer::config_changed (Config::Property p)
 	auto backend = AudioBackend::instance();
 	auto& audio = backend->rtaudio();
 
-	if (audio.isStreamOpen()) {
+	if (backend->stream_open()) {
 		audio.closeStream();
 	}
 

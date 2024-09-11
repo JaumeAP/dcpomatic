@@ -227,3 +227,10 @@ AudioBackend::set_stream_time(double time)
 	_rtaudio.setStreamTime(time);
 }
 
+
+bool
+AudioBackend::stream_open() const
+{
+	return _rtaudio.isStreamOpen();
+}
+
