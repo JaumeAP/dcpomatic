@@ -27,6 +27,7 @@
 #include "compose.hpp"
 #include "cross.h"
 #include "dcpomatic_assert.h"
+#include "dcpomatic_log.h"
 #include "exceptions.h"
 #include "file_group.h"
 #include <dcp/filesystem.h>
@@ -142,6 +143,7 @@ FileGroup::Result
 FileGroup::read (uint8_t* buffer, int amount) const
 {
 	DCPOMATIC_ASSERT (_current_file);
+	LOG_GENERAL("Group read %1 %2", (uint64_t) buffer, amount);
 
 	int read = 0;
 	while (true) {
@@ -160,6 +162,7 @@ FileGroup::read (uint8_t* buffer, int amount) const
 			eof = true;
 		}
 
+		LOG_GENERAL("Read %1 %2", (uint64_t) (buffer + read), to_read);
 		int const this_time = _current_file->read(buffer + read, 1, to_read);
 		read += this_time;
 		_position += this_time;
