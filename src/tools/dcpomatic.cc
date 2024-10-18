@@ -66,6 +66,7 @@
 #include "lib/constants.h"
 #include "lib/content.h"
 #include "lib/content_factory.h"
+#include "lib/crashpad.h"
 #include "lib/cross.h"
 #include "lib/cross.h"
 #include "lib/dcp_content.h"
@@ -318,6 +319,7 @@ public:
 		, _right_panel(new wxPanel(_splitter, wxID_ANY))
 		, _film_viewer(_right_panel)
 	{
+		setup_crashpad();
 
 		auto bar = new wxMenuBar;
 		setup_menu (bar);
@@ -463,6 +465,8 @@ public:
 		film->set_name (path.filename().generic_string());
 		film->write_metadata ();
 		set_film (film);
+		int* p = 0;
+		*p = 42;
 	}
 
 	void load_film (boost::filesystem::path file)

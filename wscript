@@ -644,6 +644,7 @@ def configure(conf):
                    define_name="DCPOMATIC_HAVE_SQLITE3_PREPARE_V3",
                    mandatory=False)
 
+    conf.env.LIB_CRASHPAD = ['client', 'common', 'handler', 'util', 'base']
 
     # Other stuff
 
