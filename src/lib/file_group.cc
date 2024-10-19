@@ -27,6 +27,8 @@
 #include "compose.hpp"
 #include "cross.h"
 #include "dcpomatic_assert.h"
+#include "dcpomatic_log.h"
+#include "digester.h"
 #include "exceptions.h"
 #include "file_group.h"
 #include <dcp/filesystem.h>
@@ -88,6 +90,7 @@ FileGroup::ensure_open_path (size_t p) const
 	if (!file) {
 		throw OpenFileError(_paths[p], file.open_error(), OpenFileError::READ);
 	}
+	LOG_GENERAL("%1 open %2", reinterpret_cast<uint64_t>(this), _paths[p]);
 
 	_current_path = p;
 	_current_file = std::move(file);
@@ -98,6 +101,8 @@ FileGroup::ensure_open_path (size_t p) const
 int64_t
 FileGroup::seek (int64_t pos, int whence) const
 {
+	LOG_GENERAL("%1 seek %2 %3", reinterpret_cast<uint64_t>(this), pos, whence);
+
 	switch (whence) {
 	case SEEK_SET:
 		_position = pos;
@@ -180,6 +185,10 @@ FileGroup::read (uint8_t* buffer, int amount) const
 			ensure_open_path (_current_path + 1);
 		}
 	}
+
+	Digester digester;
+	digester.add(buffer, amount);
+	LOG_GENERAL("%1 read %2 %3 %4", reinterpret_cast<uint64_t>(this), amount, read, digester.get());
 
 	return { read, false };
 }
