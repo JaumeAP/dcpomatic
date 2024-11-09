@@ -1444,6 +1444,7 @@ Player::emit_video (shared_ptr<PlayerVideo> pv, DCPTime time)
 {
 	auto film = _film.lock();
 	DCPOMATIC_ASSERT(film);
+	std::cout << "Player::emit_video " << to_string(time) << "\n";
 
 	/* We need a delay to give a little wiggle room to ensure that relevant subtitles arrive at the
 	   player before the video that requires them.
@@ -1468,6 +1469,7 @@ Player::emit_video (shared_ptr<PlayerVideo> pv, DCPTime time)
 void
 Player::do_emit_video (shared_ptr<PlayerVideo> pv, DCPTime time)
 {
+	std::cout << "Player::do_emit_video " << to_string(time) << "\n";
 	if (pv->eyes() == Eyes::BOTH || pv->eyes() == Eyes::RIGHT) {
 		std::for_each(_active_texts.begin(), _active_texts.end(), [time](ActiveText& a) { a.clear_before(time); });
 	}

@@ -148,6 +148,7 @@ FFmpegDecoder::flush_codecs()
 		}
 	}
 
+	std::cout << "-> FLUSH AUDIO STREAMS\n";
 	for (auto i: ffmpeg_content()->ffmpeg_audio_streams()) {
 		auto context = _codec_context[i->index(_format_context)];
 		int r = avcodec_send_packet (context, nullptr);
@@ -161,6 +162,7 @@ FFmpegDecoder::flush_codecs()
 			did_something = true;
 		}
 	}
+	std::cout << "<- FLUSH AUDIO STREAMS\n";
 
 	return did_something ? FlushResult::AGAIN : FlushResult::DONE;
 }
@@ -579,16 +581,24 @@ FFmpegDecoder::decode_and_process_video_packet (AVPacket* packet)
 
 	bool pending = false;
 	do {
+		if (packet) {
+			std::cout << "V: -> avcodec_send_packet " << packet->size << "\n";
+		} else {
+			std::cout << "V: -> avcodec_send_packet null\n";
+		}
 		int r = avcodec_send_packet (context, packet);
 		if (r < 0) {
 			LOG_WARNING("avcodec_send_packet returned %1 for a video packet", r);
 		}
+		std::cout << "V: <- avcodec_send_packet " << r << "\n";
 
 		/* EAGAIN means we should call avcodec_receive_frame and then re-send the same packet */
 		pending = r == AVERROR(EAGAIN);
 
 		while (true) {
+			std::cout << "V: -> avcodec_receive_frame\n";
 			r = avcodec_receive_frame (context, _video_frame);
+			std::cout << "V: <- avcodec_receive_frame " << r << "\n";
 			if (r == AVERROR(EAGAIN) || r == AVERROR_EOF || (r < 0 && !packet)) {
 				/* More input is required, no more frames are coming, or we are flushing and there was
 				 * some error which we just want to ignore.

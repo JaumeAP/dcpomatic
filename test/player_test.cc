@@ -729,3 +729,51 @@ BOOST_AUTO_TEST_CASE(unmapped_audio_does_not_raise_buffer_error)
 	butler.rethrow();
 }
 
+
+/* Test #2882: skipping back with a particular file would kill the butler because no video frames were decoded */
+BOOST_AUTO_TEST_CASE(no_video_on_seek)
+{
+	auto content = content_factory(TestPaths::private_data() / "00015-remux.ts")[0];
+	auto film = new_test_film2("no_video_on_seek", { content });
+
+	Player player(film, Image::Alignment::COMPACT);
+	Butler butler(film, player, AudioMapping(), 2, bind(PlayerVideo::force, AV_PIX_FMT_RGB24), VideoRange::FULL, Image::Alignment::PADDED, true, false, Butler::Audio::ENABLED);
+
+	auto get_until = [&butler](dcpomatic::DCPTime const& time) {
+		dcpomatic::DCPTime video_time;
+		dcpomatic::DCPTime audio_time;
+
+		auto constexpr frames = 2000;
+		std::vector<float> audio_data(frames * 6);
+
+		while (video_time < time) {
+			if (video_time <= audio_time) {
+				Butler::Error error;
+				auto video = butler.get_video(Butler::Behaviour::BLOCKING, &error);
+				if (!video.first && error.code == Butler::Error::Code::FINISHED) {
+					break;
+				}
+				video_time = video.second;
+			} else {
+				auto audio = butler.get_audio(Butler::Behaviour::BLOCKING, audio_data.data(), frames);
+				if (audio) {
+					audio_time = *audio;
+				}
+			}
+		}
+	};
+
+	/* Simulate playing to the end */
+	get_until(dcpomatic::DCPTime::from_seconds(200));
+
+	/* Skip around a bit */
+	butler.seek(dcpomatic::DCPTime(6696000), false);
+	// dcpomatic_sleep_seconds(20);
+	dcpomatic_sleep_seconds(60);
+	butler.seek(dcpomatic::DCPTime(8956000), false);
+	// dcpomatic_sleep_seconds(20);
+	dcpomatic_sleep_seconds(60);
+
+	/* See if the butler died */
+	butler.rethrow();
+}

@@ -136,6 +136,7 @@ Butler::~Butler ()
 bool
 Butler::should_run () const
 {
+	std::cout << "V:" << _video.size() << " A:" << _audio.size() << "\n";
 	if (_video.size() >= MAXIMUM_VIDEO_READAHEAD * 10) {
 		/* This is way too big */
 		optional<DCPTime> pos = _audio.peek();
@@ -166,20 +167,25 @@ Butler::should_run () const
 
 	if (_audio.size() >= MAXIMUM_AUDIO_READAHEAD * 2) {
 		LOG_WARNING ("Butler audio buffers reached %1 frames (video is %2)", _audio.size(), _video.size());
+		// std::cout << String::compose("Butler audio buffers reached %1 frames (video is %2)", _audio.size(), _video.size()) << "\n";
 	}
 
 	if (_stop_thread || _finished || _died || _suspended) {
 		/* Definitely do not run */
+		// std::cout << "run?0\n";
 		return false;
 	}
 
 	if (_video.size() < MINIMUM_VIDEO_READAHEAD || (!_disable_audio && _audio.size() < MINIMUM_AUDIO_READAHEAD)) {
 		/* Definitely do run: we need data */
+		// std::cout << "run?1\n";
 		return true;
 	}
 
 	/* Run if we aren't full of video or audio */
-	return (_video.size() < MAXIMUM_VIDEO_READAHEAD) && (_audio.size() < MAXIMUM_AUDIO_READAHEAD);
+	auto x = (_video.size() < MAXIMUM_VIDEO_READAHEAD) && (_audio.size() < MAXIMUM_AUDIO_READAHEAD);
+	// std::cout << "run?" << x << "\n";
+	return x;
 }
 
 
@@ -199,6 +205,7 @@ try
 
 		/* Do any seek that has been requested */
 		if (_pending_seek_position) {
+			std::cout << "seek to " << to_string(*_pending_seek_position) << "\n";
 			_finished = false;
 			_player.seek(*_pending_seek_position, _pending_seek_accurate);
 			_pending_seek_position = optional<DCPTime> ();
