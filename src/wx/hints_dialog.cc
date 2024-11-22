@@ -89,8 +89,7 @@ HintsDialog::HintsDialog(wxWindow* parent, std::weak_ptr<Film> film, bool ok)
 
 	_text->GetCaret()->Hide();
 
-	auto locked_film = _film.lock();
-	if (locked_film) {
+	if (auto locked_film = _film.lock()) {
 		_film_change_connection = locked_film->Change.connect(boost::bind(&HintsDialog::film_change, this, _1));
 		_film_content_change_connection = locked_film->ContentChange.connect(boost::bind(&HintsDialog::film_content_change, this, _1));
 	}
