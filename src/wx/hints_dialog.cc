@@ -108,11 +108,6 @@ HintsDialog::film_change(ChangeType type)
 	_text->Clear();
 	_current.clear();
 
-	auto film = _film.lock();
-	if (!film) {
-		return;
-	}
-
 	_gauge->Show();
 	_gauge_message->Show();
 	Layout();
