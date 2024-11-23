@@ -46,10 +46,11 @@ using namespace boost::placeholders;
 
 
 HintsDialog::HintsDialog(wxWindow* parent, std::weak_ptr<Film> film, bool ok)
-	: wxDialog(parent, wxID_ANY, _("Hints"))
+	: wxDialog(parent, wxID_ANY, _("Hints"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 	, _film(film)
 	, _hints(0)
 	, _finished(false)
+	, _metrics(std::string{"hints"}, { 800, 600 }, this)
 {
 	auto sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -58,7 +59,7 @@ HintsDialog::HintsDialog(wxWindow* parent, std::weak_ptr<Film> film, bool ok)
 	_gauge_message = new StaticText(this, {});
 	sizer->Add(_gauge_message, 0, wxALL | wxEXPAND, DCPOMATIC_SIZER_GAP);
 
-	_text = new wxRichTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(400, 300), wxRE_READONLY);
+	_text = new wxRichTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxRE_READONLY);
 	sizer->Add(_text, 1, wxEXPAND | wxALL, 6);
 
 	if (!ok) {
@@ -95,6 +96,8 @@ HintsDialog::HintsDialog(wxWindow* parent, std::weak_ptr<Film> film, bool ok)
 	}
 
 	film_change(ChangeType::DONE);
+
+	_metrics.bind();
 }
 
 
@@ -189,3 +192,10 @@ HintsDialog::progress(string m)
 {
 	_gauge_message->SetLabel(std_to_wx(m));
 }
+
+void
+HintsDialog::show()
+{
+	_metrics.show();
+}
+

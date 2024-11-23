@@ -55,8 +55,6 @@ private:
 	void data_start (ContentStringText cts);
 	void data_stop (dcpomatic::ContentTime time);
 	void subtitle_selected (wxListEvent &);
-	void moved(wxMoveEvent& ev);
-	void list_sized(wxSizeEvent& ev);
 
 	wxListCtrl* _list;
 	int _subs;
@@ -66,7 +64,7 @@ private:
 	std::weak_ptr<Content> _content;
 	FilmViewer& _film_viewer;
 
-	static WindowMetrics _metrics;
+	WindowMetrics _metrics;
 };
 
 

@@ -29,16 +29,36 @@ LIBDCP_DISABLE_WARNINGS
 LIBDCP_ENABLE_WARNINGS
 
 
+class wxMoveEvent;
+class wxSizeEvent;
 class wxWindow;
 
 
 class WindowMetrics
 {
 public:
-	void show(wxWindow* window) const;
+	WindowMetrics(std::string name, wxSize default_size, wxWindow* window);
 
-	wxPoint position = wxDefaultPosition;
-	wxSize size = wxDefaultSize;
+	wxPoint position() const {
+		return _position;
+	}
+
+	wxSize size() const {
+		return _size;
+	}
+
+	void bind();
+	void show() const;
+
+private:
+	void moved(wxMoveEvent& event);
+	void sized(wxSizeEvent& event);
+	void write_to_config() const;
+
+	std::string _name;
+	wxWindow* _window;
+	wxPoint _position;
+	wxSize _size;
 };
 
 

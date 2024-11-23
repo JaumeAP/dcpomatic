@@ -683,6 +683,13 @@ try
 #endif
 
 	_export.read(f.optional_node_child("Export"));
+
+	for (auto metrics: f.node_children("WindowMetrics")) {
+		_window_metrics[metrics->string_attribute("name")] = {
+			{ metrics->number_attribute<int>("x"), metrics->number_attribute<int>("y") },
+			{ metrics->number_attribute<int>("width"), metrics->number_attribute<int>("height") }
+		};
+	}
 }
 catch (...) {
 	if (have_existing("config.xml")) {
@@ -1170,6 +1177,15 @@ Config::write_config() const
 #endif
 
 	_export.write(cxml::add_child(root, "Export"));
+
+	for (auto metrics: _window_metrics) {
+		auto m = cxml::add_child(root, "WindowMetrics");
+		m->set_attribute("name", metrics.first);
+		m->set_attribute("x", fmt::to_string(metrics.second.first.x));
+		m->set_attribute("y", fmt::to_string(metrics.second.first.y));
+		m->set_attribute("width", fmt::to_string(metrics.second.second.width));
+		m->set_attribute("height", fmt::to_string(metrics.second.second.height));
+	}
 
 	auto target = config_write_file();
 
@@ -1753,6 +1769,26 @@ Config::cinemas_file() const
 	}
 
 	return read_path("config.xml").parent_path() / _cinemas_file;
+}
+
+
+optional<std::pair<Position<int>, dcp::Size>>
+Config::window_metrics(string name) const
+{
+	auto iter = _window_metrics.find(name);
+	if (iter != _window_metrics.end()) {
+		return iter->second;
+	}
+
+	return {};
+}
+
+
+void
+Config::set_window_metrics(string name, Position<int> position, dcp::Size size)
+{
+	_window_metrics[name] = { position, size };
+	changed(OTHER);
 }
 
 

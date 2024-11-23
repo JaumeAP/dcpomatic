@@ -839,6 +839,7 @@ private:
 
 		if (Config::instance()->show_hints_before_make_dcp()) {
 			HintsDialog hints(this, _film, false);
+			hints.show();
 			if (hints.ShowModal() == wxID_CANCEL) {
 				return;
 			}
@@ -939,6 +940,7 @@ private:
 
 		if (Config::instance()->show_hints_before_make_dcp()) {
 			HintsDialog hints(this, _film, false);
+			hints.show();
 			if (hints.ShowModal() == wxID_CANCEL) {
 				return;
 			}
@@ -1120,7 +1122,7 @@ private:
 			_hints_dialog = new HintsDialog (this, _film, true);
 		}
 
-		_hints_dialog->Show ();
+		_hints_dialog->show();
 	}
 
 	void tools_encoding_servers ()

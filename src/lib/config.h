@@ -39,6 +39,7 @@
 #include <dcp/language_tag.h>
 #include <boost/signals2.hpp>
 #include <boost/filesystem.hpp>
+#include <unordered_map>
 #include <vector>
 
 
@@ -697,6 +698,8 @@ public:
 		return _layout_for_short_screen;
 	}
 
+	boost::optional<std::pair<Position<int>, dcp::Size>> window_metrics(std::string name) const;
+
 	/* SET (mostly) */
 
 	void set_master_encoding_threads(int n) {
@@ -1273,6 +1276,7 @@ public:
 		maybe_set(_layout_for_short_screen, layout);
 	}
 
+	void set_window_metrics(std::string name, Position<int> position, dcp::Size size);
 
 	void changed(Property p = OTHER);
 	boost::signals2::signal<void (Property)> Changed;
@@ -1528,6 +1532,8 @@ private:
 #endif
 
 	ExportConfig _export;
+
+	std::unordered_map<std::string, std::pair<Position<int>, dcp::Size>> _window_metrics;
 
 	static int const _current_version;
 
