@@ -70,79 +70,41 @@ ContentView::selected () const
 		return {};
 	}
 
-	DCPOMATIC_ASSERT (s < int(_content.size()));
-	return _content[s];
+	DCPOMATIC_ASSERT(s < int(_content_digests.size()));
+	return ContentStore::instance()->get(_content_digests[s]);
 }
 
 
 void
 ContentView::update ()
 {
-	using namespace boost::filesystem;
-
-	DeleteAllItems ();
-	_content.clear ();
 	auto dir = Config::instance()->player_content_directory();
 	if (!dir || !dcp::filesystem::is_directory(*dir)) {
 		dir = home_directory ();
 	}
 
 	wxProgressDialog progress(variant::wx::dcpomatic(), _("Reading content directory"));
-	auto jm = JobManager::instance ();
 
-	list<shared_ptr<ExamineContentJob>> jobs;
+	auto store = ContentStore::instance();
 
-	for (auto i: directory_iterator(*dir)) {
-		try {
-			progress.Pulse ();
+	auto errors = store->update([&progress]() {
+		return progress.Pulse();
+	});
 
-			shared_ptr<Content> content;
-			if (is_directory(i) && contains_assetmap(i)) {
-				content = make_shared<DCPContent>(i);
-			} else if (i.path().extension() == ".mp4") {
-				auto all_content = content_factory(i);
-				if (!all_content.empty()) {
-					content = all_content[0];
-				}
-			}
-
-			if (content) {
-				auto job = make_shared<ExamineContentJob>(shared_ptr<Film>(), content, false);
-				jm->add (job);
-				jobs.push_back (job);
-			}
-		} catch (boost::filesystem::filesystem_error& e) {
-			/* Never mind */
-		} catch (dcp::ReadError& e) {
-			/* Never mind */
-		}
+	DeleteAllItems ();
+	_content_digests.clear();
+	for (auto content: store->all()) {
+		add(content);
 	}
 
-	while (jm->work_to_do()) {
-		if (!progress.Pulse()) {
-			/* user pressed cancel */
-			for (auto i: jm->get()) {
-				i->cancel();
-			}
-			return;
-		}
-		dcpomatic_sleep_seconds (1);
-	}
-
-	/* Add content from successful jobs and report errors */
-	for (auto i: jobs) {
-		if (i->finished_in_error()) {
-			error_dialog(this, std_to_wx(i->error_summary()) + char_to_wx(".\n"), std_to_wx(i->error_details()));
-		} else {
-			add (i->content());
-			_content.push_back (i->content());
-		}
+	for (auto error: errors) {
+		error_dialog(this, std_to_wx(error.first), std_to_wx(error.second));
 	}
 }
 
 
 void
-ContentView::add (shared_ptr<Content> content)
+ContentView::add(shared_ptr<Content> content)
 {
 	int const N = GetItemCount();
 
@@ -166,17 +128,6 @@ ContentView::add (shared_ptr<Content> content)
 	it.SetColumn(2);
 	it.SetText(std_to_wx(content->summary()));
 	SetItem(it);
-}
 
-
-shared_ptr<Content>
-ContentView::get (string digest) const
-{
-	for (auto i: _content) {
-		if (i->digest() == digest) {
-			return i;
-		}
-	}
-
-	return {};
+	_content_digests.push_back(content->digest());
 }

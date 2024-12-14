@@ -31,7 +31,7 @@ class Content;
 class Film;
 
 
-class ContentView : public wxListCtrl, public ContentStore
+class ContentView : public wxListCtrl
 {
 public:
 	ContentView (wxWindow* parent);
@@ -39,11 +39,9 @@ public:
 	std::shared_ptr<Content> selected () const;
 	void update ();
 
-	std::shared_ptr<Content> get (std::string digest) const override;
-
 private:
 	void add (std::shared_ptr<Content> content);
 
 	std::weak_ptr<Film> _film;
-	std::vector<std::shared_ptr<Content>> _content;
+	std::vector<std::string> _content_digests;
 };

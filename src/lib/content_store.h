@@ -19,16 +19,35 @@
 */
 
 
+#include <functional>
 #include <memory>
+#include <vector>
 
 
 class Content;
 
 /** @class ContentStore
- *  @brief Parent for classes which store content and can return content with a given digest.
+ *  @brief Class to maintain details of what content we have available to play
  */
 class ContentStore
 {
 public:
-	virtual std::shared_ptr<Content> get (std::string digest) const = 0;
+	std::shared_ptr<Content> get(std::string digest) const;
+
+	/** Examine content in the configured directory and update our list.
+	 *  @param pulse Called every so often to indicate progress.  Return false to cancel the scan.
+	 *  @return Errors (first of the pair is the summary, second is the detail).
+	 */
+	std::vector<std::pair<std::string, std::string>> update(std::function<bool()> pulse);
+
+	static ContentStore* instance();
+
+	std::vector<std::shared_ptr<Content>> const& all() const {
+		return _content;
+	}
+
+private:
+	std::vector<std::shared_ptr<Content>> _content;
+
+	static ContentStore* _instance;
 };
