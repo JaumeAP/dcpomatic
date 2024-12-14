@@ -79,9 +79,9 @@ public:
 
 private:
 	void handle(std::shared_ptr<Socket> socket) override;
-	Response request(std::vector<std::string> const& request);
+	Response request(std::vector<std::string> const& request, std::vector<uint8_t> const& body);
 	Response get(std::string const& url);
-	Response post(std::string const& url);
+	Response post(std::string const& url, std::vector<uint8_t> const& body);
 
 	boost::mutex _mutex;
 	bool _playing = false;

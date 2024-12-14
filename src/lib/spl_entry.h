@@ -25,6 +25,7 @@
 
 #include <libcxml/cxml.h>
 #include <dcp/content_kind.h>
+#include <nlohmann/json.hpp>
 
 
 namespace xmlpp {
@@ -41,6 +42,7 @@ public:
 	SPLEntry (std::shared_ptr<Content> c);
 
 	void as_xml(xmlpp::Element* e) const;
+	nlohmann::json as_json() const;
 
 	std::shared_ptr<Content> content;
 	std::string name;

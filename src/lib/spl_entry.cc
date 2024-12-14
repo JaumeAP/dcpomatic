@@ -55,3 +55,21 @@ SPLEntry::as_xml(xmlpp::Element* e) const
 {
 	cxml::add_text_child(e, "Digest", digest);
 }
+
+
+nlohmann::json
+SPLEntry::as_json() const
+{
+	nlohmann::json json;
+	json["name"] = name;
+	json["digest"] = digest;
+	if (!id.empty()) {
+		json["cpl-id"] = id;
+	}
+	if (kind) {
+		json["kind"] = kind->name();
+	}
+	json["encrypted"] = encrypted;
+	return json;
+}
+

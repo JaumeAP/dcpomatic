@@ -19,22 +19,29 @@
 */
 
 
+#include "config.h"
+#include "content_store.h"
 #include "cross.h"
 #include "dcpomatic_log.h"
 #include "dcpomatic_socket.h"
 #include "http_server.h"
+#include "spl.h"
 #include "util.h"
 #include "variant.h"
+#include <dcp/raw_convert.h>
 #include <nlohmann/json.hpp>
 #include <boost/algorithm/string.hpp>
 #include <stdexcept>
+#include <utility>
 
 
 using std::make_pair;
+using std::make_shared;
 using std::runtime_error;
 using std::shared_ptr;
 using std::string;
 using std::vector;
+using boost::optional;
 
 
 Response Response::ERROR_404 = { 404, "<html><head><title>Error 404</title></head><body><h1>Error 404</h1></body></html>"};
@@ -91,6 +98,27 @@ Response::send(shared_ptr<Socket> socket)
 }
 
 
+vector<shared_ptr<SignalSPL>>
+get_playlists()
+{
+	vector<shared_ptr<SignalSPL>> playlists;
+
+	if (auto path = Config::instance()->player_playlist_directory()) {
+		try {
+			for (auto i: dcp::filesystem::directory_iterator(*path)) {
+				auto spl = make_shared<SignalSPL>();
+				try {
+					spl->read(i, ContentStore::instance());
+					playlists.push_back(spl);
+				} catch (...) {}
+			}
+		} catch (...) {}
+	}
+
+	return playlists;
+}
+
+
 Response
 HTTPServer::get(string const& url)
 {
@@ -107,6 +135,28 @@ HTTPServer::get(string const& url)
 		auto response = Response(200, json.dump());
 		response.set_type(Response::Type::JSON);
 		return response;
+	} else if (url == "/api/v1/playlists") {
+		nlohmann::json json;
+		for (auto spl: get_playlists()) {
+			json.push_back(spl->as_json_without_content());
+		}
+		auto response = Response(200, json.dump());
+		response.set_type(Response::Type::JSON);
+		return response;
+	} else if (boost::algorithm::starts_with(url, "/api/v1/playlist/")) {
+		vector<string> parts;
+		boost::algorithm::split(parts, url, boost::is_any_of("/"));
+		if (parts.size() != 5) {
+			return Response::ERROR_404;
+		}
+		for (auto spl: get_playlists()) {
+			if (spl->id() == parts[4]) {
+				auto response = Response(200, spl->as_json_with_content().dump());
+				response.set_type(Response::Type::JSON);
+				return response;
+			}
+		}
+		return Response::ERROR_404;
 	} else {
 		LOG_HTTP("404 %1", url);
 		return Response::ERROR_404;
@@ -115,7 +165,7 @@ HTTPServer::get(string const& url)
 
 
 Response
-HTTPServer::post(string const& url)
+HTTPServer::post(string const& url, vector<uint8_t> const& body)
 {
 	if (url == "/api/v1/play") {
 		emit(boost::bind(boost::ref(Play)));
@@ -127,6 +177,31 @@ HTTPServer::post(string const& url)
 		auto response = Response(303);
 		response.add_header("Location", "/");
 		return response;
+	} else if (boost::algorithm::starts_with(url, "/api/v1/playlist/")) {
+		vector<string> parts;
+		boost::algorithm::split(parts, url, boost::is_any_of("/"));
+		if (parts.size() != 6 || parts[5] != "insert") {
+			return Response::ERROR_404;
+		}
+		bool found = false;
+		for (auto spl: get_playlists()) {
+			if (spl->id() == parts[4]) {
+				nlohmann::json details = nlohmann::json::parse(body);
+				spl->insert(
+					SPLEntry(ContentStore::instance()->get(details["digest"])),
+					details["before"].is_null() ? optional<string>() : details["before"].get<string>()
+				);
+				if (auto dir = Config::instance()->player_playlist_directory()) {
+					spl->write(*dir / (spl->id() + ".xml"));
+				}
+				found = true;
+			}
+		}
+		if (!found) {
+			return Response::ERROR_404;
+		}
+		return Response(201);
+
 	} else {
 		return Response::ERROR_404;
 	}
@@ -134,7 +209,7 @@ HTTPServer::post(string const& url)
 
 
 Response
-HTTPServer::request(vector<string> const& request)
+HTTPServer::request(vector<string> const& request, vector<uint8_t> const& body)
 {
 	vector<string> parts;
 	boost::split(parts, request[0], boost::is_any_of(" "));
@@ -148,7 +223,7 @@ HTTPServer::request(vector<string> const& request)
 			return get(parts[1]);
 		} else if (parts[0] == "POST") {
 			LOG_HTTP("POST %1", parts[1]);
-			return post(parts[1]);
+			return post(parts[1], body);
 		}
 	} catch (std::exception& e) {
 		LOG_ERROR("Error while handling HTTP request: %1", e.what());
@@ -176,49 +251,85 @@ HTTPServer::handle(shared_ptr<Socket> socket)
 			}
 
 			for (std::size_t i = 0; i < size; ++i) {
-				if (_line.length() >= 1024) {
-					_close = true;
-					return;
-				}
-				_line += data[i];
-				if (_line.length() >= 2 && _line.substr(_line.length() - 2) == "\r\n") {
-					if (_line.length() == 2) {
-						_got_request = true;
-						return;
-					} else if (_request.size() > 64) {
+				switch (_state) {
+				case State::HEADER:
+					if (_line.length() >= 1024) {
 						_close = true;
 						return;
-					} else if (_line.size() >= 2) {
-						_line = _line.substr(0, _line.length() - 2);
 					}
-					LOG_HTTP("Receive: %1", _line);
-					_request.push_back(_line);
-					_line = "";
+					_line += data[i];
+					if (_line.length() >= 2 && _line.substr(_line.length() - 2) == "\r\n") {
+						/* Got a line */
+						if (_line.length() == 2) {
+							_state = BODY;
+						} else if (_request.size() > 64) {
+							_close = true;
+							return;
+						} else if (_line.size() >= 2) {
+							_line = _line.substr(0, _line.length() - 2);
+							LOG_HTTP("Receive: %1", _line);
+							if (_request.empty()) {
+								_method = _line.substr(0, _line.find(' '));
+							}
+							string lower_case = _line;
+							transform(lower_case.begin(), lower_case.end(), lower_case.begin(), ::tolower);
+							auto const colon = lower_case.find(':');
+							string const key = lower_case.substr(0, colon);
+							string value = colon != std::string::npos ? lower_case.substr(colon + 1): "";
+							boost::trim(value);
+							if (key == "content-length") {
+								_content_length = dcp::raw_convert<int>(value);
+							}
+							_request.push_back(_line);
+							_line = "";
+						}
+					}
+					break;
+				case State::BODY:
+					_body.push_back(data[i]);
+					if (_body.size() > 65536) {
+						_close = true;
+						return;
+					}
+					break;
 				}
 			}
 		}
 
-
-		bool got_request() const {
-			return _got_request;
+		bool completed() const {
+			return _state == State::BODY && (_method == "GET" || (_method == "POST" && static_cast<int>(_body.size()) == _content_length));
 		}
 
 		bool close() const {
 			return _close;
 		}
 
+		std::vector<uint8_t> body() const {
+			return _body;
+		}
+
 		boost::system::error_code error_code() const {
 			return _error_code;
 		}
 
-		vector<std::string> const& get() const {
+		std::string method() const {
+			return _method;
+		}
+
+		vector<std::string> const& request() const {
 			return _request;
 		}
 
 	private:
+		enum State {
+			HEADER,
+			BODY
+		} _state = HEADER;
+		std::string _method;
 		std::string _line;
 		vector<std::string> _request;
-		bool _got_request = false;
+		std::vector<uint8_t> _body;
+		int _content_length = 0;
 		bool _close = false;
 		boost::system::error_code _error_code;
 	};
@@ -233,13 +344,13 @@ HTTPServer::handle(shared_ptr<Socket> socket)
 			reader.read_block(ec, buffer.data(), bytes_transferred);
 		});
 
-	while (!reader.got_request() && !reader.close() && socket->is_open()) {
+	while (!reader.completed() && !reader.close() && socket->is_open()) {
 		socket->run();
 	}
 
-	if (reader.got_request() && !reader.close()) {
+	if (reader.completed() && !reader.close()) {
 		try {
-			auto response = request(reader.get());
+			auto response = request(reader.request(), reader.body());
 			response.send(socket);
 		} catch (runtime_error& e) {
 			LOG_ERROR_NC(e.what());

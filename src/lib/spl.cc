@@ -85,3 +85,23 @@ SPL::insert(SPLEntry entry, optional<string> before_id)
 	}
 }
 
+
+nlohmann::json
+SPL::as_json_without_content() const
+{
+	nlohmann::json json;
+	json["id"] = _id;
+	json["name"] = _name;
+	return json;
+}
+
+
+nlohmann::json
+SPL::as_json_with_content() const
+{
+	auto json = as_json_without_content();
+	for (auto i: _spl) {
+		json["content"].push_back(i.as_json());
+	}
+	return json;
+}

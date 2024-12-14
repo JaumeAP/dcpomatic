@@ -25,6 +25,7 @@
 
 #include "spl_entry.h"
 #include <dcp/util.h>
+#include <nlohmann/json.hpp>
 #include <boost/signals2.hpp>
 #include <algorithm>
 
@@ -93,6 +94,9 @@ public:
 	bool missing() const {
 		return _missing;
 	}
+
+	nlohmann::json as_json_without_content() const;
+	nlohmann::json as_json_with_content() const;
 
 private:
 	std::string _id;
