@@ -51,7 +51,7 @@ SPLEntry::SPLEntry (shared_ptr<Content> c)
 
 
 void
-SPLEntry::as_xml (xmlpp::Element* e)
+SPLEntry::as_xml(xmlpp::Element* e) const
 {
 	cxml::add_text_child(e, "Digest", digest);
 }
