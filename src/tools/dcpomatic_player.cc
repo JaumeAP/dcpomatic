@@ -252,6 +252,10 @@ public:
 
 		Bind(wxEVT_CLOSE_WINDOW, boost::bind(&DOMFrame::close, this, _1));
 
+		if (Config::instance()->player_mode() == Config::PLAYER_MODE_DUAL || Config::instance()->enable_player_http_server()) {
+			update_content_store();
+		}
+
 		if (Config::instance()->player_mode() == Config::PLAYER_MODE_DUAL) {
 			auto pc = new PlaylistControls (_overall_panel, _viewer);
 			_controls = pc;
