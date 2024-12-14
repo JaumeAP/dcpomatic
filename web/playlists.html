@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<script>
+function selectedPlaylistId()
+{
+	var children = document.getElementById("playlists").children;
+	for (var i = 0; i < children.length; i++) {
+		if (children[i].classList.contains("selected")) {
+			return children[i].getAttribute("id");
+		}
+	}
+
+	return null;
+}
+
+function allowDrop(event)
+{
+	event.preventDefault();
+}
+
+function makePlaylistEntry(name, cpl_id)
+{
+	var li = document.createElement("li");
+	li.appendChild(document.createTextNode(name));
+	li.id = cpl_id;
+	li.onclick = function() {
+		li.classList.toggle("selected");
+		updatePlaylist();
+	};
+	li.ondrop = function(event) {
+		event.preventDefault();
+		var playlistElement = document.getElementById('playlist');
+		newLi = makePlaylistEntry(event.dataTransfer.getData("name"), event.dataTransfer.getData("cpl-id"));
+		var beforeElement = null;
+		if (event.offsetY > event.target.clientHeight / 2) {
+			beforeElement = event.target.nextSibling;
+		} else {
+			beforeElement = event.target;
+		}
+		playlistElement.insertBefore(newLi, beforeElement);
+
+		var beforeId = null;
+		if (beforeElement) {
+			beforeId = beforeElement.getAttribute("id");
+		}
+		fetch("/api/v1/playlist/" + playlistElement.getAttribute('playlist-id') + "/insert", {
+			method: "POST",
+			body: JSON.stringify({before: beforeId, digest: event.dataTransfer.getData("digest")}),
+			headers: {
+				"Content-type": "application/json; charset=UTF-8"
+			}
+		});
+	};
+	li.ondragover = "allowDrop(event)";
+	return li;
+}
+
+// Update the displayed playlist (in ul id="playlist")
+function updatePlaylist()
+{
+	var playlistId = selectedPlaylistId();
+	if (playlistId != null) {
+		fetch("/api/v1/playlist/" + playlistId).then(response => {
+			response.json().then(data => {
+				var playlistContents = document.getElementById("playlist");
+				playlistContents.setAttribute("playlist-id", playlistId);
+				playlistContents.innerHTML = "";
+				data.content.forEach(content => {
+					var li = makePlaylistEntry(content['name'], content['cpl-id'])
+					playlistContents.appendChild(li);
+				});
+			});
+		});
+	}
+}
+
+function setSelectedPlaylist(id)
+{
+	var children = document.getElementById("playlists").children;
+	for (var i = 0; i < children.length; i++) {
+		var child = children[i];
+		if (child.getAttribute("id") == id) {
+			child.classList.add("selected");
+		} else {
+			child.classList.remove("selected");
+		}
+	}
+};
+
+// Fetch playlists and make the list
+fetch("/api/v1/playlists").then(response => {
+	response.json().then(data => {
+		data.forEach(playlist => {
+			var li = document.createElement("li");
+			li.appendChild(document.createTextNode(playlist.name));
+			li.id = playlist['id'];
+			li.onclick = function() {
+				setSelectedPlaylist(playlist['id']);
+				updatePlaylist();
+			};
+			document.getElementById('playlists').appendChild(li);
+		});
+	});
+});
+
+// Fetch content and make the list
+fetch("/api/v1/content").then(response => {
+	response.json().then(data => {
+		data.forEach(content => {
+			var li = document.createElement("li");
+			li.appendChild(document.createTextNode(content.name));
+			li.id = content['cpl-id'];
+			li.draggable = "true";
+			li.ondragstart = function(event) {
+				event.dataTransfer.setData("cpl-id", content['cpl-id']);
+				event.dataTransfer.setData("name", content['name']);
+				event.dataTransfer.setData("digest", content['digest']);
+			};
+			document.getElementById('content').appendChild(li);
+		});
+	});
+})
+</script>
+
+<style>
+
+ul#playlists {
+	width: 400px;
+}
+
+ul#playlist {
+	width: 400px;
+}
+
+li {
+	border: 1px solid black;
+	background-color: #a7bad9;
+	padding: 3px;
+	list-style-type: none;
+	cursor: pointer;
+}
+
+li.selected {
+	background-color: #d343e0;
+	cursor: pointer;
+}
+
+</style>
+<head>
+	<title>Playlists</title>
+</head>
+
+<body>
+
+<div style="width: 50%; display: inline-block;">
+<p>Playlists:
+<ul id="playlists">
+</ul>
+
+<p>Playlist:
+<ul id="playlist" ondragover="allowDrop(event)">
+</ul>
+</div>
+
+<div style="float: right;">
+<p>Content:
+<ul id="content">
+</ul>
+</div>
+
+</body>
+
+</html>

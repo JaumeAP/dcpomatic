@@ -124,6 +124,8 @@ HTTPServer::get(string const& url)
 {
 	if (url == "/") {
 		return Response(200, String::compose(dcp::file_to_string(resources_path() / "web" / "index.html"), variant::dcpomatic_player()));
+	} else if (url == "/playlists") {
+		return Response(200, String::compose(dcp::file_to_string(resources_path() / "web" / "playlists.html"), variant::dcpomatic_player()));
 	} else if (url == "/api/v1/status") {
 		nlohmann::json json;
 		{
