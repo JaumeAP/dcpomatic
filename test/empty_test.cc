@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE (empty_test2)
 	 * A A A         B
 	 */
 	contentA->video->set_length (3);
-	contentA->set_position (film, DCPTime(0));
+	contentA->set_position(film, DCPTime());
 	contentB->video->set_length (1);
 	contentB->set_position (film, DCPTime::from_frames(7, vfr));
 
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE (empty_test3)
 	 * A A A         B
 	 */
 	contentA->video->set_length (3);
-	contentA->set_position (film, DCPTime(0));
+	contentA->set_position(film, DCPTime());
 	contentB->video->set_length (1);
 	contentB->set_position (film, DCPTime::from_frames(7, vfr));
 

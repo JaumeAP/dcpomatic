@@ -319,8 +319,8 @@ BOOST_AUTO_TEST_CASE (reels_test7)
 
 	film->set_reel_type (ReelType::BY_VIDEO_CONTENT);
 	BOOST_REQUIRE_EQUAL (film->reels().size(), 2U);
-	BOOST_CHECK (film->reels().front() == DCPTimePeriod(DCPTime(0), DCPTime::from_frames(2 * 24, 24)));
-	BOOST_CHECK (film->reels().back() == DCPTimePeriod(DCPTime::from_frames(2 * 24, 24), DCPTime::from_frames(3 * 24 + 1, 24)));
+	BOOST_CHECK(film->reels().front() == DCPTimePeriod(DCPTime(), DCPTime::from_frames(2 * 24, 24)));
+	BOOST_CHECK(film->reels().back() == DCPTimePeriod(DCPTime::from_frames(2 * 24, 24), DCPTime::from_frames(3 * 24 + 1, 24)));
 
 	make_and_verify_dcp (film);
 }

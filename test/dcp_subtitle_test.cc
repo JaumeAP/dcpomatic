@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test2)
 
 	stored = optional<ContentStringText> ();
 	while (!decoder->pass()) {
-		if (stored && stored->from() == ContentTime(0)) {
+		if (stored && stored->from() == ContentTime()) {
 			/* Text passed around by the player should be unescaped */
 			BOOST_CHECK_EQUAL(stored->subs.front().text(), "<b>Hello world!</b>");
 		}
