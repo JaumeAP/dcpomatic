@@ -90,7 +90,7 @@ public:
 		: _t (t)
 	{}
 
-	explicit Time (Type n, Type d)
+	Time(Type n, Type d)
 		: _t (n * HZ / d)
 	{}
 

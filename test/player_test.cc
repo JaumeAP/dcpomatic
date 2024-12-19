@@ -554,7 +554,7 @@ BOOST_AUTO_TEST_CASE(trimmed_sound_mix_bug_13)
 	A->audio->set_gain(-12);
 	B->set_position(film, DCPTime());
 	B->audio->set_gain(-12);
-	B->set_trim_start(film, ContentTime(13));
+	B->set_trim_start(film, ContentTime(13, 96000));
 
 	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
 	check_mxf_audio_file("test/data/trimmed_sound_mix_bug_13.mxf", dcp_file(film, "pcm_"));
@@ -571,7 +571,7 @@ BOOST_AUTO_TEST_CASE(trimmed_sound_mix_bug_13_frame_rate_change)
 	A->audio->set_gain(-12);
 	B->set_position(film, DCPTime());
 	B->audio->set_gain(-12);
-	B->set_trim_start(film, ContentTime(13));
+	B->set_trim_start(film, ContentTime(13, 96000));
 
 	A->set_video_frame_rate(film, 24);
 	B->set_video_frame_rate(film, 24);
