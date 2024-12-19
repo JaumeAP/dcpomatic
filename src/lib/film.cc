@@ -288,8 +288,8 @@ Film::info_file(DCPTimePeriod period) const
 {
 	boost::filesystem::path p;
 	p /= "info";
-	p /= video_identifier() + "_" + fmt::to_string(period.from.get()) + "_" + fmt::to_string(period.to.get());
-	return file(p);
+	p /= video_identifier() + "_" + period.from.identifier() + "_" + period.to.identifier();
+	return file (p);
 }
 
 
@@ -318,9 +318,9 @@ Film::audio_analysis_path(shared_ptr<const Playlist> playlist) const
 			/* Likewise we only care about position if we're looking at a
 			 * whole-project view.
 			 */
-			digester.add(content->position().get());
-			digester.add(content->trim_start().get());
-			digester.add(content->trim_end().get());
+			digester.add(content->position().identifier());
+			digester.add(content->trim_start().identifier());
+			digester.add(content->trim_end().identifier());
 		}
 	}
 

@@ -320,12 +320,7 @@ Content::length_after_trim(shared_ptr<const Film> film) const
 string
 Content::identifier() const
 {
-	char buffer[256];
-	snprintf(
-		buffer, sizeof(buffer), "%s_%" PRId64 "_%" PRId64 "_%" PRId64,
-		Content::digest().c_str(), position().get(), trim_start().get(), trim_end().get()
-		);
-	return buffer;
+	return fmt::format("{}_{}_{}_{}", Content::digest(), position().identifier(), trim_start().identifier(), trim_end().identifier());
 }
 
 

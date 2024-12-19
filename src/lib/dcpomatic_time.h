@@ -259,6 +259,11 @@ public:
 		return buffer;
 	}
 
+	std::string identifier() const {
+		/* XXX: maybe this should be more carefully considered */
+		return fmt::to_string(_t);
+	}
+
 	static Time<S, O> from_seconds (double s) {
 		return Time<S, O> (llrint (s * HZ));
 	}
