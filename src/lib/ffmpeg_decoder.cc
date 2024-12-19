@@ -406,7 +406,7 @@ FFmpegDecoder::seek (ContentTime time, bool accurate)
 	   we don't really know what the seek will give us.
 	*/
 
-	auto pre_roll = accurate ? ContentTime::from_seconds (2) : ContentTime (0);
+	auto pre_roll = accurate ? ContentTime::from_seconds(2) : ContentTime();
 	time -= pre_roll;
 
 	/* XXX: it seems debatable whether PTS should be used here...
