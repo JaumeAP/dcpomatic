@@ -1673,7 +1673,7 @@ Film::check_reel_boundaries_for_atmos()
 	if (remake_boundaries) {
 		vector<dcpomatic::DCPTime> required_boundaries;
 		std::copy_if(atmos_boundaries.begin(), atmos_boundaries.end(), std::back_inserter(required_boundaries), [this](dcpomatic::DCPTime time) {
-			return time.get() != 0 && time != length();
+			return time != dcpomatic::DCPTime() && time != length();
 		});
 		if (!required_boundaries.empty()) {
 			set_reel_type(ReelType::CUSTOM);
