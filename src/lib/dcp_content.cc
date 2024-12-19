@@ -616,11 +616,11 @@ DCPContent::reels (shared_ptr<const Film> film) const
 	list<DCPTimePeriod> p;
 
 	/* This content's frame rate must be the same as the output DCP rate, so we can
-	   convert `directly' from ContentTime to DCPTime.
+	   cheat and use a default FrameRateChange here.
 	*/
 
 	/* The starting point of this content on the timeline */
-	auto pos = position() - DCPTime (trim_start().get());
+	auto pos = position() - DCPTime(trim_start(), {});
 
 	for (auto i: reel_lengths) {
 		/* This reel runs from `pos' to `to' */
