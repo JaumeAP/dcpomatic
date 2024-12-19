@@ -32,7 +32,6 @@
 #include "dcpomatic_time.h"
 #include "pixel_quanta.h"
 #include "types.h"
-#include <libcxml/cxml.h>
 #include <dcp/atmos_asset.h>
 #include <dcp/decrypted_kdm.h>
 #include <dcp/util.h>
@@ -102,18 +101,6 @@ extern std::string join_strings(std::vector<std::string> const& in, std::string 
 extern std::string rfc_2822_date(time_t time);
 bool paths_exist(std::vector<boost::filesystem::path> const& paths);
 std::function<AVPixelFormat (AVPixelFormat)> force(AVPixelFormat format);
-
-
-template <class T>
-T
-number_attribute(cxml::ConstNodePtr node, std::string name1, std::string name2)
-{
-	auto value = node->optional_number_attribute<T>(name1);
-	if (!value) {
-		value = node->number_attribute<T>(name2);
-	}
-	return *value;
-}
 
 extern std::string screen_names_to_string(std::vector<std::string> names);
 
