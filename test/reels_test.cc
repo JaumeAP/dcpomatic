@@ -93,14 +93,14 @@ BOOST_AUTO_TEST_CASE (reels_test1)
 	r = film->reels ();
 	BOOST_CHECK_EQUAL (r.size(), 3U);
 	auto i = r.begin ();
-	BOOST_CHECK_EQUAL (i->from.get(), 0);
-	BOOST_CHECK_EQUAL (i->to.get(), DCPTime::from_frames(60, 24).get());
+	BOOST_CHECK(i->from == DCPTime());
+	BOOST_CHECK(i->to == DCPTime::from_frames(60, 24));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), DCPTime::from_frames(60, 24).get());
-	BOOST_CHECK_EQUAL (i->to.get(), DCPTime::from_frames(120, 24).get());
+	BOOST_CHECK(i->from == DCPTime::from_frames(60, 24));
+	BOOST_CHECK(i->to == DCPTime::from_frames(120, 24));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), DCPTime::from_frames(120, 24).get());
-	BOOST_CHECK_EQUAL (i->to.get(), DCPTime::from_frames(144, 24).get());
+	BOOST_CHECK(i->from == DCPTime::from_frames(120, 24));
+	BOOST_CHECK(i->to == DCPTime::from_frames(144, 24));
 }
 
 
@@ -135,14 +135,14 @@ BOOST_AUTO_TEST_CASE (reels_test2)
 	auto reels = film2->reels ();
 	BOOST_CHECK_EQUAL(reels.size(), 3U);
 	auto i = reels.begin();
-	BOOST_CHECK_EQUAL (i->from.get(), 0);
-	BOOST_CHECK_EQUAL (i->to.get(), 96000);
+	BOOST_CHECK(i->from == DCPTime::from_seconds(0));
+	BOOST_CHECK(i->to == DCPTime::from_seconds(1));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), 96000);
-	BOOST_CHECK_EQUAL (i->to.get(), 96000 * 2);
+	BOOST_CHECK(i->from == DCPTime::from_seconds(1));
+	BOOST_CHECK(i->to == DCPTime::from_seconds(2));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), 96000 * 2);
-	BOOST_CHECK_EQUAL (i->to.get(), 96000 * 3);
+	BOOST_CHECK(i->from == DCPTime::from_seconds(2));
+	BOOST_CHECK(i->to == DCPTime::from_seconds(3));
 
 	c->set_reference_video (true);
 	c->set_reference_audio (true);
@@ -164,17 +164,17 @@ BOOST_AUTO_TEST_CASE (reels_test3)
 	auto reels = film->reels();
 	BOOST_REQUIRE_EQUAL (reels.size(), 4U);
 	auto i = reels.begin ();
-	BOOST_CHECK_EQUAL (i->from.get(), 0);
-	BOOST_CHECK_EQUAL (i->to.get(), 96000);
+	BOOST_CHECK(i->from == DCPTime());
+	BOOST_CHECK(i->to == DCPTime::from_seconds(1));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), 96000);
-	BOOST_CHECK_EQUAL (i->to.get(), 96000 * 2);
+	BOOST_CHECK(i->from == DCPTime::from_seconds(1));
+	BOOST_CHECK(i->to == DCPTime::from_seconds(2));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), 96000 * 2);
-	BOOST_CHECK_EQUAL (i->to.get(), 96000 * 3);
+	BOOST_CHECK(i->from == DCPTime::from_seconds(2));
+	BOOST_CHECK(i->to == DCPTime::from_seconds(3));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), 96000 * 3);
-	BOOST_CHECK_EQUAL (i->to.get(), sub->full_length(film).ceil(film->video_frame_rate()).get());
+	BOOST_CHECK(i->from == DCPTime::from_seconds(3));
+	BOOST_CHECK(i->to == sub->full_length(film).ceil(film->video_frame_rate()));
 }
 
 
@@ -205,17 +205,17 @@ BOOST_AUTO_TEST_CASE (reels_test4)
 	auto reels = film->reels();
 	BOOST_REQUIRE_EQUAL (reels.size(), 4U);
 	auto i = reels.begin ();
-	BOOST_CHECK_EQUAL (i->from.get(), 0);
-	BOOST_CHECK_EQUAL (i->to.get(), 96000);
+	BOOST_CHECK(i->from == DCPTime::from_seconds(0));
+	BOOST_CHECK(i->to == DCPTime::from_seconds(1));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), 96000);
-	BOOST_CHECK_EQUAL (i->to.get(), 96000 * 2);
+	BOOST_CHECK(i->from == DCPTime::from_seconds(1));
+	BOOST_CHECK(i->to == DCPTime::from_seconds(2));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), 96000 * 2);
-	BOOST_CHECK_EQUAL (i->to.get(), 96000 * 3);
+	BOOST_CHECK(i->from == DCPTime::from_seconds(2));
+	BOOST_CHECK(i->to == DCPTime::from_seconds(3));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), 96000 * 3);
-	BOOST_CHECK_EQUAL (i->to.get(), 96000 * 4);
+	BOOST_CHECK(i->from == DCPTime::from_seconds(3));
+	BOOST_CHECK(i->to == DCPTime::from_seconds(4));
 
 	make_and_verify_dcp (
 		film,
@@ -412,15 +412,15 @@ BOOST_AUTO_TEST_CASE (reels_test11)
 	A->set_position (film, DCPTime::from_seconds(1));
 	film->set_reel_type (ReelType::BY_VIDEO_CONTENT);
 	make_and_verify_dcp (film);
-	BOOST_CHECK_EQUAL (A->position().get(), DCPTime::from_seconds(1).get());
-	BOOST_CHECK_EQUAL (A->end(film).get(), DCPTime::from_seconds(1 + 10).get());
+	BOOST_CHECK(A->position() == DCPTime::from_seconds(1));
+	BOOST_CHECK(A->end(film) == DCPTime::from_seconds(1 + 10));
 
 	auto r = film->reels ();
-	BOOST_CHECK_EQUAL (r.size(), 2U);
-	BOOST_CHECK_EQUAL (r.front().from.get(), 0);
-	BOOST_CHECK_EQUAL (r.front().to.get(), DCPTime::from_seconds(1).get());
-	BOOST_CHECK_EQUAL (r.back().from.get(), DCPTime::from_seconds(1).get());
-	BOOST_CHECK_EQUAL (r.back().to.get(), DCPTime::from_seconds(1 + 10).get());
+	BOOST_CHECK_EQUAL(r.size(), 2U);
+	BOOST_CHECK(r.front().from == DCPTime());
+	BOOST_CHECK(r.front().to == DCPTime::from_seconds(1));
+	BOOST_CHECK(r.back().from == DCPTime::from_seconds(1));
+	BOOST_CHECK(r.back().to == DCPTime::from_seconds(1 + 10));
 }
 
 
@@ -448,17 +448,17 @@ BOOST_AUTO_TEST_CASE (reels_test12)
 	BOOST_REQUIRE_EQUAL (r.size(), 4U);
 	auto i = r.begin ();
 
-	BOOST_CHECK_EQUAL (i->from.get(), 0);
-	BOOST_CHECK_EQUAL (i->to.get(),   DCPTime::from_seconds(1).get());
+	BOOST_CHECK(i->from == DCPTime());
+	BOOST_CHECK(i->to ==   DCPTime::from_seconds(1));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), DCPTime::from_seconds(1).get());
-	BOOST_CHECK_EQUAL (i->to.get(),   DCPTime::from_seconds(11).get());
+	BOOST_CHECK(i->from == DCPTime::from_seconds(1));
+	BOOST_CHECK(i->to ==   DCPTime::from_seconds(11));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), DCPTime::from_seconds(11).get());
-	BOOST_CHECK_EQUAL (i->to.get(),   DCPTime::from_seconds(14).get());
+	BOOST_CHECK(i->from == DCPTime::from_seconds(11));
+	BOOST_CHECK(i->to ==   DCPTime::from_seconds(14));
 	++i;
-	BOOST_CHECK_EQUAL (i->from.get(), DCPTime::from_seconds(14).get());
-	BOOST_CHECK_EQUAL (i->to.get(),   DCPTime::from_seconds(19).get());
+	BOOST_CHECK(i->from == DCPTime::from_seconds(14));
+	BOOST_CHECK(i->to ==   DCPTime::from_seconds(19));
 }
 
 

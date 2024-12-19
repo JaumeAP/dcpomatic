@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE (ffmpeg_pts_offset_test)
 		content->_first_video = ContentTime ();
 		content->ffmpeg_audio_streams().front()->first_audio = ContentTime ();
 		FFmpegDecoder decoder (film, content, false);
-		BOOST_CHECK_EQUAL (decoder._pts_offset.get(), 0);
+		BOOST_CHECK(decoder._pts_offset == ContentTime());
 	}
 
 	{
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE (ffmpeg_pts_offset_test)
 		content->_first_video = ContentTime::from_seconds (600);
 		content->ffmpeg_audio_streams().front()->first_audio = ContentTime::from_seconds (600);
 		FFmpegDecoder decoder (film, content, false);
-		BOOST_CHECK_EQUAL (decoder._pts_offset.get(), ContentTime::from_seconds(-600).get());
+		BOOST_CHECK(decoder._pts_offset == ContentTime::from_seconds(-600));
 	}
 
 	{
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE (ffmpeg_pts_offset_test)
 		content->_first_video = ContentTime::from_frames (1, 24);
 		content->ffmpeg_audio_streams().front()->first_audio = ContentTime ();
 		FFmpegDecoder decoder (film, content, false);
-		BOOST_CHECK_EQUAL (decoder._pts_offset.get(), 0);
+		BOOST_CHECK(decoder._pts_offset == ContentTime());
 	}
 
 	{

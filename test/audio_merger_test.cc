@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(audio_merger_test1)
 	BOOST_REQUIRE(tb.size() == 1U);
 	BOOST_CHECK(tb.front().first != shared_ptr<const AudioBuffers>());
 	BOOST_CHECK_EQUAL(tb.front().first->frames(), 22);
-	BOOST_CHECK_EQUAL(tb.front().second.get(), 0);
+	BOOST_CHECK(tb.front().second == DCPTime());
 
 	/* And they should be a staircase */
 	for (int i = 0; i < 22; ++i) {
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(audio_merger_test1)
 	tb = merger.pull(DCPTime::from_frames(22 + 64, sampling_rate));
 	BOOST_REQUIRE(tb.size() == 1U);
 	BOOST_CHECK_EQUAL(tb.front().first->frames(), 64);
-	BOOST_CHECK_EQUAL(tb.front().second.get(), DCPTime::from_frames(22, sampling_rate).get());
+	BOOST_CHECK(tb.front().second == DCPTime::from_frames(22, sampling_rate));
 
 	/* Check the sample values */
 	for (int i = 0; i < 64; ++i) {
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(audio_merger_test2)
 	tb = merger.pull(DCPTime::from_frames(9 + 64, sampling_rate));
 
 	BOOST_CHECK_EQUAL(tb.front().first->frames(), 64);
-	BOOST_CHECK_EQUAL(tb.front().second.get(), DCPTime::from_frames(9, sampling_rate).get());
+	BOOST_CHECK(tb.front().second == DCPTime::from_frames(9, sampling_rate));
 
 	/* Check the sample values */
 	for (int i = 0; i < 64; ++i) {
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(audio_merger_test3)
 	auto tb = merger.pull(DCPTime::from_frames(100, sampling_rate));
 	BOOST_REQUIRE(tb.size() == 1U);
 	BOOST_CHECK_EQUAL(tb.front().first->frames(), 64);
-	BOOST_CHECK_EQUAL(tb.front().second.get(), DCPTime::from_frames(17, sampling_rate).get());
+	BOOST_CHECK(tb.front().second == DCPTime::from_frames(17, sampling_rate));
 	for (int i = 0; i < 64; ++i) {
 		BOOST_CHECK_EQUAL(tb.front().first->data()[0][i], i);
 	}
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(audio_merger_test3)
 	tb = merger.pull(DCPTime::from_frames(200, sampling_rate));
 	BOOST_REQUIRE(tb.size() == 1U);
 	BOOST_CHECK_EQUAL(tb.front().first->frames(), 64);
-	BOOST_CHECK_EQUAL(tb.front().second.get(), DCPTime::from_frames(114, sampling_rate).get());
+	BOOST_CHECK(tb.front().second == DCPTime::from_frames(114, sampling_rate));
 	for (int i = 0; i < 64; ++i) {
 		BOOST_CHECK_EQUAL(tb.front().first->data()[0][i], i);
 	}
