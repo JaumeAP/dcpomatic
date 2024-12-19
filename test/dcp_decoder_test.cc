@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE (check_reuse_old_data_test)
 	BOOST_REQUIRE (decoder);
 	auto reels = decoder->reels();
 
-	ov_content->set_position (test, dcpomatic::DCPTime(96000));
+	ov_content->set_position(test, dcpomatic::DCPTime::from_seconds(1));
 	decoder = std::dynamic_pointer_cast<DCPDecoder>(player->_pieces.front()->decoder);
 	BOOST_REQUIRE (decoder);
 	BOOST_REQUIRE (reels == decoder->reels());
