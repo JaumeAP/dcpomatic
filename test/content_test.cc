@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE (content_test4)
 	film->examine_and_add_content({video});
 	BOOST_REQUIRE (!wait_for_jobs());
 
-	video->set_trim_end (dcpomatic::ContentTime(3000));
+	video->set_trim_end(dcpomatic::ContentTime(3000, 96000));
 	BOOST_CHECK (video->length_after_trim(film) == DCPTime::from_frames(299, 24));
 }
 
@@ -128,9 +128,9 @@ BOOST_AUTO_TEST_CASE (content_test5)
 	auto audio = content_factory("test/data/sine_16_48_220_10.wav");
 	auto film = new_test_film("content_test5", audio);
 
-	audio[0]->set_trim_end(dcpomatic::ContentTime(3000));
+	audio[0]->set_trim_end(dcpomatic::ContentTime(3000, 96000));
 
-	BOOST_CHECK(audio[0]->length_after_trim(film) == DCPTime(957000));
+	BOOST_CHECK(audio[0]->length_after_trim(film) == DCPTime(957000, 96000));
 }
 
 

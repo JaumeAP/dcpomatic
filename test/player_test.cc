@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE (player_subframe_test)
 	A->video->set_length (3 * 24);
 
 	BOOST_CHECK (A->full_length(film) == DCPTime::from_frames(3 * 24, 24));
-	BOOST_CHECK (B->full_length(film) == DCPTime(289920));
+	BOOST_CHECK(B->full_length(film) == DCPTime(289920, 96000));
 	/* Length should be rounded up from B's length to the next video frame */
 	BOOST_CHECK (film->length() == DCPTime::from_frames(3 * 24 + 1, 24));
 
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE (player_subframe_test)
 	BOOST_REQUIRE_EQUAL(player._black._periods.size(), 1U);
 	BOOST_CHECK(player._black._periods.front() == DCPTimePeriod(DCPTime::from_frames(3 * 24, 24), DCPTime::from_frames(3 * 24 + 1, 24)));
 	BOOST_REQUIRE_EQUAL(player._silent._periods.size(), 1U);
-	BOOST_CHECK(player._silent._periods.front() == DCPTimePeriod(DCPTime(289920), DCPTime::from_frames(3 * 24 + 1, 24)));
+	BOOST_CHECK(player._silent._periods.front() == DCPTimePeriod(DCPTime(289920, 96000), DCPTime::from_frames(3 * 24 + 1, 24)));
 }
 
 
@@ -533,7 +533,7 @@ BOOST_AUTO_TEST_CASE(multiple_sound_files_bug)
 
 	auto film = new_test_film("multiple_sound_files_bug", { A, B, C }, &cl);
 	film->set_audio_channels(16);
-	C->set_position(film, DCPTime(3840000));
+	C->set_position(film, DCPTime(3840000, 96000));
 
 	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
 
@@ -709,7 +709,7 @@ BOOST_AUTO_TEST_CASE(check_seek_with_no_video)
 	}
 
 	BOOST_REQUIRE(earliest);
-	BOOST_CHECK(*earliest >= dcpomatic::DCPTime(60 * 60));
+	BOOST_CHECK(*earliest >= dcpomatic::DCPTime(60 * 60, 96000));
 }
 
 

@@ -70,21 +70,21 @@ BOOST_AUTO_TEST_CASE (reels_test1)
 	auto A = make_shared<FFmpegContent>("test/data/test.mp4");
 	auto B = make_shared<FFmpegContent>("test/data/test.mp4");
 	auto film = new_test_film("reels_test1", { A, B });
-	BOOST_CHECK_EQUAL (A->full_length(film).get(), 288000);
+	BOOST_CHECK(A->full_length(film) == DCPTime(288000, 96000));
 
 	film->set_reel_type (ReelType::SINGLE);
 	auto r = film->reels ();
 	BOOST_CHECK_EQUAL (r.size(), 1U);
-	BOOST_CHECK_EQUAL (r.front().from.get(), 0);
-	BOOST_CHECK_EQUAL (r.front().to.get(), 288000 * 2);
+	BOOST_CHECK(r.front().from == DCPTime());
+	BOOST_CHECK(r.front().to == DCPTime(288000 * 2, 96000));
 
 	film->set_reel_type (ReelType::BY_VIDEO_CONTENT);
 	r = film->reels ();
 	BOOST_CHECK_EQUAL (r.size(), 2U);
-	BOOST_CHECK_EQUAL (r.front().from.get(), 0);
-	BOOST_CHECK_EQUAL (r.front().to.get(), 288000);
-	BOOST_CHECK_EQUAL (r.back().from.get(), 288000);
-	BOOST_CHECK_EQUAL (r.back().to.get(), 288000 * 2);
+	BOOST_CHECK(r.front().from == DCPTime());
+	BOOST_CHECK(r.front().to == DCPTime(288000, 96000));
+	BOOST_CHECK(r.back().from == DCPTime(288000, 96000));
+	BOOST_CHECK(r.back().to == DCPTime(288000 * 2, 96000));
 
 	film->set_video_bit_rate(VideoEncoding::JPEG2000, 100000000);
 	film->set_reel_type (ReelType::BY_LENGTH);
@@ -237,16 +237,16 @@ BOOST_AUTO_TEST_CASE (reels_test5)
 	film->set_sequence (false);
 
 	/* Set to 2123 but it will be rounded up to the next frame (4000) */
-	dcp->set_position(film, DCPTime(2123));
+	dcp->set_position(film, DCPTime(2123, 96000));
 
 	{
 		auto p = dcp->reels (film);
 		BOOST_REQUIRE_EQUAL (p.size(), 4U);
 		auto i = p.begin();
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 0), DCPTime(4000 + 96000)));
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 96000), DCPTime(4000 + 192000)));
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 192000), DCPTime(4000 + 288000)));
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 288000), DCPTime(4000 + 384000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 0, 96000), DCPTime(4000 + 96000, 96000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 96000, 96000), DCPTime(4000 + 192000, 96000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 192000, 96000), DCPTime(4000 + 288000, 96000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 288000, 96000), DCPTime(4000 + 384000, 96000)));
 	}
 
 	{
@@ -254,10 +254,10 @@ BOOST_AUTO_TEST_CASE (reels_test5)
 		auto p = dcp->reels (film);
 		BOOST_REQUIRE_EQUAL (p.size(), 4U);
 		auto i = p.begin();
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 0), DCPTime(4000 + 48000)));
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 48000), DCPTime(4000 + 144000)));
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 144000), DCPTime(4000 + 240000)));
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 240000), DCPTime(4000 + 336000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 0, 96000), DCPTime(4000 + 48000, 96000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 48000, 96000), DCPTime(4000 + 144000, 96000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 144000, 96000), DCPTime(4000 + 240000, 96000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 240000, 96000), DCPTime(4000 + 336000, 96000)));
 	}
 
 	{
@@ -265,10 +265,10 @@ BOOST_AUTO_TEST_CASE (reels_test5)
 		auto p = dcp->reels (film);
 		BOOST_REQUIRE_EQUAL (p.size(), 4U);
 		auto i = p.begin();
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 0), DCPTime(4000 + 48000)));
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 48000), DCPTime(4000 + 144000)));
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 144000), DCPTime(4000 + 240000)));
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 240000), DCPTime(4000 + 288000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 0, 96000), DCPTime(4000 + 48000, 96000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 48000, 96000), DCPTime(4000 + 144000, 96000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 144000, 96000), DCPTime(4000 + 240000, 96000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 240000, 96000), DCPTime(4000 + 288000, 96000)));
 	}
 
 	{
@@ -276,9 +276,9 @@ BOOST_AUTO_TEST_CASE (reels_test5)
 		auto p = dcp->reels (film);
 		BOOST_REQUIRE_EQUAL (p.size(), 3U);
 		auto i = p.begin();
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 0), DCPTime(4000 + 48000)));
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 48000), DCPTime(4000 + 144000)));
-		BOOST_CHECK (*i++ == DCPTimePeriod (DCPTime(4000 + 144000), DCPTime(4000 + 192000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 0, 96000), DCPTime(4000 + 48000, 96000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 48000, 96000), DCPTime(4000 + 144000, 96000)));
+		BOOST_CHECK(*i++ == DCPTimePeriod(DCPTime(4000 + 144000, 96000), DCPTime(4000 + 192000, 96000)));
 	}
 }
 

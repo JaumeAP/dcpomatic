@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE (test_write_odd_amount_of_silence)
 
 	auto audio = make_shared<AudioBuffers>(6, 48000);
 	audio->make_silent ();
-	writer->write (audio, dcpomatic::DCPTime(1));
+	writer->write(audio, dcpomatic::DCPTime(1, 96000));
 }
 
 

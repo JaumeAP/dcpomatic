@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE (audio_analysis_serialisation_test)
 
 	vector<AudioAnalysis::PeakTime> peak;
 	for (int i = 0; i < channels; ++i) {
-		peak.push_back (AudioAnalysis::PeakTime(random_float(), DCPTime(rand())));
+		peak.push_back (AudioAnalysis::PeakTime(random_float(), DCPTime(rand(), 96000)));
 	}
 	a.set_sample_peak (peak);
 

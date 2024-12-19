@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(audio_merger_test4)
 			merger->clear();
 		} else if (cmd == "push") {
 			BOOST_REQUIRE(i != tokens.end());
-			DCPTime time(dcp::raw_convert<DCPTime::Type>(*i++));
+			DCPTime time(dcp::raw_convert<DCPTime::Type>(*i++), 96000);
 			BOOST_REQUIRE(i != tokens.end());
 			int const frames = dcp::raw_convert<int>(*i++);
 			auto buffers = make_shared<AudioBuffers>(1, frames);
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(audio_merger_test4)
 			merger->push(buffers, time);
 		} else if (cmd == "pull") {
 			BOOST_REQUIRE(i != tokens.end());
-			DCPTime time(dcp::raw_convert<DCPTime::Type>(*i++));
+			DCPTime time(dcp::raw_convert<DCPTime::Type>(*i++), 96000);
 			merger->pull(time);
 		}
 	}

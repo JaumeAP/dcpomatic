@@ -114,9 +114,9 @@ BOOST_AUTO_TEST_CASE (import_dcp_markers_test)
 
 	auto markers = imported->markers();
 	BOOST_REQUIRE(markers.find(dcp::Marker::FFMC) != markers.end());
-	BOOST_CHECK(markers[dcp::Marker::FFMC] == dcpomatic::ContentTime(904000));
+	BOOST_CHECK(markers[dcp::Marker::FFMC] == dcpomatic::ContentTime(904000, 96000));
 	BOOST_REQUIRE(markers.find(dcp::Marker::LFMC) != markers.end());
-	BOOST_CHECK(markers[dcp::Marker::LFMC] == dcpomatic::ContentTime(960000));
+	BOOST_CHECK(markers[dcp::Marker::LFMC] == dcpomatic::ContentTime::from_seconds(10));
 
 	/* Load that film and check that the markers have been loaded */
 	auto film3 = make_shared<Film>(boost::filesystem::path("build/test/import_dcp_markers_test2"));
@@ -129,9 +129,9 @@ BOOST_AUTO_TEST_CASE (import_dcp_markers_test)
 
 	markers = reloaded->markers();
 	BOOST_REQUIRE(markers.find(dcp::Marker::FFMC) != markers.end());
-	BOOST_CHECK(markers[dcp::Marker::FFMC] == dcpomatic::ContentTime(904000));
+	BOOST_CHECK(markers[dcp::Marker::FFMC] == dcpomatic::ContentTime(904000, 96000));
 	BOOST_REQUIRE(markers.find(dcp::Marker::LFMC) != markers.end());
-	BOOST_CHECK(markers[dcp::Marker::LFMC] == dcpomatic::ContentTime(960000));
+	BOOST_CHECK(markers[dcp::Marker::LFMC] == dcpomatic::ContentTime::from_seconds(10));
 
 	cl.run ();
 }

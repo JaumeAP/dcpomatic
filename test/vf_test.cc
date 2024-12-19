@@ -270,13 +270,13 @@ BOOST_AUTO_TEST_CASE (vf_test5)
 	auto a = get_referenced_reel_assets(vf, vf->playlist());
 	BOOST_REQUIRE_EQUAL (a.size(), 4U);
 	auto i = a.begin();
-	BOOST_CHECK (i->period == DCPTimePeriod(DCPTime(0), DCPTime(960000)));
+	BOOST_CHECK(i->period == DCPTimePeriod(DCPTime(), DCPTime(960000, 96000)));
 	++i;
-	BOOST_CHECK (i->period == DCPTimePeriod(DCPTime(0), DCPTime(960000)));
+	BOOST_CHECK(i->period == DCPTimePeriod(DCPTime(), DCPTime(960000, 96000)));
 	++i;
-	BOOST_CHECK (i->period == DCPTimePeriod(DCPTime(960000), DCPTime(1440000)));
+	BOOST_CHECK(i->period == DCPTimePeriod(DCPTime(960000, 96000), DCPTime(1440000, 96000)));
 	++i;
-	BOOST_CHECK (i->period == DCPTimePeriod(DCPTime(960000), DCPTime(1440000)));
+	BOOST_CHECK(i->period == DCPTimePeriod(DCPTime(960000, 96000), DCPTime(1440000, 96000)));
 	++i;
 }
 

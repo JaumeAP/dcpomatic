@@ -129,15 +129,15 @@ BOOST_AUTO_TEST_CASE(dvb_subtitles_replace_the_last)
 	using dcpomatic::ContentTime;
 
 	std::vector<Event> correct = {
-		{ "start", ContentTime(439872) },  // 4.582000s     actual subtitle #1
-		{ "stop",  ContentTime(998400) },  // 10.400000s    stop caused by incoming blank
-		{ "start", ContentTime(998400) },  // 10.400000s    blank
-		{ "stop",  ContentTime(1141248) }, // 11.888000s    stop caused by incoming subtitle #2
-		{ "start", ContentTime(1141248) }, // 11.888000s    subtitle #2
-		{ "stop",  ContentTime(1455936) }, // 15.166000s    ...
-		{ "start", ContentTime(1455936) }, // 15.166000s
-		{ "stop",  ContentTime(1626816) }, // 16.946000s
-		{ "start", ContentTime(1626816) }, // 16.946000s
+		{ "start", ContentTime(439872, 96000) },  // 4.582000s     actual subtitle #1
+		{ "stop",  ContentTime(998400, 96000) },  // 10.400000s    stop caused by incoming blank
+		{ "start", ContentTime(998400, 96000) },  // 10.400000s    blank
+		{ "stop",  ContentTime(1141248, 96000) }, // 11.888000s    stop caused by incoming subtitle #2
+		{ "start", ContentTime(1141248, 96000) }, // 11.888000s    subtitle #2
+		{ "stop",  ContentTime(1455936, 96000) }, // 15.166000s    ...
+		{ "start", ContentTime(1455936, 96000) }, // 15.166000s
+		{ "stop",  ContentTime(1626816, 96000) }, // 16.946000s
+		{ "start", ContentTime(1626816, 96000) }, // 16.946000s
 	};
 
 	BOOST_REQUIRE(events.size() > correct.size());

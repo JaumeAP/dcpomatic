@@ -381,10 +381,10 @@ BOOST_AUTO_TEST_CASE(player_time_calculation_test1)
 	BOOST_REQUIRE_EQUAL(player->_pieces.size(), 1U);
 	piece = player->_pieces.front();
 	BOOST_CHECK_EQUAL(player->dcp_to_content_video(piece, DCPTime()), 0);
-	BOOST_CHECK_EQUAL(player->dcp_to_content_video(piece, DCPTime(3200)), 1);
-	BOOST_CHECK_EQUAL(player->dcp_to_content_video(piece, DCPTime(6400)), 2);
-	BOOST_CHECK_EQUAL(player->dcp_to_content_video(piece, DCPTime(9600)), 3);
-	BOOST_CHECK_EQUAL(player->dcp_to_content_video(piece, DCPTime(12800)), 4);
+	BOOST_CHECK_EQUAL(player->dcp_to_content_video(piece, DCPTime(3200, 96000)), 1);
+	BOOST_CHECK_EQUAL(player->dcp_to_content_video(piece, DCPTime(6400, 96000)), 2);
+	BOOST_CHECK_EQUAL(player->dcp_to_content_video(piece, DCPTime(9600, 96000)), 3);
+	BOOST_CHECK_EQUAL(player->dcp_to_content_video(piece, DCPTime(12800, 96000)), 4);
 
 }
 
@@ -475,10 +475,10 @@ BOOST_AUTO_TEST_CASE(player_time_calculation_test2)
 	player->setup_pieces();
 	BOOST_REQUIRE_EQUAL(player->_pieces.size(), 1U);
 	piece = player->_pieces.front();
-	BOOST_CHECK_EQUAL(player->content_video_to_dcp(piece, 0).get(), 142080);
-	BOOST_CHECK_EQUAL(player->content_video_to_dcp(piece, 40).get(), 295680);
-	BOOST_CHECK_EQUAL(player->content_video_to_dcp(piece, 80).get(), 449280);
-	BOOST_CHECK_EQUAL(player->content_video_to_dcp(piece, 209).get(), 944640);
+	BOOST_CHECK(player->content_video_to_dcp(piece, 0) == DCPTime(142080, 96000));
+	BOOST_CHECK(player->content_video_to_dcp(piece, 40) == DCPTime(295680, 96000));
+	BOOST_CHECK(player->content_video_to_dcp(piece, 80) == DCPTime(449280, 96000));
+	BOOST_CHECK(player->content_video_to_dcp(piece, 209) == DCPTime(944640, 96000));
 
 	/* Position 0, no trim, content rate 24, DCP rate 48
 	   Now, for example, a DCPTime position of 3s means 3s at 48fps.  Since we run the video
