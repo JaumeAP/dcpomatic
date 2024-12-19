@@ -192,7 +192,7 @@ FFmpegDecoder::flush_fill()
 			   here.  I'm not sure if that's the right idea.
 			*/
 			if (a > ContentTime() && a < full_length) {
-				LOG_DEBUG_PLAYER("Flush inserts silence at {}", to_string(a));
+				LOG_DEBUG_PLAYER("Flush inserts silence at {}", a.to_string());
 				auto to_do = min (full_length - a, ContentTime::from_seconds (0.1));
 				auto silence = make_shared<AudioBuffers>(i->channels(), to_do.frames_ceil (i->frame_rate()));
 				silence->make_silent ();
@@ -505,11 +505,11 @@ FFmpegDecoder::process_audio_frame (shared_ptr<FFmpegAudioStream> stream)
 			+ _pts_offset;
 		LOG_DEBUG_PLAYER(
 			"Process audio with timestamp {} (BET {}, timebase {}/{}, (PTS offset {})",
-			to_string(ct),
+			ct.to_string(),
 			frame->best_effort_timestamp,
 			time_base.num,
 			time_base.den,
-			to_string(_pts_offset)
+			_pts_offset.to_string()
 			);
 	}
 
@@ -526,12 +526,12 @@ FFmpegDecoder::process_audio_frame (shared_ptr<FFmpegAudioStream> stream)
 	if (ct < ContentTime()) {
 		LOG_WARNING (
 			"Crazy timestamp {} for {} samples in stream {} (ts={} tb={}, off={})",
-			to_string(ct),
+			ct.to_string(),
 			data->frames(),
 			stream->id(),
 			frame->best_effort_timestamp,
 			av_q2d(time_base),
-			to_string(_pts_offset)
+			_pts_offset.to_string()
 			);
 	}
 

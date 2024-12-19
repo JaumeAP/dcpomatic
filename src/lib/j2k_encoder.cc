@@ -312,19 +312,19 @@ J2KEncoder::encode (shared_ptr<PlayerVideo> pv, DCPTime time)
 
 	if (_writer.can_fake_write(position)) {
 		/* We can fake-write this frame */
-		LOG_DEBUG_ENCODE("Frame @ {} FAKE", to_string(time));
+		LOG_DEBUG_ENCODE("Frame @ {} FAKE", time.to_string());
 		_writer.fake_write(position, pv->eyes ());
 		frame_done ();
 	} else if (pv->has_j2k() && !_film->reencode_j2k()) {
-		LOG_DEBUG_ENCODE("Frame @ {} J2K", to_string(time));
+		LOG_DEBUG_ENCODE("Frame @ {} J2K", time.to_string());
 		/* This frame already has J2K data, so just write it */
 		_writer.write(pv->j2k(), position, pv->eyes ());
 		frame_done ();
 	} else if (_last_player_video[pv->eyes()] && _writer.can_repeat(position) && pv->same(_last_player_video[pv->eyes()])) {
-		LOG_DEBUG_ENCODE("Frame @ {} REPEAT", to_string(time));
+		LOG_DEBUG_ENCODE("Frame @ {} REPEAT", time.to_string());
 		_writer.repeat(position, pv->eyes());
 	} else {
-		LOG_DEBUG_ENCODE("Frame @ {} ENCODE", to_string(time));
+		LOG_DEBUG_ENCODE("Frame @ {} ENCODE", time.to_string());
 		/* Queue this new frame for encoding */
 		LOG_TIMING ("add-frame-to-queue queue={}", _queue.size ());
 		auto dcpv = DCPVideo(

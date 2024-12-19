@@ -31,12 +31,13 @@
 #include "dcpomatic_assert.h"
 #include "frame_rate_change.h"
 #include <boost/optional.hpp>
-#include <stdint.h>
 #include <cmath>
 #include <cstdio>
 #include <iomanip>
+#include <inttypes.h>
 #include <list>
 #include <ostream>
+#include <stdint.h>
 
 
 struct dcpomatic_time_ceil_test;
@@ -244,6 +245,16 @@ public:
 		return buffer;
 	}
 
+	std::string to_string() const {
+		char buffer[64];
+#ifdef DCPOMATIC_WINDOWS
+		__mingw_snprintf(buffer, sizeof(buffer), "[%" PRId64 " %fs]", get(), seconds());
+#else
+		snprintf(buffer, sizeof(buffer), "[%" PRId64 " %fs]", get(), seconds());
+#endif
+		return buffer;
+	}
+
 	static Time<S, O> from_seconds (double s) {
 		return Time<S, O> (llrint (s * HZ));
 	}
@@ -400,8 +411,6 @@ DCPTime min (DCPTime a, DCPTime b);
 DCPTime max (DCPTime a, DCPTime b);
 ContentTime min (ContentTime a, ContentTime b);
 ContentTime max (ContentTime a, ContentTime b);
-std::string to_string (ContentTime t);
-std::string to_string (DCPTime t);
 std::string to_string (DCPTimePeriod p);
 
 

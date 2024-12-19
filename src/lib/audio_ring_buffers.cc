@@ -51,7 +51,7 @@ AudioRingBuffers::put(shared_ptr<const AudioBuffers> data, DCPTime time, int fra
 		DCPOMATIC_ASSERT(_buffers.front().first->channels() == data->channels());
 		DCPTime const end = (_buffers.back().second + DCPTime::from_frames(_buffers.back().first->frames(), frame_rate));
 		if (labs(end.get() - time.get()) > 1) {
-			cout << "bad put " << to_string(_buffers.back().second) << " " << _buffers.back().first->frames() << " " << to_string(time) << "\n";
+			cout << "bad put " << _buffers.back().second.to_string() << " " << _buffers.back().first->frames() << " " << time.to_string() << "\n";
 		}
 		DCPOMATIC_ASSERT(labs(end.get() - time.get()) < 2);
 	}
