@@ -79,7 +79,6 @@ ContentTimeline::ContentTimeline(wxWindow* parent, ContentPanel* cp, shared_ptr<
 	, _labels_view (new TimelineLabelsView (*this))
 	, _tracks (0)
 	, _left_down (false)
-	, _down_view_position (0)
 	, _first_move (false)
 	, _menu (this, viewer)
 	, _snap (true)
