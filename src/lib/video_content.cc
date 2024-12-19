@@ -420,7 +420,7 @@ VideoContent::size_after_crop() const
 optional<double>
 VideoContent::fade(shared_ptr<const Film> film, ContentTime time) const
 {
-	DCPOMATIC_ASSERT(time.get() >= 0);
+	DCPOMATIC_ASSERT(!time.negative());
 
 	double const vfr = _parent->active_video_frame_rate(film);
 

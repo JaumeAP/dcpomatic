@@ -212,6 +212,10 @@ public:
 		return ::ceil (_t * double(r) / HZ);
 	}
 
+	bool negative() const {
+		return _t < 0;
+	}
+
 	/** Split a time into hours, minutes, seconds and frames.
 	 *  @param r Frames per second.
 	 *  @return Split time.
