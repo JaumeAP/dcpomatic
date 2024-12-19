@@ -71,7 +71,7 @@ TimelineReelsView::do_paint (wxGraphicsContext* gc, list<dcpomatic::Rect<int>>)
 	gc->SetPen(*wxThePenList->FindOrCreatePen(colour, 1, wxPENSTYLE_SOLID));
 
 	auto path = gc->CreatePath ();
-	path.MoveToPoint (time_x (DCPTime (0)), _y);
+	path.MoveToPoint(time_x({}), _y);
 	path.AddLineToPoint (time_x (_timeline.film()->length()), _y);
 	gc->StrokePath (path);
 
