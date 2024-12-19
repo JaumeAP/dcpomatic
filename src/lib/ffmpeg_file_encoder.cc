@@ -433,7 +433,7 @@ FFmpegFileEncoder::video (shared_ptr<PlayerVideo> video, DCPTime time)
 	frame->height = image->size().height;
 	frame->format = _pixel_format;
 	DCPOMATIC_ASSERT (_video_stream->time_base.num == 1);
-	frame->pts = time.get() * _video_stream->time_base.den / DCPTime::HZ;
+	frame->pts = time.seconds() * _video_stream->time_base.den;
 
 	int r = avcodec_send_frame (_video_codec_context, frame);
 	av_frame_free (&frame);
