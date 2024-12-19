@@ -265,7 +265,7 @@ Controls::update_position_slider ()
 
 	auto const len = _film->length ();
 
-	if (len.get ()) {
+	if (len != DCPTime()) {
 		int const new_slider_position = 4096 * _viewer.position().proportion_of(len);
 		if (new_slider_position != _slider->GetValue()) {
 			_slider->SetValue (new_slider_position);
