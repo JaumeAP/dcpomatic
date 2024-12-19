@@ -798,11 +798,11 @@ Player::pass()
 			   I think this is nothing to worry about since we will just add or
 			   remove a little silence at the end of some content.
 			*/
-			int64_t const error = labs(period.from.get() - _next_audio_time->get());
+			auto const error = DCPTime(period.from - *_next_audio_time).abs();
 			/* Let's not worry about less than a frame at 24fps */
-			int64_t const too_much_error = DCPTime::from_frames(1, 24).get();
+			auto const too_much_error = DCPTime::from_frames(1, 24);
 			if (error >= too_much_error) {
-				film->log()->log(fmt::format("Silence starting before or after last audio by {}", error), LogEntry::TYPE_ERROR);
+				film->log()->log(fmt::format("Silence starting before or after last audio by {}", error.to_string()), LogEntry::TYPE_ERROR);
 			}
 			DCPOMATIC_ASSERT(error < too_much_error);
 			period.from = *_next_audio_time;
