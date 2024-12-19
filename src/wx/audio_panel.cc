@@ -255,9 +255,9 @@ AudioPanel::film_content_changed (int property)
 		break;
 	case AudioContentProperty::FADE_IN:
 	{
-		set<Frame> check;
+		set<ContentTime> check;
 		for (auto i: ac) {
-			check.insert (i->audio->fade_in().get());
+			check.insert(i->audio->fade_in());
 		}
 
 		if (check.size() == 1) {
@@ -272,9 +272,9 @@ AudioPanel::film_content_changed (int property)
 	}
 	case AudioContentProperty::FADE_OUT:
 	{
-		set<Frame> check;
+		set<ContentTime> check;
 		for (auto i: ac) {
-			check.insert (i->audio->fade_out().get());
+			check.insert(i->audio->fade_out());
 		}
 
 		if (check.size() == 1) {
