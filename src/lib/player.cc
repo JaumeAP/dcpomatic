@@ -1664,5 +1664,5 @@ Player::progress() const
 	optional<DCPTime> earliest_time;
 	std::tie(earliest_content, earliest_time) = earliest_piece_and_time();
 
-	return static_cast<float>(earliest_time.get_value_or(film->length()).get()) / film->length().get();
+	return earliest_time.get_value_or(film->length()).proportion_of(film->length());
 }

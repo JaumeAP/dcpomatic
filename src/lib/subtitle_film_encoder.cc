@@ -185,7 +185,7 @@ SubtitleFilmEncoder::text(PlayerText subs, TextType type, optional<DCPTextTrack>
 
 	auto job = _job.lock ();
 	if (job) {
-		job->set_progress (float(period.from.get()) / _length.get());
+		job->set_progress(period.from.proportion_of(_length));
 	}
 }
 

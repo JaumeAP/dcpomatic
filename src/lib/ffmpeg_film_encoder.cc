@@ -211,7 +211,7 @@ FFmpegFilmEncoder::go()
 
 		auto job = _job.lock ();
 		if (job) {
-			job->set_progress(float(time.get()) / _film->length().get());
+			job->set_progress(time.proportion_of(_film->length()));
 		}
 
 		waker.nudge ();

@@ -212,6 +212,10 @@ public:
 		return ::ceil (_t * double(r) / HZ);
 	}
 
+	double proportion_of(Time<S, O> other) const {
+		return static_cast<double>(_t) / other.get();
+	}
+
 	bool negative() const {
 		return _t < 0;
 	}

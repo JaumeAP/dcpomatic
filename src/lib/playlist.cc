@@ -702,7 +702,7 @@ Playlist::content_summary(shared_ptr<const Film> film, DCPTimePeriod period) con
 		int score = 0;
 		auto const o = i->period(film).overlap(period);
 		if (o) {
-			score += 100 * o.get().duration().get() / period.duration().get();
+			score += 100 * o.get().duration().proportion_of(period.duration());
 		}
 
 		if (i->video) {
