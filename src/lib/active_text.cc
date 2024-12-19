@@ -75,7 +75,7 @@ ActiveText::get_burnt (DCPTimePeriod period, bool always_burn_captions) const
 		for (auto j: i.second) {
 			DCPTimePeriod test (j.from, j.to.get_value_or(DCPTime::max()));
 			auto overlap = period.overlap (test);
-			if (overlap && overlap->duration() > DCPTime(period.duration().get() / 2)) {
+			if (overlap && overlap->duration() > (period.duration() / 2)) {
 				ps.push_back (j.subs);
 			}
 		}
