@@ -92,10 +92,6 @@ public:
 
 	typedef int64_t Type;
 
-	explicit Time (Type t)
-		: _t (t)
-	{}
-
 	Time(Type n, Type d)
 		: _t (n * HZ / d)
 	{}
@@ -111,10 +107,6 @@ public:
 			+ from_seconds (hmsf.m * 60)
 			+ from_seconds (hmsf.s)
 			+ from_frames (hmsf.f, fps);
-	}
-
-	Type get () const {
-		return _t;
 	}
 
 	bool operator< (Time<S, O> const & o) const {
@@ -327,6 +319,15 @@ public:
 private:
 	friend struct ::dcpomatic_time_ceil_test;
 	friend struct ::dcpomatic_time_floor_test;
+	friend class Time<O, S>;
+
+	explicit Time (Type t)
+		: _t (t)
+	{}
+
+	Type get () const {
+		return _t;
+	}
 
 	Type _t;
 };
