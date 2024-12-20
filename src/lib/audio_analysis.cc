@@ -85,8 +85,8 @@ AudioAnalysis::AudioAnalysis (boost::filesystem::path filename)
 	}
 
 	for (auto i: f.node_children ("SamplePeak")) {
-		auto const time = number_attribute<Frame>(i, "Time", "time");
-		_sample_peak.push_back(PeakTime(dcp::raw_convert<float>(i->content()), DCPTime(time)));
+		auto time = DCPTime::from_attributes(i);
+		_sample_peak.push_back(PeakTime(dcp::raw_convert<float>(i->content()), time));
 	}
 
 	for (auto i: f.node_children("TruePeak")) {
@@ -153,7 +153,7 @@ AudioAnalysis::write (boost::filesystem::path filename)
 	for (size_t i = 0; i < _sample_peak.size(); ++i) {
 		auto n = cxml::add_child(root, "SamplePeak");
 		n->add_child_text(fmt::to_string(_sample_peak[i].peak));
-		n->set_attribute("time", fmt::to_string(_sample_peak[i].time.get()));
+		_sample_peak[i].time.add_as_attributes(n);
 	}
 
 	for (auto i: _true_peak) {

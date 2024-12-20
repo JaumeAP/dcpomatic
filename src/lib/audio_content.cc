@@ -84,8 +84,8 @@ AudioContent::AudioContent (Content* parent, cxml::ConstNodePtr node)
 {
 	_gain = node->number_child<double> ("AudioGain");
 	_delay = node->number_child<int> ("AudioDelay");
-	_fade_in = ContentTime(node->optional_number_child<ContentTime::Type>("AudioFadeIn").get_value_or(0));
-	_fade_out = ContentTime(node->optional_number_child<ContentTime::Type>("AudioFadeOut").get_value_or(0));
+	_fade_in = ContentTime::from_node(node->optional_node_child("AudioFadeIn"));
+	_fade_out = ContentTime::from_node(node->optional_node_child("AudioFadeOut"));
 	_use_same_fades_as_video = node->optional_bool_child("AudioUseSameFadesAsVideo").get_value_or(false);
 }
 
@@ -118,8 +118,8 @@ AudioContent::as_xml(xmlpp::Element* element) const
 	boost::mutex::scoped_lock lm (_mutex);
 	cxml::add_text_child(element, "AudioGain", fmt::to_string(_gain));
 	cxml::add_text_child(element, "AudioDelay", fmt::to_string(_delay));
-	cxml::add_text_child(element, "AudioFadeIn", fmt::to_string(_fade_in.get()));
-	cxml::add_text_child(element, "AudioFadeOut", fmt::to_string(_fade_out.get()));
+	_fade_in.add_as_node(element, "AudioFadeIn");
+	_fade_out.add_as_node(element, "AudioFadeOut");
 	cxml::add_text_child(element, "AudioUseSameFadesAsVideo", _use_same_fades_as_video ? "1" : "0");
 }
 

@@ -294,8 +294,8 @@ public:
 
 	xmlpp::Element* add_as_node(xmlpp::Element* parent, std::string name) const {
 		auto child = cxml::add_child(parent, name);
-		child->add_child_text(dcp::raw_convert<std::string>(_t));
-		child->set_attribute("timebase", dcp::raw_convert<std::string>(HZ));
+		child->add_child_text(fmt::to_string(_t));
+		child->set_attribute("timebase", fmt::to_string(HZ));
 		return child;
 	}
 
@@ -306,8 +306,8 @@ public:
 	}
 
 	void add_as_attributes(xmlpp::Element* element) const {
-		element->set_attribute("time", dcp::raw_convert<std::string>(_t));
-		element->set_attribute("timebase", dcp::raw_convert<std::string>(HZ));
+		element->set_attribute("time", fmt::to_string(_t));
+		element->set_attribute("timebase", fmt::to_string(HZ));
 	}
 
 	static Time<S, O> delta () {

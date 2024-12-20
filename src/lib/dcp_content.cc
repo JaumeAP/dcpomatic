@@ -145,7 +145,7 @@ DCPContent::DCPContent(cxml::ConstNodePtr node, boost::optional<boost::filesyste
 	}
 
 	for (auto i: node->node_children("Marker")) {
-		_markers[dcp::marker_from_string(i->string_attribute("type"))] = ContentTime(raw_convert<int64_t>(i->content()));
+		_markers[dcp::marker_from_string(i->string_attribute("type"))] = ContentTime::from_attributes(i);
 	}
 
 	for (auto i: node->node_children("Rating")) {
@@ -324,7 +324,7 @@ DCPContent::examine(shared_ptr<const Film> film, shared_ptr<Job> job, bool toler
 		_cpl = examiner->cpl ();
 		_reel_lengths = examiner->reel_lengths ();
 		for (auto const& i: examiner->markers()) {
-			_markers[i.first] = ContentTime(i.second.as_editable_units_ceil(DCPTime::HZ));
+			_markers[i.first] = ContentTime(i.second.as_editable_units_ceil(96000), 96000);
 		}
 		_ratings = examiner->ratings ();
 		_content_versions = examiner->content_versions ();
@@ -433,9 +433,9 @@ DCPContent::as_xml(xmlpp::Element* element, bool with_paths, PathBehaviour path_
 	}
 
 	for (auto const& i: _markers) {
-		auto marker = cxml::add_child(element, "Marker");
+		auto marker = i.second.add_as_node(element, "Marker");
 		marker->set_attribute("type", dcp::marker_to_string(i.first));
-		marker->add_child_text(fmt::to_string(i.second.get()));
+		i.second.add_as_attributes(marker);
 	}
 
 	for (auto i: _ratings) {

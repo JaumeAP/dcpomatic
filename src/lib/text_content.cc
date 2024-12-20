@@ -173,24 +173,16 @@ TextContent::TextContent(Content* parent, cxml::ConstNodePtr node, int version, 
 			);
 	}
 
-	optional<Frame> fi;
 	if (version >= 37) {
-		fi = node->optional_number_child<Frame>("FadeIn");
+		_fade_in = ContentTime::from_node(node->optional_node_child("FadeIn"));
 	} else {
-		fi = node->optional_number_child<Frame>("SubtitleFadeIn");
-	}
-	if (fi) {
-		_fade_in = ContentTime(*fi);
+		_fade_in = ContentTime::from_node(node->optional_node_child("SubtitleFadeIn"));
 	}
 
-	optional<Frame> fo;
 	if (version >= 37) {
-		fo = node->optional_number_child<Frame>("FadeOut");
+		_fade_out = ContentTime::from_node(node->optional_node_child("FadeOut"));
 	} else {
-		fo = node->optional_number_child<Frame>("SubtitleFadeOut");
-	}
-	if (fo) {
-		_fade_out = ContentTime(*fo);
+		_fade_out = ContentTime::from_node(node->optional_node_child("SubtitleFadeOut"));
 	}
 
 	for (auto i: node->node_children("Font")) {
@@ -373,10 +365,10 @@ TextContent::as_xml(xmlpp::Element* root) const
 	}
 	cxml::add_text_child(text, "LineSpacing", fmt::to_string(_line_spacing));
 	if (_fade_in) {
-		cxml::add_text_child(text, "FadeIn", fmt::to_string(_fade_in->get()));
+		_fade_in->add_as_node(text, "FadeIn");
 	}
 	if (_fade_out) {
-		cxml::add_text_child(text, "FadeOut", fmt::to_string(_fade_out->get()));
+		_fade_out->add_as_node(text, "FadeOut");
 	}
 	cxml::add_text_child(text, "OutlineWidth", fmt::to_string(_outline_width));
 

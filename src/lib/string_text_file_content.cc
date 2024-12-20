@@ -53,7 +53,7 @@ StringTextFileContent::StringTextFileContent (boost::filesystem::path path)
 
 StringTextFileContent::StringTextFileContent(cxml::ConstNodePtr node, boost::optional<boost::filesystem::path> film_directory, int version, list<string>& notes)
 	: Content (node, film_directory)
-	, _length (node->number_child<ContentTime::Type>("Length"))
+	, _length(ContentTime::from_node(node->node_child("Length")))
 {
 	text = TextContent::from_xml (this, node, version, notes);
 }
@@ -130,7 +130,7 @@ StringTextFileContent::as_xml(xmlpp::Element* element, bool with_paths, PathBeha
 		only_text()->as_xml(element);
 	}
 
-	cxml::add_text_child(element, "Length", fmt::to_string(_length.get()));
+	_length.add_as_node(element, "Length");
 }
 
 

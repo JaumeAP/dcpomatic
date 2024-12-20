@@ -115,11 +115,7 @@ FFmpegContent::FFmpegContent(cxml::ConstNodePtr node, boost::optional<boost::fil
 		}
 	}
 
-	auto const f = node->optional_number_child<ContentTime::Type> ("FirstVideo");
-	if (f) {
-		_first_video = ContentTime (f.get ());
-	}
-
+	_first_video = ContentTime::from_node(node->optional_node_child("FirstVideo"));
 	_color_primaries = get_optional_enum<AVColorPrimaries>(node, "ColorPrimaries");
 	_color_trc = get_optional_enum<AVColorTransferCharacteristic>(node, "ColorTransferCharacteristic");
 	_colorspace = get_optional_enum<AVColorSpace>(node, "Colorspace");
@@ -228,7 +224,7 @@ FFmpegContent::as_xml(xmlpp::Element* element, bool with_paths, PathBehaviour pa
 	}
 
 	if (_first_video) {
-		cxml::add_text_child(element, "FirstVideo", fmt::to_string(_first_video.get().get()));
+		_first_video->add_as_node(element, "FirstVideo");
 	}
 
 	if (_color_range) {

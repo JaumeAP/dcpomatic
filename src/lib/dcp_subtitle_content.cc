@@ -50,7 +50,7 @@ DCPSubtitleContent::DCPSubtitleContent (boost::filesystem::path path)
 
 DCPSubtitleContent::DCPSubtitleContent(cxml::ConstNodePtr node, boost::optional<boost::filesystem::path> film_directory, int version)
 	: Content (node, film_directory)
-	, _length (node->number_child<ContentTime::Type> ("Length"))
+	, _length(ContentTime::from_node(node->node_child("Length")))
 {
 	list<string> notes;
 	text = TextContent::from_xml (this, node, version, notes);
@@ -149,5 +149,5 @@ DCPSubtitleContent::as_xml(xmlpp::Element* element, bool with_paths, PathBehavio
 		only_text()->as_xml(element);
 	}
 
-	cxml::add_text_child(element, "Length", fmt::to_string(_length.get()));
+	_length.add_as_node(element, "Length");
 }

@@ -421,14 +421,14 @@ Film::metadata(bool with_content_paths) const
 	cxml::add_text_child(root, "ReelType", fmt::to_string(static_cast<int>(_reel_type)));
 	cxml::add_text_child(root, "ReelLength", fmt::to_string(_reel_length));
 	for (auto boundary: _custom_reel_boundaries) {
-		cxml::add_text_child(root, "CustomReelBoundary", fmt::to_string(boundary.get()));
+		boundary.add_as_node(root, "CustomReelBoundary");
 	}
 	cxml::add_text_child(root, "ReencodeJ2K", _reencode_j2k ? "1" : "0");
 	cxml::add_text_child(root, "UserExplicitVideoFrameRate", _user_explicit_video_frame_rate ? "1" : "0");
 	for (auto const& marker: _markers) {
 		auto m = cxml::add_child(root, "Marker");
 		m->set_attribute("type", dcp::marker_to_string(marker.first));
-		m->add_child_text(fmt::to_string(marker.second.get()));
+		marker.second.add_as_attributes(m);
 	}
 	for (auto i: _ratings) {
 		i.as_xml(cxml::add_child(root, "Rating"));
@@ -629,7 +629,7 @@ Film::read_metadata(optional<boost::filesystem::path> path)
 	_reel_type = static_cast<ReelType>(f.optional_number_child<int>("ReelType").get_value_or(static_cast<int>(ReelType::SINGLE)));
 	_reel_length = f.optional_number_child<int64_t>("ReelLength").get_value_or(2000000000);
 	for (auto boundary: f.node_children("CustomReelBoundary")) {
-		_custom_reel_boundaries.push_back(DCPTime(raw_convert<int64_t>(boundary->content())));
+		_custom_reel_boundaries.push_back(DCPTime::from_node(boundary));
 	}
 	_reencode_j2k = f.optional_bool_child("ReencodeJ2K").get_value_or(false);
 	_user_explicit_video_frame_rate = f.optional_bool_child("UserExplicitVideoFrameRate").get_value_or(false);
@@ -639,7 +639,7 @@ Film::read_metadata(optional<boost::filesystem::path> path)
 		if (!type) {
 			type = i->string_attribute("type");
 		}
-		_markers[dcp::marker_from_string(*type)] = DCPTime(dcp::raw_convert<DCPTime::Type>(i->content()));
+		_markers[dcp::marker_from_string(*type)] = DCPTime::from_attributes(i);
 	}
 
 	for (auto i: f.node_children("Rating")) {

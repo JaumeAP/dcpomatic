@@ -87,9 +87,9 @@ Content::Content(cxml::ConstNodePtr node, boost::optional<boost::filesystem::pat
 		}
 	}
 	_digest = node->optional_string_child("Digest").get_value_or("X");
-	_position = DCPTime(node->number_child<DCPTime::Type>("Position"));
-	_trim_start = ContentTime(node->number_child<ContentTime::Type>("TrimStart"));
-	_trim_end = ContentTime(node->number_child<ContentTime::Type>("TrimEnd"));
+	_position = DCPTime::from_node(node->node_child("Position"));
+	_trim_start = ContentTime::from_node(node->node_child("TrimStart"));
+	_trim_end = ContentTime::from_node(node->node_child("TrimEnd"));
 	_video_frame_rate = node->optional_number_child<double>("VideoFrameRate");
 }
 
@@ -146,9 +146,9 @@ Content::as_xml(xmlpp::Element* element, bool with_paths, PathBehaviour path_beh
 		}
 	}
 	cxml::add_text_child(element, "Digest", _digest);
-	cxml::add_text_child(element, "Position", fmt::to_string(_position.get()));
-	cxml::add_text_child(element, "TrimStart", fmt::to_string(_trim_start.get()));
-	cxml::add_text_child(element, "TrimEnd", fmt::to_string(_trim_end.get()));
+	_position.add_as_node(element, "Position");
+	_trim_start.add_as_node(element, "TrimStart");
+	_trim_end.add_as_node(element, "TrimEnd");
 	if (_video_frame_rate) {
 		cxml::add_text_child(element, "VideoFrameRate", fmt::to_string(_video_frame_rate.get()));
 	}
