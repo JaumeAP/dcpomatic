@@ -34,6 +34,10 @@ using std::cout;
 using namespace dcpomatic;
 
 
+// 24 hours
+int64_t constexpr long_project_seconds = 12 * 60 * 60;
+
+
 static DCPTime test_time(int t)
 {
 	return DCPTime(t, 96000);
@@ -56,6 +60,14 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_test)
 		}
 	}
 }
+
+
+BOOST_AUTO_TEST_CASE(dcpomatic_time_construction_test)
+{
+	/* Check that we can construct a large time using the old timebase */
+	BOOST_CHECK(DCPTime(long_project_seconds * 96000, 96000) == DCPTime(long_project_seconds * DCPTime::TIME_BASE, DCPTime::TIME_BASE));
+}
+
 
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_overlaps_test)
 {
@@ -324,36 +336,55 @@ BOOST_AUTO_TEST_CASE (test_coalesce_with_overlapping_periods)
 /* Straightforward test of DCPTime::ceil */
 BOOST_AUTO_TEST_CASE (dcpomatic_time_ceil_test)
 {
-	BOOST_CHECK(test_time(0).ceil(DCPTime::HZ / 2) == test_time(0));
-	BOOST_CHECK(test_time(1).ceil(DCPTime::HZ / 2) == test_time(2));
-	BOOST_CHECK(test_time(2).ceil(DCPTime::HZ / 2) == test_time(2));
-	BOOST_CHECK(test_time(3).ceil(DCPTime::HZ / 2) == test_time(4));
+	BOOST_CHECK(DCPTime(0, DCPTime::TIME_BASE).ceil(DCPTime::TIME_BASE / 2) == DCPTime(0, DCPTime::TIME_BASE));
+	BOOST_CHECK(DCPTime(1, DCPTime::TIME_BASE).ceil(DCPTime::TIME_BASE / 2) == DCPTime(2, DCPTime::TIME_BASE));
+	BOOST_CHECK(DCPTime(2, DCPTime::TIME_BASE).ceil(DCPTime::TIME_BASE / 2) == DCPTime(2, DCPTime::TIME_BASE));
+	BOOST_CHECK(DCPTime(3, DCPTime::TIME_BASE).ceil(DCPTime::TIME_BASE / 2) == DCPTime(4, DCPTime::TIME_BASE));
 
-	BOOST_CHECK(test_time(0).ceil(DCPTime::HZ / 42) == test_time(0));
-	BOOST_CHECK(test_time(1).ceil(DCPTime::HZ / 42) == test_time(42));
-	BOOST_CHECK(test_time(42).ceil(DCPTime::HZ / 42) == test_time(42));
-	BOOST_CHECK(test_time(43).ceil(DCPTime::HZ / 42) == test_time(84));
+	BOOST_CHECK(DCPTime(0, DCPTime::TIME_BASE).ceil(DCPTime::TIME_BASE / 42) == DCPTime(0, DCPTime::TIME_BASE));
+	BOOST_CHECK(DCPTime(1, DCPTime::TIME_BASE).ceil(DCPTime::TIME_BASE / 42) == DCPTime(42, DCPTime::TIME_BASE));
+	BOOST_CHECK(DCPTime(42, DCPTime::TIME_BASE).ceil(DCPTime::TIME_BASE / 42) == DCPTime(42, DCPTime::TIME_BASE));
+	BOOST_CHECK(DCPTime(43, DCPTime::TIME_BASE).ceil(DCPTime::TIME_BASE / 42) == DCPTime(84, DCPTime::TIME_BASE));
 
 	/* Check that rounding up to non-integer frame rates works */
-	BOOST_CHECK(test_time(45312).ceil(29.976) == test_time(48038));
+	BOOST_CHECK(test_time(45312).ceil(29.976) == DCPTime(247316108887, DCPTime::TIME_BASE));
 
 	/* Check another tricky case that used to fail */
-	BOOST_CHECK(test_time(212256039).ceil(23.976) == test_time(212256256));
+	BOOST_CHECK(DCPTime(1092757128815583LL, DCPTime::TIME_BASE).ceil(23.976) == DCPTime(1092758247315315, DCPTime::TIME_BASE));
 }
 
 /* Straightforward test of DCPTime::floor */
 BOOST_AUTO_TEST_CASE (dcpomatic_time_floor_test)
 {
-	BOOST_CHECK(test_time(0).floor(DCPTime::HZ / 2) == test_time(0));
-	BOOST_CHECK(test_time(1).floor(DCPTime::HZ / 2) == test_time(0));
-	BOOST_CHECK(test_time(2).floor(DCPTime::HZ / 2) == test_time(2));
-	BOOST_CHECK(test_time(3).floor(DCPTime::HZ / 2) == test_time(2));
+	BOOST_CHECK(test_time(0).floor(DCPTime::TIME_BASE / 2) == test_time(0));
+	BOOST_CHECK(test_time(1).floor(DCPTime::TIME_BASE / 2) == test_time(0));
+	BOOST_CHECK(test_time(2).floor(DCPTime::TIME_BASE / 2) == test_time(2));
+	BOOST_CHECK(test_time(3).floor(DCPTime::TIME_BASE / 2) == test_time(2));
 
-	BOOST_CHECK(test_time(0).floor(DCPTime::HZ / 42) == test_time(0));
-	BOOST_CHECK(test_time(1).floor(DCPTime::HZ / 42) == test_time(0));
-	BOOST_CHECK(test_time(42).floor(DCPTime::HZ / 42.0) == test_time(42));
-	BOOST_CHECK(test_time(43).floor(DCPTime::HZ / 42.0) == test_time(42));
+	BOOST_CHECK(test_time(0).floor(DCPTime::TIME_BASE / 42) == test_time(0));
+	BOOST_CHECK(test_time(1).floor(DCPTime::TIME_BASE / 42) == test_time(0));
+	BOOST_CHECK(test_time(42).floor(DCPTime::TIME_BASE / 42.0) == test_time(42));
+	BOOST_CHECK(test_time(43).floor(DCPTime::TIME_BASE / 42.0) == test_time(42));
 
 	/* Check that rounding down to non-integer frame rates works */
 	BOOST_CHECK(test_time(45312).floor(29.976) == test_time(44836));
 }
+
+
+BOOST_AUTO_TEST_CASE(dcpomatic_time_factor_test)
+{
+	for (int i = 2; i <= 30; ++i) {
+		BOOST_CHECK((dcpomatic::DCPTime::TIME_BASE % i) == 0);
+	}
+
+	BOOST_CHECK((dcpomatic::DCPTime::TIME_BASE % 36) == 0);
+	BOOST_CHECK((dcpomatic::DCPTime::TIME_BASE % 48) == 0);
+	BOOST_CHECK((dcpomatic::DCPTime::TIME_BASE % 60) == 0);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcpomatic_time_frames_floor_test)
+{
+	BOOST_CHECK_EQUAL(dcpomatic::DCPTime(195061250884500LL, 69872686884000LL).frames_floor(48000), 134000);
+}
+

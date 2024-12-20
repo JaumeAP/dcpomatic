@@ -36,6 +36,7 @@
 LIBDCP_DISABLE_WARNINGS
 #include <libxml++/libxml++.h>
 LIBDCP_ENABLE_WARNINGS
+#include <boost/multiprecision/cpp_int.hpp>
 #include <boost/optional.hpp>
 #include <cmath>
 #include <cstdio>
@@ -75,7 +76,7 @@ public:
 bool operator<=(HMSF const& a, HMSF const& b);
 
 
-/** A time in seconds, expressed as a number scaled up by Time::HZ.  We want two different
+/** A time in seconds, expressed as a number scaled up by Time::TIME_BASE.  We want two different
  *  versions of this class, dcpomatic::ContentTime and dcpomatic::DCPTime, and we want it to be impossible to
  *  convert implicitly between the two.  Hence there's this template hack.  I'm not
  *  sure if it's the best way to do it.
@@ -86,14 +87,13 @@ template <class S, class O>
 class Time
 {
 public:
-	Time ()
-		: _t (0)
-	{}
+	Time() = default;
 
-	typedef int64_t Type;
+	using Type = int64_t;
+	using big_int = boost::multiprecision::int128_t;
 
 	Time(Type n, Type d)
-		: _t (n * HZ / d)
+		: _t(big_int(big_int(n) * big_int(TIME_BASE) / big_int(d)).convert_to<int64_t>())
 	{}
 
 	/* Explicit conversion from type O */
@@ -168,19 +168,19 @@ public:
 	 *  @param r Sampling rate.
 	 */
 	Time<S, O> ceil (double r) const {
-		return Time<S, O> (llrint(HZ * frames_ceil(r) / r));
+		return Time<S, O>(llrint(frames_ceil(r) * TIME_BASE / r));
 	}
 
 	Time<S, O> floor (double r) const {
-		return Time<S, O> (llrint(HZ * frames_floor(r) / r));
+		return Time<S, O>(llrint(frames_floor(r) * TIME_BASE / r));
 	}
 
 	Time<S, O> round (double r) const {
-		return Time<S, O> (llrint(HZ * frames_round(r) / r));
+		return Time<S, O>(llrint(frames_round(r) * TIME_BASE / r));
 	}
 
 	double seconds () const {
-		return double (_t) / HZ;
+		return double (_t) / TIME_BASE;
 	}
 
 	Time<S, O> abs () const {
@@ -193,12 +193,12 @@ public:
 		   the calculation will round down before we get the chance
 		   to llrint().
 		*/
-		return llrint (_t * double(r) / HZ);
+		return llrint (_t * double(r) / TIME_BASE);
 	}
 
 	template <typename T>
 	int64_t frames_floor (T r) const {
-		return ::floor (_t * r / HZ);
+		return std::floor(_t * r / TIME_BASE);
 	}
 
 	template <typename T>
@@ -207,7 +207,7 @@ public:
 		   the calculation will round down before we get the chance
 		   to ceil().
 		*/
-		return ::ceil (_t * double(r) / HZ);
+		return std::ceil(_t * double(r) / TIME_BASE);
 	}
 
 	double proportion_of(Time<S, O> other) const {
@@ -267,13 +267,13 @@ public:
 	}
 
 	static Time<S, O> from_seconds (double s) {
-		return Time<S, O> (llrint (s * HZ));
+		return Time<S, O> (llrint (s * TIME_BASE));
 	}
 
 	template <class T>
 	static Time<S, O> from_frames (int64_t f, T r) {
 		DCPOMATIC_ASSERT (r > 0);
-		return Time<S, O> (f * HZ / r);
+		return Time<S, O>((double(f) / r) * TIME_BASE);
 	}
 
 	static Time<S, O> from_node(std::shared_ptr<const cxml::Node> node) {
@@ -281,25 +281,25 @@ public:
 			return {};
 		}
 
-		return Time<S, O>(dcp::raw_convert<Type>(node->content()), node->optional_number_attribute<Type>("timebase").get_value_or(96000));
+		return Time<S, O>(dcp::raw_convert<Type>(node->content()), node->optional_number_attribute<Type>("timebase").get_value_or(OLD_TIME_BASE));
 	}
 
 	xmlpp::Element* add_as_node(xmlpp::Element* parent, std::string name) const {
 		auto child = cxml::add_child(parent, name);
 		child->add_child_text(fmt::to_string(_t));
-		child->set_attribute("timebase", fmt::to_string(HZ));
+		child->set_attribute("timebase", fmt::to_string(TIME_BASE));
 		return child;
 	}
 
 	static Time<S, O> from_attributes(std::shared_ptr<const cxml::Node> node) {
 		auto time = number_attribute<Type>(node, "Time", "time");
-		auto timebase = node->optional_number_attribute<Type>("timebase").get_value_or(96000);
+		auto timebase = node->optional_number_attribute<Type>("timebase").get_value_or(OLD_TIME_BASE);
 		return Time<S, O>(time, timebase);
 	}
 
 	void add_as_attributes(xmlpp::Element* element) const {
 		element->set_attribute("time", fmt::to_string(_t));
-		element->set_attribute("timebase", fmt::to_string(HZ));
+		element->set_attribute("timebase", fmt::to_string(TIME_BASE));
 	}
 
 	static Time<S, O> delta () {
@@ -314,12 +314,14 @@ public:
 		return Time<S, O> (INT64_MAX);
 	}
 
-	static const int HZ = 96000;
+	static Type const TIME_BASE;
 
 private:
 	friend struct ::dcpomatic_time_ceil_test;
 	friend struct ::dcpomatic_time_floor_test;
 	friend class Time<O, S>;
+
+	static Type const OLD_TIME_BASE;
 
 	explicit Time (Type t)
 		: _t (t)
@@ -329,8 +331,17 @@ private:
 		return _t;
 	}
 
-	Type _t;
+	Type _t = 0;
 };
+
+
+/* This is what old projects (before 2.18.0) assume */
+template <class S, class O>
+typename Time<S, O>::Type const Time<S, O>::OLD_TIME_BASE = 96000;
+
+/* See hacks/hz.py: this is divisible by a set of useful numbers */
+template <class S, class O>
+typename Time<S, O>::Type const Time<S, O>::TIME_BASE = 494236512000;
 
 
 class ContentTimeDifferentiator {};

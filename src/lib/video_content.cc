@@ -428,7 +428,7 @@ VideoContent::fade(shared_ptr<const Film> film, ContentTime time) const
 	auto const fade_in_time = ContentTime::from_frames(fade_in(), vfr);
 	/* time after the trimmed start of the content */
 	auto const time_after_start = time - trim_start;
-	if (fade_in_time.get() && time_after_start < fade_in_time) {
+	if (fade_in_time != ContentTime() && time_after_start < fade_in_time) {
 		return std::max(0.0, time_after_start.proportion_of(fade_in_time));
 	}
 

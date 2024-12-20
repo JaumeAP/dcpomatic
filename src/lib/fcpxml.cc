@@ -44,7 +44,7 @@ convert_time(string const& time)
 		throw FCPXMLError(fmt::format("Unexpected time format {}", time));
 	}
 
-	return dcpomatic::ContentTime{dcp::raw_convert<int64_t>(parts[0]) * dcpomatic::ContentTime::HZ / dcp::raw_convert<int64_t>(parts[1])};
+	return dcpomatic::ContentTime{dcp::raw_convert<int64_t>(parts[0]), dcp::raw_convert<int64_t>(parts[1])};
 }
 
 

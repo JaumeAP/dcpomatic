@@ -103,6 +103,6 @@ FCPXMLContent::as_xml(xmlpp::Element* element, bool with_paths, PathBehaviour pa
 		only_text()->as_xml(element);
 	}
 
-	cxml::add_child(element, "Length", fmt::to_string(_length.get()));
+	_length.add_as_node(element, "Length");
 }
 
