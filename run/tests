@@ -106,6 +106,9 @@ if [ "$check" == "1" ]; then
     popd
 fi
 
+# Make newer OpenSSL libraries still support SHA1 signatures
+export OPENSSL_ENABLE_SHA1_SIGNATURES=1
+
 if [ "$type" == "debug" ]; then
     gdb --args build/test/unit-tests --catch_system_errors=no --log_level=test_suite $*
 elif [ "$type" == "backtrace" ]; then
