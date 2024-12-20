@@ -30,6 +30,12 @@
 
 #include "dcpomatic_assert.h"
 #include "frame_rate_change.h"
+#include "xml_util.h"
+#include <libcxml/cxml.h>
+#include <dcp/raw_convert.h>
+LIBDCP_DISABLE_WARNINGS
+#include <libxml++/libxml++.h>
+LIBDCP_ENABLE_WARNINGS
 #include <boost/optional.hpp>
 #include <cmath>
 #include <cstdio>
@@ -276,6 +282,32 @@ public:
 	static Time<S, O> from_frames (int64_t f, T r) {
 		DCPOMATIC_ASSERT (r > 0);
 		return Time<S, O> (f * HZ / r);
+	}
+
+	static Time<S, O> from_node(std::shared_ptr<const cxml::Node> node) {
+		if (!node) {
+			return {};
+		}
+
+		return Time<S, O>(dcp::raw_convert<Type>(node->content()), node->optional_number_attribute<Type>("timebase").get_value_or(96000));
+	}
+
+	xmlpp::Element* add_as_node(xmlpp::Element* parent, std::string name) const {
+		auto child = cxml::add_child(parent, name);
+		child->add_child_text(dcp::raw_convert<std::string>(_t));
+		child->set_attribute("timebase", dcp::raw_convert<std::string>(HZ));
+		return child;
+	}
+
+	static Time<S, O> from_attributes(std::shared_ptr<const cxml::Node> node) {
+		auto time = number_attribute<Type>(node, "Time", "time");
+		auto timebase = node->optional_number_attribute<Type>("timebase").get_value_or(96000);
+		return Time<S, O>(time, timebase);
+	}
+
+	void add_as_attributes(xmlpp::Element* element) const {
+		element->set_attribute("time", dcp::raw_convert<std::string>(_t));
+		element->set_attribute("timebase", dcp::raw_convert<std::string>(HZ));
 	}
 
 	static Time<S, O> delta () {
