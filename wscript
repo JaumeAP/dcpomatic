@@ -95,7 +95,7 @@ def configure(conf):
         conf.env.CAIROMM_API = '1.16'
         conf.env.GLIBMM_API = '2.68'
     else:
-        cpp_std = '11'
+        cpp_std = '14'
         conf.env.XMLPP_API = '2.6'
         conf.env.PANGOMM_API = '1.4'
         conf.env.CAIROMM_API = '1.0'
