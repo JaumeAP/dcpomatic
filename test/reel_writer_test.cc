@@ -57,7 +57,7 @@ static bool equal(J2KFrameInfo a, dcp::File& file, Frame frame, Eyes eyes)
 BOOST_AUTO_TEST_CASE (write_frame_info_test)
 {
 	auto film = new_test_film("write_frame_info_test");
-	dcpomatic::DCPTimePeriod const period (dcpomatic::DCPTime(0), dcpomatic::DCPTime(96000));
+	dcpomatic::DCPTimePeriod const period(dcpomatic::DCPTime(), dcpomatic::DCPTime(96000, 96000));
 
 	J2KFrameInfo info1(0, 123, "12345678901234567890123456789012");
 	J2KFrameInfo info2(596, 14921, "123acb789f1234ae782012n456339522");

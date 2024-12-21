@@ -50,7 +50,7 @@ maybe_add_asset (list<ReferencedReelAsset>& a, shared_ptr<dcp::ReelAsset> r, Fra
 	r->set_duration (r->actual_duration() - reel_trim_start - reel_trim_end);
 	if (r->actual_duration() > 0) {
 		a.push_back (
-			ReferencedReelAsset(r, DCPTimePeriod(from, from + DCPTime::from_frames(r->actual_duration(), ffr)))
+			ReferencedReelAsset(r, DCPTimePeriod(from, from + DCPTime(r->actual_duration(), ffr)))
 			);
 	}
 }
@@ -106,7 +106,7 @@ get_referenced_reel_assets(shared_ptr<const Film> film, shared_ptr<const Playlis
 			Frame const reel_trim_start = min(reel_duration, max(int64_t(0), trim_start - offset_from_start));
 			Frame const reel_trim_end =   min(reel_duration, max(int64_t(0), reel_duration - (offset_from_end - trim_end)));
 
-			auto const from = content->position() + std::max(DCPTime(), DCPTime::from_frames(offset_from_start - trim_start, frame_rate));
+			auto const from = content->position() + std::max(DCPTime(), DCPTime(offset_from_start - trim_start, frame_rate));
 			if (dcp->reference_video()) {
 				maybe_add_asset (reel_assets, reel->main_picture(), reel_trim_start, reel_trim_end, from, frame_rate);
 			}

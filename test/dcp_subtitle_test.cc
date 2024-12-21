@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test)
 	film->set_dcp_content_type(DCPContentType::from_isdcf_name("TLR"));
 	film->set_name("frobozz");
 
-	BOOST_CHECK_EQUAL (content->full_length(film).get(), DCPTime::from_seconds(2).get());
+	BOOST_CHECK(content->full_length(film) == DCPTime::from_seconds(2));
 
 	content->only_text()->set_use (true);
 	content->only_text()->set_burn (false);

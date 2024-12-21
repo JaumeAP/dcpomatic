@@ -45,7 +45,7 @@ MPEG2Encoder::encode(shared_ptr<PlayerVideo> pv, dcpomatic::DCPTime time)
 
 	auto image = pv->image(force(AV_PIX_FMT_YUV420P), VideoRange::VIDEO, false);
 
-	dcp::FFmpegImage ffmpeg_image(time.get() * _film->video_frame_rate() / dcpomatic::DCPTime::HZ);
+	dcp::FFmpegImage ffmpeg_image(time.frames_round(_film->video_frame_rate()));
 
 	DCPOMATIC_ASSERT(image->size() == ffmpeg_image.size());
 

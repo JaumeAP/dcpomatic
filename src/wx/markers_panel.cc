@@ -136,7 +136,7 @@ MarkersPanel::position (dcpomatic::DCPTime time, int width) const
 		return 0;
 	}
 
-	return end_gap + time.get() * (width - end_gap * 2) / film->length().get();
+	return end_gap + time.seconds() * (width - end_gap * 2) / film->length().seconds();
 }
 
 

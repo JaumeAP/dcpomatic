@@ -107,10 +107,10 @@ BOOST_AUTO_TEST_CASE (player_black_fill_test)
 	film->set_sequence (false);
 
 	contentA->video->set_length (3);
-	contentA->set_position (film, DCPTime::from_frames(2, film->video_frame_rate()));
+	contentA->set_position (film, DCPTime(2, film->video_frame_rate()));
 	contentA->video->set_custom_ratio (1.85);
 	contentB->video->set_length (1);
-	contentB->set_position (film, DCPTime::from_frames(7, film->video_frame_rate()));
+	contentB->set_position (film, DCPTime(7, film->video_frame_rate()));
 	contentB->video->set_custom_ratio (1.85);
 
 	make_and_verify_dcp (
@@ -148,17 +148,17 @@ BOOST_AUTO_TEST_CASE (player_subframe_test)
 	film->set_video_frame_rate (24);
 	A->video->set_length (3 * 24);
 
-	BOOST_CHECK (A->full_length(film) == DCPTime::from_frames(3 * 24, 24));
-	BOOST_CHECK (B->full_length(film) == DCPTime(289920));
+	BOOST_CHECK (A->full_length(film) == DCPTime(3 * 24, 24));
+	BOOST_CHECK (B->full_length(film) == DCPTime(289920, 96000));
 	/* Length should be rounded up from B's length to the next video frame */
-	BOOST_CHECK (film->length() == DCPTime::from_frames(3 * 24 + 1, 24));
+	BOOST_CHECK (film->length() == DCPTime(3 * 24 + 1, 24));
 
 	Player player(film, Image::Alignment::COMPACT, false);
 	player.setup_pieces();
 	BOOST_REQUIRE_EQUAL(player._black._periods.size(), 1U);
-	BOOST_CHECK(player._black._periods.front() == DCPTimePeriod(DCPTime::from_frames(3 * 24, 24), DCPTime::from_frames(3 * 24 + 1, 24)));
+	BOOST_CHECK(player._black._periods.front() == DCPTimePeriod(DCPTime(3 * 24, 24), DCPTime(3 * 24 + 1, 24)));
 	BOOST_REQUIRE_EQUAL(player._silent._periods.size(), 1U);
-	BOOST_CHECK(player._silent._periods.front() == DCPTimePeriod(DCPTime(289920), DCPTime::from_frames(3 * 24 + 1, 24)));
+	BOOST_CHECK(player._silent._periods.front() == DCPTimePeriod(DCPTime(289920, 96000), DCPTime(3 * 24 + 1, 24)));
 }
 
 
@@ -220,10 +220,10 @@ BOOST_AUTO_TEST_CASE (player_seek_test)
 		);
 
 	for (int i = 0; i < 10; ++i) {
-		auto t = DCPTime::from_frames (i, 24);
+		auto t = DCPTime(i, 24);
 		butler->seek (t, true);
 		auto video = butler->get_video(Butler::Behaviour::BLOCKING, 0);
-		BOOST_CHECK_EQUAL(video.second.get(), t.get());
+		BOOST_CHECK(video.second == t);
 		write_image(video.first->image(force(AV_PIX_FMT_RGB24), VideoRange::FULL, true), fmt::format("build/test/player_seek_test_{}.png", i));
 		/* This 14.08 is empirically chosen (hopefully) to accept changes in rendering between the reference and a test machine
 		   (17.10 and 16.04 seem to anti-alias a little differently) but to reject gross errors e.g. missing fonts or missing
@@ -255,10 +255,10 @@ BOOST_AUTO_TEST_CASE (player_seek_test2)
 	butler->seek(DCPTime::from_seconds(5), true);
 
 	for (int i = 0; i < 10; ++i) {
-		auto t = DCPTime::from_seconds(5) + DCPTime::from_frames (i, 24);
+		auto t = DCPTime::from_seconds(5) + DCPTime(i, 24);
 		butler->seek (t, true);
 		auto video = butler->get_video(Butler::Behaviour::BLOCKING, 0);
-		BOOST_CHECK_EQUAL(video.second.get(), t.get());
+		BOOST_CHECK(video.second == t);
 		write_image(
 			video.first->image(force(AV_PIX_FMT_RGB24), VideoRange::FULL, true), fmt::format("build/test/player_seek_test2_{}.png", i)
 			);
@@ -533,7 +533,7 @@ BOOST_AUTO_TEST_CASE(multiple_sound_files_bug)
 
 	auto film = new_test_film("multiple_sound_files_bug", { A, B, C }, &cl);
 	film->set_audio_channels(16);
-	C->set_position(film, DCPTime(3840000));
+	C->set_position(film, DCPTime(3840000, 96000));
 
 	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
 
@@ -612,7 +612,7 @@ BOOST_AUTO_TEST_CASE(two_d_in_three_d_duplicates)
 		BOOST_CHECK(last_eyes != video->eyes());
 		last_eyes = video->eyes();
 		if (video->eyes() == Eyes::LEFT) {
-			BOOST_CHECK(!last_time || time == *last_time + DCPTime::from_frames(1, 24));
+			BOOST_CHECK(!last_time || time == *last_time + DCPTime(1, 24));
 		} else {
 			BOOST_CHECK(time == *last_time);
 		}
@@ -665,7 +665,7 @@ BOOST_AUTO_TEST_CASE(three_d_in_two_d_chooses_left)
 	optional<DCPTime> last_time;
 	player->Video.connect([&last_time, &red_line, &blue_line](shared_ptr<PlayerVideo> video, dcpomatic::DCPTime time) {
 		BOOST_CHECK(video->eyes() == Eyes::BOTH);
-		BOOST_CHECK(!last_time || time == *last_time + DCPTime::from_frames(1, 24));
+		BOOST_CHECK(!last_time || time == *last_time + DCPTime(1, 24));
 		last_time = time;
 
 		auto image = video->image(force(AV_PIX_FMT_RGB24), VideoRange::FULL, false);
@@ -709,7 +709,7 @@ BOOST_AUTO_TEST_CASE(check_seek_with_no_video)
 	}
 
 	BOOST_REQUIRE(earliest);
-	BOOST_CHECK(*earliest >= dcpomatic::DCPTime(60 * 60));
+	BOOST_CHECK(*earliest >= dcpomatic::DCPTime::from_seconds(60 * 60));
 }
 
 

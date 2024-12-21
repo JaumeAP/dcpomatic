@@ -81,19 +81,19 @@ public:
 
 	void set (T t, float fps)
 	{
-		auto const hmsf = t.split (fps);
+		auto const hmsf = t.splitX(fps);
 
 		checked_set(_hours, fmt::to_string(hmsf.h));
 		checked_set(_minutes, fmt::to_string(hmsf.m));
 		checked_set(_seconds, fmt::to_string(hmsf.s));
 		checked_set(_frames, fmt::to_string(hmsf.f));
 
-		checked_set (_fixed, t.timecode (fps));
+		checked_set(_fixed, t.timecodeX(fps));
 	}
 
 	void set_hint (T t, float fps)
 	{
-		auto hmsf = t.split (fps);
+		auto hmsf = t.splitX(fps);
 
 		_hours->SetHint(std_to_wx(fmt::to_string(hmsf.h)));
 		_minutes->SetHint(std_to_wx(fmt::to_string(hmsf.m)));

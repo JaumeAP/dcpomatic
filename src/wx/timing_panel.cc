@@ -391,7 +391,7 @@ TimingPanel::trim_end_changed()
 
 	/* XXX: maybe playhead-off-the-end-of-the-film should be handled elsewhere */
 	if (_viewer.position() >= _parent->film()->length()) {
-		_viewer.seek(_parent->film()->length() - DCPTime::from_frames(1, _parent->film()->video_frame_rate()), true);
+		_viewer.seek(_parent->film()->length() - DCPTime(1, _parent->film()->video_frame_rate()), true);
 	}
 
 	_viewer.set_coalesce_player_changes(false);
@@ -405,7 +405,7 @@ TimingPanel::play_length_changed()
 	for (auto i: _parent->selected()) {
 		auto const frc = _parent->film()->active_frame_rate_change(i->position());
 		auto dcp = max(DCPTime(), i->full_length(_parent->film()) - play_length);
-		i->set_trim_end(max(ContentTime(), ContentTime(dcp, frc) - i->trim_start()));
+		i->set_trim_end(max(ContentTime(), dcp.content_time(frc) - i->trim_start()));
 	}
 }
 
@@ -443,7 +443,7 @@ TimingPanel::trim_start_to_playhead_clicked()
 	for (auto i: _parent->selected()) {
 		if (i->position() < ph && ph < i->end(film)) {
 			auto const frc = film->active_frame_rate_change(i->position());
-			i->set_trim_start(film, i->trim_start() + ContentTime(ph - i->position(), frc));
+			i->set_trim_start(film, i->trim_start() + DCPTime(ph - i->position()).content_time(frc));
 			new_ph = i->position();
 		}
 	}
@@ -463,7 +463,7 @@ TimingPanel::trim_end_to_playhead_clicked()
 	for (auto i: _parent->selected()) {
 		if (i->position() < ph && ph < i->end(film)) {
 			auto const frc = film->active_frame_rate_change(i->position());
-			i->set_trim_end(ContentTime(i->position() + i->full_length(film) - ph, frc) - i->trim_start());
+			i->set_trim_end(DCPTime(i->position() + i->full_length(film) - ph).content_time(frc) - i->trim_start());
 		}
 	}
 }

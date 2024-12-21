@@ -100,10 +100,10 @@ TimelineReelsView::do_paint (wxGraphicsContext* gc, list<dcpomatic::Rect<int>>)
 		wxDouble str_leading;
 		gc->GetTextExtent (str, &str_width, &str_height, &str_descent, &str_leading);
 
-		int const available_width = time_x(DCPTime(i.to.get())) - time_x(DCPTime(i.from.get()));
+		int const available_width = time_x(i.to) - time_x(i.from);
 
 		if (available_width > str_width) {
-			gc->DrawText (str, time_x(DCPTime(i.from.get())) + (available_width - str_width) / 2, _y + 4);
+			gc->DrawText (str, time_x(i.from) + (available_width - str_width) / 2, _y + 4);
 		}
 	}
 }

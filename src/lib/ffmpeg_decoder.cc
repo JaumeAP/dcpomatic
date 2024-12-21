@@ -173,7 +173,7 @@ FFmpegDecoder::flush_fill()
 	bool did_something = false;
 
 	auto const frc = film()->active_frame_rate_change(_ffmpeg_content->position());
-	ContentTime full_length (_ffmpeg_content->full_length(film()), frc);
+	auto full_length = _ffmpeg_content->full_length(film()).content_time(frc);
 	full_length = full_length.ceil (frc.source);
 	if (video && !video->ignore()) {
 		double const vfr = _ffmpeg_content->video_frame_rate().get();

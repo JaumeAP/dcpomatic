@@ -216,7 +216,7 @@ public:
 	 *  @return Split time.
 	 */
 	template <typename T>
-	HMSF split (T r) const
+	HMSF splitX(T r) const
 	{
 		/* Do this calculation with frames so that we can round
 		   to a frame boundary at the start rather than the end.
@@ -236,8 +236,8 @@ public:
 	}
 
 	template <typename T>
-	std::string timecode (T r) const {
-		auto hmsf = split (r);
+	std::string timecodeX(T r) const {
+		auto hmsf = splitX(r);
 
 		char buffer[128];
 		snprintf (buffer, sizeof(buffer), "%02d:%02d:%02d:%02d", hmsf.h, hmsf.m, hmsf.s, hmsf.f);
@@ -291,8 +291,7 @@ Time<DCPTimeDifferentiator, ContentTimeDifferentiator>::Time (Time<ContentTimeDi
 
 /** Time relative to the start or position of a piece of content in its native frame rate */
 typedef Time<ContentTimeDifferentiator, DCPTimeDifferentiator> ContentTime;
-/** Time relative to the start of the output DCP in its frame rate */
-typedef Time<DCPTimeDifferentiator, ContentTimeDifferentiator> DCPTime;
+
 
 template <class T>
 class TimePeriod
@@ -392,6 +391,66 @@ std::list<TimePeriod<T>> subtract (TimePeriod<T> A, std::list<TimePeriod<T>> con
 }
 
 
+class DCPTime
+{
+private:
+	using Type = int64_t;
+
+public:
+	DCPTime() = default;
+	explicit DCPTime(Type num);
+	DCPTime(Type num, Type den);
+	DCPTime(ContentTime time, FrameRateChange frc);
+	DCPTime(std::string const& serializable_string);
+	DCPTime(HMSF const& hmsf, float fps);
+
+	static DCPTime from_seconds(double s);
+
+	std::string to_serialisable_string() const;
+	std::string to_debug_string() const;
+
+	double seconds() const;
+
+	int64_t frames_floor(int r) const;
+	int64_t frames_round(int r) const;
+	int64_t frames_ceil(int r) const;
+	DCPTime floor(int r) const;
+	DCPTime round(int r) const;
+	DCPTime ceil(int r) const;
+
+	DCPTime abs() const;
+
+	bool operator<(DCPTime const& o) const;
+	bool operator<=(DCPTime const& o) const;
+	bool operator==(DCPTime const& o) const;
+	bool operator!=(DCPTime const& o) const;
+	bool operator>=(DCPTime const& o) const;
+	bool operator>(DCPTime const& o) const;
+
+	DCPTime operator+(DCPTime const& o) const;
+	DCPTime& operator+=(DCPTime const& o);
+	DCPTime operator-() const;
+	DCPTime operator-(DCPTime const& o) const;
+	DCPTime& operator-=(DCPTime const& o);
+	DCPTime operator*(int o) const;
+	DCPTime operator/(int o) const;
+
+	DCPTime max() const;
+
+	explicit operator bool() const;
+
+	HMSF splitX(int r) const;
+	std::string timecodeX(int r) const;
+
+	ContentTime content_time(FrameRateChange frc) const;
+
+private:
+	Type _num = 0;
+	Type _den = 1;
+};
+
+
+
 typedef TimePeriod<ContentTime> ContentTimePeriod;
 typedef TimePeriod<DCPTime> DCPTimePeriod;
 
@@ -401,7 +460,6 @@ DCPTime max (DCPTime a, DCPTime b);
 ContentTime min (ContentTime a, ContentTime b);
 ContentTime max (ContentTime a, ContentTime b);
 std::string to_string (ContentTime t);
-std::string to_string (DCPTime t);
 std::string to_string (DCPTimePeriod p);
 
 

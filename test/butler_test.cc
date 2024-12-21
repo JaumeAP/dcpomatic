@@ -67,8 +67,8 @@ BOOST_AUTO_TEST_CASE (butler_test1)
 		);
 
 	BOOST_CHECK (butler.get_video(Butler::Behaviour::BLOCKING, 0).second == DCPTime());
-	BOOST_CHECK (butler.get_video(Butler::Behaviour::BLOCKING, 0).second == DCPTime::from_frames(1, 24));
-	BOOST_CHECK (butler.get_video(Butler::Behaviour::BLOCKING, 0).second == DCPTime::from_frames(2, 24));
+	BOOST_CHECK (butler.get_video(Butler::Behaviour::BLOCKING, 0).second == DCPTime(1, 24));
+	BOOST_CHECK (butler.get_video(Butler::Behaviour::BLOCKING, 0).second == DCPTime(2, 24));
 	/* XXX: check the frame contents */
 
 	float buffer[256 * 6];

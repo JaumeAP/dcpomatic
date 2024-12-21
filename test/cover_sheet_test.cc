@@ -34,16 +34,16 @@ BOOST_AUTO_TEST_CASE(cover_sheet_test)
 	auto film = new_test_film("cover_sheet_test");
 	film->set_video_frame_rate(24);
 
-	film->set_marker(dcp::Marker::FFOC, dcpomatic::DCPTime::from_frames(24 *    6 +  9, 24));
-	film->set_marker(dcp::Marker::LFOC, dcpomatic::DCPTime::from_frames(24 *   42 + 15, 24));
-	film->set_marker(dcp::Marker::FFTC, dcpomatic::DCPTime::from_frames(24 *   95 +  4, 24));
-	film->set_marker(dcp::Marker::LFTC, dcpomatic::DCPTime::from_frames(24 *  106 +  1, 24));
-	film->set_marker(dcp::Marker::FFOI, dcpomatic::DCPTime::from_frames(24 *  112 +  0, 24));
-	film->set_marker(dcp::Marker::LFOI, dcpomatic::DCPTime::from_frames(24 *  142 +  6, 24));
-	film->set_marker(dcp::Marker::FFEC, dcpomatic::DCPTime::from_frames(24 *  216 + 23, 24));
-	film->set_marker(dcp::Marker::LFEC, dcpomatic::DCPTime::from_frames(24 *  242 + 21, 24));
-	film->set_marker(dcp::Marker::FFMC, dcpomatic::DCPTime::from_frames(24 *  250 + 23, 24));
-	film->set_marker(dcp::Marker::LFMC, dcpomatic::DCPTime::from_frames(24 *  251 + 21, 24));
+	film->set_marker(dcp::Marker::FFOC, dcpomatic::DCPTime(24 *    6 +  9, 24));
+	film->set_marker(dcp::Marker::LFOC, dcpomatic::DCPTime(24 *   42 + 15, 24));
+	film->set_marker(dcp::Marker::FFTC, dcpomatic::DCPTime(24 *   95 +  4, 24));
+	film->set_marker(dcp::Marker::LFTC, dcpomatic::DCPTime(24 *  106 +  1, 24));
+	film->set_marker(dcp::Marker::FFOI, dcpomatic::DCPTime(24 *  112 +  0, 24));
+	film->set_marker(dcp::Marker::LFOI, dcpomatic::DCPTime(24 *  142 +  6, 24));
+	film->set_marker(dcp::Marker::FFEC, dcpomatic::DCPTime(24 *  216 + 23, 24));
+	film->set_marker(dcp::Marker::LFEC, dcpomatic::DCPTime(24 *  242 + 21, 24));
+	film->set_marker(dcp::Marker::FFMC, dcpomatic::DCPTime(24 *  250 + 23, 24));
+	film->set_marker(dcp::Marker::LFMC, dcpomatic::DCPTime(24 *  251 + 21, 24));
 
 	Config::instance()->set_cover_sheet(
 		"First frame of content: $FFOC\n"

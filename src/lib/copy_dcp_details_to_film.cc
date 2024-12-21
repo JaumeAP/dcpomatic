@@ -74,7 +74,7 @@ copy_dcp_markers_to_film(shared_ptr<const DCPContent> dcp, shared_ptr<Film> film
 {
 	film->clear_markers();
 	for (auto const& i: dcp->markers()) {
-		film->set_marker(i.first, dcpomatic::DCPTime(i.second.get()));
+		film->set_marker(i.first, dcpomatic::DCPTime(i.second, FrameRateChange{}));
 	}
 }
 

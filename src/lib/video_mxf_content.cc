@@ -133,14 +133,14 @@ DCPTime
 VideoMXFContent::full_length (shared_ptr<const Film> film) const
 {
 	FrameRateChange const frc (film, shared_from_this());
-	return DCPTime::from_frames (llrint(video->length_after_3d_combine() * frc.factor()), film->video_frame_rate());
+	return DCPTime(llrint(video->length_after_3d_combine() * frc.factor()), film->video_frame_rate());
 }
 
 
 DCPTime
 VideoMXFContent::approximate_length () const
 {
-	return DCPTime::from_frames (video->length_after_3d_combine(), 24);
+	return DCPTime(video->length_after_3d_combine(), 24);
 }
 
 

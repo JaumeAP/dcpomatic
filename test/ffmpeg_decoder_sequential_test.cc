@@ -80,9 +80,9 @@ ffmpeg_decoder_sequential_test_one (boost::filesystem::path file, float fps, int
 	player->Video.connect (bind (&check, _1, _2));
 
 	next = DCPTime ();
-	frame = DCPTime::from_frames (1, film->video_frame_rate ());
+	frame = DCPTime(1, film->video_frame_rate());
 	while (!player->pass()) {}
-	BOOST_REQUIRE (next == DCPTime::from_frames (video_length, film->video_frame_rate()));
+	BOOST_REQUIRE (next == DCPTime(video_length, film->video_frame_rate()));
 }
 
 

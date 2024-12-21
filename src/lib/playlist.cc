@@ -488,7 +488,7 @@ Playlist::start() const
 		return {};
 	}
 
-	auto start = DCPTime::max();
+	auto start = DCPTime().max();
 	for (auto i: cont) {
 		start = min(start, i->position());
 	}
@@ -595,7 +595,7 @@ Playlist::content() const
 void
 Playlist::repeat(shared_ptr<const Film> film, ContentList c, int n)
 {
-	pair<DCPTime, DCPTime> range(DCPTime::max(), DCPTime());
+	pair<DCPTime, DCPTime> range(DCPTime().max(), DCPTime());
 	for (auto i: c) {
 		range.first = min(range.first, i->position());
 		range.second = max(range.second, i->position());
@@ -700,9 +700,8 @@ Playlist::content_summary(shared_ptr<const Film> film, DCPTimePeriod period) con
 	int best_score = -1;
 	for (auto i: content()) {
 		int score = 0;
-		auto const o = i->period(film).overlap(period);
-		if (o) {
-			score += 100 * o.get().duration().get() / period.duration().get();
+		if (auto const o = i->period(film).overlap(period)) {
+			score += 100 * o.get().duration().seconds() / period.duration().seconds();
 		}
 
 		if (i->video) {

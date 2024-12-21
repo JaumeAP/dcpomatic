@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE (test_write_odd_amount_of_silence)
 
 	auto audio = make_shared<AudioBuffers>(6, 48000);
 	audio->make_silent ();
-	writer->write (audio, dcpomatic::DCPTime(1));
+	writer->write(audio, dcpomatic::DCPTime(1, 96000));
 }
 
 
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE (interrupt_writer)
 
 	for (int i = 0; i < frames; ++i) {
 		writer->write (video_ptr, i, Eyes::BOTH);
-		writer->write (audio, dcpomatic::DCPTime::from_frames(i, 24));
+		writer->write (audio, dcpomatic::DCPTime(i, 24));
 	}
 
 	/* Start digest calculations then abort them; there should be no crash or error */

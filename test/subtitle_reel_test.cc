@@ -242,7 +242,7 @@ BOOST_AUTO_TEST_CASE(bad_subtitle_not_created_at_reel_boundaries)
 	film->set_reel_type(ReelType::CUSTOM);
 	content->text[0]->set_language(dcp::LanguageTag("de"));
 	/* This is 1 frame after the start of the subtitle */
-	film->set_custom_reel_boundaries({dcpomatic::DCPTime::from_frames(241, 24)});
+	film->set_custom_reel_boundaries({dcpomatic::DCPTime(241, 24)});
 
 	/* This is a tricky situation and the way DoM deals with it gives two Bv2.1
 	 * warnings, but these are "should" not "shall" so I think it's OK.

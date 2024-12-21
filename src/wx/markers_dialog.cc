@@ -103,7 +103,7 @@ private:
 		auto vfr = f->video_frame_rate();
 		auto tc = _timecode->get(vfr);
 		if (tc >= f->length()) {
-			tc = f->length() - DCPTime::from_frames(1, vfr);
+			tc = f->length() - DCPTime(1, vfr);
 			_timecode->set(tc, vfr);
 		}
 		if (_checkbox->GetValue()) {

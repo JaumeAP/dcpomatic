@@ -40,8 +40,8 @@ RememberedAsset::RememberedAsset(cxml::ConstNodePtr node)
 	DCPOMATIC_ASSERT(period_node);
 
 	_period = {
-		dcpomatic::DCPTime(period_node->number_child<int64_t>("From")),
-		dcpomatic::DCPTime(period_node->number_child<int64_t>("To"))
+		dcpomatic::DCPTime(period_node->string_child("From")),
+		dcpomatic::DCPTime(period_node->string_child("To"))
 	};
 
 	_identifier = node->string_child("Identifier");
@@ -53,8 +53,8 @@ RememberedAsset::as_xml(xmlpp::Element* parent) const
 {
 	cxml::add_text_child(parent, "Filename", _filename.string());
 	auto period_node = cxml::add_child(parent, "Period");
-	cxml::add_text_child(period_node, "From", fmt::to_string(_period.from.get()));
-	cxml::add_text_child(period_node, "To", fmt::to_string(_period.to.get()));
+	cxml::add_text_child(period_node, "From", _period.from.to_serialisable_string());
+	cxml::add_text_child(period_node, "To", _period.to.to_serialisable_string());
 	cxml::add_text_child(parent, "Identifier", _identifier);
 }
 

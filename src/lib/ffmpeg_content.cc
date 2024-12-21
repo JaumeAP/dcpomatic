@@ -416,13 +416,13 @@ FFmpegContent::full_length (shared_ptr<const Film> film) const
 {
 	FrameRateChange const frc (film, shared_from_this());
 	if (video) {
-		return DCPTime::from_frames (llrint (video->length_after_3d_combine() * frc.factor()), film->video_frame_rate());
+		return DCPTime(llrint(video->length_after_3d_combine() * frc.factor()), film->video_frame_rate());
 	}
 
 	if (audio) {
 		DCPTime longest;
 		for (auto i: audio->streams()) {
-			longest = max (longest, DCPTime::from_frames(llrint(i->length() / frc.speed_up), i->frame_rate()));
+			longest = max(longest, DCPTime(llrint(i->length() / frc.speed_up), i->frame_rate()));
 		}
 		return longest;
 	}
@@ -437,7 +437,7 @@ DCPTime
 FFmpegContent::approximate_length () const
 {
 	if (video) {
-		return DCPTime::from_frames (video->length_after_3d_combine(), 24);
+		return DCPTime(video->length_after_3d_combine(), 24);
 	}
 
 	DCPOMATIC_ASSERT (audio);
@@ -447,7 +447,7 @@ FFmpegContent::approximate_length () const
 		longest = max (longest, Frame(llrint(i->length())));
 	}
 
-	return DCPTime::from_frames (longest, 24);
+	return DCPTime(longest, 24);
 }
 
 

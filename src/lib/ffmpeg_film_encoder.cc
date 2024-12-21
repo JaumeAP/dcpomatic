@@ -171,7 +171,7 @@ FFmpegFilmEncoder::go()
 	auto reel = reel_periods.begin ();
 	auto encoder = file_encoders.begin ();
 
-	auto const video_frame = DCPTime::from_frames (1, _film->video_frame_rate ());
+	auto const video_frame = DCPTime(1, _film->video_frame_rate ());
 	int const audio_frames = video_frame.frames_round(_film->audio_frame_rate());
 	std::vector<float> interleaved(_output_audio_channels * audio_frames);
 	auto deinterleaved = make_shared<AudioBuffers>(_output_audio_channels, audio_frames);
@@ -209,9 +209,8 @@ FFmpegFilmEncoder::go()
 			_last_time = time;
 		}
 
-		auto job = _job.lock ();
-		if (job) {
-			job->set_progress(float(time.get()) / _film->length().get());
+		if (auto job = _job.lock()) {
+			job->set_progress(time.seconds() / _film->length().seconds());
 		}
 
 		waker.nudge ();

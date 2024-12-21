@@ -70,8 +70,8 @@ BOOST_AUTO_TEST_CASE(digest_head_tail_test)
 
 BOOST_AUTO_TEST_CASE(timecode_test)
 {
-	auto t = DCPTime::from_seconds(2 * 60 * 60 + 4 * 60 + 31) + DCPTime::from_frames(19, 24);
-	BOOST_CHECK_EQUAL(t.timecode(24), "02:04:31:19");
+	auto t = DCPTime::from_seconds(2 * 60 * 60 + 4 * 60 + 31) + DCPTime(19, 24);
+	BOOST_CHECK_EQUAL(t.timecodeX(24), "02:04:31:19");
 }
 
 
@@ -93,9 +93,9 @@ BOOST_AUTO_TEST_CASE(seconds_to_approximate_hms_test)
 
 BOOST_AUTO_TEST_CASE(time_to_hmsf_test)
 {
-	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_frames(12, 24), 24), "00:00:00.12");
-	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_frames(24, 24), 24), "00:00:01.00");
-	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_frames(32, 24), 24), "00:00:01.08");
+	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime(12, 24), 24), "00:00:00.12");
+	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime(24, 24), 24), "00:00:01.00");
+	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime(32, 24), 24), "00:00:01.08");
 	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_seconds(92), 24), "00:01:32.00");
 	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_seconds(2 * 60 * 60 + 92), 24), "02:01:32.00");
 }

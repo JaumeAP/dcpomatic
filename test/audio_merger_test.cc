@@ -73,21 +73,21 @@ BOOST_AUTO_TEST_CASE(audio_merger_test1)
 	push(merger, 0, 64, 0);
 	push(merger, 0, 64, 22);
 
-	auto tb = merger.pull(DCPTime::from_frames(22, sampling_rate));
+	auto tb = merger.pull(DCPTime(22, sampling_rate));
 	BOOST_REQUIRE(tb.size() == 1U);
 	BOOST_CHECK(tb.front().first != shared_ptr<const AudioBuffers>());
 	BOOST_CHECK_EQUAL(tb.front().first->frames(), 22);
-	BOOST_CHECK_EQUAL(tb.front().second.get(), 0);
+	BOOST_CHECK(tb.front().second == DCPTime{});
 
 	/* And they should be a staircase */
 	for (int i = 0; i < 22; ++i) {
 		BOOST_CHECK_EQUAL(tb.front().first->data()[0][i], i);
 	}
 
-	tb = merger.pull(DCPTime::from_frames(22 + 64, sampling_rate));
+	tb = merger.pull(DCPTime(22 + 64, sampling_rate));
 	BOOST_REQUIRE(tb.size() == 1U);
 	BOOST_CHECK_EQUAL(tb.front().first->frames(), 64);
-	BOOST_CHECK_EQUAL(tb.front().second.get(), DCPTime::from_frames(22, sampling_rate).get());
+	BOOST_CHECK(tb.front().second == DCPTime(22, sampling_rate));
 
 	/* Check the sample values */
 	for (int i = 0; i < 64; ++i) {
@@ -108,14 +108,14 @@ BOOST_AUTO_TEST_CASE(audio_merger_test2)
 	push(merger, 0, 64, 9);
 
 	/* There's nothing from 0 to 9 */
-	auto tb = merger.pull(DCPTime::from_frames(9, sampling_rate));
+	auto tb = merger.pull(DCPTime(9, sampling_rate));
 	BOOST_CHECK_EQUAL(tb.size(), 0U);
 
 	/* Then there's our data at 9 */
-	tb = merger.pull(DCPTime::from_frames(9 + 64, sampling_rate));
+	tb = merger.pull(DCPTime(9 + 64, sampling_rate));
 
 	BOOST_CHECK_EQUAL(tb.front().first->frames(), 64);
-	BOOST_CHECK_EQUAL(tb.front().second.get(), DCPTime::from_frames(9, sampling_rate).get());
+	BOOST_CHECK(tb.front().second == DCPTime(9, sampling_rate));
 
 	/* Check the sample values */
 	for (int i = 0; i < 64; ++i) {
@@ -134,18 +134,18 @@ BOOST_AUTO_TEST_CASE(audio_merger_test3)
 
 	/* Get them back */
 
-	auto tb = merger.pull(DCPTime::from_frames(100, sampling_rate));
+	auto tb = merger.pull(DCPTime(100, sampling_rate));
 	BOOST_REQUIRE(tb.size() == 1U);
 	BOOST_CHECK_EQUAL(tb.front().first->frames(), 64);
-	BOOST_CHECK_EQUAL(tb.front().second.get(), DCPTime::from_frames(17, sampling_rate).get());
+	BOOST_CHECK(tb.front().second == DCPTime(17, sampling_rate));
 	for (int i = 0; i < 64; ++i) {
 		BOOST_CHECK_EQUAL(tb.front().first->data()[0][i], i);
 	}
 
-	tb = merger.pull(DCPTime::from_frames(200, sampling_rate));
+	tb = merger.pull(DCPTime(200, sampling_rate));
 	BOOST_REQUIRE(tb.size() == 1U);
 	BOOST_CHECK_EQUAL(tb.front().first->frames(), 64);
-	BOOST_CHECK_EQUAL(tb.front().second.get(), DCPTime::from_frames(114, sampling_rate).get());
+	BOOST_CHECK(tb.front().second == DCPTime(114, sampling_rate));
 	for (int i = 0; i < 64; ++i) {
 		BOOST_CHECK_EQUAL(tb.front().first->data()[0][i], i);
 	}
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(audio_merger_test4)
 			merger->clear();
 		} else if (cmd == "push") {
 			BOOST_REQUIRE(i != tokens.end());
-			DCPTime time(dcp::raw_convert<DCPTime::Type>(*i++));
+			DCPTime time(dcp::raw_convert<int64_t>(*i++), 96000);
 			BOOST_REQUIRE(i != tokens.end());
 			int const frames = dcp::raw_convert<int>(*i++);
 			auto buffers = make_shared<AudioBuffers>(1, frames);
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(audio_merger_test4)
 			merger->push(buffers, time);
 		} else if (cmd == "pull") {
 			BOOST_REQUIRE(i != tokens.end());
-			DCPTime time(dcp::raw_convert<DCPTime::Type>(*i++));
+			DCPTime time(dcp::raw_convert<int64_t>(*i++), 96000);
 			merger->pull(time);
 		}
 	}

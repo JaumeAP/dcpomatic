@@ -47,5 +47,5 @@ BOOST_AUTO_TEST_CASE (subtitle_charset_test2)
 	auto ts = dynamic_pointer_cast<StringTextFileContent>(content[0]);
 	BOOST_REQUIRE (ts);
 	/* Make sure we got the subtitle data from the file */
-	BOOST_REQUIRE_EQUAL(content[0]->full_length(film).get(), 6052032);
+	BOOST_REQUIRE(content[0]->full_length(film) == dcpomatic::DCPTime(6052032, 96000));
 }

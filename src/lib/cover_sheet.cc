@@ -94,7 +94,7 @@ dcpomatic::write_cover_sheet(shared_ptr<const Film> film, boost::filesystem::pat
 	}
 	boost::algorithm::replace_all(text, "$AUDIO", description);
 
-	auto const hmsf = film->length().split(film->video_frame_rate());
+	auto const hmsf = film->length().splitX(film->video_frame_rate());
 	string length;
 	if (hmsf.h == 0 && hmsf.m == 0) {
 		length = fmt::format("{}s", hmsf.s);

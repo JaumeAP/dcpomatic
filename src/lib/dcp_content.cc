@@ -324,7 +324,7 @@ DCPContent::examine(shared_ptr<const Film> film, shared_ptr<Job> job, bool toler
 		_cpl = examiner->cpl ();
 		_reel_lengths = examiner->reel_lengths ();
 		for (auto const& i: examiner->markers()) {
-			_markers[i.first] = ContentTime(i.second.as_editable_units_ceil(DCPTime::HZ));
+			_markers[i.first] = ContentTime(i.second.as_editable_units_ceil(ContentTime::HZ));
 		}
 		_ratings = examiner->ratings ();
 		_content_versions = examiner->content_versions ();
@@ -472,7 +472,7 @@ DCPContent::full_length (shared_ptr<const Film> film) const
 		return {};
 	}
 	FrameRateChange const frc (film, shared_from_this());
-	return DCPTime::from_frames (llrint(video->length() * frc.factor()), film->video_frame_rate());
+	return DCPTime(llrint(video->length() * frc.factor()), film->video_frame_rate());
 }
 
 DCPTime
@@ -481,7 +481,7 @@ DCPContent::approximate_length () const
 	if (!video) {
 		return {};
 	}
-	return DCPTime::from_frames (video->length(), 24);
+	return DCPTime(video->length(), 24);
 }
 
 string
@@ -620,11 +620,11 @@ DCPContent::reels (shared_ptr<const Film> film) const
 	*/
 
 	/* The starting point of this content on the timeline */
-	auto pos = position() - DCPTime (trim_start().get());
+	auto pos = position() - DCPTime(trim_start(), FrameRateChange{});
 
 	for (auto i: reel_lengths) {
 		/* This reel runs from `pos' to `to' */
-		DCPTime const to = pos + DCPTime::from_frames (i, film->video_frame_rate());
+		DCPTime const to = pos + DCPTime(i, film->video_frame_rate());
 		if (to > position()) {
 			p.push_back (DCPTimePeriod(max(position(), pos), min(end(film), to)));
 			if (to > end(film)) {

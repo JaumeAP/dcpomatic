@@ -87,7 +87,7 @@ Content::Content(cxml::ConstNodePtr node, boost::optional<boost::filesystem::pat
 		}
 	}
 	_digest = node->optional_string_child("Digest").get_value_or("X");
-	_position = DCPTime(node->number_child<DCPTime::Type>("Position"));
+	_position = DCPTime(node->string_child("Position"));
 	_trim_start = ContentTime(node->number_child<ContentTime::Type>("TrimStart"));
 	_trim_end = ContentTime(node->number_child<ContentTime::Type>("TrimEnd"));
 	_video_frame_rate = node->optional_number_child<double>("VideoFrameRate");
@@ -146,7 +146,7 @@ Content::as_xml(xmlpp::Element* element, bool with_paths, PathBehaviour path_beh
 		}
 	}
 	cxml::add_text_child(element, "Digest", _digest);
-	cxml::add_text_child(element, "Position", fmt::to_string(_position.get()));
+	cxml::add_text_child(element, "Position", _position.to_serialisable_string());
 	cxml::add_text_child(element, "TrimStart", fmt::to_string(_trim_start.get()));
 	cxml::add_text_child(element, "TrimEnd", fmt::to_string(_trim_end.get()));
 	if (_video_frame_rate) {
@@ -322,8 +322,8 @@ Content::identifier() const
 {
 	char buffer[256];
 	snprintf(
-		buffer, sizeof(buffer), "%s_%" PRId64 "_%" PRId64 "_%" PRId64,
-		Content::digest().c_str(), position().get(), trim_start().get(), trim_end().get()
+		buffer, sizeof(buffer), "%s_%s_%" PRId64 "_%" PRId64,
+		Content::digest().c_str(), position().to_serialisable_string().c_str(), trim_start().get(), trim_end().get()
 		);
 	return buffer;
 }

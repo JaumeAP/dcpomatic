@@ -713,7 +713,7 @@ FilmViewer::audio_time() const
 	}
 
 	return DCPTime::from_seconds(audio.getStreamTime()) -
-		DCPTime::from_frames(average_latency(), _film->audio_frame_rate());
+		DCPTime(average_latency(), _film->audio_frame_rate());
 }
 
 
@@ -795,7 +795,7 @@ FilmViewer::position_in_content(shared_ptr<const Content> content) const
 DCPTime
 FilmViewer::one_video_frame() const
 {
-	return DCPTime::from_frames(1, _film ? _film->video_frame_rate() : 24);
+	return DCPTime(1, _film ? _film->video_frame_rate() : 24);
 }
 
 

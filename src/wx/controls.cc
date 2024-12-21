@@ -227,7 +227,7 @@ Controls::slider_moved (bool page)
 		_slider_being_moved = true;
 	}
 
-	DCPTime t (_slider->GetValue() * _film->length().get() / 4096);
+	auto t = DCPTime::from_seconds(_slider->GetValue() * _film->length().seconds() / 4096);
 	t = t.round (_film->video_frame_rate());
 	/* Ensure that we hit the end of the film at the end of the slider.  In particular, we
 	   need to do an accurate seek in case there isn't a keyframe near the end.
@@ -265,8 +265,8 @@ Controls::update_position_slider ()
 
 	auto const len = _film->length ();
 
-	if (len.get ()) {
-		int const new_slider_position = 4096 * _viewer.position().get() / len.get();
+	if (len) {
+		int const new_slider_position = 4096 * _viewer.position().seconds() / len.seconds();
 		if (new_slider_position != _slider->GetValue()) {
 			_slider->SetValue (new_slider_position);
 		}

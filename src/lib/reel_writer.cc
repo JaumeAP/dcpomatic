@@ -514,7 +514,7 @@ ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReferencedReelA
 		for (auto j: refs) {
 			auto k = dynamic_pointer_cast<dcp::ReelPictureAsset>(j.asset);
 			if (k) {
-				LOG_GENERAL("candidate picture asset period is {}-{}", j.period.from.get(), j.period.to.get());
+				LOG_GENERAL("candidate picture asset period is {}-{}", j.period.from.to_debug_string(), j.period.to.to_debug_string());
 			}
 			if (k && j.period == _period) {
 				reel_asset = k;
@@ -556,7 +556,7 @@ ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReferencedReelAss
 		for (auto j: refs) {
 			auto k = dynamic_pointer_cast<dcp::ReelSoundAsset>(j.asset);
 			if (k) {
-				LOG_GENERAL("candidate sound asset period is {}-{}", j.period.from.get(), j.period.to.get());
+				LOG_GENERAL("candidate sound asset period is {}-{}", j.period.from.to_debug_string(), j.period.to.to_debug_string());
 			}
 			if (k && j.period == _period) {
 				reel_asset = k;
@@ -682,7 +682,7 @@ ReelWriter::create_reel_markers(shared_ptr<dcp::Reel> reel) const
 		auto ma = make_shared<dcp::ReelMarkersAsset>(dcp::Fraction(film()->video_frame_rate(), 1), reel->duration());
 		for (auto const& i: reel_markers) {
 			DCPTime relative = i.second - _period.from;
-			auto hmsf = relative.split(film()->video_frame_rate());
+			auto const hmsf = relative.splitX(film()->video_frame_rate());
 			ma->set(i.first, dcp::Time(hmsf.h, hmsf.m, hmsf.s, hmsf.f, film()->video_frame_rate()));
 		}
 		reel->add(ma);
@@ -701,7 +701,7 @@ ReelWriter::create_reel(
 	set<DCPTextTrack> ensure_closed_captions
 	)
 {
-	LOG_GENERAL("create_reel for {}-{}; {} of {}", _period.from.get(), _period.to.get(), _reel_index, _reel_count);
+	LOG_GENERAL("create_reel for {}-{}; {} of {}", _period.from.to_debug_string(), _period.to.to_debug_string(), _reel_index, _reel_count);
 
 	auto reel = make_shared<dcp::Reel>();
 

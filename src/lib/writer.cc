@@ -263,7 +263,7 @@ Writer::write (shared_ptr<const AudioBuffers> audio, DCPTime const time)
 
 	int const afr = film()->audio_frame_rate();
 
-	DCPTime const end = time + DCPTime::from_frames(audio->frames(), afr);
+	DCPTime const end = time + DCPTime(audio->frames(), afr);
 
 	/* The audio we get might span a reel boundary, and if so we have to write it in bits */
 
@@ -771,9 +771,9 @@ Writer::write(PlayerText text, TextType type, optional<DCPTextTrack> track, DCPT
 
 	auto back_off = [this](DCPTimePeriod period) {
 		auto const vfr = film()->video_frame_rate();
-		period.to -= DCPTime::from_frames(2, vfr);
+		period.to -= DCPTime(2, vfr);
 		if (period.duration().frames_floor(vfr) <= 0) {
-			period.to = period.from + DCPTime::from_frames(1, vfr);
+			period.to = period.from + DCPTime(1, vfr);
 		}
 		return period;
 	};
@@ -887,7 +887,7 @@ Writer::write(ReferencedReelAsset asset)
 size_t
 Writer::video_reel(int frame) const
 {
-	auto t = DCPTime::from_frames(frame, film()->video_frame_rate());
+	auto t = DCPTime(frame, film()->video_frame_rate());
 	size_t reel_index = 0;
 	while (reel_index < _reels.size() && !_reels[reel_index].period().contains(t)) {
 		++reel_index;

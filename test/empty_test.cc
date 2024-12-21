@@ -69,18 +69,18 @@ BOOST_AUTO_TEST_CASE (empty_test1)
 	 *     A A A     B
 	 */
 	contentA->video->set_length (3);
-	contentA->set_position (film, DCPTime::from_frames(2, vfr));
+	contentA->set_position (film, DCPTime(2, vfr));
 	contentB->video->set_length (1);
-	contentB->set_position (film, DCPTime::from_frames(7, vfr));
+	contentB->set_position (film, DCPTime(7, vfr));
 
 	Empty black (film, film->playlist(), bind(&has_video, _1), film->playlist()->length(film));
 	BOOST_REQUIRE_EQUAL (black._periods.size(), 2U);
 	auto i = black._periods.begin();
-	BOOST_CHECK (i->from == DCPTime::from_frames(0, vfr));
-	BOOST_CHECK (i->to ==   DCPTime::from_frames(2, vfr));
+	BOOST_CHECK (i->from == DCPTime(0, vfr));
+	BOOST_CHECK (i->to ==   DCPTime(2, vfr));
 	++i;
-	BOOST_CHECK (i->from == DCPTime::from_frames(5, vfr));
-	BOOST_CHECK (i->to ==   DCPTime::from_frames(7, vfr));
+	BOOST_CHECK (i->from == DCPTime(5, vfr));
+	BOOST_CHECK (i->to ==   DCPTime(7, vfr));
 }
 
 
@@ -103,21 +103,21 @@ BOOST_AUTO_TEST_CASE (empty_test2)
 	contentA->video->set_length (3);
 	contentA->set_position (film, DCPTime(0));
 	contentB->video->set_length (1);
-	contentB->set_position (film, DCPTime::from_frames(7, vfr));
+	contentB->set_position (film, DCPTime(7, vfr));
 
 	Empty black (film, film->playlist(), bind(&has_video, _1), film->playlist()->length(film));
 	BOOST_REQUIRE_EQUAL (black._periods.size(), 1U);
-	BOOST_CHECK (black._periods.front().from == DCPTime::from_frames(3, vfr));
-	BOOST_CHECK (black._periods.front().to == DCPTime::from_frames(7, vfr));
+	BOOST_CHECK (black._periods.front().from == DCPTime(3, vfr));
+	BOOST_CHECK (black._periods.front().to == DCPTime(7, vfr));
 
 	/* position should initially be the start of the first empty period */
-	BOOST_CHECK (black.position() == DCPTime::from_frames(3, vfr));
+	BOOST_CHECK (black.position() == DCPTime(3, vfr));
 
 	/* check that done() works */
 	BOOST_CHECK (!black.done ());
-	black.set_position (DCPTime::from_frames (4, vfr));
+	black.set_position (DCPTime (4, vfr));
 	BOOST_CHECK (!black.done ());
-	black.set_position (DCPTime::from_frames (7, vfr));
+	black.set_position (DCPTime (7, vfr));
 	BOOST_CHECK (black.done ());
 }
 
@@ -141,17 +141,17 @@ BOOST_AUTO_TEST_CASE (empty_test3)
 	contentA->video->set_length (3);
 	contentA->set_position (film, DCPTime(0));
 	contentB->video->set_length (1);
-	contentB->set_position (film, DCPTime::from_frames(7, vfr));
+	contentB->set_position (film, DCPTime(7, vfr));
 
 	auto playlist = make_shared<Playlist>();
 	playlist->add (film, contentB);
 	Empty black (film, playlist, bind(&has_video, _1), playlist->length(film));
 	BOOST_REQUIRE_EQUAL (black._periods.size(), 1U);
-	BOOST_CHECK (black._periods.front().from == DCPTime::from_frames(0, vfr));
-	BOOST_CHECK (black._periods.front().to == DCPTime::from_frames(7, vfr));
+	BOOST_CHECK (black._periods.front().from == DCPTime(0, vfr));
+	BOOST_CHECK (black._periods.front().to == DCPTime(7, vfr));
 
 	/* position should initially be the start of the first empty period */
-	BOOST_CHECK (black.position() == DCPTime::from_frames(0, vfr));
+	BOOST_CHECK (black.position() == DCPTime(0, vfr));
 }
 
 

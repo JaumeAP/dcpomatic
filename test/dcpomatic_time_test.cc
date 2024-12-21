@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_test)
 	int k = 0;
 	for (int64_t i = 0; i < 62000; i += 2000) {
 		DCPTime d (i);
-		ContentTime c (d, frc);
+		auto c = d.content_time(frc);
 		BOOST_CHECK_EQUAL (c.frames_floor (24.0), j);
 		++k;
 		if (k == 2) {
@@ -275,9 +275,9 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_coalesce_test3)
 
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_coalesce_test4)
 {
-	DCPTimePeriod A (DCPTime(14), DCPTime(29));
-	DCPTimePeriod B (DCPTime(20), DCPTime(91));
-	DCPTimePeriod C (DCPTime(35), DCPTime(106));
+	DCPTimePeriod A(DCPTime(14, 96000), DCPTime(29, 96000));
+	DCPTimePeriod B(DCPTime(20, 96000), DCPTime(91, 96000));
+	DCPTimePeriod C(DCPTime(35, 96000), DCPTime(106, 96000));
 	list<DCPTimePeriod> p;
 	p.push_back (A);
 	p.push_back (B);
@@ -289,17 +289,17 @@ BOOST_AUTO_TEST_CASE (dcpomatic_time_period_coalesce_test4)
 
 BOOST_AUTO_TEST_CASE (dcpomatic_time_period_coalesce_test5)
 {
-	DCPTimePeriod A (DCPTime(14), DCPTime(29));
-	DCPTimePeriod B (DCPTime(20), DCPTime(91));
-	DCPTimePeriod C (DCPTime(100), DCPTime(106));
+	DCPTimePeriod A(DCPTime(14, 96000), DCPTime(29, 96000));
+	DCPTimePeriod B(DCPTime(20, 96000), DCPTime(91, 96000));
+	DCPTimePeriod C(DCPTime(100, 96000), DCPTime(106, 96000));
 	list<DCPTimePeriod> p;
 	p.push_back (A);
 	p.push_back (B);
 	p.push_back (C);
 	list<DCPTimePeriod> q = coalesce (p);
 	BOOST_REQUIRE_EQUAL (q.size(), 2U);
-	BOOST_CHECK (q.front() == DCPTimePeriod(DCPTime(14), DCPTime(91)));
-	BOOST_CHECK (q.back()  == DCPTimePeriod(DCPTime(100), DCPTime(106)));
+	BOOST_CHECK(q.front() == DCPTimePeriod(DCPTime(14, 96000), DCPTime(91, 96000)));
+	BOOST_CHECK(q.back()  == DCPTimePeriod(DCPTime(100, 96000), DCPTime(106, 96000)));
 }
 
 BOOST_AUTO_TEST_CASE (test_coalesce_with_overlapping_periods)
@@ -317,36 +317,36 @@ BOOST_AUTO_TEST_CASE (test_coalesce_with_overlapping_periods)
 /* Straightforward test of DCPTime::ceil */
 BOOST_AUTO_TEST_CASE (dcpomatic_time_ceil_test)
 {
-	BOOST_CHECK_EQUAL (DCPTime(0).ceil(DCPTime::HZ / 2).get(), 0);
-	BOOST_CHECK_EQUAL (DCPTime(1).ceil(DCPTime::HZ / 2).get(), 2);
-	BOOST_CHECK_EQUAL (DCPTime(2).ceil(DCPTime::HZ / 2).get(), 2);
-	BOOST_CHECK_EQUAL (DCPTime(3).ceil(DCPTime::HZ / 2).get(), 4);
+	BOOST_CHECK(DCPTime(0, 96000).ceil(96000 / 2) == DCPTime(0, 96000));
+	BOOST_CHECK(DCPTime(1, 96000).ceil(96000 / 2) == DCPTime(2, 96000));
+	BOOST_CHECK(DCPTime(2, 96000).ceil(96000 / 2) == DCPTime(2, 96000));
+	BOOST_CHECK(DCPTime(3, 96000).ceil(96000 / 2) == DCPTime(4, 96000));
 
-	BOOST_CHECK_EQUAL (DCPTime(0).ceil(DCPTime::HZ / 42).get(), 0);
-	BOOST_CHECK_EQUAL (DCPTime(1).ceil(DCPTime::HZ / 42).get(), 42);
-	BOOST_CHECK_EQUAL (DCPTime(42).ceil(DCPTime::HZ / 42).get(), 42);
-	BOOST_CHECK_EQUAL (DCPTime(43).ceil(DCPTime::HZ / 42).get(), 84);
+	BOOST_CHECK(DCPTime(0, 96000).ceil(96000 / 42) == DCPTime(0, 96000));
+	BOOST_CHECK(DCPTime(1, 96000).ceil(96000 / 42) == DCPTime(42, 96000));
+	BOOST_CHECK(DCPTime(42, 96000).ceil(96000 / 42) == DCPTime(42, 96000));
+	BOOST_CHECK(DCPTime(43, 96000).ceil(96000 / 42) == DCPTime(84, 96000));
 
 	/* Check that rounding up to non-integer frame rates works */
-	BOOST_CHECK_EQUAL (DCPTime(45312).ceil(29.976).get(), 48038);
+	BOOST_CHECK(DCPTime(45312, 96000).ceil(29.976) == DCPTime(48038, 96000));
 
 	/* Check another tricky case that used to fail */
-	BOOST_CHECK_EQUAL (DCPTime(212256039).ceil(23.976).get(), 212256256);
+	BOOST_CHECK(DCPTime(212256039, 96000).ceil(23.976) == DCPTime(212256256, 96000));
 }
 
 /* Straightforward test of DCPTime::floor */
 BOOST_AUTO_TEST_CASE (dcpomatic_time_floor_test)
 {
-	BOOST_CHECK_EQUAL (DCPTime(0).floor(DCPTime::HZ / 2).get(), 0);
-	BOOST_CHECK_EQUAL (DCPTime(1).floor(DCPTime::HZ / 2).get(), 0);
-	BOOST_CHECK_EQUAL (DCPTime(2).floor(DCPTime::HZ / 2).get(), 2);
-	BOOST_CHECK_EQUAL (DCPTime(3).floor(DCPTime::HZ / 2).get(), 2);
+	BOOST_CHECK(DCPTime(0, 96000).floor(96000 / 2) == DCPTime(0, 96000));
+	BOOST_CHECK(DCPTime(1, 96000).floor(96000 / 2) == DCPTime(0, 96000));
+	BOOST_CHECK(DCPTime(2, 96000).floor(96000 / 2) == DCPTime(2, 96000));
+	BOOST_CHECK(DCPTime(3, 96000).floor(96000 / 2) == DCPTime(2, 96000));
 
-	BOOST_CHECK_EQUAL (DCPTime(0).floor(DCPTime::HZ / 42).get(), 0);
-	BOOST_CHECK_EQUAL (DCPTime(1).floor(DCPTime::HZ / 42).get(), 0);
-	BOOST_CHECK_EQUAL (DCPTime(42).floor(DCPTime::HZ / 42.0).get(), 42);
-	BOOST_CHECK_EQUAL (DCPTime(43).floor(DCPTime::HZ / 42.0).get(), 42);
+	BOOST_CHECK(DCPTime(0, 96000).floor(96000 / 42) == DCPTime(0, 96000));
+	BOOST_CHECK(DCPTime(1, 96000).floor(96000 / 42) == DCPTime(0, 96000));
+	BOOST_CHECK(DCPTime(42, 96000).floor(96000 / 42.0) == DCPTime(42, 96000));
+	BOOST_CHECK(DCPTime(43, 96000).floor(96000 / 42.0) == DCPTime(42, 96000));
 
 	/* Check that rounding down to non-integer frame rates works */
-	BOOST_CHECK_EQUAL (DCPTime(45312).floor(29.976).get(), 44836);
+	BOOST_CHECK(DCPTime(45312, 96000).floor(29.976) == DCPTime(44836, 96000));
 }

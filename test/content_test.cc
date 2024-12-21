@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE (content_test4)
 	BOOST_REQUIRE (!wait_for_jobs());
 
 	video->set_trim_end (dcpomatic::ContentTime(3000));
-	BOOST_CHECK (video->length_after_trim(film) == DCPTime::from_frames(299, 24));
+	BOOST_CHECK (video->length_after_trim(film) == DCPTime(299, 24));
 }
 
 
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE (content_test5)
 
 	audio[0]->set_trim_end(dcpomatic::ContentTime(3000));
 
-	BOOST_CHECK(audio[0]->length_after_trim(film) == DCPTime(957000));
+	BOOST_CHECK(audio[0]->length_after_trim(film) == DCPTime(957000, 96000));
 }
 
 

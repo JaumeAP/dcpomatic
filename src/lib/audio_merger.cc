@@ -83,7 +83,7 @@ AudioMerger::pull (DCPTime time)
 				auto audio = make_shared<AudioBuffers>(i.audio, overlap, 0);
 				out.push_back (make_pair(audio, i.time));
 				i.audio->trim_start (overlap);
-				i.time += DCPTime::from_frames(overlap, _frame_rate);
+				i.time += DCPTime(overlap, _frame_rate);
 				DCPOMATIC_ASSERT (i.audio->frames() > 0);
 				new_buffers.push_back (i);
 			}
@@ -110,7 +110,7 @@ AudioMerger::push (std::shared_ptr<const AudioBuffers> audio, DCPTime time)
 {
 	DCPOMATIC_ASSERT (audio->frames() > 0);
 
-	DCPTimePeriod period (time, time + DCPTime::from_frames (audio->frames(), _frame_rate));
+	DCPTimePeriod period(time, time + DCPTime(audio->frames(), _frame_rate));
 
 	/* Mix any overlapping parts of this new block with existing ones */
 	for (auto i: _buffers) {

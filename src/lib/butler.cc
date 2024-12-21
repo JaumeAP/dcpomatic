@@ -136,10 +136,9 @@ Butler::should_run() const
 {
 	if (_video.size() >= MAXIMUM_VIDEO_READAHEAD * 10) {
 		/* This is way too big */
-		auto pos = _audio.peek();
-		if (pos) {
+		if (auto pos = _audio.peek()) {
 			throw ProgrammingError
-				(__FILE__, __LINE__, fmt::format("Butler video buffers reached {} frames (audio is {} at {})", _video.size(), _audio.size(), pos->get()));
+				(__FILE__, __LINE__, fmt::format("Butler video buffers reached {} frames (audio is {} at {})", _video.size(), _audio.size(), pos->to_debug_string()));
 		} else {
 			throw ProgrammingError
 				(__FILE__, __LINE__, fmt::format("Butler video buffers reached {} frames (audio is {})", _video.size(), _audio.size()));
@@ -148,10 +147,9 @@ Butler::should_run() const
 
 	if (_audio.size() >= MAXIMUM_AUDIO_READAHEAD * 10) {
 		/* This is way too big */
-		auto pos = _audio.peek();
-		if (pos) {
+		if (auto pos = _audio.peek()) {
 			throw ProgrammingError
-				(__FILE__, __LINE__, fmt::format("Butler audio buffers reached {} frames at {} (video is {})", _audio.size(), pos->get(), _video.size()));
+				(__FILE__, __LINE__, fmt::format("Butler audio buffers reached {} frames at {} (video is {})", _audio.size(), pos->to_debug_string(), _video.size()));
 		} else {
 			throw ProgrammingError
 				(__FILE__, __LINE__, fmt::format("Butler audio buffers reached {} frames (video is {})", _audio.size(), _video.size()));

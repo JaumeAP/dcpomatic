@@ -183,9 +183,8 @@ SubtitleFilmEncoder::text(PlayerText subs, TextType type, optional<DCPTextTrack>
 
 	_last = period.from;
 
-	auto job = _job.lock ();
-	if (job) {
-		job->set_progress (float(period.from.get()) / _length.get());
+	if (auto job = _job.lock()) {
+		job->set_progress(period.from.seconds() / _length.seconds());
 	}
 }
 

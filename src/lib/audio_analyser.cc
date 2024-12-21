@@ -135,7 +135,7 @@ AudioAnalyser::AudioAnalyser(shared_ptr<const Film> film, shared_ptr<const Playl
 void
 AudioAnalyser::analyse (shared_ptr<AudioBuffers> b, DCPTime time)
 {
-	LOG_DEBUG_AUDIO_ANALYSIS("AudioAnalyser received {} frames at {}", b->frames(), to_string(time));
+	LOG_DEBUG_AUDIO_ANALYSIS("AudioAnalyser received {} frames at {}", b->frames(), time.to_debug_string());
 	DCPOMATIC_ASSERT (time >= _start);
 	/* In bug #2364 we had a lot of frames arriving here (~47s worth) which
 	 * caused an OOM error on Windows.  Check for the number of frames being
@@ -197,7 +197,7 @@ AudioAnalyser::finish ()
 	vector<AudioAnalysis::PeakTime> sample_peak;
 	for (int i = 0; i < _film->audio_channels(); ++i) {
 		sample_peak.push_back (
-			AudioAnalysis::PeakTime (_sample_peak[i], DCPTime::from_frames (_sample_peak_frame[i], _film->audio_frame_rate ()))
+			AudioAnalysis::PeakTime(_sample_peak[i], DCPTime(_sample_peak_frame[i], _film->audio_frame_rate()))
 			);
 	}
 	_analysis.set_sample_peak (sample_peak);

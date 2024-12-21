@@ -164,7 +164,7 @@ ContentView::add (shared_ptr<Content> content)
 	it.SetId(N);
 	it.SetColumn(0);
 	auto length = content->approximate_length ();
-	auto const hmsf = length.split (24);
+	auto const hmsf = length.splitX(24);
 	it.SetText(wxString::Format(char_to_wx("%02d:%02d:%02d"), hmsf.h, hmsf.m, hmsf.s));
 	InsertItem(it);
 

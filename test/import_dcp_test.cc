@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE (import_dcp_markers_test)
 
 	content[0]->video->set_length (24 * 60 * 10);
 
-	film->set_marker(dcp::Marker::FFOC, dcpomatic::DCPTime::from_frames(1, 24));
+	film->set_marker(dcp::Marker::FFOC, dcpomatic::DCPTime(1, 24));
 	film->set_marker(dcp::Marker::FFMC, dcpomatic::DCPTime::from_seconds(9.4));
 	film->set_marker(dcp::Marker::LFMC, dcpomatic::DCPTime::from_seconds(9.99));
 

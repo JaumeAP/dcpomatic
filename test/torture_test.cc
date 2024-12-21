@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE (torture_test1)
 	auto staircase = content_factory("test/data/staircase.wav")[0];
 	film->examine_and_add_content({staircase});
 	BOOST_REQUIRE (!wait_for_jobs());
-	staircase->set_position (film, DCPTime::from_frames(2000, film->audio_frame_rate()));
+	staircase->set_position (film, DCPTime(2000, film->audio_frame_rate()));
 	staircase->set_trim_start(film, ContentTime::from_frames(12, 48000));
 	staircase->set_trim_end (ContentTime::from_frames (35, 48000));
 	staircase->audio->set_gain (20 * log10(2));
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE (torture_test1)
 	staircase = content_factory("test/data/staircase.wav")[0];
 	film->examine_and_add_content({staircase});
 	BOOST_REQUIRE (!wait_for_jobs());
-	staircase->set_position (film, DCPTime::from_frames(50000, film->audio_frame_rate()));
+	staircase->set_position (film, DCPTime(50000, film->audio_frame_rate()));
 	staircase->set_trim_start(film, ContentTime::from_frames(12, 48000));
 	staircase->set_trim_end (ContentTime::from_frames(35, 48000));
 	staircase->audio->set_gain (20 * log10(2));

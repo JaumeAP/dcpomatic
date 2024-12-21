@@ -288,7 +288,7 @@ Film::info_file(DCPTimePeriod period) const
 {
 	boost::filesystem::path p;
 	p /= "info";
-	p /= video_identifier() + "_" + fmt::to_string(period.from.get()) + "_" + fmt::to_string(period.to.get());
+	p /= video_identifier() + "_" + fmt::to_string(period.from.to_serialisable_string()) + "_" + fmt::to_string(period.to.to_serialisable_string());
 	return file(p);
 }
 
@@ -318,7 +318,7 @@ Film::audio_analysis_path(shared_ptr<const Playlist> playlist) const
 			/* Likewise we only care about position if we're looking at a
 			 * whole-project view.
 			 */
-			digester.add(content->position().get());
+			digester.add(content->position().to_serialisable_string());
 			digester.add(content->trim_start().get());
 			digester.add(content->trim_end().get());
 		}
@@ -421,14 +421,14 @@ Film::metadata(bool with_content_paths) const
 	cxml::add_text_child(root, "ReelType", fmt::to_string(static_cast<int>(_reel_type)));
 	cxml::add_text_child(root, "ReelLength", fmt::to_string(_reel_length));
 	for (auto boundary: _custom_reel_boundaries) {
-		cxml::add_text_child(root, "CustomReelBoundary", fmt::to_string(boundary.get()));
+		cxml::add_text_child(root, "CustomReelBoundary", boundary.to_serialisable_string());
 	}
 	cxml::add_text_child(root, "ReencodeJ2K", _reencode_j2k ? "1" : "0");
 	cxml::add_text_child(root, "UserExplicitVideoFrameRate", _user_explicit_video_frame_rate ? "1" : "0");
 	for (auto const& marker: _markers) {
 		auto m = cxml::add_child(root, "Marker");
 		m->set_attribute("type", dcp::marker_to_string(marker.first));
-		m->add_child_text(fmt::to_string(marker.second.get()));
+		m->add_child_text(marker.second.to_serialisable_string());
 	}
 	for (auto i: _ratings) {
 		i.as_xml(cxml::add_child(root, "Rating"));
@@ -629,7 +629,7 @@ Film::read_metadata(optional<boost::filesystem::path> path)
 	_reel_type = static_cast<ReelType>(f.optional_number_child<int>("ReelType").get_value_or(static_cast<int>(ReelType::SINGLE)));
 	_reel_length = f.optional_number_child<int64_t>("ReelLength").get_value_or(2000000000);
 	for (auto boundary: f.node_children("CustomReelBoundary")) {
-		_custom_reel_boundaries.push_back(DCPTime(raw_convert<int64_t>(boundary->content())));
+		_custom_reel_boundaries.push_back(DCPTime(boundary->content()));
 	}
 	_reencode_j2k = f.optional_bool_child("ReencodeJ2K").get_value_or(false);
 	_user_explicit_video_frame_rate = f.optional_bool_child("UserExplicitVideoFrameRate").get_value_or(false);
@@ -639,7 +639,7 @@ Film::read_metadata(optional<boost::filesystem::path> path)
 		if (!type) {
 			type = i->string_attribute("type");
 		}
-		_markers[dcp::marker_from_string(*type)] = DCPTime(dcp::raw_convert<DCPTime::Type>(i->content()));
+		_markers[dcp::marker_from_string(*type)] = DCPTime(i->content());
 	}
 
 	for (auto i: f.node_children("Rating")) {
@@ -1673,7 +1673,7 @@ Film::check_reel_boundaries_for_atmos()
 	if (remake_boundaries) {
 		vector<dcpomatic::DCPTime> required_boundaries;
 		std::copy_if(atmos_boundaries.begin(), atmos_boundaries.end(), std::back_inserter(required_boundaries), [this](dcpomatic::DCPTime time) {
-			return time.get() != 0 && time != length();
+			return time && time != length();
 		});
 		if (!required_boundaries.empty()) {
 			set_reel_type(ReelType::CUSTOM);
@@ -2031,7 +2031,7 @@ Film::reels_for_type(ReelType type) const
 		 */
 		Frame const reel_in_frames = max(_reel_length / ((video_bit_rate(video_encoding()) / video_frame_rate()) / 8), static_cast<Frame>(video_frame_rate()));
 		while (current < len) {
-			DCPTime end = min(len, current + DCPTime::from_frames(reel_in_frames, video_frame_rate()));
+			DCPTime end = min(len, current + DCPTime(reel_in_frames, video_frame_rate()));
 			periods.emplace_back(current, end);
 			current = end;
 		}
@@ -2295,11 +2295,11 @@ void
 Film::add_ffoc_lfoc(Markers& markers) const
 {
 	if (markers.find(dcp::Marker::FFOC) == markers.end()) {
-		markers[dcp::Marker::FFOC] = dcpomatic::DCPTime::from_frames(1, video_frame_rate());
+		markers[dcp::Marker::FFOC] = dcpomatic::DCPTime(1, video_frame_rate());
 	}
 
 	if (markers.find(dcp::Marker::LFOC) == markers.end()) {
-		markers[dcp::Marker::LFOC] = length() - DCPTime::from_frames(1, video_frame_rate());
+		markers[dcp::Marker::LFOC] = length() - DCPTime(1, video_frame_rate());
 	}
 }
 

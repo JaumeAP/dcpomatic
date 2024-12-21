@@ -41,5 +41,5 @@ PlayheadToFrameDialog::PlayheadToFrameDialog (wxWindow* parent, DCPTime time, in
 DCPTime
 PlayheadToFrameDialog::get () const
 {
-	return DCPTime::from_frames (locale_convert<Frame> (wx_to_std (_frame->GetValue ())) - 1, _fps);
+	return DCPTime(locale_convert<Frame>(wx_to_std(_frame->GetValue())) - 1, _fps);
 }

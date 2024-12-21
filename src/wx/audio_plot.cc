@@ -319,7 +319,7 @@ AudioPlot::plot_peak (wxGraphicsPath& path, int channel, Metrics const & metrics
 		_peak[channel].push_back (
 			Point (
 				wxPoint (metrics.db_label_width + i * metrics.x_scale, y_for_linear (peak, metrics)),
-				DCPTime::from_frames (i * _analysis->samples_per_point(), _analysis->sample_rate()),
+				DCPTime(i * _analysis->samples_per_point(), _analysis->sample_rate()),
 				linear_to_db(peak)
 				)
 			);
@@ -389,7 +389,7 @@ AudioPlot::plot_rms (wxGraphicsPath& path, int channel, Metrics const & metrics)
 		_rms[channel].push_back (
 			Point (
 				wxPoint (metrics.db_label_width + i * metrics.x_scale, y_for_linear (p, metrics)),
-				DCPTime::from_frames (i * _analysis->samples_per_point(), _analysis->sample_rate()),
+				DCPTime(i * _analysis->samples_per_point(), _analysis->sample_rate()),
 				linear_to_db(p)
 				)
 			);

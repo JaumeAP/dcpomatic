@@ -68,7 +68,7 @@ private:
 		int frame_rate;
 
 		dcpomatic::DCPTimePeriod period () const {
-			return dcpomatic::DCPTimePeriod (time, time + dcpomatic::DCPTime::from_frames (audio->frames(), frame_rate));
+			return dcpomatic::DCPTimePeriod(time, time + dcpomatic::DCPTime(audio->frames(), frame_rate));
 		}
 	};
 

@@ -548,7 +548,7 @@ DCPTime
 Player::content_video_to_dcp(shared_ptr<const Piece> piece, Frame f) const
 {
 	/* See comment in dcp_to_content_video */
-	auto const d = DCPTime::from_frames(f * piece->frc.factor(), piece->frc.dcp) - DCPTime(piece->content->trim_start(), piece->frc);
+	auto const d = DCPTime(f * piece->frc.factor(), piece->frc.dcp) - DCPTime(piece->content->trim_start(), piece->frc);
 	return d + piece->content->position();
 }
 
@@ -573,7 +573,7 @@ Player::resampled_audio_to_dcp(shared_ptr<const Piece> piece, Frame f) const
 	DCPOMATIC_ASSERT(film);
 
 	/* See comment in dcp_to_content_video */
-	return DCPTime::from_frames(f, film->audio_frame_rate())
+	return DCPTime(f, film->audio_frame_rate())
 		- DCPTime(piece->content->trim_start(), piece->frc)
 		+ piece->content->position();
 }
@@ -587,7 +587,7 @@ Player::dcp_to_content_time(shared_ptr<const Piece> piece, DCPTime t) const
 
 	auto s = t - piece->content->position();
 	s = min(piece->content->length_after_trim(film), s);
-	return max(ContentTime(), ContentTime(s, piece->frc) + piece->content->trim_start());
+	return max(ContentTime(), s.content_time(piece->frc) + piece->content->trim_start());
 }
 
 
@@ -773,7 +773,7 @@ Player::pass()
 		break;
 	}
 	case BLACK:
-		LOG_DEBUG_PLAYER("Emit black for gap at {}", to_string(_black.position()));
+		LOG_DEBUG_PLAYER("Emit black for gap at {}", _black.position().to_debug_string());
 		if (!_next_video_time) {
 			/* Deciding to emit black has the same effect as getting some video from the content
 			 * when we are inaccurately seeking.
@@ -790,7 +790,7 @@ Player::pass()
 		break;
 	case SILENT:
 	{
-		LOG_DEBUG_PLAYER("Emit silence for gap at {}", to_string(_silent.position()));
+		LOG_DEBUG_PLAYER("Emit silence for gap at {}", _silent.position().to_debug_string());
 		DCPTimePeriod period(_silent.period_at_position());
 		if (_next_audio_time) {
 			/* Sometimes the thing that happened last finishes fractionally before
@@ -798,9 +798,9 @@ Player::pass()
 			   I think this is nothing to worry about since we will just add or
 			   remove a little silence at the end of some content.
 			*/
-			int64_t const error = labs(period.from.get() - _next_audio_time->get());
+			int64_t const error = labs(period.from.frames_round(96000) - _next_audio_time->frames_round(96000));
 			/* Let's not worry about less than a frame at 24fps */
-			int64_t const too_much_error = DCPTime::from_frames(1, 24).get();
+			int64_t constexpr too_much_error = 96000 / 24;
 			if (error >= too_much_error) {
 				film->log()->log(fmt::format("Silence starting before or after last audio by {}", error), LogEntry::TYPE_ERROR);
 			}
@@ -845,7 +845,11 @@ Player::pass()
 	std::map<AudioStreamPtr, StreamState> alive_stream_states;
 
 	if (latest_last_push_end != have_pushed.end()) {
-		LOG_DEBUG_PLAYER("Leading audio stream is in {} at {}", latest_last_push_end->second.piece->content->path(0).string(), to_string(latest_last_push_end->second.last_push_end.get()));
+		LOG_DEBUG_PLAYER(
+			"Leading audio stream is in {} at {}",
+			latest_last_push_end->second.piece->content->path(0).string(),
+			latest_last_push_end->second.last_push_end->to_debug_string()
+		);
 
 		/* Now make a list of those streams that are less than ignore_streams_behind behind the leader */
 		for (auto const& i: _stream_states) {
@@ -868,7 +872,7 @@ Player::pass()
 		pull_to = _silent.position();
 	}
 
-	LOG_DEBUG_PLAYER("Emitting audio up to {}", to_string(pull_to));
+	LOG_DEBUG_PLAYER("Emitting audio up to {}", pull_to.to_debug_string());
 	auto audio = _audio_merger.pull(pull_to);
 	for (auto i = audio.begin(); i != audio.end(); ++i) {
 		if (_next_audio_time && i->second < *_next_audio_time) {
@@ -888,7 +892,7 @@ Player::pass()
 
 	if (done) {
 		if (_next_video_time) {
-			LOG_DEBUG_PLAYER("Done: emit video until end of film at {}", to_string(film->length()));
+			LOG_DEBUG_PLAYER("Done: emit video until end of film at {}", film->length().to_debug_string());
 			emit_video_until(film->length());
 		}
 
@@ -919,7 +923,7 @@ Player::open_texts_for_frame(DCPTime time) const
 	for (auto type: { TextType::OPEN_SUBTITLE, TextType::OPEN_CAPTION }) {
 		for (
 			auto const& text:
-			_active_texts[type].get_burnt(DCPTimePeriod(time, time + DCPTime::from_frames(1, vfr)), _always_burn_open_subtitles)
+			_active_texts[type].get_burnt(DCPTimePeriod(time, time + DCPTime(1, vfr)), _always_burn_open_subtitles)
 			) {
 
 			/* Bitmap texts */
@@ -964,7 +968,7 @@ Player::open_texts_for_frame(DCPTime time) const
 void
 Player::emit_video_until(DCPTime time)
 {
-	LOG_DEBUG_PLAYER("emit_video_until {}; next video time is {}", to_string(time), to_string(_next_video_time.get_value_or({})));
+	LOG_DEBUG_PLAYER("emit_video_until {}; next video time is {}", time.to_debug_string(), _next_video_time.get_value_or({}).to_debug_string());
 	auto frame = [this](shared_ptr<PlayerVideo> pv, DCPTime time) {
 		/* We need a delay to give a little wiggle room to ensure that relevant subtitles arrive at the
 		   player before the video that requires them.
@@ -1013,7 +1017,12 @@ Player::emit_video_until(DCPTime time)
 			frame(right.first, next);
 		} else if (both.first && (both.second - next) < age_threshold(both)) {
 			frame(both.first, next);
-			LOG_DEBUG_PLAYER("Content {} selected for DCP {} (age {})", to_string(both.second), to_string(next), to_string(both.second - next));
+			LOG_DEBUG_PLAYER(
+				"Content {} selected for DCP {} (age {})",
+				both.second.to_debug_string(),
+				next.to_debug_string(),
+				DCPTime(both.second - next).to_debug_string()
+			);
 		} else {
 			auto film = _film.lock();
 			if (film && film->three_d()) {
@@ -1022,7 +1031,7 @@ Player::emit_video_until(DCPTime time)
 			} else {
 				frame(black_player_video_frame(Eyes::BOTH), next);
 			}
-			LOG_DEBUG_PLAYER("Black selected for DCP {}", to_string(next));
+			LOG_DEBUG_PLAYER("Black selected for DCP {}", next.to_debug_string());
 		}
 	}
 }
@@ -1073,7 +1082,7 @@ Player::video(weak_ptr<Piece> weak_piece, ContentVideo video)
 
 	/* Time of the frame we just received within the DCP */
 	auto const time = content_time_to_dcp(piece, video.time);
-	LOG_DEBUG_PLAYER("Received video frame {} {} eyes {}", to_string(video.time), to_string(time), static_cast<int>(video.eyes));
+	LOG_DEBUG_PLAYER("Received video frame {} {} eyes {}", to_string(video.time), time.to_debug_string(), static_cast<int>(video.eyes));
 
 	if (time < piece->content->position()) {
 		return;
@@ -1162,12 +1171,18 @@ Player::audio(weak_ptr<Piece> weak_piece, AudioStreamPtr stream, ContentAudio co
 	auto time = resampled_audio_to_dcp(piece, content_audio.frame);
 
 	/* And the end of this block in the DCP */
-	auto end = time + DCPTime::from_frames(content_audio.audio->frames(), rfr);
-	LOG_DEBUG_PLAYER("Received audio frame {} covering {} to {} ({})", content_audio.frame, to_string(time), to_string(end), piece->content->path(0).filename().string());
+	auto end = time + DCPTime(content_audio.audio->frames(), rfr);
+	LOG_DEBUG_PLAYER(
+		"Received audio frame {} covering {} to {} ({})",
+		content_audio.frame,
+		time.to_debug_string(),
+		end.to_debug_string(),
+		piece->content->path(0).filename().string()
+	);
 
 	/* Remove anything that comes before the start or after the end of the content */
 	if (time < piece->content->position()) {
-		auto cut = discard_audio(content_audio.audio, time, piece->content->position());
+		auto const cut = discard_audio(content_audio.audio, time, piece->content->position());
 		if (!cut.first) {
 			/* This audio is entirely discarded */
 			return;
@@ -1225,7 +1240,7 @@ Player::audio(weak_ptr<Piece> weak_piece, AudioStreamPtr stream, ContentAudio co
 
 	_audio_merger.push(content_audio.audio, time);
 	DCPOMATIC_ASSERT(_stream_states.find(stream) != _stream_states.end());
-	_stream_states[stream].last_push_end = time + DCPTime::from_frames(content_audio.audio->frames(), film->audio_frame_rate());
+	_stream_states[stream].last_push_end = time + DCPTime(content_audio.audio->frames(), film->audio_frame_rate());
 }
 
 
@@ -1382,7 +1397,7 @@ void
 Player::seek(DCPTime time, bool accurate)
 {
 	boost::mutex::scoped_lock lm(_mutex);
-	LOG_DEBUG_PLAYER("Seek to {} ({}accurate)", to_string(time), accurate ? "" : "in");
+	LOG_DEBUG_PLAYER("Seek to {} ({}accurate)", time.to_debug_string(), accurate ? "" : "in");
 
 	if (_suspended) {
 		/* We can't seek in this state */
@@ -1469,14 +1484,21 @@ Player::emit_audio(shared_ptr<AudioBuffers> data, DCPTime time)
 	DCPOMATIC_ASSERT(film);
 
 	/* Log if the assert below is about to fail */
-	if (_next_audio_time && labs(time.get() - _next_audio_time->get()) > 1) {
-		film->log()->log(fmt::format("Out-of-sequence emit {} vs {}", to_string(time), to_string(*_next_audio_time)), LogEntry::TYPE_WARNING);
+	if (_next_audio_time && labs(time.frames_round(96000) - _next_audio_time->frames_round(96000)) > 1) {
+		film->log()->log(
+			fmt::format(
+				"Out-of-sequence emit {} vs {}",
+				time.to_debug_string(),
+				_next_audio_time->to_debug_string()
+			),
+			LogEntry::TYPE_WARNING
+		);
 	}
 
 	/* This audio must follow on from the previous, allowing for half a sample (at 48kHz) leeway */
-	DCPOMATIC_ASSERT(!_next_audio_time || labs(time.get() - _next_audio_time->get()) < 2);
+	DCPOMATIC_ASSERT(!_next_audio_time || labs(time.frames_round(96000) - _next_audio_time->frames_round(96000)) < 2);
 	Audio(data, time, film->audio_frame_rate());
-	_next_audio_time = time + DCPTime::from_frames(data->frames(), film->audio_frame_rate());
+	_next_audio_time = time + DCPTime(data->frames(), film->audio_frame_rate());
 }
 
 
@@ -1512,7 +1534,7 @@ Player::one_video_frame() const
 	auto film = _film.lock();
 	DCPOMATIC_ASSERT(film);
 
-	return DCPTime::from_frames(1, film->video_frame_rate());
+	return DCPTime(1, film->video_frame_rate());
 }
 
 
@@ -1607,7 +1629,7 @@ Player::atmos(weak_ptr<Piece> weak_piece, ContentAtmos data)
 
 	auto const vfr = film->video_frame_rate();
 
-	DCPTime const dcp_time = DCPTime::from_frames(data.frame, vfr) - DCPTime(piece->content->trim_start(), FrameRateChange(vfr, vfr));
+	DCPTime const dcp_time = DCPTime(data.frame, vfr) - DCPTime(piece->content->trim_start(), FrameRateChange(vfr, vfr));
 	if (dcp_time < piece->content->position() || dcp_time >= (piece->content->end(film))) {
 		return;
 	}
@@ -1664,5 +1686,5 @@ Player::progress() const
 	optional<DCPTime> earliest_time;
 	std::tie(earliest_content, earliest_time) = earliest_piece_and_time();
 
-	return static_cast<float>(earliest_time.get_value_or(film->length()).get()) / film->length().get();
+	return earliest_time.get_value_or(film->length()).seconds() / film->length().seconds();
 }

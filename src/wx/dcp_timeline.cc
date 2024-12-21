@@ -75,7 +75,7 @@ public:
 		sizer->Add(_label, wxGBPosition(index, 0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
 		sizer->Add(_timecode, wxGBPosition(index, 1));
 
-		_timecode->set_maximum(maximum.split(fps));
+		_timecode->set_maximum(maximum.splitX(fps));
 		_timecode->set_editable(editable);
 		_timecode->Changed.connect(boost::bind(&ReelBoundary::timecode_changed, this));
 	}

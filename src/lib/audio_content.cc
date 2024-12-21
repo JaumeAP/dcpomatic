@@ -307,7 +307,7 @@ AudioContent::add_properties (shared_ptr<const Film> film, list<UserProperty>& p
 	}
 
 	FrameRateChange const frc (_parent->active_video_frame_rate(film), film->video_frame_rate());
-	ContentTime const c (_parent->full_length(film), frc);
+	auto const c = _parent->full_length(film).content_time(frc);
 
 	p.push_back (
 		UserProperty (UserProperty::LENGTH, _("Full length in video frames at content rate"), c.frames_round(frc.source))
