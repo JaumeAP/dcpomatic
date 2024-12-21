@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(atmos_encrypted_passthrough_test)
 	Cleanup cl;
 
 	auto ref = TestPaths::private_data() / "atmos_asset.mxf";
-	auto content = content_factory(TestPaths::private_data() / "atmos_asset.mxf");
+	auto content = content_factory(ref);
 	auto film = new_test_film("atmos_encrypted_passthrough_test", content, &cl);
 
 	film->set_encrypted(true);
