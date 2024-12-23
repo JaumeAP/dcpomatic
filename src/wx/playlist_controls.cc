@@ -26,7 +26,6 @@
 #include "static_text.h"
 #include "wx_util.h"
 #include "wx_variant.h"
-#include "lib/compose.hpp"
 #include "lib/constants.h"
 #include "lib/cross.h"
 #include "lib/dcp_content.h"
@@ -36,7 +35,6 @@
 #include "lib/player_video.h"
 #include "lib/scoped_temporary.h"
 #include <dcp/exceptions.h>
-#include <dcp/raw_convert.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/listctrl.h>

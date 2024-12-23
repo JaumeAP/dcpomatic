@@ -22,7 +22,6 @@
 #include "static_text.h"
 #include "time_picker.h"
 #include "wx_util.h"
-#include <dcp/locale_convert.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/spinctrl.h>
@@ -38,7 +37,6 @@ using std::setfill;
 using std::setw;
 using std::string;
 using boost::bind;
-using dcp::locale_convert;
 
 
 TimePicker::TimePicker (wxWindow* parent)
