@@ -19,7 +19,6 @@
 */
 
 
-#include "compose.hpp"
 #include "config.h"
 #include "email.h"
 #include "exceptions.h"
@@ -146,7 +145,7 @@ Email::send(string server, int port, EmailProtocol protocol, string user, string
 	}
 
 	_email += "Subject: " + encode_rfc1342(_subject) + "\r\n" +
-		variant::insert_dcpomatic("User-Agent: %1\r\n\r\n");
+		variant::insert_dcpomatic("User-Agent: {}\r\n\r\n");
 
 	if (!_attachments.empty ()) {
 		_email += "--" + boundary + "\r\n"
@@ -195,9 +194,9 @@ Email::send(string server, int port, EmailProtocol protocol, string user, string
 
 	if ((protocol == EmailProtocol::AUTO && port == 465) || protocol == EmailProtocol::SSL) {
 		/* "SSL" or "Implicit TLS"; I think curl wants us to use smtps here */
-		curl_easy_setopt (curl, CURLOPT_URL, String::compose("smtps://%1:%2", server, port).c_str());
+		curl_easy_setopt(curl, CURLOPT_URL, fmt::format("smtps://{}:{}", server, port).c_str());
 	} else {
-		curl_easy_setopt (curl, CURLOPT_URL, String::compose("smtp://%1:%2", server, port).c_str());
+		curl_easy_setopt(curl, CURLOPT_URL, fmt::format("smtp://{}:{}", server, port).c_str());
 	}
 
 	if (!user.empty ()) {
@@ -237,7 +236,7 @@ Email::send(string server, int port, EmailProtocol protocol, string user, string
 
 	auto const r = curl_easy_perform (curl);
 	if (r != CURLE_OK) {
-		throw NetworkError(_("Failed to send email"), String::compose("%1 sending to %2:%3", curl_easy_strerror(r), server, port));
+		throw NetworkError(_("Failed to send email"), fmt::format("{} sending to {}:{}", curl_easy_strerror(r), server, port));
 	}
 
 	curl_slist_free_all (recipients);

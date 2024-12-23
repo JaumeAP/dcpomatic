@@ -21,17 +21,17 @@
 
 #include "video_ring_buffers.h"
 #include "player_video.h"
-#include "compose.hpp"
+#include <fmt/format.h>
 #include <list>
 #include <iostream>
 
 
+using std::cout;
 using std::list;
 using std::make_pair;
-using std::cout;
 using std::pair;
-using std::string;
 using std::shared_ptr;
+using std::string;
 using boost::optional;
 using namespace dcpomatic;
 
@@ -89,7 +89,7 @@ VideoRingBuffers::memory_used () const
 	for (auto const& i: _data) {
 		m += i.first->memory_used();
 	}
-	return make_pair(m, String::compose("%1 frames", _data.size()));
+	return make_pair(m, fmt::format("{} frames", _data.size()));
 }
 
 

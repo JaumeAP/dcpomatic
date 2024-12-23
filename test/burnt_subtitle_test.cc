@@ -46,6 +46,7 @@
 #include <dcp/reel_picture_asset.h>
 #include <dcp/reel_mono_picture_asset.h>
 #include <pango/pango-utils.h>
+#include <fmt/format.h>
 #include <boost/test/unit_test.hpp>
 
 
@@ -157,8 +158,8 @@ BOOST_AUTO_TEST_CASE(burnt_subtitle_test_position)
 {
 	auto check = [](string alignment)
 	{
-		auto const name = String::compose("burnt_subtitle_test_position_%1", alignment);
-		auto subs = content_factory(String::compose("test/data/burn_%1.xml", alignment));
+		auto const name = fmt::format("burnt_subtitle_test_position_{}", alignment);
+		auto subs = content_factory(fmt::format("test/data/burn_{}.xml", alignment));
 		auto film = new_test_film(name, subs);
 		subs[0]->text[0]->set_use(true);
 		subs[0]->text[0]->set_burn(true);
@@ -171,11 +172,11 @@ BOOST_AUTO_TEST_CASE(burnt_subtitle_test_position)
 			});
 
 #if defined(DCPOMATIC_WINDOWS)
-		check_dcp(String::compose("test/data/windows/%1", name), film);
+		check_dcp(fmt::format("test/data/windows/{}", name), film);
 #elif defined(DCPOMATIC_OSX) || PANGO_VERSION_CHECK(1, 52, 1)
-		check_dcp(String::compose("test/data/mac/%1", name), film);
+		check_dcp(fmt::format("test/data/mac/{}", name), film);
 #else
-		check_dcp(String::compose("test/data/%1", name), film);
+		check_dcp(fmt::format("test/data/{}", name), film);
 #endif
 	};
 

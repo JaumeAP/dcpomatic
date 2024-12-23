@@ -19,7 +19,6 @@
 */
 
 
-#include "compose.hpp"
 #include "config.h"
 #include "dcpomatic_log.h"
 #include "digester.h"
@@ -37,6 +36,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 }
+#include <fmt/format.h>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 
@@ -218,7 +218,7 @@ FFmpeg::setup_decoders ()
 				throw DecodeError (N_("avcodec_open2"), N_("FFmpeg::setup_decoders"), r);
 			}
 		} else {
-			dcpomatic_log->log (String::compose ("No codec found for stream %1", i), LogEntry::TYPE_WARNING);
+			dcpomatic_log->log(fmt::format("No codec found for stream {}", i), LogEntry::TYPE_WARNING);
 		}
 	}
 }

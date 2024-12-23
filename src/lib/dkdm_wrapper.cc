@@ -19,13 +19,13 @@
 */
 
 
-#include "compose.hpp"
 #include "dkdm_wrapper.h"
 #include "dcpomatic_assert.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <libxml++/libxml++.h>
 LIBDCP_ENABLE_WARNINGS
+#include <fmt/format.h>
 
 
 using std::string;
@@ -61,7 +61,7 @@ DKDMBase::read (cxml::ConstNodePtr node)
 string
 DKDM::name () const
 {
-	return String::compose ("%1 (%2)", _dkdm.content_title_text(), _dkdm.cpl_id());
+	return fmt::format("{} ({})", _dkdm.content_title_text(), _dkdm.cpl_id());
 }
 
 

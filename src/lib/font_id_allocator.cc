@@ -19,13 +19,13 @@
 */
 
 
-#include "compose.hpp"
 #include "constants.h"
 #include "dcpomatic_assert.h"
 #include "font_id_allocator.h"
 #include <dcp/reel.h>
 #include <dcp/reel_text_asset.h>
 #include <dcp/text_asset.h>
+#include <fmt/format.h>
 #include <set>
 #include <string>
 #include <vector>
@@ -88,7 +88,7 @@ FontIDAllocator::allocate()
 		auto proposed = font.first.font_id;
 		int prefix = 0;
 		while (used_ids.find(proposed) != used_ids.end()) {
-			proposed = String::compose("%1_%2", prefix++, font.first.font_id);
+			proposed = fmt::format("{}_{}", prefix++, font.first.font_id);
 			DCPOMATIC_ASSERT(prefix < 128);
 		}
 		font.second = proposed;

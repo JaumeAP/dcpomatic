@@ -23,6 +23,7 @@
 #include "exceptions.h"
 #include "image.h"
 #include <png.h>
+#include <fmt/format.h>
 
 #include "i18n.h"
 
@@ -78,7 +79,7 @@ png_flush (png_structp)
 static void
 png_error_fn (png_structp, char const * message)
 {
-	throw EncodeError (String::compose("Error during PNG write: %1", message));
+	throw EncodeError(fmt::format("Error during PNG write: {}", message));
 }
 
 

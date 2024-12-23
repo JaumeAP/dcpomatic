@@ -19,7 +19,6 @@
 */
 
 
-#include "compose.hpp"
 #include "cross.h"
 #include "email.h"
 #include "environment_info.h"
@@ -29,6 +28,7 @@
 #include "send_problem_report_job.h"
 #include "variant.h"
 #include "version.h"
+#include <fmt/format.h>
 #include <libxml++/libxml++.h>
 
 #include "i18n.h"
@@ -69,7 +69,7 @@ SendProblemReportJob::name () const
 		return _("Email problem report");
 	}
 
-	return String::compose (_("Email problem report for %1"), _film->name());
+	return fmt::format(_("Email problem report for {}"), _film->name());
 }
 
 
@@ -109,7 +109,7 @@ SendProblemReportJob::run ()
 		body += "---<8----\n";
 	}
 
-	Email email(_from, {"carl@dcpomatic.com"}, variant::insert_dcpomatic("%1 problem report"), body);
+	Email email(_from, {"carl@dcpomatic.com"}, variant::insert_dcpomatic("{} problem report"), body);
 	email.send("main.carlh.net", 2525, EmailProtocol::STARTTLS);
 
 	set_progress (1);

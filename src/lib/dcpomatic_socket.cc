@@ -19,7 +19,6 @@
 */
 
 
-#include "compose.hpp"
 #include "dcpomatic_assert.h"
 #include "dcpomatic_log.h"
 #include "dcpomatic_socket.h"
@@ -71,7 +70,7 @@ Socket::connect (boost::asio::ip::tcp::endpoint endpoint)
 	} while (ec == boost::asio::error::would_block);
 
 	if (ec) {
-		throw NetworkError (String::compose (_("error during async_connect (%1)"), ec.value ()));
+		throw NetworkError(fmt::format(_("error during async_connect ({})"), ec.value ()));
 	}
 
 	if (!_socket.is_open ()) {
@@ -105,7 +104,7 @@ Socket::write (uint8_t const * data, int size)
 	} while (ec == boost::asio::error::would_block);
 
 	if (ec) {
-		throw NetworkError (String::compose (_("error during async_write (%1)"), ec.value ()));
+		throw NetworkError(fmt::format(_("error during async_write ({})"), ec.value()));
 	}
 
 	if (_write_digester) {
@@ -146,7 +145,7 @@ Socket::read (uint8_t* data, int size)
 	} while (ec == boost::asio::error::would_block);
 
 	if (ec) {
-		throw NetworkError (String::compose (_("error during async_read (%1)"), ec.value ()));
+		throw NetworkError(fmt::format(_("error during async_read ({})"), ec.value()));
 	}
 
 	if (_read_digester) {

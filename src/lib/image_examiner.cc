@@ -19,7 +19,6 @@
 */
 
 
-#include "compose.hpp"
 #include "config.h"
 #include "cross.h"
 #include "exceptions.h"
@@ -33,6 +32,7 @@
 #include <dcp/exceptions.h>
 #include <dcp/filesystem.h>
 #include <dcp/j2k_transcode.h>
+#include <fmt/format.h>
 #include <iostream>
 
 #include "i18n.h"
@@ -62,7 +62,7 @@ ImageExaminer::ImageExaminer (shared_ptr<const Film> film, shared_ptr<const Imag
 		try {
 			_video_size = dcp::decompress_j2k(buffer.data(), size, 0)->size();
 		} catch (dcp::ReadError& e) {
-			throw DecodeError (String::compose (_("Could not decode JPEG2000 file %1 (%2)"), path, e.what ()));
+			throw DecodeError(fmt::format(_("Could not decode JPEG2000 file {} ({})"), path.string(), e.what()));
 		}
 	} else {
 		FFmpegImageProxy proxy(content->path(0));

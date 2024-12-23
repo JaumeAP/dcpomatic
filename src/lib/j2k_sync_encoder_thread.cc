@@ -40,7 +40,7 @@ try
 	log_thread_start();
 
 	while (true) {
-		LOG_TIMING("encoder-sleep thread=%1", thread_id());
+		LOG_TIMING("encoder-sleep thread={}", thread_id());
 		auto frame = _encoder.pop();
 
 		dcp::ScopeGuard frame_guard([this, &frame]() {
@@ -48,7 +48,7 @@ try
 			_encoder.retry(frame);
 		});
 
-		LOG_TIMING("encoder-pop thread=%1 frame=%2 eyes=%3", thread_id(), frame.index(), static_cast<int>(frame.eyes()));
+		LOG_TIMING("encoder-pop thread={} frame={} eyes={}", thread_id(), frame.index(), static_cast<int>(frame.eyes()));
 
 		auto encoded = encode(frame);
 

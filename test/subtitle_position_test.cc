@@ -28,6 +28,7 @@
 #include <dcp/interop_text_asset.h>
 #include <dcp/language_tag.h>
 #include <dcp/smpte_text_asset.h>
+#include <fmt/format.h>
 #include <boost/test/unit_test.hpp>
 #include <vector>
 
@@ -112,8 +113,8 @@ vpos_test(dcp::VAlign reference, float position, dcp::SubtitleStandard from, dcp
 			break;
 	}
 
-	auto name = String::compose("vpos_test_%1_%2", standard, valign_to_string(reference));
-	auto in = content_factory(String::compose("test/data/%1.xml", name));
+	auto name = fmt::format("vpos_test_{}_{}", standard, valign_to_string(reference));
+	auto in = content_factory(fmt::format("test/data/{}.xml", name));
 	auto film = new_test_film(name, in);
 
 	film->set_interop(to == dcp::Standard::INTEROP);

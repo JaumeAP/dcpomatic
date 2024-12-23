@@ -19,7 +19,6 @@
 */
 
 
-#include "compose.hpp"
 #include "film.h"
 #include "job.h"
 #include "video_content.h"
@@ -30,6 +29,7 @@
 #include <dcp/mono_j2k_picture_asset.h>
 #include <dcp/stereo_j2k_picture_asset.h>
 #include <libxml++/libxml++.h>
+#include <fmt/format.h>
 
 #include "i18n.h"
 
@@ -103,7 +103,7 @@ VideoMXFContent::examine (shared_ptr<const Film> film, shared_ptr<Job> job)
 string
 VideoMXFContent::summary () const
 {
-	return String::compose (_("%1 [video]"), path_summary());
+	return fmt::format(_("{} [video]"), path_summary());
 }
 
 

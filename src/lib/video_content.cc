@@ -20,7 +20,6 @@
 
 
 #include "colour_conversion.h"
-#include "compose.hpp"
 #include "config.h"
 #include "content.h"
 #include "dcpomatic_log.h"
@@ -332,7 +331,7 @@ VideoContent::take_from_examiner(shared_ptr<const Film> film, shared_ptr<VideoEx
 		_pixel_quanta = pixel_quanta;
 	}
 
-	LOG_GENERAL ("Video length obtained from header as %1 frames", _length);
+	LOG_GENERAL ("Video length obtained from header as {} frames", _length);
 
 	if (d->video_frame_rate()) {
 		_parent->set_video_frame_rate(film, d->video_frame_rate().get());
@@ -372,16 +371,16 @@ VideoContent::identifier () const
 string
 VideoContent::technical_summary () const
 {
-	string const size_string = size() ? String::compose("%1x%2", size()->width, size()->height) : _("unknown");
+	string const size_string = size() ? fmt::format("{}x{}", size()->width, size()->height) : _("unknown");
 
-	string s = String::compose (
-		N_("video: length %1 frames, size %2"),
+	string s = fmt::format(
+		N_("video: length {} frames, size {}"),
 		length_after_3d_combine(),
 		size_string
 		);
 
 	if (sample_aspect_ratio ()) {
-		s += String::compose (N_(", sample aspect ratio %1"), (sample_aspect_ratio().get ()));
+		s += fmt::format(N_(", sample aspect ratio {}"), (sample_aspect_ratio().get ()));
 	}
 
 	return s;
@@ -456,8 +455,8 @@ VideoContent::processing_description (shared_ptr<const Film> film)
 	char buffer[256];
 
 	if (size() && size()->width && size()->height) {
-		d += String::compose (
-			_("Content video is %1x%2"),
+		d += fmt::format(
+			_("Content video is {}x{}"),
 			size_after_3d_split()->width,
 			size_after_3d_split()->height
 			);
@@ -480,8 +479,8 @@ VideoContent::processing_description (shared_ptr<const Film> film)
 	if ((crop.left || crop.right || crop.top || crop.bottom) && size() != dcp::Size(0, 0)) {
 		auto const cropped = size_after_crop ();
 		if (cropped) {
-			d += String::compose (
-				_("\nCropped to %1x%2"),
+			d += fmt::format(
+				_("\nCropped to {}x{}"),
 				cropped->width, cropped->height
 				);
 
@@ -494,8 +493,8 @@ VideoContent::processing_description (shared_ptr<const Film> film)
 	auto const scaled = scaled_size (container_size);
 
 	if (scaled && *scaled != size_after_crop()) {
-		d += String::compose (
-			_("\nScaled to %1x%2"),
+		d += fmt::format(
+			_("\nScaled to {}x{}"),
 			scaled->width, scaled->height
 			);
 
@@ -504,8 +503,8 @@ VideoContent::processing_description (shared_ptr<const Film> film)
 	}
 
 	if (scaled && *scaled != container_size) {
-		d += String::compose (
-			_("\nPadded with black to fit container %1 (%2x%3)"),
+		d += fmt::format(
+			_("\nPadded with black to fit container {} ({}x{})"),
 			film->container()->container_nickname (),
 			container_size.width, container_size.height
 			);
@@ -532,7 +531,7 @@ VideoContent::add_properties (list<UserProperty>& p) const
 {
 	p.push_back (UserProperty (UserProperty::VIDEO, _("Length"), length (), _("video frames")));
 	if (auto s = size()) {
-		p.push_back(UserProperty(UserProperty::VIDEO, _("Size"), String::compose("%1x%2", s->width, s->height)));
+		p.push_back(UserProperty(UserProperty::VIDEO, _("Size"), fmt::format("{}x{}", s->width, s->height)));
 	}
 }
 

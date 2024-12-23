@@ -30,6 +30,7 @@ extern "C" {
 LIBDCP_DISABLE_WARNINGS
 #include <libxml++/libxml++.h>
 LIBDCP_ENABLE_WARNINGS
+#include <fmt/format.h>
 
 #include "i18n.h"
 

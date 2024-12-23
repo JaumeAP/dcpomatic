@@ -20,7 +20,6 @@
 
 
 #include "cross.h"
-#include "compose.hpp"
 #include "dcpomatic_assert.h"
 #include "dcpomatic_log.h"
 #include <dcp/warnings.h>
@@ -96,7 +95,7 @@ Drive::description () const
 		name = _("Unknown");
 	}
 
-	return String::compose(_("%1 (%2 GB) [%3]"), name, gb, _device);
+	return fmt::format(_("{} ({} GB) [{}]"), name, gb, _device);
 }
 
 
@@ -113,8 +112,8 @@ Drive::log_summary () const
 		mp = mp.substr (0, mp.length() - 1);
 	}
 
-	return String::compose(
-		"Device %1 mounted on %2 size %3 vendor %4 model %5",
+	return fmt::format(
+		"Device {} mounted on {} size {} vendor {} model {}",
 		_device, mp, _size, _vendor.get_value_or("[none]"), _model.get_value_or("[none]")
 			);
 }

@@ -36,6 +36,7 @@ LIBDCP_DISABLE_WARNINGS
 #include <wx/filepicker.h>
 LIBDCP_ENABLE_WARNINGS
 #include <wx/wx.h>
+#include <fmt/format.h>
 #include <boost/bind/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <exception>
@@ -161,8 +162,8 @@ private:
 			if (!confirm_dialog (
 				    this,
 				    std_to_wx (
-					    String::compose(wx_to_std(_("The directory %1 already exists and is not empty.  "
-									"Are you sure you want to use it?")),
+					    fmt::format(wx_to_std(_("The directory {} already exists and is not empty.  "
+								    "Are you sure you want to use it?")),
 							    output.string())
 					    )
 				    )) {

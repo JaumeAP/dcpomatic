@@ -18,12 +18,14 @@
 
 */
 
+
 #include "christie_certificate_panel.h"
 #include "download_certificate_dialog.h"
 #include "wx_util.h"
 #include "lib/internet.h"
-#include "lib/compose.hpp"
 #include "lib/config.h"
+#include <fmt/format.h>
+
 
 using std::string;
 using boost::optional;
@@ -31,6 +33,7 @@ using boost::bind;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
+
 
 ChristieCertificatePanel::ChristieCertificatePanel (DownloadCertificateDialog* dialog)
 	: CredentialsDownloadCertificatePanel (
@@ -50,8 +53,8 @@ ChristieCertificatePanel::ChristieCertificatePanel (DownloadCertificateDialog* d
 void
 ChristieCertificatePanel::do_download ()
 {
-	string const prefix = String::compose(
-		"ftp://%1:%2@certificates.christiedigital.com/Certificates/",
+	string const prefix = fmt::format(
+		"ftp://{}:{}@certificates.christiedigital.com/Certificates/",
 		Config::instance()->christie_username().get(),
 		Config::instance()->christie_password().get()
 		);
@@ -59,7 +62,7 @@ ChristieCertificatePanel::do_download ()
 	string serial = wx_to_std (_serial->GetValue());
 	serial.insert (0, 12 - serial.length(), '0');
 
-	string const url = String::compose ("%1F-IMB/F-IMB_%2_sha256.pem", prefix, serial);
+	string const url = fmt::format("{}F-IMB/F-IMB_{}_sha256.pem", prefix, serial);
 
 	optional<string> all_errors;
 	bool ok = true;
@@ -68,7 +71,7 @@ ChristieCertificatePanel::do_download ()
 	if (error) {
 		all_errors = *error;
 
-		auto const url = String::compose ("%1IMB-S2/IMB-S2_%2_sha256.pem", prefix, serial);
+		auto const url = fmt::format("{}IMB-S2/IMB-S2_{}_sha256.pem", prefix, serial);
 
 		error = get_from_url (url, true, false, boost::bind(&DownloadCertificatePanel::load_certificate_from_chain, this, _1, _2));
 		if (error) {

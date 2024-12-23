@@ -111,7 +111,7 @@ VerifyDCPResultPanel::fill(shared_ptr<VerifyDCPJob> job)
 			message.Replace(char_to_wx("%calculated_hash"), std_to_wx(note.calculated_hash().get()));
 		}
 		if (note.frame()) {
-			message.Replace(char_to_wx("%frame"), std_to_wx(dcp::fmt::to_string(note.frame().get())));
+			message.Replace(char_to_wx("%frame"), std_to_wx(fmt::to_string(note.frame().get())));
 			message.Replace(
 				char_to_wx("%timecode"),
 				std_to_wx(
@@ -125,13 +125,13 @@ VerifyDCPResultPanel::fill(shared_ptr<VerifyDCPJob> job)
 			message.Replace(char_to_wx("%f"), std_to_wx(note.file()->filename().string()));
 		}
 		if (note.line()) {
-			message.Replace(char_to_wx("%l"), std_to_wx(dcp::fmt::to_string(note.line().get())));
+			message.Replace(char_to_wx("%l"), std_to_wx(fmt::to_string(note.line().get())));
 		}
 		if (note.component()) {
-			message.Replace(char_to_wx("%component"), std_to_wx(dcp::fmt::to_string(note.component().get())));
+			message.Replace(char_to_wx("%component"), std_to_wx(fmt::to_string(note.component().get())));
 		}
 		if (note.size()) {
-			message.Replace(char_to_wx("%size"), std_to_wx(dcp::fmt::to_string(note.size().get())));
+			message.Replace(char_to_wx("%size"), std_to_wx(fmt::to_string(note.size().get())));
 		}
 		if (note.id()) {
 			message.Replace(char_to_wx("%id"), std_to_wx(note.id().get()));

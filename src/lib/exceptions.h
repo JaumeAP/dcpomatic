@@ -31,6 +31,7 @@
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
+#include <fmt/format.h>
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <sqlite3.h>
@@ -50,19 +51,19 @@ public:
 	{}
 
 	DecodeError (std::string function, std::string caller)
-		: std::runtime_error (String::compose("%1 failed [%2]", function, caller))
+		: std::runtime_error(fmt::format("{} failed [{}]", function, caller))
 	{}
 
 	DecodeError (std::string function, std::string caller, int error)
-		: std::runtime_error (String::compose("%1 failed [%2] (%3)", function, caller, error))
+		: std::runtime_error(fmt::format("{} failed [{}] ({})", function, caller, error))
 	{}
 
 	DecodeError (std::string function, std::string caller, boost::filesystem::path file)
-		: std::runtime_error (String::compose("%1 failed [%2] (%3)", function, caller, file.string()))
+		: std::runtime_error(fmt::format("{} failed [{}] ({})", function, caller, file.string()))
 	{}
 
 	DecodeError (std::string function, std::string caller, int error, boost::filesystem::path file)
-		: std::runtime_error (String::compose("%1 failed [%2] (%3) (%4)", function, caller, error, file.string()))
+		: std::runtime_error(fmt::format("{} failed [{}] ({}) ({})", function, caller, error, file.string()))
 	{}
 };
 
@@ -86,12 +87,12 @@ public:
 		: std::runtime_error (s)
 	{}
 
-	explicit EncodeError (std::string function, std::string caller)
-		: std::runtime_error (String::compose("%1 failed [%2]", function, caller))
+	EncodeError(std::string function, std::string caller)
+		: std::runtime_error(fmt::format("{} failed [{}]", function, caller))
 	{}
 
-	explicit EncodeError (std::string function, std::string caller, int error)
-		: std::runtime_error (String::compose("%1 failed [%2] (%3)", function, caller, error))
+	EncodeError(std::string function, std::string caller, int error)
+		: std::runtime_error(fmt::format("{} failed [{}] ({})", function, caller, error))
 	{}
 };
 
@@ -106,7 +107,7 @@ public:
 	 *  @param f Name of the file that this exception concerns.
 	 */
 	FileError (std::string m, boost::filesystem::path f)
-		: std::runtime_error (String::compose("%1 with %2", m, f.string()))
+		: std::runtime_error(fmt::format("{} with {}", m, f.string()))
 		, _file (f)
 	{}
 
@@ -339,7 +340,7 @@ class CPLNotFoundError : public DCPError
 {
 public:
 	CPLNotFoundError(std::string id)
-		: DCPError(String::compose("CPL %1 not found", id))
+		: DCPError(fmt::format("CPL {} not found", id))
 	{}
 };
 
@@ -517,17 +518,17 @@ private:
 
 	std::string get_message(sqlite3* db, char const* s)
 	{
-		return String::compose("%1 (in %2)", s, get_filename(db));
+		return fmt::format("{} (in {})", s, get_filename(db).string());
 	}
 
 	std::string get_message(sqlite3* db, int rc)
 	{
-		return String::compose("%1 (in %2)", sqlite3_errstr(rc), get_filename(db));
+		return fmt::format("{} (in {})", sqlite3_errstr(rc), get_filename(db).string());
 	}
 
 	std::string get_message(sqlite3* db, int rc, std::string doing)
 	{
-		return String::compose("%1 (while doing %2) (in %3)", sqlite3_errstr(rc), doing, get_filename(db));
+		return fmt::format("{} (while doing {}) (in {})", sqlite3_errstr(rc), doing, get_filename(db).string());
 	}
 
 	boost::filesystem::path _filename;

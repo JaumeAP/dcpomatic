@@ -30,6 +30,7 @@
 #include "util.h"
 #include <dcp/certificate.h>
 #include <sqlite3.h>
+#include <fmt/format.h>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <numeric>
@@ -153,7 +154,7 @@ void
 CinemaList::clear()
 {
 	for (auto table: { "cinemas", "screens", "trusted_devices" }) {
-		SQLiteStatement sql(_db, String::compose("DELETE FROM %1", table));
+		SQLiteStatement sql(_db, fmt::format("DELETE FROM {}", table));
 		sql.execute();
 	}
 }

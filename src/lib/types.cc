@@ -18,9 +18,8 @@
 
 */
 
-#include "types.h"
-#include "compose.hpp"
 #include "dcpomatic_assert.h"
+#include "types.h"
 #include <dcp/cpl.h>
 #include <dcp/dcp.h>
 #include <dcp/filesystem.h>

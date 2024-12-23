@@ -21,12 +21,12 @@
 
 #include "atmos_content.h"
 #include "atmos_mxf_content.h"
-#include "compose.hpp"
 #include "film.h"
 #include "job.h"
 #include <asdcp/KM_log.h>
 #include <dcp/atmos_asset.h>
 #include <dcp/exceptions.h>
+#include <fmt/format.h>
 #include <libxml++/libxml++.h>
 
 #include "i18n.h"
@@ -93,7 +93,7 @@ AtmosMXFContent::examine (shared_ptr<const Film> film, shared_ptr<Job> job)
 string
 AtmosMXFContent::summary () const
 {
-	return String::compose (_("%1 [Atmos]"), path_summary());
+	return fmt::format(_("{} [Atmos]"), path_summary());
 }
 
 

@@ -40,7 +40,6 @@
 #include "wx/wx_variant.h"
 #include "lib/cinema.h"
 #include "lib/collator.h"
-#include "lib/compose.hpp"
 #include "lib/constants.h"
 #include "lib/config.h"
 #include "lib/cross.h"
@@ -128,7 +127,7 @@ public:
 			setvbuf(hf_in, NULL, _IONBF, 128);
 			*stdin = *hf_in;
 
-			std::cout << variant::insert_dcpomatic_kdm_creator("%1 is starting.\n");
+			std::cout << variant::insert_dcpomatic_kdm_creator("{} is starting.\n");
 		}
 #endif
 

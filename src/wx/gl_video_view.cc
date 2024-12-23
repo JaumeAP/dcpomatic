@@ -37,6 +37,7 @@
 #include "lib/exceptions.h"
 #include "lib/image.h"
 #include "lib/player_video.h"
+#include <fmt/format.h>
 #include <boost/bind/bind.hpp>
 #include <iostream>
 
@@ -109,7 +110,7 @@ GLVideoView::size_changed (wxSizeEvent const& ev)
 	int const width = std::round(ev.GetSize().GetWidth() * scale);
 	int const height = std::round(ev.GetSize().GetHeight() * scale);
 	_canvas_size = { width, height };
-	LOG_GENERAL("GLVideoView canvas size changed to %1x%2", width, height);
+	LOG_GENERAL("GLVideoView canvas size changed to {}x{}", width, height);
 	Sized ();
 }
 
@@ -435,7 +436,7 @@ GLVideoView::setup_shaders ()
 				log = string(log_char.data());
 			}
 			glDeleteShader(shader);
-			throw GLError(String::compose("Could not compile shader (%1)", log).c_str(), -1);
+			throw GLError(fmt::format("Could not compile shader ({})", log).c_str(), -1);
 		}
 		return shader;
 	};
@@ -463,7 +464,7 @@ GLVideoView::setup_shaders ()
 			log = string(log_char.data());
 		}
 		glDeleteProgram (program);
-		throw GLError(String::compose("Could not link shader (%1)", log).c_str(), -1);
+		throw GLError(fmt::format("Could not link shader ({})", log).c_str(), -1);
 	}
 	glDeleteShader (vertex_shader);
 	glDeleteShader (fragment_shader);

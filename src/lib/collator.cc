@@ -27,6 +27,7 @@
 #include <unicode/utypes.h>
 #include <unicode/usearch.h>
 #include <unicode/ustring.h>
+#include <boost/algorithm/string.hpp>
 #include <boost/scoped_array.hpp>
 #include <cstring>
 #include <vector>

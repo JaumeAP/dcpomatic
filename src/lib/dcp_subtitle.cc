@@ -21,9 +21,9 @@
 
 #include "dcp_subtitle.h"
 #include "exceptions.h"
-#include "compose.hpp"
 #include <dcp/interop_text_asset.h>
 #include <dcp/smpte_text_asset.h>
+#include <fmt/format.h>
 #include <memory>
 
 #include "i18n.h"
@@ -57,7 +57,7 @@ DCPSubtitle::load (boost::filesystem::path file) const
 	}
 
 	if (!sc) {
-		throw FileError(String::compose(_("Could not read subtitles (%1 / %2)"), interop_error, smpte_error), file);
+		throw FileError(fmt::format(_("Could not read subtitles ({} / {})"), interop_error, smpte_error), file);
 	}
 
 	return sc;

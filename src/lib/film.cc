@@ -30,7 +30,6 @@
 #include "audio_processor.h"
 #include "change_signaller.h"
 #include "cinema.h"
-#include "compose.hpp"
 #include "config.h"
 #include "constants.h"
 #include "cross.h"
@@ -502,7 +501,7 @@ Film::write_metadata ()
 	try {
 		metadata()->write_to_file_formatted(filename.string());
 	} catch (xmlpp::exception& e) {
-		throw FileError(String::compose("Could not write metadata file (%1)", e.what()), filename);
+		throw FileError(fmt::format("Could not write metadata file ({})", e.what()), filename);
 	}
 	set_dirty (false);
 }
@@ -526,7 +525,7 @@ Film::read_metadata (optional<boost::filesystem::path> path)
 		if (dcp::filesystem::exists(file("metadata")) && !dcp::filesystem::exists(file(metadata_file))) {
 			throw runtime_error(
 				variant::insert_dcpomatic(
-					_("This film was created with an older version of %1, and unfortunately it cannot "
+					_("This film was created with an older version of {}, and unfortunately it cannot "
 					  "be loaded into this version.  You will need to create a new Film, re-add your "
 					  "content and set it up again.  Sorry!")
 					)
@@ -545,10 +544,10 @@ Film::read_metadata (optional<boost::filesystem::path> path)
 
 	_state_version = f.number_child<int> ("Version");
 	if (_state_version > current_state_version) {
-		throw runtime_error(variant::insert_dcpomatic(_("This film was created with a newer version of %1, and it cannot be loaded into this version.  Sorry!")));
+		throw runtime_error(variant::insert_dcpomatic(_("This film was created with a newer version of {}, and it cannot be loaded into this version.  Sorry!")));
 	} else if (_state_version < current_state_version) {
 		/* This is an older version; save a copy (if we haven't already) */
-		auto const older = path->parent_path() / String::compose("metadata.%1.xml", _state_version);
+		auto const older = path->parent_path() / fmt::format("metadata.{}.xml", _state_version);
 		if (!dcp::filesystem::is_regular_file(older)) {
 			try {
 				dcp::filesystem::copy_file(*path, older);
@@ -933,7 +932,7 @@ Film::isdcf_name (bool if_created_now) const
 				}
 			}
 		} else {
-			version = dcp::fmt::to_string(_version_number);
+			version = fmt::to_string(_version_number);
 		}
 		isdcf_name += "-" + version;
 	}
@@ -966,7 +965,7 @@ Film::isdcf_name (bool if_created_now) const
 		auto fl = _luminance->value_in_foot_lamberts();
 		char buffer[64];
 		snprintf (buffer, sizeof(buffer), "%.1f", fl);
-		isdcf_name += String::compose("-%1fl", buffer);
+		isdcf_name += fmt::format("-{}fl", buffer);
 	}
 
 	if (video_frame_rate() != 24) {
@@ -989,7 +988,7 @@ Film::isdcf_name (bool if_created_now) const
 				auto first_ratio = lrintf(scaled_size->ratio() * 100);
 				auto container_ratio = lrintf(container()->ratio() * 100);
 				if (first_ratio != container_ratio) {
-					isdcf_name += "-" + dcp::fmt::to_string(first_ratio);
+					isdcf_name += "-" + fmt::to_string(first_ratio);
 				}
 			}
 		}
@@ -1052,7 +1051,7 @@ Film::isdcf_name (bool if_created_now) const
 	if (!ch.first && !ch.second) {
 		isdcf_name += "_MOS";
 	} else if (ch.first) {
-		isdcf_name += String::compose("_%1%2", ch.first, ch.second);
+		isdcf_name += fmt::format("_{}{}", ch.first, ch.second);
 	}
 
 	if (audio_channels() > static_cast<int>(dcp::Channel::HI) && find(mapped.begin(), mapped.end(), static_cast<int>(dcp::Channel::HI)) != mapped.end()) {
@@ -1650,7 +1649,7 @@ Film::check_reel_boundaries_for_atmos()
 		} else {
 			set_reel_type(ReelType::SINGLE);
 		}
-		Message(variant::insert_dcpomatic("%1 had to change your reel settings to accomodate the Atmos content"));
+		Message(variant::insert_dcpomatic("{} had to change your reel settings to accomodate the Atmos content"));
 	}
 }
 
@@ -1672,7 +1671,7 @@ Film::check_settings_consistency ()
 		Message(_("You have more than one piece of Atmos content, and they do not have the same frame rate.  You must remove some Atmos content."));
 	} else if (atmos_rates.size() == 1 && *atmos_rates.begin() != video_frame_rate()) {
 		set_video_frame_rate(*atmos_rates.begin(), false);
-		Message(variant::insert_dcpomatic(_("%1 had to change your settings so that the film's frame rate is the same as that of your Atmos content.")));
+		Message(variant::insert_dcpomatic(_("{} had to change your settings so that the film's frame rate is the same as that of your Atmos content.")));
 	}
 
 	if (!atmos_rates.empty()) {
@@ -1706,7 +1705,7 @@ Film::check_settings_consistency ()
 	}
 
 	if (change_made) {
-		Message(variant::insert_dcpomatic(_("%1 had to change your settings for referring to DCPs as OV.  Please review those settings to make sure they are what you want.")));
+		Message(variant::insert_dcpomatic(_("{} had to change your settings for referring to DCPs as OV.  Please review those settings to make sure they are what you want.")));
 	}
 
 	if (reel_type() == ReelType::CUSTOM) {
@@ -1717,9 +1716,9 @@ Film::check_settings_consistency ()
 
 		if (too_late != boundaries.end()) {
 			if (std::distance(too_late, boundaries.end()) > 1) {
-				Message(variant::insert_dcpomatic(_("%1 had to remove some of your custom reel boundaries as they no longer lie within the film.")));
+				Message(variant::insert_dcpomatic(_("{} had to remove some of your custom reel boundaries as they no longer lie within the film.")));
 			} else {
-				Message(variant::insert_dcpomatic(_("%1 had to remove one of your custom reel boundaries as it no longer lies within the film.")));
+				Message(variant::insert_dcpomatic(_("{} had to remove one of your custom reel boundaries as it no longer lies within the film.")));
 			}
 			boundaries.erase(too_late, boundaries.end());
 			set_custom_reel_boundaries(boundaries);
@@ -1842,7 +1841,7 @@ Film::make_kdm(boost::filesystem::path cpl_file, dcp::LocalTime from, dcp::Local
 		bool done = false;
 		for (auto const& k: imported_keys) {
 			if (k.id() == asset->key_id().get()) {
-				LOG_GENERAL("Using imported key for %1", asset->key_id().get());
+				LOG_GENERAL("Using imported key for {}", asset->key_id().get());
 				keys[asset] = k.key();
 				done = true;
 			}
@@ -1850,7 +1849,7 @@ Film::make_kdm(boost::filesystem::path cpl_file, dcp::LocalTime from, dcp::Local
 
 		if (!done) {
 			/* No imported key; it must be an asset that we encrypted */
-			LOG_GENERAL("Using our own key for %1", asset->key_id().get());
+			LOG_GENERAL("Using our own key for {}", asset->key_id().get());
 			keys[asset] = key();
 		}
 	}
@@ -2454,9 +2453,9 @@ Film::read_remembered_assets() const
 			assets.push_back(RememberedAsset(node));
 		}
 	} catch (std::exception& e) {
-		LOG_ERROR("Could not read assets file %1 (%2)", filename, e.what());
+		LOG_ERROR("Could not read assets file {} ({})", filename.string(), e.what());
 	} catch (...) {
-		LOG_ERROR("Could not read assets file %1", filename);
+		LOG_ERROR("Could not read assets file {}", filename.string());
 	}
 
 	return assets;
@@ -2476,8 +2475,8 @@ Film::write_remembered_assets(vector<RememberedAsset> const& assets) const
 	try {
 		doc->write_to_file_formatted(dcp::filesystem::fix_long_path(file(assets_file)).string());
 	} catch (std::exception& e) {
-		LOG_ERROR("Could not write assets file %1 (%2)", file(assets_file), e.what());
+		LOG_ERROR("Could not write assets file {} ({})", file(assets_file).string(), e.what());
 	} catch (...) {
-		LOG_ERROR("Could not write assets file %1", file(assets_file));
+		LOG_ERROR("Could not write assets file {}", file(assets_file).string());
 	}
 }
