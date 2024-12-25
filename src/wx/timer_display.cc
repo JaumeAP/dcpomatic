@@ -27,10 +27,10 @@
 #include <list>
 
 
-using std::map;
 using std::list;
-using std::pair;
 using std::make_pair;
+using std::map;
+using std::pair;
 using std::string;
 
 
