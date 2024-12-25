@@ -23,6 +23,7 @@
 #include "exceptions.h"
 #include "string_text_file.h"
 #include "string_text_file_content.h"
+#include <dcp/array_data.h>
 #include <dcp/file.h>
 #include <sub/collect.h>
 #include <sub/exceptions.h>

@@ -23,6 +23,7 @@
 #include "lib/user_property.h"
 #include <list>
 #include <map>
+#include <memory>
 
 
 class Content;
