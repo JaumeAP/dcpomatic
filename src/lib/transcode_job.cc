@@ -130,7 +130,7 @@ TranscodeJob::run ()
 		set_progress (1);
 		set_state (FINISHED_OK);
 
-		LOG_GENERAL(N_("Transcode job completed successfully: {} fps"), dcp::locale_convert<string>(frames_per_second(), 2, true));
+		LOG_GENERAL(N_("Transcode job completed successfully: {:.2L} fps"), frames_per_second());
 
 		if (variant::count_created_dcps() && dynamic_pointer_cast<DCPFilmEncoder>(_encoder)) {
 			try {
@@ -179,7 +179,7 @@ TranscodeJob::status () const
 	auto status = fmt::format(_("{}; {}/{} frames"), Job::status(), _encoder->frames_done(), _film->length().frames_round(_film->video_frame_rate()));
 	if (auto const fps = _encoder->current_rate()) {
 		/// TRANSLATORS: fps here is an abbreviation for frames per second
-		status += fmt::format(_("; {} fps"), dcp::locale_convert<string>(*fps, 1, true));
+		status += fmt::format(_("; {:.1L} fps"), *fps);
 	}
 
 	return status;

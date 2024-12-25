@@ -766,10 +766,10 @@ Writer::write_cover_sheet()
 		}
 	}
 
-	if (size > (1000000000L)) {
-		boost::algorithm::replace_all(text, "$SIZE", fmt::format("{}GB", dcp::locale_convert<string>(size / 1000000000.0, 1, true)));
+	if (size > 1000000000L) {
+		boost::algorithm::replace_all(text, "$SIZE", fmt::format("{}GB", fmt::format("{:L}", size / 1000000000.0, 1, true)));
 	} else {
-		boost::algorithm::replace_all(text, "$SIZE", fmt::format("{}MB", dcp::locale_convert<string>(size / 1000000.0, 1, true)));
+		boost::algorithm::replace_all(text, "$SIZE", fmt::format("{}MB", fmt::format("{:L}", size / 1000000.0, 1, true)));
 	}
 
 	auto ch = audio_channel_types (film()->mapped_audio_channels(), film()->audio_channels());

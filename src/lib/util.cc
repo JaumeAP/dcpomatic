@@ -205,7 +205,7 @@ seconds_to_approximate_hms (int s)
 
 	if (hours) {
 		/// TRANSLATORS: h here is an abbreviation for hours
-		ap += locale_convert<string>(h) + _("h");
+		ap += fmt::to_string(h) + _("h");
 
 		if (minutes || seconds) {
 			ap += N_(" ");
@@ -214,7 +214,7 @@ seconds_to_approximate_hms (int s)
 
 	if (minutes) {
 		/// TRANSLATORS: m here is an abbreviation for minutes
-		ap += locale_convert<string>(m) + _("m");
+		ap += fmt::to_string(m) + _("m");
 
 		if (seconds) {
 			ap += N_(" ");
@@ -224,7 +224,7 @@ seconds_to_approximate_hms (int s)
 	if (seconds) {
 		/* Seconds */
 		/// TRANSLATORS: s here is an abbreviation for seconds
-		ap += locale_convert<string>(s) + _("s");
+		ap += fmt::to_string(s) + _("s");
 	}
 
 	return ap;

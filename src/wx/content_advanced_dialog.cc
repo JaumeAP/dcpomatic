@@ -32,6 +32,7 @@
 #include "lib/ffmpeg_content.h"
 #include "lib/image_content.h"
 #include "lib/video_content.h"
+#include <dcp/locale_convert.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/gbsizer.h>
@@ -129,7 +130,7 @@ ContentAdvancedDialog::ContentAdvancedDialog (wxWindow* parent, shared_ptr<Conte
 
 	auto vfr = _content->video_frame_rate ();
 	if (vfr) {
-		_video_frame_rate->SetValue (std_to_wx(locale_convert<string>(*vfr)));
+		_video_frame_rate->SetValue(std_to_wx(fmt::format("{:L}", *vfr)));
 	}
 
 	_burnt_subtitle->SetValue (_content->video && static_cast<bool>(_content->video->burnt_subtitle_language()));

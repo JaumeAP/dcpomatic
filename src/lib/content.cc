@@ -493,7 +493,7 @@ Content::add_properties (shared_ptr<const Film>, list<UserProperty>& p) const
 				UserProperty (
 					UserProperty::VIDEO,
 					_("Frame rate"),
-					locale_convert<string> (_video_frame_rate.get(), 5),
+					fmt::format("{:.5L}", _video_frame_rate.get()),
 					_("frames per second")
 					)
 				);
@@ -502,7 +502,7 @@ Content::add_properties (shared_ptr<const Film>, list<UserProperty>& p) const
 				UserProperty (
 					UserProperty::GENERAL,
 					_("Prepared for video frame rate"),
-					locale_convert<string> (_video_frame_rate.get(), 5),
+					fmt::format("{:.5L}", _video_frame_rate.get()),
 					_("frames per second")
 					)
 				);

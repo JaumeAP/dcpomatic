@@ -437,7 +437,7 @@ DCPPanel::film_changed(FilmProperty p)
 		if (_film->audio_channels() < minimum_allowed_audio_channels()) {
 			_film->set_audio_channels (minimum_allowed_audio_channels());
 		} else {
-			checked_set (_audio_channels, locale_convert<string>(max(minimum_allowed_audio_channels(), _film->audio_channels())));
+			checked_set(_audio_channels, fmt::to_string(max(minimum_allowed_audio_channels(), _film->audio_channels())));
 			setup_dcp_name ();
 		}
 		break;

@@ -131,7 +131,7 @@ VideoWaveformPlot::paint ()
 		} else if (n < 1000) {
 			x += extra[2];
 		}
-		gc->DrawText (std_to_wx(locale_convert<string>(n)), x, y - (label_height / 2));
+		gc->DrawText(std_to_wx(fmt::format("{:L}", n)), x, y - (label_height / 2));
 	}
 
 	wxImage waveform (_waveform->size().width, height, _waveform->data()[0], true);

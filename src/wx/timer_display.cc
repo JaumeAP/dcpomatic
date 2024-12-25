@@ -23,6 +23,7 @@
 #include "wx_util.h"
 #include "lib/timer.h"
 #include <dcp/locale_convert.h>
+#include <fmt/format.h>
 #include <list>
 
 
@@ -47,15 +48,15 @@ TimerDisplay::TimerDisplay (wxWindow* parent, StateTimer const & timer, int gets
 	});
 
 	add(char_to_wx("get() calls"), true);
-	add (std_to_wx(dcp::locale_convert<string>(gets)), false);
+	add(std_to_wx(fmt::format("{:L}", gets)), false);
 	add_spacer ();
 	add_spacer ();
 
 	for (auto const& i: sorted) {
 		add (std_to_wx(i.first), true);
-		add (std_to_wx(dcp::locale_convert<string>(i.second.total_time)), false);
-		add (std_to_wx(dcp::locale_convert<string>(i.second.number)), false);
-		add (std_to_wx(dcp::locale_convert<string>(i.second.total_time / i.second.number)), false);
+		add(std_to_wx(fmt::format("{:L}", (i.second.total_time))), false);
+		add(std_to_wx(fmt::format("{:L}", (i.second.number))), false);
+		add(std_to_wx(fmt::format("{:L}", (i.second.total_time / i.second.number))), false);
 	}
 
 	layout ();

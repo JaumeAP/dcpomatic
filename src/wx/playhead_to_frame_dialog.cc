@@ -18,12 +18,16 @@
 
 */
 
+
 #include "playhead_to_frame_dialog.h"
+#include <fmt/format.h>
 #include <dcp/locale_convert.h>
+
 
 using std::string;
 using dcp::locale_convert;
 using namespace dcpomatic;
+
 
 PlayheadToFrameDialog::PlayheadToFrameDialog (wxWindow* parent, DCPTime time, int fps)
 	: TableDialog (parent, _("Go to frame"), 2, 1, true)
@@ -32,7 +36,7 @@ PlayheadToFrameDialog::PlayheadToFrameDialog (wxWindow* parent, DCPTime time, in
 	add (_("Go to"), true);
 	_frame = add(new wxTextCtrl(this, wxID_ANY, {}));
 	_frame->SetFocus ();
-	_frame->SetValue (std_to_wx(locale_convert<string>(time.frames_round(fps) + 1)));
+	_frame->SetValue(std_to_wx(fmt::format("{:L}", time.frames_round(fps) + 1)));
 	_frame->SetSelection (-1, -1);
 
 	layout ();

@@ -23,7 +23,7 @@
 #define DCPOMATIC_USER_PROPERTY_H
 
 
-#include <dcp/locale_convert.h>
+#include <fmt/format.h>
 
 
 class UserProperty
@@ -40,8 +40,15 @@ public:
 	UserProperty (Category category_, std::string key_, T value_, std::string unit_ = "")
 		: category (category_)
 		, key (key_)
-		, value (dcp::locale_convert<std::string> (value_))
+		, value(fmt::format("{:L}", value_))
 		, unit (unit_)
+	{}
+
+	UserProperty(Category category_, std::string key_, std::string value_, std::string unit_ = "")
+		: category(category_)
+		, key(key_)
+		, value(value_)
+		, unit(unit_)
 	{}
 
 	Category category;
