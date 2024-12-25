@@ -546,6 +546,7 @@ dcpomatic_setup_gettext_i18n (string lang)
 	}
 
 	setlocale (LC_ALL, "");
+	std::locale::global(std::locale(""));
 	textdomain ("libdcpomatic2");
 
 #if defined(DCPOMATIC_WINDOWS) || defined(DCPOMATIC_OSX)
