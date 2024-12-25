@@ -88,6 +88,25 @@ argument_option (int& n, int argc, char* argv[], string short_name, string long_
 }
 
 
+template <>
+void
+argument_option(int& n, int argc, char* argv[], string short_name, string long_name, bool* claimed, optional<string>* error, string* out)
+{
+	string const a = argv[n];
+	if (a != short_name && a != long_name) {
+		return;
+	}
+
+	if ((n + 1) >= argc) {
+		**error = fmt::format("{}: option {} requires an argument", argv[0], long_name);
+		return;
+	}
+
+	*out = string(argv[++n]);
+	*claimed = true;
+}
+
+
 template <class T>
 void
 argument_option (
