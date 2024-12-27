@@ -88,7 +88,9 @@ public:
 	boost::optional<boost::filesystem::path> get () const
 	{
 		auto const dcp = boost::filesystem::path(wx_to_std(GetPath()));
+		LOG_DISK("Checking %1 for ASSETMAP", dcp.string());
 		if (!dcp::filesystem::exists(dcp / "ASSETMAP") && !dcp::filesystem::exists(dcp / "ASSETMAP.xml")) {
+			LOG_DISK("Found neither %1 nor %2", dcp / "ASSETMAP", dcp / "ASSETMAP.xml");
 			error_dialog (nullptr, _("No ASSETMAP or ASSETMAP.xml found in this folder.  Please choose a DCP folder."));
 			return {};
 		}
