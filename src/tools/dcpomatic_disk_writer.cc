@@ -261,7 +261,7 @@ try
 
 		LOG_DISK("Here we go writing these to %1", device);
 		for (auto dcp: dcp_paths) {
-			LOG_DISK("  %1", dcp);
+			LOG_DISK("  %{}", dcp);
 		}
 
 		request_privileges (
