@@ -51,6 +51,20 @@ public:
 		, unit(unit_)
 	{}
 
+	UserProperty(Category category_, std::string key_, char const* value_, std::string unit_ = "")
+		: category(category_)
+		, key(key_)
+		, value(value_)
+		, unit(unit_)
+	{}
+
+	UserProperty(Category category_, std::string key_, char* value_, std::string unit_ = "")
+		: category(category_)
+		, key(key_)
+		, value(value_)
+		, unit(unit_)
+	{}
+
 	Category category;
 	std::string key;
 	std::string value;
