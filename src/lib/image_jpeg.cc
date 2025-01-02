@@ -22,6 +22,7 @@
 #include "dcpomatic_assert.h"
 #include "exceptions.h"
 #include "image.h"
+#include <dcp/array_data.h>
 #include <jpeglib.h>
 
 #include "i18n.h"
@@ -132,4 +133,40 @@ image_as_jpeg (shared_ptr<const Image> image, int quality)
 	return dcp::ArrayData (data.data(), data.size());
 }
 
+
+shared_ptr<Image>
+image_from_jpeg(boost::filesystem::path file)
+{
+	struct jpeg_decompress_struct decompress;
+	struct jpeg_error_mgr error;
+
+	decompress.err = jpeg_std_error(&error);
+	error.error_exit = error_exit;
+	jpeg_create_decompress(&decompress);
+
+	auto data = dcp::ArrayData(file);
+	jpeg_mem_src(&decompress, data.data(), data.size());
+
+	jpeg_read_header(&decompress, TRUE);
+
+	jpeg_start_decompress(&decompress);
+
+	DCPOMATIC_ASSERT(decompress.output_components == 3);
+
+	auto output = std::make_shared<Image>(
+		AV_PIX_FMT_RGB24,
+		dcp::Size{static_cast<int>(decompress.output_width), static_cast<int>(decompress.output_height)},
+		Image::Alignment::COMPACT
+	);
+
+	while (decompress.output_scanline < decompress.output_height) {
+		uint8_t* pointers[1] = { output->data()[0] + output->stride()[0] * decompress.output_scanline };
+		jpeg_read_scanlines(&decompress, pointers, 1);
+	}
+
+	jpeg_finish_decompress(&decompress);
+	jpeg_destroy_decompress(&decompress);
+
+	return output;
+}
 

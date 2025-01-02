@@ -19,4 +19,8 @@
 */
 
 
+class Image;
+
+
+std::shared_ptr<Image> image_from_jpeg(boost::filesystem::path file);
 dcp::ArrayData image_as_jpeg (std::shared_ptr<const Image> image, int quality);
