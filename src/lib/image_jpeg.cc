@@ -135,7 +135,7 @@ image_as_jpeg (shared_ptr<const Image> image, int quality)
 
 
 shared_ptr<Image>
-image_from_jpeg(boost::filesystem::path file)
+image_from_jpeg(boost::filesystem::path file, Image::Alignment alignment)
 {
 	struct jpeg_decompress_struct decompress;
 	struct jpeg_error_mgr error;
@@ -156,7 +156,7 @@ image_from_jpeg(boost::filesystem::path file)
 	auto output = std::make_shared<Image>(
 		AV_PIX_FMT_RGB24,
 		dcp::Size{static_cast<int>(decompress.output_width), static_cast<int>(decompress.output_height)},
-		Image::Alignment::COMPACT
+		alignment
 	);
 
 	while (decompress.output_scanline < decompress.output_height) {

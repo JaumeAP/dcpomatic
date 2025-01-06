@@ -19,8 +19,8 @@
 */
 
 
-class Image;
+#include "image.h"
 
 
-std::shared_ptr<Image> image_from_jpeg(boost::filesystem::path file);
+std::shared_ptr<Image> image_from_jpeg(boost::filesystem::path file, Image::Alignment alignment);
 dcp::ArrayData image_as_jpeg (std::shared_ptr<const Image> image, int quality);
