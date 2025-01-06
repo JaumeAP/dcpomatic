@@ -24,6 +24,7 @@
 #include "email.h"
 #include "exceptions.h"
 #include "variant.h"
+#include <dcp/scope_guard.h>
 #include <curl/curl.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time/c_local_time_adjustor.hpp>
@@ -113,7 +114,11 @@ void
 Email::create(time_t time)
 {
 	char date_buffer[128];
-	strftime(date_buffer, sizeof(date_buffer), "%a, %d %b %Y %H:%M:%S ", localtime(&time));
+
+	auto english_locale = newlocale(LC_TIME_MASK, "C", 0);
+	DCPOMATIC_ASSERT(english_locale);
+	dcp::ScopeGuard sg = [english_locale]() { freelocale(english_locale); };
+	strftime_l(date_buffer, sizeof(date_buffer), "%a, %d %b %Y %H:%M:%S ", localtime(&time), english_locale);
 
 	auto const utc_time = boost::posix_time::second_clock::universal_time();
 	auto const local_time = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(utc_time);

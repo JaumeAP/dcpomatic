@@ -80,6 +80,7 @@ def build(bld):
                  dcp_subtitle_test.cc
                  digest_test.cc
                  dkdm_recipient_list_test.cc
+                 email_test.cc
                  empty_caption_test.cc
                  empty_test.cc
                  encryption_test.cc

@@ -24,6 +24,9 @@
 #include <boost/scoped_array.hpp>
 
 
+struct email_date_format_test;
+
+
 class Email
 {
 public:
@@ -51,6 +54,7 @@ public:
 	static std::string address_list(std::vector<std::string> addresses);
 
 private:
+	friend struct ::email_date_format_test;
 
 	std::string fix (std::string s) const;
 	static std::string encode_rfc1342 (std::string subject);
