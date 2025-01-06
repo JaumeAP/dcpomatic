@@ -110,7 +110,7 @@ Email::get_data(void* ptr, size_t size, size_t nmemb)
 
 
 void
-Email::send(string server, int port, EmailProtocol protocol, string user, string password)
+Email::create()
 {
 	char date_buffer[128];
 	time_t now = time (0);
@@ -185,6 +185,13 @@ Email::send(string server, int port, EmailProtocol protocol, string user, string
 	if (!_attachments.empty ()) {
 		_email += "\r\n--" + boundary + "--\r\n";
 	}
+}
+
+
+void
+Email::send(string server, int port, EmailProtocol protocol, string user, string password)
+{
+	create();
 
 	curl_global_init (CURL_GLOBAL_DEFAULT);
 

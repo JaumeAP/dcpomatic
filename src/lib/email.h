@@ -54,6 +54,7 @@ private:
 
 	std::string fix (std::string s) const;
 	static std::string encode_rfc1342 (std::string subject);
+	void create();
 
 	std::string _from;
 	std::vector<std::string> _to;
