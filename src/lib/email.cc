@@ -110,15 +110,14 @@ Email::get_data(void* ptr, size_t size, size_t nmemb)
 
 
 void
-Email::create()
+Email::create(time_t time)
 {
 	char date_buffer[128];
-	time_t now = time (0);
-	strftime (date_buffer, sizeof(date_buffer), "%a, %d %b %Y %H:%M:%S ", localtime(&now));
+	strftime(date_buffer, sizeof(date_buffer), "%a, %d %b %Y %H:%M:%S ", localtime(&time));
 
-	auto const utc_now = boost::posix_time::second_clock::universal_time ();
-	auto const local_now = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local (utc_now);
-	auto offset = local_now - utc_now;
+	auto const utc_time = boost::posix_time::second_clock::universal_time();
+	auto const local_time = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(utc_time);
+	auto offset = local_time - utc_time;
 	auto end = date_buffer + strlen(date_buffer);
 	snprintf(end, sizeof(date_buffer) - (end - date_buffer), "%s%02d%02d", (offset.hours() >= 0 ? "+" : "-"), int(abs(offset.hours())), int(offset.minutes()));
 
@@ -191,7 +190,7 @@ Email::create()
 void
 Email::send(string server, int port, EmailProtocol protocol, string user, string password)
 {
-	create();
+	create(time(nullptr));
 
 	curl_global_init (CURL_GLOBAL_DEFAULT);
 
