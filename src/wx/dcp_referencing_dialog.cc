@@ -83,6 +83,8 @@ DCPReferencingDialog::film_changed(ChangeType type, FilmProperty property)
 void
 DCPReferencingDialog::film_content_changed(ChangeType type, int property)
 {
+	PeriodTimer timer("DCPReferencingDialog::film_content_changed");
+
 	if (type != ChangeType::DONE) {
 		return;
 	}

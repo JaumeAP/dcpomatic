@@ -195,12 +195,17 @@ SimpleVideoView::start ()
 VideoView::NextFrameResult
 SimpleVideoView::display_next_frame (bool non_blocking)
 {
+	std::cout << "dnf non_blocking=" << non_blocking << "\n";
+	PeriodTimer timer("dnf");
+
 	auto const r = get_next_frame (non_blocking);
 	if (r != SUCCESS) {
 		return r;
 	}
 
-	update ();
+	if (do_update(non_blocking)) {
+		return AGAIN;
+	}
 
 	try {
 		_viewer->butler()->rethrow ();
@@ -215,18 +220,30 @@ SimpleVideoView::display_next_frame (bool non_blocking)
 void
 SimpleVideoView::update ()
 {
+	do_update(false);
+}
+
+
+/** @return true if this call was aborted because it would take too long, and we're non_blocking */
+bool
+SimpleVideoView::do_update(bool non_blocking)
+{
+	StateTimer timer("update", "early-return");
 	if (!player_video().first) {
 		_image.reset ();
 		refresh_panel ();
-		return;
+		return false;
 	}
 
+	timer.set("check too late");
+
 	if (_viewer->playing() && (_viewer->time() - player_video().second) > one_video_frame()) {
+		std::cout << "too late!\n";
 		/* Too late; just drop this frame before we try to get its image (which will be the time-consuming
 		   part if this frame is J2K).
 		*/
 		add_dropped ();
-		return;
+		return false;
 	}
 
 	/* In an ideal world, what we would do here is:
@@ -249,18 +266,30 @@ SimpleVideoView::update ()
 
 	_state_timer.set ("get image");
 
+	timer.set("player_video()");
 	auto const pv = player_video();
+	timer.set("get image");
+	// if (non_blocking && !pv.first->have_image()) {
+	// 	std::cout << "not ready\n";
+	// 	return true;
+	// }
+
 	_image = pv.first->image(boost::bind(&PlayerVideo::force, AV_PIX_FMT_RGB24), VideoRange::FULL, true);
+	timer.set("fix 2020");
 	if (pv.first->colour_conversion() && pv.first->colour_conversion()->about_equal(dcp::ColourConversion::rec2020_to_xyz(), 1e-6)) {
 		_image = Image::ensure_alignment(_rec2020_filter_graph.get(_image->size(), _image->pixel_format())->process(_image).front(), Image::Alignment::COMPACT);
 	}
 
 	_state_timer.set ("ImageChanged");
+	timer.set("image_changed");
 	_viewer->image_changed (player_video().first);
 	_state_timer.unset ();
 
 	_inter_position = player_video().first->inter_position ();
 	_inter_size = player_video().first->inter_size ();
 
+	timer.set("refresh_panel");
 	refresh_panel ();
+
+	return false;
 }

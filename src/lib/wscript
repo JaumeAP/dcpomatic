@@ -51,7 +51,6 @@ sources = """
           check_content_job.cc
           cinema_list.cc
           cinema_sound_processor.cc
-          change_signaller.cc
           collator.cc
           colour_conversion.cc
           config.cc

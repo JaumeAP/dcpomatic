@@ -1578,12 +1578,12 @@ Film::playlist_content_change (ChangeType type, weak_ptr<Content> c, int p, bool
 	}
 
 	if (type == ChangeType::DONE) {
-		emit (boost::bind (boost::ref (ContentChange), type, c, p, frequent));
+		// emit (boost::bind (boost::ref (ContentChange), type, c, p, frequent));
 		if (!frequent) {
 			check_settings_consistency ();
 		}
 	} else {
-		ContentChange (type, c, p, frequent);
+		// ContentChange (type, c, p, frequent);
 	}
 
 	set_dirty (true);

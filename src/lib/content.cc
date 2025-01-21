@@ -204,10 +204,12 @@ Content::examine(shared_ptr<const Film>, shared_ptr<Job> job, bool)
 void
 Content::signal_change (ChangeType c, int p)
 {
+	std::cout << "Content::signal_change " << p << " " << static_cast<int>(c) << "\n";
 	try {
 		if (c == ChangeType::PENDING || c == ChangeType::CANCELLED) {
 			Change (c, shared_from_this(), p, _change_signals_frequent);
 		} else {
+			PeriodTimer timer("emit");
 			emit (boost::bind (boost::ref(Change), c, shared_from_this(), p, _change_signals_frequent));
 		}
 	} catch (std::bad_weak_ptr &) {

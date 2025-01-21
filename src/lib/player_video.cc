@@ -115,13 +115,27 @@ PlayerVideo::set_text (PositionImage image)
 }
 
 
+bool
+PlayerVideo::have_image() const
+{
+	boost::mutex::scoped_lock lm (_mutex);
+	return have_image_unlocked();
+}
+
+
+bool
+PlayerVideo::have_image_unlocked() const
+{
+	return _image && _crop == _image_crop && _inter_size == _image_inter_size && _out_size == _image_out_size && _fade == _image_fade;
+}
+
+
 shared_ptr<Image>
 PlayerVideo::image (function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, bool fast) const
 {
 	/* XXX: this assumes that image() and prepare() are only ever called with the same parameters (except crop, inter size, out size, fade) */
-
 	boost::mutex::scoped_lock lm (_mutex);
-	if (!_image || _crop != _image_crop || _inter_size != _image_inter_size || _out_size != _image_out_size || _fade != _image_fade) {
+	if (!have_image_unlocked()) {
 		make_image (pixel_format, video_range, fast);
 	}
 	return _image;

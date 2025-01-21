@@ -394,6 +394,7 @@ TextPanel::film_changed(FilmProperty property)
 void
 TextPanel::film_content_changed (int property)
 {
+	PeriodTimer timer("TextPanel::film_content_changed");
 	auto fc = _parent->selected_ffmpeg ();
 	auto sc = _parent->selected_text ();
 

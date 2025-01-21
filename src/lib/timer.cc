@@ -27,6 +27,7 @@
 #include "compose.hpp"
 #include "timer.h"
 #include "util.h"
+#include <fmt/format.h>
 #include <sys/time.h>
 #include <iostream>
 
@@ -39,6 +40,9 @@ using std::max;
 using std::pair;
 using std::string;
 using boost::optional;
+
+
+GlobalTimer* GlobalTimer::_instance = nullptr;
 
 
 /** @param n Name to use when giving output */
@@ -54,7 +58,7 @@ PeriodTimer::~PeriodTimer ()
 {
 	struct timeval stop;
 	gettimeofday (&stop, 0);
-	cout << N_("T: ") << _name << N_(": ") << (seconds (stop) - seconds (_start)) << N_("\n");
+	cout << fmt::format("T: {}: {:.3f}\n", _name, seconds(stop) - seconds(_start));
 }
 
 
@@ -143,3 +147,47 @@ StateTimer::~StateTimer ()
 		cout << N_("\t") << i.second << "\n";
 	}
 }
+
+
+GlobalTimer*
+GlobalTimer::instance()
+{
+	if (!_instance) {
+		_instance = new GlobalTimer();
+	}
+
+	return _instance;
+}
+
+
+void
+GlobalTimer::reset()
+{
+	struct timeval now;
+	gettimeofday(&now, 0);
+	_reset = _last = seconds(now);
+	// std::cout << "|----------------------\\\n";
+}
+
+
+void
+GlobalTimer::mark(string const& tag)
+{
+	// std::cout << "|" << tag << " ";
+
+	struct timeval now;
+	gettimeofday(&now, 0);
+	auto const now_seconds = seconds(now);
+
+	if (_last > 0) {
+		// std::cout << fmt::format("{:.2} ", now_seconds - _last);
+	}
+
+	if (_reset > 0) {
+		// std::cout << fmt::format("{:.2} ", now_seconds - _reset);
+	}
+
+	_last = now_seconds;
+	// std::cout << "\n";
+}
+

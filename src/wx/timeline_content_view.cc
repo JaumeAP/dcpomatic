@@ -175,6 +175,8 @@ TimelineContentView::do_paint (wxGraphicsContext* gc, list<dcpomatic::Rect<int>>
 void
 TimelineContentView::content_change (ChangeType type, int p)
 {
+	PeriodTimer timer("TimelineContentView::content_change");
+
 	if (type != ChangeType::DONE) {
 		return;
 	}

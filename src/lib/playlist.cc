@@ -96,6 +96,7 @@ Playlist::content_change (weak_ptr<const Film> weak_film, ChangeType type, weak_
 	DCPOMATIC_ASSERT (film);
 
 	if (type == ChangeType::DONE) {
+		PeriodTimer timer("content_change#1 in Playlist");
 		if (
 			property == ContentProperty::TRIM_START ||
 			property == ContentProperty::TRIM_END ||
@@ -116,6 +117,7 @@ Playlist::content_change (weak_ptr<const Film> weak_film, ChangeType type, weak_
 			property == ContentProperty::TRIM_START ||
 			property == ContentProperty::TRIM_END) {
 
+
 			bool changed = false;
 
 			{
@@ -134,6 +136,8 @@ Playlist::content_change (weak_ptr<const Film> weak_film, ChangeType type, weak_
 		}
 	}
 
+
+	PeriodTimer timer("content_change#2 in Playlist");
 	ContentChange (type, content, property, frequent);
 }
 

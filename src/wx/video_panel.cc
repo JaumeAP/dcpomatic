@@ -371,6 +371,7 @@ hash_value (boost::optional<ColourConversion> const & c)
 void
 VideoPanel::film_content_changed (int property)
 {
+	PeriodTimer timer("VideoPanel::film_content_changed");
 	auto vc = _parent->selected_video ();
 	shared_ptr<Content> vcs;
 	shared_ptr<FFmpegContent> fcs;
@@ -543,6 +544,8 @@ VideoPanel::edit_colour_conversion_clicked ()
 void
 VideoPanel::content_selection_changed ()
 {
+	std::cout << "VideoContentProperty::content_selection_changed\n";
+
 	auto video_sel = _parent->selected_video ();
 
 	_frame_type->set_content (video_sel);

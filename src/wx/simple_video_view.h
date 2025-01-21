@@ -48,6 +48,7 @@ public:
 	NextFrameResult display_next_frame (bool non_blocking) override;
 
 private:
+	bool do_update(bool non_blocking);
 	void refresh_panel ();
 	void paint ();
 	void timer ();

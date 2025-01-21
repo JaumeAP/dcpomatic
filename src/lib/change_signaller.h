@@ -23,8 +23,11 @@
 #define DCPOMATIC_CHANGE_SIGNALLER_H
 
 
+#include "timer.h"
 #include <boost/thread.hpp>
 #include <vector>
+
+#include <iostream>
 
 
 enum class ChangeType
@@ -73,6 +76,7 @@ public:
 			boost::mutex::scoped_lock lm(_mutex);
 			_pending.push_back(signal);
 		} else {
+			GlobalTimer::instance()->mark("signalled");
 			signal.thing->signal_change(signal.type, signal.property);
 		}
 	}
@@ -128,6 +132,9 @@ public:
 
 	~ChangeSignaller ()
 	{
+		if (static_cast<int>(_property) == 401) {
+			GlobalTimer::instance()->mark("signal_change 401");
+		}
 		ChangeSignalDespatcher<T, P>::instance()->signal_change({_thing, _property, _done ? ChangeType::DONE : ChangeType::CANCELLED});
 	}
 

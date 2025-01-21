@@ -27,6 +27,8 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 
+#include <iostream>
+
 
 class Signaller;
 
@@ -85,6 +87,7 @@ private:
 				store_current ();
 			}
 		} else {
+			std::cout << "[[waiting]]\n";
 			/* non-UI thread; post to the service and wake up the UI */
 			_service.post (f);
 			wake_ui ();

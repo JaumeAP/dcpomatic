@@ -48,6 +48,9 @@ LIBDCP_ENABLE_WARNINGS
 #include <list>
 
 
+#include "lib/timer.h"
+
+
 using std::abs;
 using std::dynamic_pointer_cast;
 using std::list;
@@ -643,7 +646,9 @@ ContentTimeline::left_up_select(wxMouseEvent& ev)
 		_down_view->content()->set_change_signals_frequent (false);
 	}
 
-	_content_panel->set_selection (selected_content ());
+	PeriodTimer timer("Let's a go");
+	// _content_panel->set_selection (selected_content ());
+
 	/* Since we may have just set change signals back to `not-frequent', we have to
 	   make sure this position change is signalled, even if the position value has
 	   not changed since the last time it was set (with frequent=true).  This is
@@ -856,6 +861,8 @@ ContentTimeline::set_position_from_event(wxMouseEvent& ev, bool force_emit)
 		new_position = DCPTime ();
 	}
 
+	GlobalTimer::instance()->reset();
+	GlobalTimer::instance()->mark("set_position");
 	_down_view->content()->set_position (film, new_position, force_emit);
 
 	film->set_sequence (false);
@@ -865,6 +872,7 @@ ContentTimeline::set_position_from_event(wxMouseEvent& ev, bool force_emit)
 void
 ContentTimeline::force_redraw(dcpomatic::Rect<int> const & r)
 {
+	GlobalTimer::instance()->mark("RefreshRect");
 	_main_canvas->RefreshRect (wxRect (r.x, r.y, r.width, r.height), false);
 }
 

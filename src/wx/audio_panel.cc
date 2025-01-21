@@ -214,6 +214,8 @@ AudioPanel::film_changed (FilmProperty property)
 void
 AudioPanel::film_content_changed (int property)
 {
+	PeriodTimer timer("AudioPanel::film_content_changed");
+
 	auto ac = _parent->selected_audio ();
 	if (property == AudioContentProperty::STREAMS) {
 		if (ac.size() == 1) {

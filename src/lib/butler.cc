@@ -88,6 +88,7 @@ Butler::Butler (
 	, _alignment (alignment)
 	, _fast (fast)
 	, _prepare_only_proxy (prepare_only_proxy)
+	, _lookahead(false)
 {
 	_player_video_connection = _player.Video.connect(bind(&Butler::video, this, _1, _2));
 	_player_audio_connection = _player.Audio.connect(bind(&Butler::audio, this, _1, _2, _3));
@@ -107,7 +108,7 @@ Butler::Butler (
 
 	LOG_TIMING("start-prepare-threads %1", boost::thread::hardware_concurrency() * 2);
 
-	for (size_t i = 0; i < boost::thread::hardware_concurrency() * 2; ++i) {
+	for (size_t i = 0; i < boost::thread::hardware_concurrency() / 2; ++i) {
 		_prepare_pool.create_thread (bind (&boost::asio::io_service::run, &_prepare_service));
 	}
 }
@@ -200,6 +201,7 @@ try
 		/* Do any seek that has been requested */
 		if (_pending_seek_position) {
 			_finished = false;
+			std::cout << "-------------------------------- seek " << to_string(*_pending_seek_position) << " " << _pending_seek_accurate << "\n";
 			_player.seek(*_pending_seek_position, _pending_seek_accurate);
 			_pending_seek_position = optional<DCPTime> ();
 		}
@@ -322,11 +324,12 @@ void
 Butler::prepare (weak_ptr<PlayerVideo> weak_video)
 try
 {
-	auto video = weak_video.lock ();
 	/* If the weak_ptr cannot be locked the video obviously no longer requires any work */
-	if (video) {
+	if (auto video = weak_video.lock()) {
 		LOG_TIMING("start-prepare in %1", thread_id());
+		std::cout << "SPREP.\n";
 		video->prepare (_pixel_format, _video_range, _alignment, _fast, _prepare_only_proxy);
+		std::cout << "FPREP.\n";
 		LOG_TIMING("finish-prepare in %1", thread_id());
 	}
 }
@@ -355,7 +358,10 @@ Butler::video (shared_ptr<PlayerVideo> video, DCPTime time)
 		return;
 	}
 
-	_prepare_service.post (bind(&Butler::prepare, this, weak_ptr<PlayerVideo>(video)));
+	std::cout << "POST " << to_string(time) << " to prep service.\n";
+	// if (_lookahead) {
+		_prepare_service.post(bind(&Butler::prepare, this, weak_ptr<PlayerVideo>(video)));
+	// }
 
 	_video.put (video, time);
 }
@@ -479,5 +485,19 @@ Butler::Error::summary () const
 	}
 
 	return "";
+}
+
+
+void
+Butler::enable_lookahead()
+{
+	_lookahead = true;
+}
+
+
+void
+Butler::disable_lookahead()
+{
+	_lookahead = false;
 }
 

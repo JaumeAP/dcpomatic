@@ -105,4 +105,20 @@ private:
 };
 
 
+class GlobalTimer
+{
+public:
+	void mark(std::string const& tag);
+	void reset();
+
+	static GlobalTimer* instance();
+
+private:
+	static GlobalTimer* _instance;
+
+	double _reset = 0;
+	double _last = 0;
+};
+
+
 #endif

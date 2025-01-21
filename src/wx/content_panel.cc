@@ -865,6 +865,8 @@ ContentPanel::select_all ()
 void
 ContentPanel::film_content_changed (int property)
 {
+	PeriodTimer timer("ContentPanel::film_content_changed");
+
 	if (
 		property == ContentProperty::PATH ||
 		property == DCPContentProperty::NEEDS_ASSETS ||

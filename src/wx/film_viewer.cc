@@ -405,6 +405,7 @@ FilmViewer::start ()
 	start_audio_stream_if_open ();
 
 	_playing = true;
+	_butler->enable_lookahead();
 	/* Calling start() below may directly result in Stopped being emitted, and if that
 	 * happens we want it to come after the Started signal, so do that first.
 	 */
@@ -423,6 +424,7 @@ FilmViewer::stop ()
 	}
 
 	_playing = false;
+	_butler->disable_lookahead();
 	_video_view->stop ();
 	Stopped ();
 
@@ -451,6 +453,7 @@ void
 FilmViewer::player_change (vector<int> properties)
 {
 	calculate_sizes ();
+	PeriodTimer timer("FV player_change");
 
 	bool try_quick_refresh = false;
 	bool update_ccap_tracks = false;
@@ -484,9 +487,11 @@ FilmViewer::player_change (vector<int> properties)
 }
 
 
+
 void
 FilmViewer::film_change(ChangeType type, FilmProperty p)
 {
+	PeriodTimer timer("FV film_change");
 	if (type != ChangeType::DONE) {
 		return;
 	}
@@ -506,6 +511,7 @@ FilmViewer::film_change(ChangeType type, FilmProperty p)
 void
 FilmViewer::film_length_change ()
 {
+	PeriodTimer timer("FV film_length_change");
 	_video_view->set_length (_film->length());
 }
 
@@ -514,6 +520,7 @@ FilmViewer::film_length_change ()
 void
 FilmViewer::slow_refresh ()
 {
+	PeriodTimer timer("FV slow refresh\n");
 	seek (_video_view->position(), true);
 }
 

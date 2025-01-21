@@ -61,6 +61,8 @@ VideoView::clear ()
 VideoView::NextFrameResult
 VideoView::get_next_frame (bool non_blocking)
 {
+	PeriodTimer timer("get_next_frame");
+
 	if (length() == dcpomatic::DCPTime()) {
 		return FAIL;
 	}

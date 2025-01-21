@@ -255,6 +255,8 @@ have_audio (shared_ptr<const Content> content)
 void
 Player::setup_pieces ()
 {
+	std::cout << "setup pieces.\n";
+
 	boost::mutex::scoped_lock lm (_mutex);
 
 	auto old_pieces = _pieces;
@@ -416,6 +418,10 @@ Player::setup_pieces ()
 void
 Player::playlist_content_change (ChangeType type, int property, bool frequent)
 {
+	if (frequent) {
+		return;
+	}
+
 	auto film = _film.lock();
 	if (!film) {
 		return;

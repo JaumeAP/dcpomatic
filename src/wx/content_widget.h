@@ -211,9 +211,9 @@ private:
 
 	void model_changed (ChangeType type, int property)
 	{
-		if (type == ChangeType::DONE && property == _property && !_ignore_model_changes) {
-			update_from_model ();
-		}
+		// if (type == ChangeType::DONE && property == _property && !_ignore_model_changes) {
+		// 	update_from_model ();
+		// }
 	}
 
 	T* _wrapped;
