@@ -55,7 +55,7 @@ msgstr "Не удалось запустить %s."
 
 #: src/tools/dcpomatic_batch.cc:89
 msgid "&Add Film...\tCtrl-A"
-msgstr "&Добавить проект...\tCtrl-A"
+msgstr "&Добавить проект..."
 
 #: src/tools/dcpomatic_player.cc:602
 msgid "&Add OV..."
@@ -67,7 +67,7 @@ msgstr "&Закрыть"
 
 #: src/tools/dcpomatic.cc:1354
 msgid "&Close\tCtrl-W"
-msgstr "&Закрыть\tCtrl-W"
+msgstr "&Закрыть"
 
 #: src/tools/dcpomatic_batch.cc:111 src/tools/dcpomatic.cc:1439
 #: src/tools/dcpomatic_kdm.cc:332 src/tools/dcpomatic_player.cc:665
@@ -100,24 +100,24 @@ msgstr "&Задачи"
 
 #: src/tools/dcpomatic.cc:1385
 msgid "&Make DCP\tCtrl-M"
-msgstr "&Создать DCP\tCtrl-M"
+msgstr "&Создать DCP"
 
 #: src/tools/dcpomatic.cc:1341 src/tools/dcpomatic_editor.cc:355
 #: src/tools/dcpomatic_player.cc:601
 msgid "&Open...\tCtrl-O"
-msgstr "&Открыть...\tCtrl-O"
+msgstr "&Открыть..."
 
 #: src/tools/dcpomatic_batch.cc:97 src/tools/dcpomatic.cc:1376
 #: src/tools/dcpomatic_kdm.cc:314 src/tools/dcpomatic_player.cc:620
 #: src/tools/dcpomatic_playlist.cc:577
 msgid "&Preferences...\tCtrl-,"
-msgstr "&Настройки...\tCtrl-,"
+msgstr "&Настройки..."
 
 #: src/tools/dcpomatic_batch.cc:100 src/tools/dcpomatic.cc:1380
 #: src/tools/dcpomatic_kdm.cc:317 src/tools/dcpomatic_player.cc:623
 #: src/tools/dcpomatic_playlist.cc:588
 msgid "&Preferences...\tCtrl-P"
-msgstr "&Настройки...\tCtrl-P"
+msgstr "&Настройки..."
 
 #: src/tools/dcpomatic_batch.cc:93 src/tools/dcpomatic.cc:1363
 #: src/tools/dcpomatic_editor.cc:362 src/tools/dcpomatic_kdm.cc:310
@@ -127,11 +127,11 @@ msgstr "&Выход"
 
 #: src/tools/dcpomatic.cc:1344 src/tools/dcpomatic_editor.cc:357
 msgid "&Save\tCtrl-S"
-msgstr "&Сохранить\tCtrl-S"
+msgstr "&Сохранить"
 
 #: src/tools/dcpomatic_player.cc:605
 msgid "&Save frame to file...\tCtrl-S"
-msgstr "&Сохранить кард фильма в файл…\tCtrl-E"
+msgstr "&Сохранить кард фильма в файл…"
 
 #: src/tools/dcpomatic.cc:1399
 msgid "&Send DCP to TMS"
@@ -327,7 +327,7 @@ msgstr "Скопировать DCPs"
 
 #: src/tools/dcpomatic.cc:1368
 msgid "Copy settings\tCtrl-C"
-msgstr "Копировать настройки\tCtrl-C"
+msgstr "Копировать настройки"
 
 #: src/tools/dcpomatic.cc:576 src/tools/dcpomatic.cc:585
 msgid "Could not create folder to store film."
@@ -584,7 +584,7 @@ msgstr "Диск"
 
 #: src/tools/dcpomatic_player.cc:635
 msgid "Dual screen\tShift+F11"
-msgstr "Двойной экран\tShift+F11"
+msgstr "Двойной экран"
 
 #: src/tools/dcpomatic.cc:641 src/tools/dcpomatic.cc:657
 msgid "Duplicate Film"
@@ -632,7 +632,7 @@ msgstr "Экспортировать субтитры..."
 
 #: src/tools/dcpomatic.cc:1396
 msgid "Export video file...\tCtrl-E"
-msgstr "Экспортировать видеофайл...\tCtrl-E"
+msgstr "Экспортировать видеофайл..."
 
 #: src/tools/dcpomatic_kdm.cc:220
 msgid "Export..."
@@ -664,7 +664,7 @@ msgstr "Кадров в секунду"
 
 #: src/tools/dcpomatic_player.cc:634
 msgid "Full screen\tF11"
-msgstr "Полный экран\tF11"
+msgstr "Полный экран"
 
 #: src/tools/dcpomatic.cc:1417
 msgid "Hints..."
@@ -712,11 +712,11 @@ msgstr "Загрузка контента"
 
 #: src/tools/dcpomatic.cc:1392
 msgid "Make &DKDMs...\tCtrl-D"
-msgstr "Создать &DKDM...\tCtrl-D"
+msgstr "Создать &DKDM..."
 
 #: src/tools/dcpomatic.cc:1390
 msgid "Make &KDMs...\tCtrl-K"
-msgstr "Создать &KDM...\tCtrl-K"
+msgstr "Создать &KDM..."
 
 #: src/tools/dcpomatic.cc:1387
 msgid "Make DCP in &batch converter\tCtrl-B"
@@ -750,7 +750,7 @@ msgstr "Новый плейлист"
 
 #: src/tools/dcpomatic.cc:1339
 msgid "New...\tCtrl-N"
-msgstr "Новый...\tCtrl-N"
+msgstr "Новый..."
 
 #: src/tools/dcpomatic_disk.cc:92
 msgid ""
@@ -786,7 +786,7 @@ msgstr "Вывод DCP папки"
 
 #: src/tools/dcpomatic.cc:1370
 msgid "Paste settings...\tCtrl-V"
-msgstr "Вставить настройки…\tCtrl-V"
+msgstr "Вставить настройки…"
 
 #: src/tools/dcpomatic_batch.cc:179
 msgid "Pause or resume conversion"
@@ -922,7 +922,7 @@ msgstr "Выберите KDM-файл"
 
 #: src/tools/dcpomatic.cc:1373
 msgid "Select all\tShift-Ctrl-A"
-msgstr "Выделить всё\tShift-Ctrl-A"
+msgstr "Выделить всё"
 
 #: src/tools/dcpomatic_batch.cc:335 src/tools/dcpomatic.cc:594
 msgid "Select film to open"
