@@ -26,6 +26,7 @@
 #include "dcpomatic_time.h"
 #include "player_video.h"
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/thread.hpp>
 #include <utility>
 
 
@@ -36,7 +37,7 @@ class PlayerVideo;
 class VideoRingBuffers
 {
 public:
-	VideoRingBuffers () {}
+	VideoRingBuffers() = default;
 
 	VideoRingBuffers (VideoRingBuffers const&) = delete;
 	VideoRingBuffers& operator= (VideoRingBuffers const&) = delete;
@@ -53,6 +54,8 @@ public:
 	std::pair<size_t, std::string> memory_used () const;
 
 private:
+	void prepare_thread();
+
 	mutable boost::mutex _mutex;
 	std::list<std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime>> _data;
 };

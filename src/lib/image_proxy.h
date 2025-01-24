@@ -48,6 +48,10 @@ namespace cxml {
 	class Node;
 }
 
+namespace dcp {
+	class Cancel;
+}
+
 
 /** @class ImageProxy
  *  @brief A class which holds an Image, and can produce it on request.
@@ -109,7 +113,7 @@ public:
 	 *  This method may be called in a different thread to image().
 	 *  @return log2 of any scaling down that will be applied to the image.
 	 */
-	virtual int prepare (Image::Alignment, boost::optional<dcp::Size> = boost::optional<dcp::Size>()) const { return 0; }
+	virtual int prepare(Image::Alignment, boost::optional<dcp::Size> = boost::optional<dcp::Size>(), std::shared_ptr<dcp::Cancel> = {}) const { return 0; }
 	virtual size_t memory_used () const = 0;
 };
 

@@ -65,7 +65,7 @@ public:
 	void write_to_socket (std::shared_ptr<Socket> override) const override;
 	/** @return true if our image is definitely the same as another, false if it is probably not */
 	bool same (std::shared_ptr<const ImageProxy>) const override;
-	int prepare (Image::Alignment alignment, boost::optional<dcp::Size> = boost::optional<dcp::Size>()) const override;
+	int prepare(Image::Alignment alignment, boost::optional<dcp::Size> = boost::optional<dcp::Size>(), std::shared_ptr<dcp::Cancel> cancel = {}) const override;
 
 	std::shared_ptr<const dcp::Data> j2k () const {
 		return _data;

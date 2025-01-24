@@ -311,9 +311,9 @@ PlayerVideo::keep_xyz_or_rgb (AVPixelFormat p)
 
 
 void
-PlayerVideo::prepare (function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, Image::Alignment alignment, bool fast, bool proxy_only)
+PlayerVideo::prepare(function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, Image::Alignment alignment, bool fast, bool proxy_only, shared_ptr<dcp::Cancel> cancel)
 {
-	_in->prepare (alignment, _inter_size);
+	_in->prepare(alignment, _inter_size, cancel);
 	boost::mutex::scoped_lock lm (_mutex);
 	if (!_image && !proxy_only) {
 		make_image (pixel_format, video_range, fast);

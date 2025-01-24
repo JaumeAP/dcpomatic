@@ -30,6 +30,7 @@
 #include "text_ring_buffers.h"
 #include "text_type.h"
 #include "video_ring_buffers.h"
+#include <dcp/j2k_transcode.h>
 #include <boost/asio.hpp>
 #include <boost/signals2.hpp>
 #include <boost/thread.hpp>
@@ -104,6 +105,7 @@ private:
 	void prepare (std::weak_ptr<PlayerVideo> video);
 	void player_change (ChangeType type, int property);
 	void seek_unlocked (dcpomatic::DCPTime position, bool accurate);
+	void prepare_thread();
 
 	std::weak_ptr<const Film> _film;
 	Player& _player;
@@ -151,6 +153,17 @@ private:
 	    seeking to.
 	*/
 	boost::optional<dcpomatic::DCPTime> _awaiting;
+
+	mutable boost::mutex _prepare_queue_mutex;
+	mutable boost::condition _prepare_queue_filled;
+	enum class PrepareState {
+		WAIT,
+		FIRST,
+		RUN
+	} _prepare_state = PrepareState::WAIT;
+	std::list<std::shared_ptr<PlayerVideo>> _prepare_queue;
+	boost::thread_group _prepare_threads;
+	std::shared_ptr<dcp::OpenJPEGCancel> _cancel;
 
 	boost::signals2::scoped_connection _player_video_connection;
 	boost::signals2::scoped_connection _player_audio_connection;

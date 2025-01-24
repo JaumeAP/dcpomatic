@@ -26,13 +26,17 @@
 #include "exceptions.h"
 #include "log.h"
 #include "player.h"
+#include "timer.h"
 #include "util.h"
 #include "video_content.h"
+#include <dcp/j2k_transcode.h>
+#include <iomanip>
 
 
 using std::cout;
 using std::function;
 using std::make_pair;
+using std::make_shared;
 using std::pair;
 using std::shared_ptr;
 using std::string;
@@ -88,6 +92,7 @@ Butler::Butler (
 	, _alignment (alignment)
 	, _fast (fast)
 	, _prepare_only_proxy (prepare_only_proxy)
+	, _cancel(make_shared<dcp::OpenJPEGCancel>())
 {
 	_player_video_connection = _player.Video.connect(bind(&Butler::video, this, _1, _2));
 	_player_audio_connection = _player.Audio.connect(bind(&Butler::audio, this, _1, _2, _3));
@@ -107,8 +112,12 @@ Butler::Butler (
 
 	LOG_TIMING("start-prepare-threads %1", boost::thread::hardware_concurrency() * 2);
 
-	for (size_t i = 0; i < boost::thread::hardware_concurrency() * 2; ++i) {
-		_prepare_pool.create_thread (bind (&boost::asio::io_service::run, &_prepare_service));
+	// for (size_t i = 0; i < boost::thread::hardware_concurrency() * 2; ++i) {
+	// 	_prepare_pool.create_thread (bind (&boost::asio::io_service::run, &_prepare_service));
+	// }
+
+	for (size_t i = 0; i < boost::thread::hardware_concurrency(); ++i) {
+		_prepare_threads.create_thread(bind(&Butler::prepare_thread, this));
 	}
 }
 
@@ -122,9 +131,13 @@ Butler::~Butler ()
 		_stop_thread = true;
 	}
 
-	_prepare_work.reset ();
-	_prepare_pool.join_all ();
-	_prepare_service.stop ();
+	_cancel->cancel();
+	// _prepare_work.reset ();
+	// _prepare_pool.join_all ();
+	// _prepare_service.stop ();
+
+	_prepare_threads.interrupt_all();
+	_prepare_threads.join_all();
 
 	_thread.interrupt ();
 	try {
@@ -306,9 +319,53 @@ Butler::seek_unlocked (DCPTime position, bool accurate)
 		return;
 	}
 
+	{
+		// std::cout << ">=== seek\n";
+		// StateTimer timer("seek", "stop");
+		// _cancel->cancel();
+		// timer.set("reset ");
+		// _prepare_service.stop();
+		// _prepare_work.reset ();
+		// timer.set("interrupt");
+		// _prepare_pool.interrupt_all();
+		// timer.set("join");
+		// _prepare_pool.join_all();
+		// timer.set("rebuild");
+		// _stopper->reset();
+		// _prepare_work.reset(new boost::asio::io_service::work(_prepare_service));
+		// _prepare_service.reset();
+		// for (size_t i = 0; i < boost::thread::hardware_concurrency() * 2; ++i) {
+		// 	_prepare_pool.create_thread (bind (&boost::asio::io_service::run, &_prepare_service));
+		// }
+		// std::cout << "<=== seek\n";
+	}
+
+	std::cout << "===> seek\n";
+	StateTimer* timer = new StateTimer("stop", "setup");
+
 	_finished = false;
 	_pending_seek_position = position;
 	_pending_seek_accurate = accurate;
+
+	_cancel->cancel();
+	{
+		boost::mutex::scoped_lock lm(_prepare_queue_mutex);
+		_prepare_queue.clear();
+	}
+	timer->set("interrupt+join");
+	_prepare_threads.interrupt_all();
+	_prepare_threads.join_all();
+	timer->set("remake");
+	_cancel->reset();
+	{
+		boost::mutex::scoped_lock lm(_prepare_queue_mutex);
+		_prepare_state = PrepareState::WAIT;
+	}
+	std::cout << "create " << boost::thread::hardware_concurrency() << "\n";
+	for (size_t i = 0; i < boost::thread::hardware_concurrency(); ++i) {
+		_prepare_threads.create_thread(bind(&Butler::prepare_thread, this));
+	}
+	delete timer;
 
 	_video.clear ();
 	_audio.clear ();
@@ -326,7 +383,9 @@ try
 	/* If the weak_ptr cannot be locked the video obviously no longer requires any work */
 	if (video) {
 		LOG_TIMING("start-prepare in %1", thread_id());
-		video->prepare (_pixel_format, _video_range, _alignment, _fast, _prepare_only_proxy);
+		// std::cout << "->prep\n";
+		video->prepare(_pixel_format, _video_range, _alignment, _fast, _prepare_only_proxy, _cancel);
+		// std::cout << "<-prep\n";
 		LOG_TIMING("finish-prepare in %1", thread_id());
 	}
 }
@@ -348,16 +407,35 @@ catch (...)
 void
 Butler::video (shared_ptr<PlayerVideo> video, DCPTime time)
 {
-	boost::mutex::scoped_lock lm (_mutex);
+	{
+		boost::mutex::scoped_lock lm (_mutex);
 
-	if (_pending_seek_position) {
-		/* Don't store any video in this case */
-		return;
+		if (_pending_seek_position) {
+			/* Don't store any video in this case */
+			return;
+		}
+
+	// if (_video.size()) {
+	// 	_stopper->reset();
+	// 	_prepare_work.reset(new boost::asio::io_service::work(_prepare_service));
+	// 	_prepare_service.reset();
+	// 	for (size_t i = 0; i < boost::thread::hardware_concurrency() * 2; ++i) {
+	// 		_prepare_pool.create_thread (bind (&boost::asio::io_service::run, &_prepare_service));
+	// 	}
+	// 	_prepare_service.post (bind(&Butler::prepare, this, weak_ptr<PlayerVideo>(video)));
+	// }
+
+		_video.put (video, time);
 	}
 
-	_prepare_service.post (bind(&Butler::prepare, this, weak_ptr<PlayerVideo>(video)));
-
-	_video.put (video, time);
+	{
+		boost::mutex::scoped_lock lm(_prepare_queue_mutex);
+		struct timeval tv;
+		gettimeofday(&tv, 0);
+		_prepare_queue.push_back(video);
+		std::cout << "prep push " << _prepare_queue.size() << "\n";
+		_prepare_queue_filled.notify_one();
+	}
 }
 
 
@@ -480,4 +558,46 @@ Butler::Error::summary () const
 
 	return "";
 }
+
+void
+Butler::prepare_thread()
+{
+	while (true) {
+		try {
+			boost::mutex::scoped_lock lm(_prepare_queue_mutex);
+			while (_prepare_queue.empty() || _prepare_state == PrepareState::FIRST) {
+				std::cout << "sleep with " << _prepare_queue.size() << "\n";
+				_prepare_queue_filled.wait(lm);
+				std::cout << "wake\n";
+			}
+
+			auto frame = _prepare_queue.front();
+			_prepare_queue.pop_front();
+
+			if (_prepare_state == PrepareState::WAIT) {
+				std::cout << "doing 1st of " << _prepare_queue.size() << "\n";
+				_prepare_state = PrepareState::FIRST;
+			}
+
+			lm.unlock();
+
+			struct timeval tv;
+			gettimeofday(&tv, 0);
+			std::cout << "prep\n";
+			frame->prepare(_pixel_format, _video_range, _alignment, _fast, _prepare_only_proxy, _cancel);
+
+			lm.lock();
+			if (_prepare_state == PrepareState::FIRST) {
+				std::cout << "done 1st of " << _prepare_queue.size() << "\n";
+				_prepare_state = PrepareState::RUN;
+				_prepare_queue_filled.notify_all();
+			}
+		} catch (boost::thread_interrupted&) {
+			return;
+		} catch (dcp::Cancelled&) {
+			return;
+		}
+	}
+}
+
 

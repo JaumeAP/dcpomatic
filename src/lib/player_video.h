@@ -40,6 +40,10 @@ class ImageProxy;
 class Film;
 class Socket;
 
+namespace dcp {
+	class Cancel;
+}
+
 
 /** Everything needed to describe a video frame coming out of the player, but with the
  *  bits still their raw form.  We may want to combine the bits on a remote machine,
@@ -75,7 +79,7 @@ public:
 		return _text;
 	}
 
-	void prepare (std::function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, Image::Alignment alignment, bool fast, bool proxy_only);
+	void prepare(std::function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, Image::Alignment alignment, bool fast, bool proxy_only, std::shared_ptr<dcp::Cancel> = {});
 	std::shared_ptr<Image> image (std::function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, bool fast) const;
 	std::shared_ptr<const Image> raw_image () const;
 

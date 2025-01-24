@@ -117,7 +117,7 @@ J2KImageProxy::J2KImageProxy (shared_ptr<cxml::Node> xml, shared_ptr<Socket> soc
 
 
 int
-J2KImageProxy::prepare (Image::Alignment alignment, optional<dcp::Size> target_size) const
+J2KImageProxy::prepare(Image::Alignment alignment, optional<dcp::Size> target_size, shared_ptr<dcp::Cancel> cancel) const
 {
 	boost::mutex::scoped_lock lm (_mutex);
 
@@ -141,7 +141,9 @@ J2KImageProxy::prepare (Image::Alignment alignment, optional<dcp::Size> target_s
 
 	try {
 		/* XXX: should check that potentially trashing _data here doesn't matter */
-		auto decompressed = dcp::decompress_j2k (const_cast<uint8_t*>(_data->data()), _data->size(), reduce);
+		auto j2k_cancel = dynamic_pointer_cast<dcp::OpenJPEGCancel>(cancel);
+		shared_ptr<dcp::OpenJPEGImage> decompressed;
+		decompressed = dcp::decompress_j2k(const_cast<uint8_t*>(_data->data()), _data->size(), reduce, j2k_cancel);
 		_image = make_shared<Image>(_pixel_format, decompressed->size(), alignment);
 
 		int const shift = 16 - decompressed->precision (0);
