@@ -80,6 +80,7 @@ def options(opt):
     opt.add_option('--disable-more-warnings', action='store_true', default=False, help='disable some warnings raised by Xcode 15 with the 2.16 branch')
     opt.add_option('--c++17', action='store_true', default=False, help='build with C++17 and libxml++-4.0')
     opt.add_option('--variant', help="build with variant")
+    opt.add_option('--enable-cucumber', action='store_true', default=False, help="build with support for running cucumber tests (also builds with c++14)")
 
 def configure(conf):
     conf.load('compiler_cxx')
@@ -93,7 +94,10 @@ def configure(conf):
         conf.env.PANGOMM_API = '2.48'
         conf.env.CAIROMM_API = '1.16'
     else:
-        cpp_std = '11'
+        if conf.options.enable_cucumber:
+            cpp_std = '14'
+        else:
+            cpp_std = '11'
         conf.env.XMLPP_API = '2.6'
         conf.env.PANGOMM_API = '1.4'
         conf.env.CAIROMM_API = '1.0'
@@ -115,6 +119,7 @@ def configure(conf):
     else:
         conf.env.INSTALL_PREFIX = conf.options.destdir
     conf.env.VARIANT = conf.options.variant if conf.options.variant else "dcpomatic"
+    conf.env.ENABLE_CUCUMBER = conf.options.enable_cucumber
 
     conf.check_cxx(cxxflags=['-msse', '-mfpmath=sse'], msg='Checking for SSE support', mandatory=False, define_name='SSE')
 
