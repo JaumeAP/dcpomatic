@@ -881,6 +881,36 @@ ContentPanel::film_content_changed (int property)
 }
 
 
+static
+wxString
+text_for_content(shared_ptr<Content> content, bool& alert)
+{
+	bool const valid = content->paths_valid();
+
+	auto dcp = dynamic_pointer_cast<DCPContent>(content);
+	bool const needs_kdm = dcp && dcp->needs_kdm();
+	bool const needs_assets = dcp && dcp->needs_assets();
+
+	auto s = std_to_wx(content->summary());
+
+	if (!valid) {
+		s = _("MISSING: ") + s;
+	}
+
+	if (needs_kdm) {
+		s = _("NEEDS KDM: ") + s;
+	}
+
+	if (needs_assets) {
+		s = _("NEEDS OV: ") + s;
+	}
+
+	alert = !valid || needs_kdm || needs_assets;
+
+	return s;
+}
+
+
 void
 ContentPanel::setup ()
 {
@@ -896,27 +926,9 @@ ContentPanel::setup ()
 	vector<ContentListCtrl::Item> items;
 
 	for (auto i: content) {
-		bool const valid = i->paths_valid ();
-
-		auto dcp = dynamic_pointer_cast<DCPContent> (i);
-		bool const needs_kdm = dcp && dcp->needs_kdm ();
-		bool const needs_assets = dcp && dcp->needs_assets ();
-
-		auto s = std_to_wx (i->summary ());
-
-		if (!valid) {
-			s = _("MISSING: ") + s;
-		}
-
-		if (needs_kdm) {
-			s = _("NEEDS KDM: ") + s;
-		}
-
-		if (needs_assets) {
-			s = _("NEEDS OV: ") + s;
-		}
-
-		items.push_back({s, i, !valid || needs_kdm || needs_assets});
+		bool alert = false;
+		wxString const s = text_for_content(i, alert);
+		items.push_back({s, i, alert});
 	}
 
 	_content->set(items);
