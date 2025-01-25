@@ -108,7 +108,7 @@ class DOMFrame : public wxFrame
 public:
 	explicit DOMFrame (wxString const & title)
 		: wxFrame (nullptr, wxID_ANY, title)
-		, _nanomsg (true)
+		, _nanomsg(true, "disk")
 		, _sizer (new wxBoxSizer(wxVERTICAL))
 	{
 #ifdef DCPOMATIC_OSX

@@ -27,7 +27,7 @@
 class Nanomsg
 {
 public:
-	explicit Nanomsg (bool server);
+	Nanomsg(bool server, std::string prefix);
 	~Nanomsg ();
 
 	Nanomsg (Nanomsg const&) = delete;

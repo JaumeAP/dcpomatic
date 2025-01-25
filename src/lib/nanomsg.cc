@@ -33,21 +33,22 @@ using std::string;
 using boost::optional;
 
 
-#define NANOMSG_URL "ipc:///tmp/dcpomatic.ipc"
+char constexpr URL_PREFIX[] = "ipc:///tmp/dcpomatic_";
 
 
-Nanomsg::Nanomsg (bool server)
+Nanomsg::Nanomsg(bool server, string id)
 {
 	_socket = nn_socket (AF_SP, NN_PAIR);
 	if (_socket < 0) {
 		throw runtime_error("Could not set up nanomsg socket");
 	}
+	string const url = URL_PREFIX + id;
 	if (server) {
-		if ((_endpoint = nn_bind(_socket, NANOMSG_URL)) < 0) {
+		if ((_endpoint = nn_bind(_socket, url.c_str())) < 0) {
 			throw runtime_error(String::compose("Could not bind nanomsg socket (%1)", errno));
 		}
 	} else {
-		if ((_endpoint = nn_connect(_socket, NANOMSG_URL)) < 0) {
+		if ((_endpoint = nn_connect(_socket, url.c_str())) < 0) {
 			throw runtime_error(String::compose("Could not connect nanomsg socket (%1)", errno));
 		}
 	}
