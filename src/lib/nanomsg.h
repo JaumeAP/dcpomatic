@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_NANOMSG_H
+#define DCPOMATIC_NANOMSG_H
+
+
 #include <string>
 #include <list>
 #include <boost/optional.hpp>
@@ -54,4 +58,7 @@ private:
 	std::list<std::string> _pending;
 	std::string _current;
 };
+
+
+#endif
 

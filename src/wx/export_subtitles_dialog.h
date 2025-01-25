@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_EXPORT_SUBTITLES_DIALOG_H
+#define DCPOMATIC_EXPORT_SUBTITLES_DIALOG_H
+
+
 #include "dir_picker_ctrl.h"
 #include "table_dialog.h"
 #include <dcp/warnings.h>
@@ -52,3 +56,7 @@ private:
 	DirPickerCtrl* _dir;
 	wxStaticText* _dir_label;
 };
+
+
+#endif
+

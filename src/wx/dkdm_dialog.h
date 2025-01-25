@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_DKDM_DIALOG_H
+#define DCPOMATIC_DKDM_DIALOG_H
+
+
 #include "wx_util.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -53,3 +57,7 @@ private:
 	DKDMOutputPanel* _output;
 	wxButton* _make;
 };
+
+
+#endif
+

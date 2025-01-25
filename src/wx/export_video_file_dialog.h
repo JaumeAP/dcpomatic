@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_EXPORT_VIDEO_FILE_DIALOG
+#define DCPOMATIC_EXPORT_VIDEO_FILE_DIALOG
+
+
 #include "table_dialog.h"
 #include "lib/ffmpeg_file_encoder.h"
 #include <dcp/warnings.h>
@@ -60,3 +64,7 @@ private:
 	wxStaticText* _x264_crf_label[2];
 	FilePickerCtrl* _file;
 };
+
+
+#endif
+
