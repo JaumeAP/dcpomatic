@@ -189,3 +189,18 @@ FilmEditor::first_shown ()
 	_content_panel->first_shown ();
 }
 
+
+#ifdef DCPOMATIC_CUCUMBER
+void
+FilmEditor::cucumber_add_content_file(string filename)
+{
+	_content_panel->cucumber_add_content_file(filename);
+}
+
+
+string
+FilmEditor::cucumber_get_content_list()
+{
+	return _content_panel->cucumber_get_content_list();
+}
+#endif

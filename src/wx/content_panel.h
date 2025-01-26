@@ -96,6 +96,11 @@ public:
 	void add_dcp(boost::filesystem::path dcp);
 	void add_folder(boost::filesystem::path folder);
 
+#ifdef DCPOMATIC_CUCUMBER
+	void cucumber_add_content_file(std::string filename);
+	std::string cucumber_get_content_list();
+#endif
+
 	boost::signals2::signal<void (void)> SelectionChanged;
 
 private:

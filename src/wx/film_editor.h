@@ -65,6 +65,12 @@ public:
 
 private:
 
+#ifdef DCPOMATIC_CUCUMBER
+	friend class DOMFrame;
+	void cucumber_add_content_file(std::string filename);
+	std::string cucumber_get_content_list();
+#endif
+
 	/* Handle changes to the model */
 	void film_change(ChangeType, FilmProperty);
 	void film_content_change (ChangeType type, int);

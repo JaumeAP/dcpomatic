@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2012-2021 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2012-2022 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -26,6 +26,10 @@
 
 #include "wx/about_dialog.h"
 #include "wx/content_panel.h"
+#ifdef DCPOMATIC_CUCUMBER
+#include "wx/cucumber_bridge.h"
+#include "wx/cucumber_registry.h"
+#endif
 #include "wx/dcp_referencing_dialog.h"
 #include "wx/dkdm_dialog.h"
 #include "wx/export_subtitles_dialog.h"
@@ -529,6 +533,17 @@ public:
 	shared_ptr<Film> film () const {
 		return _film;
 	}
+
+#ifdef DCPOMATIC_CUCUMBER
+	void cucumber_add_content_file(string filename) {
+		_film_editor->cucumber_add_content_file(filename);
+	}
+
+	/* Could be called from any thread */
+	std::string cucumber_get_content_list() {
+		return _film_editor->cucumber_get_content_list();
+	}
+#endif
 
 private:
 
@@ -1604,7 +1619,10 @@ static const wxCmdLineEntryDesc command_line_description[] = {
 	{ wxCMD_LINE_SWITCH, "n", "new", "create new film", wxCMD_LINE_VAL_NONE, wxCMD_LINE_PARAM_OPTIONAL },
 	{ wxCMD_LINE_OPTION, "c", "content", "add content file / directory", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
 	{ wxCMD_LINE_OPTION, "d", "dcp", "add content DCP", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
-	{ wxCMD_LINE_SWITCH, "v", "version", "show version", wxCMD_LINE_VAL_NONE, wxCMD_LINE_PARAM_OPTIONAL },
+	{ wxCMD_LINE_SWITCH, "v", "version", "show DCP-o-matic version", wxCMD_LINE_VAL_NONE, wxCMD_LINE_PARAM_OPTIONAL },
+#ifdef DCPOMATIC_CUCUMBER
+	{ wxCMD_LINE_SWITCH, "t", "cucumber", "enable cucumber tests", wxCMD_LINE_VAL_NONE, wxCMD_LINE_PARAM_OPTIONAL },
+#endif
 	{ wxCMD_LINE_OPTION, "", "config", "directory containing config.xml and cinemas.xml", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
 	{ wxCMD_LINE_PARAM, 0, 0, "film to load or create", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
 	{ wxCMD_LINE_NONE, "", "", "", wxCmdLineParamType (0), 0 }
@@ -1760,6 +1778,12 @@ private:
 			grk_plugin::setMessengerLogger(new grk_plugin::GrokLogger("[GROK] "));
 			setup_grok_library_path();
 #endif
+
+#ifdef DCPOMATIC_CUCUMBER
+			if (_cucumber_bridge) {
+				_cucumber_bridge->start();
+			}
+#endif
 		}
 		catch (exception& e)
 		{
@@ -1806,8 +1830,66 @@ private:
 			State::override_path = wx_to_std (config);
 		}
 
+#ifdef DCPOMATIC_CUCUMBER
+		if (parser.Found(wxT("cucumber"))) {
+			_cucumber_bridge = new CucumberBridge();
+			_cucumber_bridge->ClickRegisteredButton.connect(bind(&App::cucumber_click_registered_button, this, _1));
+			_cucumber_bridge->ClickButtonId.connect(bind(&App::cucumber_click_button_id, this, _1));
+			_cucumber_bridge->SelectMenu.connect(bind(&App::cucumber_select_menu, this, _1));
+			_cucumber_bridge->Type.connect(bind(&App::cucumber_type, this, _1));
+			_cucumber_bridge->AddContentFile.connect(bind(&App::cucumber_add_content_file, this, _1));
+			_cucumber_bridge->GetContentList.connect(bind(&App::cucumber_get_content_list, this));
+		}
+#endif
+
 		return true;
 	}
+
+
+#ifdef DCPOMATIC_CUCUMBER
+	void cucumber_add_content_file(string filename)
+	{
+		_frame->cucumber_add_content_file(filename);
+	}
+
+
+	std::string cucumber_get_content_list()
+	{
+		return _frame->cucumber_get_content_list();
+	}
+
+
+	void cucumber_click_registered_button(string id)
+	{
+		CucumberRegistry::instance()->click_button(id);
+	}
+
+	void cucumber_click_button_id(wxStandardID id)
+	{
+		wxCommandEvent event(wxEVT_BUTTON, id);
+		if (auto focus = wxWindow::FindFocus()) {
+			if (auto dialog = focus->GetParent()) {
+				event.SetEventObject(dialog);
+				dialog->HandleWindowEvent(event);
+			}
+		}
+	}
+
+	void cucumber_select_menu(string id)
+	{
+		if (id == CUCUMBER_MENU_FILE_NEW) {
+			wxPostEvent(_frame, wxMenuEvent(wxEVT_MENU, ID_file_new));
+		}
+	}
+
+
+	void cucumber_type(string text)
+	{
+		if (auto ctrl = dynamic_cast<wxTextCtrl*>(wxWindow::FindFocus())) {
+			ctrl->SetValue(std_to_wx(text));
+		}
+	}
+#endif
 
 	void report_exception ()
 	{
@@ -2003,6 +2085,9 @@ private:
 	string _film_to_create;
 	string _content_to_add;
 	string _dcp_to_add;
+#ifdef DCPOMATIC_CUCUMBER
+	CucumberBridge* _cucumber_bridge = nullptr;
+#endif
 };
 
 

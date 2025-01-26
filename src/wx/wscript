@@ -333,7 +333,7 @@ def build(bld):
 
     obj.name   = 'libdcpomatic2-wx'
     obj.export_includes = ['..']
-    obj.uselib = 'BOOST_FILESYSTEM BOOST_THREAD BOOST_REGEX WXWIDGETS DCP SUB ZIP CXML RTAUDIO ICU AVUTIL '
+    obj.uselib = 'BOOST_FILESYSTEM BOOST_THREAD BOOST_REGEX WXWIDGETS DCP SUB ZIP CXML RTAUDIO ICU AVUTIL NANOMSG'
     if bld.env.TARGET_LINUX:
         obj.uselib += 'GTK GL GLU '
     if bld.env.TARGET_WINDOWS_64 or bld.env.TARGET_WINDOWS_32:
@@ -341,6 +341,10 @@ def build(bld):
     if bld.env.TARGET_OSX:
         obj.framework = ['CoreAudio', 'OpenGL']
     obj.use = 'libdcpomatic2'
+
+    global sources
+    if bld.env.ENABLE_CUCUMBER:
+        sources += " cucumber_bridge.cc cucumber_registry.cc"
     obj.source = sources
     obj.target = 'dcpomatic2-wx'
 

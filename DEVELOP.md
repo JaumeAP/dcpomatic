@@ -125,3 +125,32 @@ Files to edit:
 - `platform/osx/make_dmg.sh`
 - `platform/windows/wscript`
 - `platform/osx/wscript`
+
+
+## Cucumber
+
+To run the cucumber tests you will need to build cucumber-cpp:
+
+git clone https://github.com/cucumber/cucumber-cpp.git
+cd cucumber-cpp
+cmake .
+make
+sudo make install
+
+It may give warnings about not finding Qt but you can ignore them
+(Qt is not required).
+
+You then need three processes:
+
+`run/cucumber_server`
+
+Runs dcpomatic_cucumber (built from step_defintions/dcpomatic.cc):
+a means to ask a running DCP-o-matic to do something.
+
+`dcpomatic2 --cucumber`
+
+A DCP-o-matic instance that is listening for dcpomatic_cucumber to send something.
+
+`cucumber .`
+
+The ruby program that performs the steps in the tests.

@@ -260,13 +260,17 @@ def build(bld):
     obj.source = sources + ' version.cc'
 
     if bld.env.ENABLE_DISK:
-        obj.source += ' copy_to_drive_job.cc disk_writer_messages.cc ext.cc nanomsg.cc'
-        obj.uselib += ' LWEXT4 NANOMSG'
+        obj.source += ' copy_to_drive_job.cc disk_writer_messages.cc ext.cc'
+        obj.uselib += ' LWEXT4'
         if bld.env.TARGET_LINUX:
             obj.uselib += ' POLKIT'
 
     if bld.env.ENABLE_GROK:
         obj.source += ' grok_j2k_encoder_thread.cc'
+
+    if bld.env.ENABLE_DISK or bld.env.ENABLE_CUCUMBER:
+        obj.source += ' nanomsg.cc'
+        obj.uselib += ' NANOMSG'
 
     if bld.env.TARGET_WINDOWS_64 or bld.env.TARGET_WINDOWS_32:
         obj.uselib += ' WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE SETUPAPI OLE32 UUID'

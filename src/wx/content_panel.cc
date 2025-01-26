@@ -22,6 +22,10 @@
 #include "audio_panel.h"
 #include "content_panel.h"
 #include "content_timeline_dialog.h"
+#ifdef DCPOMATIC_CUCUMBER
+#include "cucumber_bridge.h"
+#include "cucumber_registry.h"
+#endif
 #include "dcpomatic_button.h"
 #include "dir_dialog.h"
 #include "file_dialog.h"
@@ -46,6 +50,7 @@
 #include "lib/film.h"
 #include "lib/film_util.h"
 #include "lib/image_content.h"
+#include "lib/job_manager.h"
 #include "lib/log.h"
 #include "lib/playlist.h"
 #include "lib/string_text_file.h"
@@ -1021,3 +1026,33 @@ ContentPanel::window() const
 {
 	return _splitter;
 }
+
+
+#ifdef DCPOMATIC_CUCUMBER
+void
+ContentPanel::cucumber_add_content_file (string filename)
+{
+	add_files({filename});
+	auto jm = JobManager::instance();
+	while (jm->work_to_do()) {
+		while (signal_manager->ui_idle()) {}
+		dcpomatic_sleep_seconds(1);
+	}
+}
+
+
+std::string
+ContentPanel::cucumber_get_content_list ()
+{
+	if (!_film) {
+		return {};
+	}
+
+	std::string s;
+	for (auto content: _film->content()) {
+		bool alert;
+		s += wx_to_std(text_for_content(content, alert)) + "\n";
+	}
+	return s;
+}
+#endif

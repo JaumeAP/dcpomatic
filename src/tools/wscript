@@ -103,10 +103,14 @@ def build(bld):
     if bld.env.ENABLE_DISK:
         if bld.env.TARGET_LINUX:
             uselib += 'POLKIT '
-        uselib += 'LWEXT4 NANOMSG '
+        uselib += 'LWEXT4 '
+
+    if bld.env.ENABLE_DISK or bld.env.ENABLE_CUCUMBER:
+        uselib += 'NANOMSG '
 
     if bld.env.TARGET_WINDOWS_64 or bld.env.TARGET_WINDOWS_32:
         uselib += 'WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE WINSOCK2 OLE32 DSOUND WINMM KSUSER SETUPAPI UUID '
+
     if bld.env.TARGET_LINUX:
         uselib += 'DL '
 

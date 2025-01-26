@@ -1,0 +1,11 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+export LD_LIBRARY_PATH=build/src/lib:build/src/wx:$LD_LIBRARY_PATH
+export DCPOMATIC_GRAPHICS=$DIR/../graphics
+
+build/features/dcpomatic_cucumber &
+sleep 5
+cucumber .
+

@@ -80,6 +80,7 @@ def options(opt):
     opt.add_option('--disable-more-warnings', action='store_true', default=False, help='disable some warnings raised by Xcode 15 with the 2.16 branch')
     opt.add_option('--c++17', action='store_true', default=False, help='build with C++17 and libxml++-4.0')
     opt.add_option('--variant', help="build with variant")
+    opt.add_option('--enable-cucumber',   action='store_true', default=False, help='enable cucumber testing; requires Boost process and nanomsg libraries')
 
 def configure(conf):
     conf.load('compiler_cxx')
@@ -93,7 +94,7 @@ def configure(conf):
         conf.env.PANGOMM_API = '2.48'
         conf.env.CAIROMM_API = '1.16'
     else:
-        cpp_std = '11'
+        cpp_std = '14' if conf.options.enable_cucumber else '11'
         conf.env.XMLPP_API = '2.6'
         conf.env.PANGOMM_API = '1.4'
         conf.env.CAIROMM_API = '1.0'
@@ -117,6 +118,7 @@ def configure(conf):
     conf.env.VARIANT = conf.options.variant if conf.options.variant else "dcpomatic"
 
     conf.check_cxx(cxxflags=['-msse', '-mfpmath=sse'], msg='Checking for SSE support', mandatory=False, define_name='SSE')
+    conf.env.ENABLE_CUCUMBER = conf.options.enable_cucumber
 
     # Common CXXFLAGS
     conf.env.append_value('CXXFLAGS', ['-D__STDC_CONSTANT_MACROS',
@@ -179,6 +181,9 @@ def configure(conf):
 
     if conf.options.enable_grok:
         conf.env.append_value('CXXFLAGS', '-DDCPOMATIC_GROK')
+
+    if conf.options.enable_cucumber:
+        conf.env.append_value('CXXFLAGS', '-DDCPOMATIC_CUCUMBER')
 
     if conf.options.use_lld:
         try:
@@ -455,7 +460,7 @@ def configure(conf):
         conf.check_cfg(package='polkit-gobject-1', args='--cflags --libs', uselib_store='POLKIT', mandatory=True)
 
     # nanomsg
-    if conf.options.enable_disk:
+    if conf.options.enable_disk or conf.options.enable_cucumber:
         if conf.check_cfg(package='nanomsg', args='--cflags --libs', uselib_store='NANOMSG', mandatory=False) is None:
             conf.check_cfg(package='libnanomsg', args='--cflags --libs', uselib_store='NANOMSG', mandatory=True)
         if conf.env.TARGET_LINUX:
@@ -663,6 +668,8 @@ def configure(conf):
     conf.recurse('src')
     if not conf.env.DISABLE_TESTS:
         conf.recurse('test')
+    if conf.env.ENABLE_CUCUMBER:
+        conf.recurse('features')
 
     Logs.pprint('YELLOW', '')
     if conf.env.TARGET_WINDOWS_64 or conf.env.TARGET_WINDOWS_32:
@@ -714,6 +721,8 @@ def build(bld):
     bld.recurse('src')
     bld.recurse('graphics')
     bld.recurse('web')
+    if bld.env.ENABLE_CUCUMBER:
+        bld.recurse('features')
 
     if not bld.env.DISABLE_TESTS:
         bld.recurse('test')
