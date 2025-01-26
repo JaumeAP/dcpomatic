@@ -105,6 +105,8 @@ CucumberBridge::idle()
 		AddContentFile(*message.parameter);
 	} else if (message.id == CUCUMBER_BRIDGE_GET_CONTENT_LIST) {
 		/* I hope it's OK to send and receive from nanomsg sockets from different threads */
-		_nanomsg.send(GetContentList()->c_str(), -1);
+		if (!_nanomsg.send(GetContentList()->c_str(), 200)) {
+			std::cerr << "Failed to send content list reply.\n";
+		}
 	}
 }
