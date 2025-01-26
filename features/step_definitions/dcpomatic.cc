@@ -57,7 +57,7 @@ struct Context
 	{
 		general_delay();
 		send(CUCUMBER_BRIDGE_CLICK_BUTTON_ID);
-		send(fmt::to_string(id));
+		send(fmt::to_string(static_cast<int>(id)));
 	}
 
 	void select_menu(string id)
