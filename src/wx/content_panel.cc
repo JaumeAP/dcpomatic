@@ -1038,6 +1038,7 @@ ContentPanel::cucumber_add_content_file (string filename)
 		while (signal_manager->ui_idle()) {}
 		dcpomatic_sleep_seconds(1);
 	}
+	while (signal_manager->ui_idle()) {}
 }
 
 
