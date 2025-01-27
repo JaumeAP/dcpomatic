@@ -31,6 +31,7 @@ import json
 # variant: passed to wscript --variant (dcpomatic or post)
 # gui: True to build with GUI, False without
 # part: part to build for macOS, passed to make_dmg.sh (e.g. dcpomatic2_player)
+# cucumber: build with cucumber support
 
 
 def dmg_prefix(variant):
@@ -448,7 +449,7 @@ def dependencies(target, options):
 
     return deps
 
-option_defaults = { "gui": True, "variant": None }
+option_defaults = { "gui": True, "variant": None, "cucumber": False }
 
 
 def build_tests(target):
@@ -487,6 +488,9 @@ def configure_options(target, options, for_package=False):
 
     if options['variant']:
         opt += ' --variant=%s' % options['variant']
+
+    if options['cucumber']:
+        opt += ' --cucumber'
 
     # Build Windows debug versions with static linking as I think gdb works better then
     if target.debug and target.platform == 'windows':
