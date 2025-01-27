@@ -325,7 +325,7 @@ main ()
 #endif
 
 	try {
-		nanomsg = new Nanomsg (false);
+		nanomsg = new Nanomsg(false, "disk");
 	} catch (runtime_error& e) {
 		LOG_DISK_NC("Could not set up nanomsg socket");
 		exit (EXIT_FAILURE);
