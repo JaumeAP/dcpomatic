@@ -490,7 +490,7 @@ def configure_options(target, options, for_package=False):
         opt += ' --variant=%s' % options['variant']
 
     if options['cucumber']:
-        opt += ' --cucumber'
+        opt += ' --enable-cucumber'
 
     # Build Windows debug versions with static linking as I think gdb works better then
     if target.debug and target.platform == 'windows':
