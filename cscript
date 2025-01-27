@@ -26,6 +26,13 @@ import os
 import copy
 import json
 
+
+# Accepted options:
+# variant: passed to wscript --variant (dcpomatic or post)
+# gui: True to build with GUI, False without
+# part: part to build for macOS, passed to make_dmg.sh (e.g. dcpomatic2_player)
+
+
 def dmg_prefix(variant):
     return 'DCP-o-matic'
 
