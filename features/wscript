@@ -34,7 +34,7 @@ def build(bld):
     obj = bld(features='cxx cxxprogram')
     obj.name = 'dcpomatic_cucumber'
     obj.uselib =  'CUCUMBER CUCUMBER_CPP BOOST_FILESYSTEM BOOST_THREAD BOOST_REGEX BOOST_THREAD BOOST_TEST WXWIDGETS DCP '
-    obj.uselib += 'AVFORMAT AVFILTER AVCODEC AVUTIL SWSCALE SWRESAMPLE NANOMSG '
+    obj.uselib += 'AVFORMAT AVFILTER AVCODEC AVUTIL SWSCALE SWRESAMPLE NANOMSG SQLITE3 '
     if bld.env.TARGET_WINDOWS_64 or bld.env.TARGET_WINDOWS_32:
         obj.uselib += 'WINSOCK2 OLE32 DSOUND WINMM KSUSER GL GLU GLEW '
     obj.use = 'libdcpomatic2'
