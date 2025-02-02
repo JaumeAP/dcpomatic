@@ -55,6 +55,8 @@ public:
 		_spl.erase (_spl.begin() + index);
 	}
 
+	void insert(SPLEntry entry, boost::optional<std::string> before_id);
+
 	std::vector<SPLEntry> const & get () const {
 		return _spl;
 	}

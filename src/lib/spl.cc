@@ -33,6 +33,7 @@ LIBDCP_ENABLE_WARNINGS
 using std::cout;
 using std::string;
 using std::shared_ptr;
+using boost::optional;
 
 
 void
@@ -67,3 +68,20 @@ SPL::write (boost::filesystem::path path) const
 	}
 	doc.write_to_file_formatted (path.string());
 }
+
+
+void
+SPL::insert(SPLEntry entry, optional<string> before_id)
+{
+	if (before_id) {
+		auto iter = std::find_if(_spl.begin(), _spl.end(), [before_id](SPLEntry const& e) {
+			return e.id == before_id;
+		});
+		if (iter != _spl.end()) {
+			_spl.insert(iter, entry);
+		}
+	} else {
+		_spl.push_back(entry);
+	}
+}
+
