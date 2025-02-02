@@ -267,6 +267,7 @@ public:
 		, _log_warning (0)
 		, _log_error (0)
 		, _log_timing (0)
+		, _log_http (0)
 	{}
 
 	wxString GetName () const override
@@ -311,6 +312,8 @@ private:
 			/// TRANSLATORS: translate the word "Timing" here; do not include the "Config|" prefix
 			_log_timing = new CheckBox (_panel, S_("Config|Timing"));
 			t->Add (_log_timing, 1, wxEXPAND | wxALL);
+			_log_http = new CheckBox (_panel, S_("HTTP server"));
+			t->Add (_log_http, 1, wxEXPAND | wxALL);
 			_log_debug_video_view = new CheckBox(_panel, _("Debug: video view"));
 			t->Add(_log_debug_video_view, 1, wxEXPAND | wxALL);
 			table->Add (t, 0, wxALL, 6);
@@ -326,6 +329,7 @@ private:
 		_log_warning->bind(&PlayerAdvancedPage::log_changed, this);
 		_log_error->bind(&PlayerAdvancedPage::log_changed, this);
 		_log_timing->bind(&PlayerAdvancedPage::log_changed, this);
+		_log_http->bind(&PlayerAdvancedPage::log_changed, this);
 		_log_debug_video_view->bind(&PlayerAdvancedPage::log_changed, this);
 #ifdef DCPOMATIC_WINDOWS
 		_win32_console->bind(&PlayerAdvancedPage::win32_console_changed, this);
@@ -340,6 +344,7 @@ private:
 		checked_set (_log_warning, config->log_types() & LogEntry::TYPE_WARNING);
 		checked_set (_log_error, config->log_types() & LogEntry::TYPE_ERROR);
 		checked_set (_log_timing, config->log_types() & LogEntry::TYPE_TIMING);
+		checked_set (_log_http, config->log_types() & LogEntry::TYPE_HTTP);
 		checked_set (_log_debug_video_view, config->log_types() & LogEntry::TYPE_DEBUG_VIDEO_VIEW);
 #ifdef DCPOMATIC_WINDOWS
 		checked_set (_win32_console, config->win32_console());
@@ -361,6 +366,9 @@ private:
 		if (_log_timing->GetValue ()) {
 			types |= LogEntry::TYPE_TIMING;
 		}
+		if (_log_http->GetValue ()) {
+			types |= LogEntry::TYPE_HTTP;
+		}
 		if (_log_debug_video_view->GetValue()) {
 			types |= LogEntry::TYPE_DEBUG_VIDEO_VIEW;
 		}
@@ -378,6 +386,7 @@ private:
 	CheckBox* _log_warning;
 	CheckBox* _log_error;
 	CheckBox* _log_timing;
+	CheckBox* _log_http;
 	CheckBox* _log_debug_video_view;
 #ifdef DCPOMATIC_WINDOWS
 	CheckBox* _win32_console;

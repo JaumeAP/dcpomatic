@@ -1167,6 +1167,8 @@ private:
 				dcpomatic_log = make_shared<NullLog>();
 			}
 		}
+
+		dcpomatic_log->set_types(Config::instance()->log_types());
 	}
 
 	void set_menu_sensitivity ()
