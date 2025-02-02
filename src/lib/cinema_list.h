@@ -77,7 +77,7 @@ class CinemaList
 {
 public:
 	CinemaList();
-	CinemaList(boost::filesystem::path db_file);
+	explicit CinemaList(boost::filesystem::path db_file);
 
 	CinemaList(CinemaList const&) = delete;
 	CinemaList& operator=(CinemaList const&) = delete;
