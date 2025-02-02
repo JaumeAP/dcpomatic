@@ -34,6 +34,7 @@ namespace xmlpp {
 class Content;
 
 
+/** An entry on a show playlist (SPL) */
 class SPLEntry
 {
 public:

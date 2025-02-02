@@ -32,36 +32,41 @@
 class ContentStore;
 
 
+/** @class SPL
+ *
+ *  @brief A "show playlist": what a projection system might play for an entire cinema "show".
+ *
+ *  For example, it might contain some adverts, some trailers and a feature.
+ *  Each SPL has unique ID, a name, and some SPLEntry objects.
+ */
 class SPL
 {
 public:
-	SPL ()
-		: _id (dcp::make_uuid())
-		, _missing (false)
+	SPL()
+		: _id(dcp::make_uuid())
 	{}
 
-	SPL (std::string name)
-		: _id (dcp::make_uuid())
-		, _name (name)
-		, _missing (false)
+	explicit SPL(std::string name)
+		: _id(dcp::make_uuid())
+		, _name(name)
 	{}
 
 
-	void add (SPLEntry e) {
-		_spl.push_back (e);
+	void add(SPLEntry e) {
+		_spl.push_back(e);
 	}
 
-	void remove (std::size_t index) {
-		_spl.erase (_spl.begin() + index);
+	void remove(std::size_t index) {
+		_spl.erase(_spl.begin() + index);
 	}
 
 	void insert(SPLEntry entry, boost::optional<std::string> before_id);
 
-	std::vector<SPLEntry> const & get () const {
+	std::vector<SPLEntry> const& get() const {
 		return _spl;
 	}
 
-	SPLEntry const & operator[] (std::size_t index) const {
+	SPLEntry const& operator[](std::size_t index) const {
 		return _spl[index];
 	}
 
@@ -69,22 +74,23 @@ public:
 		std::iter_swap(_spl.begin() + a, _spl.begin() + b);
 	}
 
-	void read (boost::filesystem::path path, ContentStore* store);
-	void write (boost::filesystem::path path) const;
+	void read(boost::filesystem::path path, ContentStore* store);
+	void write(boost::filesystem::path path) const;
 
-	std::string id () const {
+	std::string id() const {
 		return _id;
 	}
 
-	std::string name () const {
+	std::string name() const {
 		return _name;
 	}
 
-	void set_name (std::string name) {
+	void set_name(std::string name) {
 		_name = name;
 	}
 
-	bool missing () const {
+	/** @return true if any content was missing when read() was last called on this SPL */
+	bool missing() const {
 		return _missing;
 	}
 
@@ -93,10 +99,14 @@ private:
 	std::string _name;
 	std::vector<SPLEntry> _spl;
 	/** true if any content was missing when read() was last called on this SPL */
-	bool _missing;
+	bool _missing = false;
 };
 
 
+/** @class SignalSPL
+ *
+ *  @brief A wrapper around SPL that signals changes.
+ */
 class SignalSPL : public SPL
 {
 public:
@@ -105,13 +115,13 @@ public:
 		CONTENT,
 	};
 
-	SignalSPL () {}
+	SignalSPL() = default;
 
-	SignalSPL (std::string name)
-		: SPL (name)
+	explicit SignalSPL(std::string name)
+		: SPL(name)
 	{}
 
-	void set_name (std::string name) {
+	void set_name(std::string name) {
 		SPL::set_name (name);
 		Changed(Change::NAME);
 	}
@@ -123,6 +133,11 @@ public:
 
 	void remove(std::size_t index) {
 		SPL::remove(index);
+		Changed(Change::CONTENT);
+	}
+
+	void insert(SPLEntry e, boost::optional<std::string> before_id) {
+		SPL::insert(e, before_id);
 		Changed(Change::CONTENT);
 	}
 
