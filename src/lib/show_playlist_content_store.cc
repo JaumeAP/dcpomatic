@@ -21,11 +21,11 @@
 
 #include "config.h"
 #include "content_factory.h"
-#include "content_store.h"
 #include "cross.h"
 #include "dcp_content.h"
 #include "examine_content_job.h"
 #include "job_manager.h"
+#include "show_playlist_content_store.h"
 #include "util.h"
 #include <dcp/exceptions.h>
 #include <dcp/filesystem.h>
@@ -36,13 +36,14 @@ using std::pair;
 using std::shared_ptr;
 using std::string;
 using std::vector;
+using boost::optional;
 
 
-ContentStore* ContentStore::_instance = nullptr;
+ShowPlaylistContentStore* ShowPlaylistContentStore::_instance = nullptr;
 
 
 vector<pair<string, string>>
-ContentStore::update(std::function<bool()> pulse)
+ShowPlaylistContentStore::update(std::function<bool()> pulse)
 {
 	_content.clear();
 	auto dir = Config::instance()->player_content_directory();
@@ -97,7 +98,7 @@ ContentStore::update(std::function<bool()> pulse)
 		if (i->finished_in_error()) {
 			errors.push_back({String::compose("%1.\n", i->error_summary()), i->error_details()});
 		} else {
-			_content.push_back(i->content());
+			_content.push_back(ShowPlaylistEntry(i->content()));
 		}
 	}
 
@@ -105,11 +106,11 @@ ContentStore::update(std::function<bool()> pulse)
 }
 
 
-shared_ptr<Content>
-ContentStore::get(string digest) const
+optional<ShowPlaylistEntry>
+ShowPlaylistContentStore::get(string uuid) const
 {
-	auto iter = std::find_if(_content.begin(), _content.end(), [digest](shared_ptr<const Content> content) {
-		return content->digest() == digest;
+	auto iter = std::find_if(_content.begin(), _content.end(), [uuid](ShowPlaylistEntry const& entry) {
+		return entry.uuid() == uuid;
 	});
 
 	if (iter == _content.end()) {
@@ -120,11 +121,11 @@ ContentStore::get(string digest) const
 }
 
 
-ContentStore*
-ContentStore::instance()
+ShowPlaylistContentStore*
+ShowPlaylistContentStore::instance()
 {
 	if (!_instance) {
-		_instance = new ContentStore();
+		_instance = new ShowPlaylistContentStore();
 	}
 
 	return _instance;

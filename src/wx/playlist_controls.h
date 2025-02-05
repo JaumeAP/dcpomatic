@@ -20,7 +20,7 @@
 
 
 #include "controls.h"
-#include "lib/spl.h"
+#include "lib/show_playlist.h"
 
 
 class DCPContent;
@@ -46,9 +46,9 @@ private:
 	void stop_clicked ();
 	void next_clicked ();
 	void previous_clicked ();
-	void add_playlist_to_list (SPL spl);
+	void add_playlist_to_list(ShowPlaylist spl);
 	void update_content_directory ();
-	void update_playlist_directory ();
+	void update_playlists();
 	void spl_selection_changed ();
 	void select_playlist (int selected, int position);
 	void started () override;
@@ -76,7 +76,8 @@ private:
 	wxButton* _refresh_spl_view;
 	wxListCtrl* _current_spl_view;
 
-	std::vector<SPL> _playlists;
+	std::vector<ShowPlaylist> _playlists;
 	boost::optional<int> _selected_playlist;
+	std::vector<std::shared_ptr<Content>> _playlist;
 	int _selected_playlist_position;
 };

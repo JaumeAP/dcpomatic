@@ -19,6 +19,7 @@
 */
 
 
+#include "show_playlist_entry.h"
 #include <functional>
 #include <memory>
 #include <vector>
@@ -26,13 +27,13 @@
 
 class Content;
 
-/** @class ContentStore
+/** @class ShowPlaylistContentStore
  *  @brief Class to maintain details of what content we have available to play
  */
-class ContentStore
+class ShowPlaylistContentStore
 {
 public:
-	std::shared_ptr<Content> get(std::string digest) const;
+	boost::optional<ShowPlaylistEntry> get(std::string uuid) const;
 
 	/** Examine content in the configured directory and update our list.
 	 *  @param pulse Called every so often to indicate progress.  Return false to cancel the scan.
@@ -40,14 +41,14 @@ public:
 	 */
 	std::vector<std::pair<std::string, std::string>> update(std::function<bool()> pulse);
 
-	static ContentStore* instance();
+	static ShowPlaylistContentStore* instance();
 
-	std::vector<std::shared_ptr<Content>> const& all() const {
+	std::vector<ShowPlaylistEntry> const& all() const {
 		return _content;
 	}
 
 private:
-	std::vector<std::shared_ptr<Content>> _content;
+	std::vector<ShowPlaylistEntry> _content;
 
-	static ContentStore* _instance;
+	static ShowPlaylistContentStore* _instance;
 };

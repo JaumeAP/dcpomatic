@@ -20,12 +20,12 @@
 
 
 #include "config.h"
-#include "content_store.h"
 #include "cross.h"
 #include "dcpomatic_log.h"
 #include "dcpomatic_socket.h"
 #include "http_server.h"
-#include "spl.h"
+#include "show_playlist_content_store.h"
+#include "show_playlist_list.h"
 #include "util.h"
 #include "variant.h"
 #include <dcp/raw_convert.h>
@@ -98,27 +98,6 @@ Response::send(shared_ptr<Socket> socket)
 }
 
 
-vector<shared_ptr<SignalSPL>>
-get_playlists()
-{
-	vector<shared_ptr<SignalSPL>> playlists;
-
-	if (auto path = Config::instance()->player_playlist_directory()) {
-		try {
-			for (auto i: dcp::filesystem::directory_iterator(*path)) {
-				auto spl = make_shared<SignalSPL>();
-				try {
-					spl->read(i, ContentStore::instance());
-					playlists.push_back(spl);
-				} catch (...) {}
-			}
-		} catch (...) {}
-	}
-
-	return playlists;
-}
-
-
 Response
 HTTPServer::get(string const& url)
 {
@@ -138,9 +117,10 @@ HTTPServer::get(string const& url)
 		response.set_type(Response::Type::JSON);
 		return response;
 	} else if (url == "/api/v1/playlists") {
+		ShowPlaylistList spl_list;
 		nlohmann::json json;
-		for (auto spl: get_playlists()) {
-			json.push_back(spl->as_json_without_content());
+		for (auto const& spl: spl_list.show_playlists()) {
+			json.push_back(spl.second.as_json());
 		}
 		auto response = Response(200, json.dump());
 		response.set_type(Response::Type::JSON);
@@ -151,18 +131,20 @@ HTTPServer::get(string const& url)
 		if (parts.size() != 5) {
 			return Response::ERROR_404;
 		}
-		for (auto spl: get_playlists()) {
-			if (spl->id() == parts[4]) {
-				auto response = Response(200, spl->as_json_with_content().dump());
-				response.set_type(Response::Type::JSON);
-				return response;
+		ShowPlaylistList spl_list;
+		for (auto const& spl: spl_list.show_playlists()) {
+			if (spl.second.uuid() == parts[4]) {
+				// XXX
+				// auto response = Response(200, spl->as_json_with_content().dump());
+				// response.set_type(Response::Type::JSON);
+				// return response;
 			}
 		}
 		return Response::ERROR_404;
 	} else if (url == "/api/v1/content") {
 		nlohmann::json json;
-		for (auto i: ContentStore::instance()->all()) {
-			json.push_back(SPLEntry(i).as_json());
+		for (auto i: ShowPlaylistContentStore::instance()->all()) {
+			json.push_back(i.as_json());
 		}
 		auto response = Response(200, json.dump());
 		response.set_type(Response::Type::JSON);
@@ -173,11 +155,11 @@ HTTPServer::get(string const& url)
 		if (parts.size() != 5) {
 			return Response::ERROR_404;
 		}
-		auto content = ContentStore::instance()->get(parts[4]);
+		auto content = ShowPlaylistContentStore::instance()->get(parts[4]);
 		if (!content) {
 			return Response::ERROR_404;
 		}
-		auto json = SPLEntry(content).as_json();
+		auto json = content->as_json();
 		auto response = Response(200, json.dump());
 		response.set_type(Response::Type::JSON);
 		return response;
@@ -208,16 +190,18 @@ HTTPServer::post(string const& url, vector<uint8_t> const& body)
 			return Response::ERROR_404;
 		}
 		bool found = false;
-		for (auto spl: get_playlists()) {
-			if (spl->id() == parts[4]) {
+		ShowPlaylistList spl_list;
+		for (auto const& spl: spl_list.show_playlists()) {
+			if (spl.second.uuid() == parts[4]) {
 				nlohmann::json details = nlohmann::json::parse(body);
-				spl->insert(
-					SPLEntry(ContentStore::instance()->get(details["digest"])),
-					details["before"].is_null() ? optional<string>() : details["before"].get<string>()
-				);
-				if (auto dir = Config::instance()->player_playlist_directory()) {
-					spl->write(*dir / (spl->id() + ".xml"));
-				}
+				// XXX
+				// spl->insert(
+				// 	SPLEntry(ContentStore::instance()->get(details["digest"])),
+				// 	details["before"].is_null() ? optional<string>() : details["before"].get<string>()
+				// );
+				// if (auto dir = Config::instance()->player_playlist_directory()) {
+				// 	spl->write(*dir / (spl->id() + ".xml"));
+				// }
 				found = true;
 			}
 		}
@@ -225,7 +209,6 @@ HTTPServer::post(string const& url, vector<uint8_t> const& body)
 			return Response::ERROR_404;
 		}
 		return Response(201);
-
 	} else {
 		return Response::ERROR_404;
 	}

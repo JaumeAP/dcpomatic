@@ -24,6 +24,7 @@
 #include "check_box.h"
 #include "config_dialog.h"
 #include "dcpomatic_button.h"
+#include "file_picker_ctrl.h"
 #include "nag_dialog.h"
 #include "static_text.h"
 #include "wx_variant.h"
@@ -1041,9 +1042,9 @@ LocationsPage::setup ()
 	table->Add (_content_directory, wxGBPosition (r, 1));
 	++r;
 
-	add_label_to_sizer (table, _panel, _("Playlist directory"), true, wxGBPosition (r, 0));
-	_playlist_directory = new wxDirPickerCtrl (_panel, wxID_ANY, wxEmptyString, char_to_wx(wxDirSelectorPromptStr), wxDefaultPosition, wxSize (300, -1));
-	table->Add (_playlist_directory, wxGBPosition (r, 1));
+	add_label_to_sizer(table, _panel, _("Show playlists file"), true, wxGBPosition (r, 0));
+	_show_playlists_file = new FilePickerCtrl(_panel, _("Select show playlists file"), _("SQLite3 files (.sqlite3)|*.sqlite3)"), false, true, "ShowPlaylistsFile");
+	table->Add(_show_playlists_file, wxGBPosition (r, 1));
 	++r;
 
 	add_label_to_sizer (table, _panel, _("KDM directory"), true, wxGBPosition (r, 0));
@@ -1052,7 +1053,7 @@ LocationsPage::setup ()
 	++r;
 
 	_content_directory->Bind (wxEVT_DIRPICKER_CHANGED, bind(&LocationsPage::content_directory_changed, this));
-	_playlist_directory->Bind (wxEVT_DIRPICKER_CHANGED, bind(&LocationsPage::playlist_directory_changed, this));
+	_show_playlists_file->Bind(wxEVT_FILEPICKER_CHANGED, bind(&LocationsPage::show_playlists_file_changed, this));
 	_kdm_directory->Bind (wxEVT_DIRPICKER_CHANGED, bind(&LocationsPage::kdm_directory_changed, this));
 }
 
@@ -1064,9 +1065,7 @@ LocationsPage::config_changed ()
 	if (config->player_content_directory()) {
 		checked_set (_content_directory, *config->player_content_directory());
 	}
-	if (config->player_playlist_directory()) {
-		checked_set (_playlist_directory, *config->player_playlist_directory());
-	}
+	checked_set(_show_playlists_file, config->show_playlists_file());
 	if (config->player_kdm_directory()) {
 		checked_set (_kdm_directory, *config->player_kdm_directory());
 	}
@@ -1079,9 +1078,11 @@ LocationsPage::content_directory_changed ()
 }
 
 void
-LocationsPage::playlist_directory_changed ()
+LocationsPage::show_playlists_file_changed()
 {
-	Config::instance()->set_player_playlist_directory(wx_to_std(_playlist_directory->GetPath()));
+	if (auto path = _show_playlists_file->path()) {
+		Config::instance()->set_show_playlists_file(*path);
+	}
 }
 
 void

@@ -19,42 +19,47 @@
 */
 
 
-#ifndef DCPOMATIC_SPL_ENTRY_H
-#define DCPOMATIC_SPL_ENTRY_H
+#ifndef DCPOMATIC_SHOW_PLAYLIST_ENTRY_H
+#define DCPOMATIC_SHOW_PLAYLIST_ENTRY_H
 
 
-#include <libcxml/cxml.h>
 #include <dcp/content_kind.h>
 #include <nlohmann/json.hpp>
 
 
-namespace xmlpp {
-	class Element;
-}
-
 class Content;
 
 
-/** An entry on a show playlist (SPL) */
-class SPLEntry
+/** @class ShowPlaylistEntry
+ *
+ *  @brief An entry on a show playlist (SPL).
+ *
+ *  In the ShowPlaylist database we only store the UUID of the content.  This class
+ *  holds a pointer to a Content object, and provides a simpler interface to information
+ *  that is needed by the ShowPlaylist code.
+ *
+ *  Given a UUID from the database, a ShowPlaylistEntry can be obtained from the
+ *  ShowPlaylistContentStore.
+ */
+class ShowPlaylistEntry
 {
 public:
-	SPLEntry (std::shared_ptr<Content> c);
+	explicit ShowPlaylistEntry(std::shared_ptr<Content> content);
 
-	void as_xml(xmlpp::Element* e) const;
 	nlohmann::json as_json() const;
 
-	std::shared_ptr<Content> content;
-	std::string name;
-	/** Digest of this content */
-	std::string digest;
-	/** CPL ID */
-	std::string id;
-	boost::optional<dcp::ContentKind> kind;
-	bool encrypted;
+	std::string uuid() const;
+	std::string name() const;
+	dcp::ContentKind kind() const;
+	std::string approximate_length() const;
+	bool encrypted() const;
+
+	std::shared_ptr<Content> content() const {
+		return _content;
+	}
 
 private:
-	void construct (std::shared_ptr<Content> content);
+	std::shared_ptr<Content> _content;
 };
 
 

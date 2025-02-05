@@ -192,7 +192,7 @@ Config::set_defaults()
 	_respect_kdm_validity_periods = true;
 	_player_debug_log_file = boost::none;
 	_player_content_directory = boost::none;
-	_player_playlist_directory = boost::none;
+	_show_playlists_file = read_path("show_playlists.sqlite3");
 	_player_kdm_directory = boost::none;
 	_audio_mapping = boost::none;
 	_custom_languages.clear();
@@ -617,7 +617,7 @@ try
 	_respect_kdm_validity_periods = f.optional_bool_child("RespectKDMValidityPeriods").get_value_or(true);
 	_player_debug_log_file = f.optional_string_child("PlayerDebugLogFile");
 	_player_content_directory = f.optional_string_child("PlayerContentDirectory");
-	_player_playlist_directory = f.optional_string_child("PlayerPlaylistDirectory");
+	_show_playlists_file = f.string_child("ShowPlaylistsFile");
 	_player_kdm_directory = f.optional_string_child("PlayerKDMDirectory");
 
 	if (f.optional_node_child("AudioMapping")) {
@@ -1093,10 +1093,8 @@ Config::write_config() const
 		/* [XML] PlayerContentDirectory Directory to use for player content in the dual-screen mode. */
 		cxml::add_text_child(root, "PlayerContentDirectory", _player_content_directory->string());
 	}
-	if (_player_playlist_directory) {
-		/* [XML] PlayerPlaylistDirectory Directory to use for player playlists in the dual-screen mode. */
-		cxml::add_text_child(root, "PlayerPlaylistDirectory", _player_playlist_directory->string());
-	}
+	/* [XML] ShowPlaylistsFile Filename of SQLite3 database containing show playlists for the player dual-screen mode */
+	cxml::add_text_child(root, "ShowPlaylistsFile", _show_playlists_file.string());
 	if (_player_kdm_directory) {
 		/* [XML] PlayerKDMDirectory Directory to use for player KDMs in the dual-screen mode. */
 		cxml::add_text_child(root, "PlayerKDMDirectory", _player_kdm_directory->string());
@@ -1697,7 +1695,7 @@ Config::load_from_zip(boost::filesystem::path zip_file, CinemasAction action)
 	changed(Property::SOUND);
 	changed(Property::SOUND_OUTPUT);
 	changed(Property::PLAYER_CONTENT_DIRECTORY);
-	changed(Property::PLAYER_PLAYLIST_DIRECTORY);
+	changed(Property::SHOW_PLAYLISTS_FILE);
 	changed(Property::PLAYER_DEBUG_LOG);
 	changed(Property::HISTORY);
 	changed(Property::SHOW_EXPERIMENTAL_AUDIO_PROCESSORS);

@@ -35,6 +35,7 @@
 #include "lib/internet.h"
 #include "lib/player_video.h"
 #include "lib/scoped_temporary.h"
+#include "lib/show_playlist_list.h"
 #include <dcp/exceptions.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -118,10 +119,10 @@ PlaylistControls::PlaylistControls(wxWindow* parent, FilmViewer& viewer)
 	_spl_view->Bind        (wxEVT_LIST_ITEM_SELECTED,   boost::bind(&PlaylistControls::spl_selection_changed, this));
 	_spl_view->Bind        (wxEVT_LIST_ITEM_DESELECTED, boost::bind(&PlaylistControls::spl_selection_changed, this));
 	_viewer.Finished.connect(boost::bind(&PlaylistControls::viewer_finished, this));
-	_refresh_spl_view->Bind (wxEVT_BUTTON, boost::bind(&PlaylistControls::update_playlist_directory, this));
+	_refresh_spl_view->Bind (wxEVT_BUTTON, boost::bind(&PlaylistControls::update_playlists, this));
 	_refresh_content_view->Bind (wxEVT_BUTTON, boost::bind(&ContentView::update, _content_view));
 
-	update_playlist_directory ();
+	update_playlists();
 }
 
 void
@@ -209,7 +210,9 @@ PlaylistControls::previous_clicked ()
 bool
 PlaylistControls::can_do_next ()
 {
-	return _selected_playlist && (_selected_playlist_position + 1) < int(_playlists[*_selected_playlist].get().size());
+	ShowPlaylistList spl_list;
+	auto entries = spl_list.entries(_playlists[*_selected_playlist].uuid());
+	return _selected_playlist && (_selected_playlist_position + 1) < int(entries.size());
 }
 
 void
@@ -225,60 +228,43 @@ PlaylistControls::next_clicked ()
 
 
 void
-PlaylistControls::add_playlist_to_list (SPL spl)
+PlaylistControls::add_playlist_to_list(ShowPlaylist show_playlist)
 {
 	int const N = _spl_view->GetItemCount();
 
 	wxListItem it;
 	it.SetId(N);
 	it.SetColumn(0);
-	string t = spl.name();
-	if (spl.missing()) {
-		t += " (content missing)";
-	}
+	string t = show_playlist.name();
+	// XXX
+	// if (spl.missing()) {
+	// 	t += " (content missing)";
+	// }
 	it.SetText (std_to_wx(t));
 	_spl_view->InsertItem (it);
 }
 
-struct SPLComparator
-{
-	bool operator() (SPL const & a, SPL const & b) {
-		return a.name() < b.name();
-	}
-};
 
 void
-PlaylistControls::update_playlist_directory ()
+PlaylistControls::update_playlists()
 {
 	using namespace boost::filesystem;
 
 	_spl_view->DeleteAllItems ();
-	optional<path> dir = Config::instance()->player_playlist_directory();
-	if (!dir) {
-		return;
+	_playlists.clear();
+
+	ShowPlaylistList spl_list;
+	for (auto const& spl: spl_list.show_playlists()) {
+		_playlists.push_back(spl.second);
 	}
 
-	_playlists.clear ();
-
-	for (directory_iterator i = directory_iterator(*dir); i != directory_iterator(); ++i) {
-		try {
-			if (is_regular_file(i->path()) && i->path().extension() == ".xml") {
-				SPL spl;
-				spl.read(i->path(), ContentStore::instance());
-				_playlists.push_back (spl);
-			}
-		} catch (exception& e) {
-			/* Never mind */
-		}
-	}
-
-	sort (_playlists.begin(), _playlists.end(), SPLComparator());
 	for (auto i: _playlists) {
-		add_playlist_to_list (i);
+		add_playlist_to_list(i);
 	}
 
 	_selected_playlist = boost::none;
 }
+
 
 optional<dcp::EncryptedKDM>
 PlaylistControls::get_kdm_from_directory (shared_ptr<DCPContent> dcp)
@@ -313,13 +299,17 @@ PlaylistControls::spl_selection_changed ()
 		return;
 	}
 
-	if (_playlists[selected].missing()) {
-		error_dialog(this, _("This playlist cannot be loaded as some content is missing."));
-		deselect_playlist ();
-		return;
-	}
+	// XXX
+	// if (_playlists[selected].missing()) {
+	// 	error_dialog(this, _("This playlist cannot be loaded as some content is missing."));
+	// 	deselect_playlist ();
+	// 	return;
+	// }
 
-	if (_playlists[selected].get().empty()) {
+	ShowPlaylistList spl_list;
+	auto const entries = spl_list.entries(_playlists[selected].uuid());
+
+	if (entries.empty()) {
 		error_dialog(this, _("This playlist is empty."));
 		return;
 	}
@@ -332,13 +322,20 @@ PlaylistControls::select_playlist (int selected, int position)
 {
 	wxProgressDialog dialog(variant::wx::dcpomatic(), _("Loading playlist and KDMs"));
 
-	for (auto const& i: _playlists[selected].get()) {
+	_playlist.clear();
+
+	ShowPlaylistList spl_list;
+	for (auto const& uuid: spl_list.entries(_playlists[selected].uuid())) {
 		dialog.Pulse ();
-		shared_ptr<DCPContent> dcp = dynamic_pointer_cast<DCPContent> (i.content);
+
+		auto entry = ShowPlaylistContentStore::instance()->get(uuid);
+		if (!entry) {
+			continue;
+		}
+
+		auto dcp = dynamic_pointer_cast<DCPContent>(entry->content());
 		if (dcp && dcp->needs_kdm()) {
-			optional<dcp::EncryptedKDM> kdm;
-			kdm = get_kdm_from_directory (dcp);
-			if (kdm) {
+			if (auto kdm = get_kdm_from_directory(dcp)) {
 				try {
 					dcp->add_kdm (*kdm);
 					dcp->examine(_film, shared_ptr<Job>(), true);
@@ -358,13 +355,15 @@ PlaylistControls::select_playlist (int selected, int position)
 	_current_spl_view->DeleteAllItems ();
 
 	int N = 0;
-	for (auto i: _playlists[selected].get()) {
-		wxListItem it;
-		it.SetId (N);
-		it.SetColumn (0);
-		it.SetText (std_to_wx(i.name));
-		_current_spl_view->InsertItem (it);
-		++N;
+	for (auto const& uuid: spl_list.entries(_playlists[selected].uuid())) {
+		if (auto entry = ShowPlaylistContentStore::instance()->get(uuid)) {
+			wxListItem it;
+			it.SetId(N);
+			it.SetColumn(0);
+			it.SetText(std_to_wx(entry->name()));
+			_current_spl_view->InsertItem(it);
+			++N;
+		}
 	}
 
 	_selected_playlist = selected;
@@ -379,9 +378,13 @@ void
 PlaylistControls::reset_film ()
 {
 	DCPOMATIC_ASSERT (_selected_playlist);
-	shared_ptr<Film> film (new Film(optional<boost::filesystem::path>()));
-	film->add_content (_playlists[*_selected_playlist].get()[_selected_playlist_position].content);
-	ResetFilm (film);
+	auto film = std::make_shared<Film>(optional<boost::filesystem::path>());
+	ShowPlaylistList spl_list;
+	auto uuid = spl_list.entries(_playlists[*_selected_playlist].uuid())[_selected_playlist_position];
+	if (auto entry = ShowPlaylistContentStore::instance()->get(uuid)) {
+		film->add_content(entry->content());
+	}
+	ResetFilm(film);
 }
 
 void
@@ -391,8 +394,8 @@ PlaylistControls::config_changed (int property)
 
 	if (property == Config::PLAYER_CONTENT_DIRECTORY) {
 		_content_view->update ();
-	} else if (property == Config::PLAYER_PLAYLIST_DIRECTORY) {
-		update_playlist_directory ();
+	} else if (property == Config::SHOW_PLAYLISTS_FILE) {
+		update_playlists();
 	}
 }
 
@@ -417,8 +420,11 @@ PlaylistControls::viewer_finished ()
 		return;
 	}
 
+	ShowPlaylistList spl_list;
+	auto entries = spl_list.entries(_playlists[*_selected_playlist].uuid());
+
 	_selected_playlist_position++;
-	if (_selected_playlist_position < int(_playlists[*_selected_playlist].get().size())) {
+	if (_selected_playlist_position < int(entries.size())) {
 		/* Next piece of content on the SPL */
 		update_current_content ();
 		_viewer.start();

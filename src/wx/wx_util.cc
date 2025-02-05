@@ -33,7 +33,7 @@
 #include "wx_util.h"
 #include "wx_variant.h"
 #include "lib/config.h"
-#include "lib/content_store.h"
+#include "lib/show_playlist_content_store.h"
 #include "lib/cross.h"
 #include "lib/job.h"
 #include "lib/job_manager.h"
@@ -845,7 +845,7 @@ layout_for_short_screen(wxWindow* reference)
 
 
 void
-update_content_store()
+update_show_playlist_content_store()
 {
 	auto dir = Config::instance()->player_content_directory();
 	if (!dir || !dcp::filesystem::is_directory(*dir)) {
@@ -854,7 +854,7 @@ update_content_store()
 
 	wxProgressDialog progress(variant::wx::dcpomatic(), _("Reading content directory"));
 
-	auto store = ContentStore::instance();
+	auto store = ShowPlaylistContentStore::instance();
 
 	auto errors = store->update([&progress]() {
 		return progress.Pulse();

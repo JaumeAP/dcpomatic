@@ -19,7 +19,7 @@
 */
 
 
-#include "lib/content_store.h"
+#include "lib/show_playlist_content_store.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/listctrl.h>
@@ -31,17 +31,21 @@ class Content;
 class Film;
 
 
+/** @class ContentView
+ *
+ *  @brief A GUI list of content from our ShowPlaylistContentStore.
+ */
 class ContentView : public wxListCtrl
 {
 public:
 	ContentView (wxWindow* parent);
 
-	std::shared_ptr<Content> selected () const;
+	boost::optional<ShowPlaylistEntry> selected() const;
 	void update ();
 
 private:
-	void add (std::shared_ptr<Content> content);
+	void add(ShowPlaylistEntry entry);
 
 	std::weak_ptr<Film> _film;
-	std::vector<std::string> _content_digests;
+	std::vector<std::string> _uuids;
 };

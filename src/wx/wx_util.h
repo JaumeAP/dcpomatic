@@ -126,7 +126,7 @@ extern double dpi_scale_factor (wxWindow* window);
 extern int search_ctrl_height ();
 extern void report_config_load_failure(wxWindow* parent, Config::LoadFailure what);
 extern bool layout_for_short_screen(wxWindow* reference);
-extern void update_content_store();
+extern void update_show_playlist_content_store();
 
 
 struct Offset

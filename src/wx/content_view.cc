@@ -62,55 +62,50 @@ ContentView::ContentView (wxWindow* parent)
 }
 
 
-shared_ptr<Content>
-ContentView::selected () const
+optional<ShowPlaylistEntry>
+ContentView::selected() const
 {
-	long int s = GetNextItem (-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	long int s = GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
 	if (s == -1) {
 		return {};
 	}
 
-	DCPOMATIC_ASSERT(s < int(_content_digests.size()));
-	return ContentStore::instance()->get(_content_digests[s]);
+	DCPOMATIC_ASSERT(s < int(_uuids.size()));
+	return ShowPlaylistContentStore::instance()->get(_uuids[s]);
 }
 
 
 void
-ContentView::update ()
+ContentView::update()
 {
-	DeleteAllItems ();
-	_content_digests.clear();
-	for (auto content: ContentStore::instance()->all()) {
-		add(content);
+	DeleteAllItems();
+	_uuids.clear();
+	for (auto entry: ShowPlaylistContentStore::instance()->all()) {
+		add(entry);
 	}
 }
 
 
 void
-ContentView::add(shared_ptr<Content> content)
+ContentView::add(ShowPlaylistEntry entry)
 {
 	int const N = GetItemCount();
 
 	wxListItem it;
 	it.SetId(N);
 	it.SetColumn(0);
-	auto length = content->approximate_length ();
-	auto const hmsf = length.split (24);
-	it.SetText(wxString::Format(char_to_wx("%02d:%02d:%02d"), hmsf.h, hmsf.m, hmsf.s));
+	it.SetText(std_to_wx(entry.approximate_length()));
 	InsertItem(it);
 
-	auto dcp = dynamic_pointer_cast<DCPContent>(content);
-	if (dcp && dcp->content_kind()) {
-		it.SetId(N);
-		it.SetColumn(1);
-		it.SetText(std_to_wx(dcp->content_kind()->name()));
-		SetItem(it);
-	}
+	it.SetId(N);
+	it.SetColumn(1);
+	it.SetText(std_to_wx(entry.kind().name()));
+	SetItem(it);
 
 	it.SetId(N);
 	it.SetColumn(2);
-	it.SetText(std_to_wx(content->summary()));
+	it.SetText(std_to_wx(entry.name()));
 	SetItem(it);
 
-	_content_digests.push_back(content->digest());
+	_uuids.push_back(entry.uuid());
 }
