@@ -1642,6 +1642,12 @@ private:
 			setvbuf(hf_out, NULL, _IONBF, 1);
 			*stdout = *hf_out;
 
+			HANDLE handle_err = GetStdHandle(STD_ERROR_HANDLE);
+			int hCrt = _open_osfhandle((intptr_t) handle_err, _O_TEXT);
+			FILE* hf_err = _fdopen(hCrt, "w");
+			setvbuf(hf_err, NULL, _IONBF, 1);
+			*stderr = *hf_err;
+
 			HANDLE handle_in = GetStdHandle(STD_INPUT_HANDLE);
 			hCrt = _open_osfhandle((intptr_t) handle_in, _O_TEXT);
 			FILE* hf_in = _fdopen(hCrt, "r");
