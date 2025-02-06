@@ -1643,7 +1643,7 @@ private:
 			*stdout = *hf_out;
 
 			HANDLE handle_err = GetStdHandle(STD_ERROR_HANDLE);
-			int hCrt = _open_osfhandle((intptr_t) handle_err, _O_TEXT);
+			hCrt = _open_osfhandle((intptr_t) handle_err, _O_TEXT);
 			FILE* hf_err = _fdopen(hCrt, "w");
 			setvbuf(hf_err, NULL, _IONBF, 1);
 			*stderr = *hf_err;
