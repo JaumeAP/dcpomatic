@@ -130,6 +130,7 @@ LIBDCP_ENABLE_WARNINGS
 
 
 using std::cout;
+using std::cerr;
 using std::dynamic_pointer_cast;
 using std::exception;
 using std::function;
@@ -1655,6 +1656,7 @@ private:
 			*stdin = *hf_in;
 
 			cout << variant::insert_dcpomatic("%1 is starting.") << "\n";
+			cerr << variant::insert_dcpomatic("Big bunch of bollocks.") << "\n";
 		}
 #endif
 			wxInitAllImageHandlers ();
