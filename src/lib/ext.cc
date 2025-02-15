@@ -27,8 +27,8 @@
 #include "exceptions.h"
 #include "ext.h"
 #include "nanomsg.h"
-#include <dcp/file.h>
 #include <dcp/filesystem.h>
+#include <dcp/raw_file.h>
 
 #ifdef DCPOMATIC_LINUX
 #include <linux/fs.h>
@@ -74,7 +74,7 @@ using std::vector;
 
 
 /* Use quite a big block size here, as ext4's fwrite() has quite a bit of overhead */
-uint64_t constexpr block_size = 4096 * 4096;
+int64_t constexpr block_size = 4096 * 4096;
 
 
 static
@@ -117,10 +117,10 @@ write (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total
 		throw CopyError(String::compose("Failed to open file %1", to.generic_string()), r, ext4_blockdev_errno);
 	}
 
-	dcp::File in(from, "rb");
+	dcp::RawFile in(from, dcp::RawFile::Access::READ);
 	if (!in) {
 		ext4_fclose (&out);
-		throw CopyError(String::compose("Failed to open file %1", from.string()), 0);
+		throw CopyError(String::compose("Failed to open file %1", from.string()), in.open_error());
 	}
 
 	std::vector<uint8_t> buffer(block_size);
@@ -128,13 +128,13 @@ write (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total
 
 	int progress_frequency = 1;
 	int progress_count = 0;
-	uint64_t remaining = file_size (from);
+	int64_t remaining = file_size(from);
 	while (remaining > 0) {
-		uint64_t const this_time = min(remaining, block_size);
-		size_t read = in.read(buffer.data(), 1, this_time);
+		int64_t const this_time = min(remaining, block_size);
+		auto read = in.read(buffer.data(), this_time);
 		if (read != this_time) {
 			ext4_fclose (&out);
-			throw CopyError(String::compose("Short read; expected %1 but read %2", this_time, read), 0, ext4_blockdev_errno);
+			throw CopyError(String::compose("Short read; expected %1 but read %2", this_time, read), 0, read);
 		}
 
 		digester.add (buffer.data(), this_time);
@@ -145,9 +145,9 @@ write (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total
 			ext4_fclose (&out);
 			throw CopyError("Write failed", r, ext4_blockdev_errno);
 		}
-		if (written != this_time) {
+		if (static_cast<int64_t>(written) != this_time) {
 			ext4_fclose (&out);
-			throw CopyError(String::compose("Short write; expected %1 but wrote %2", this_time, written), 0, ext4_blockdev_errno);
+			throw CopyError(String::compose("Short write; expected %1 but wrote %2", this_time, written), r, ext4_blockdev_errno);
 		}
 		remaining -= this_time;
 		total_remaining -= this_time;
@@ -181,12 +181,12 @@ read (boost::filesystem::path from, boost::filesystem::path to, uint64_t& total_
 	std::vector<uint8_t> buffer(block_size);
 	Digester digester;
 
-	uint64_t remaining = file_size (from);
+	int64_t remaining = file_size(from);
 	while (remaining > 0) {
-		uint64_t const this_time = min(remaining, block_size);
+		auto const this_time = min(remaining, block_size);
 		size_t read;
 		r = ext4_fread (&in, buffer.data(), this_time, &read);
-		if (read != this_time) {
+		if (static_cast<int64_t>(read) != this_time) {
 			ext4_fclose (&in);
 			throw VerifyError (String::compose("Short read; expected %1 but read %2", this_time, read), 0);
 		}
