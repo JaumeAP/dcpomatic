@@ -23,6 +23,7 @@
 #include "audio_processor.h"
 #include "constants.h"
 #include "dcpomatic_assert.h"
+#include "dcpomatic_log.h"
 #include "digester.h"
 #include "util.h"
 #include <dcp/raw_convert.h>
@@ -116,6 +117,8 @@ AudioMapping::make_default (AudioProcessor const * processor, optional<boost::fi
 
 	static int const regexes = sizeof(regex) / sizeof(*regex);
 
+	LOG_GENERAL("Setting default mapping for %1 %2", filename.get_value_or({}).string(), processor ? "with processor" : "without processor");
+
 	if (processor) {
 		processor->make_audio_mapping_default (*this);
 	} else {
@@ -128,8 +131,11 @@ AudioMapping::make_default (AudioProcessor const * processor, optional<boost::fi
 				for (int i = 0; i < regexes; ++i) {
 					boost::regex e (regex[i].regex, boost::regex::icase);
 					if (boost::regex_match(filename->filename().string(), e) && regex[i].channel < output_channels()) {
+						LOG_GENERAL("%1 matched regex %2 for channel %3", filename->filename().string(), regex[i].regex, regex[i].channel);
 						set (0, regex[i].channel, 1);
 						guessed = true;
+					} else {
+						LOG_GENERAL("%1 did not match regex %2 for channel %3", filename->filename().string(), regex[i].regex, regex[i].channel);
 					}
 				}
 			}
