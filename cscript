@@ -224,6 +224,7 @@ deb_depends['unstable'].extend(['libboost-filesystem1.67.0',
                                 'libfmt10'])
 
 def can_build_disk(target):
+    print("can_build_disk? ", target, target.distro)
     # We can build dcpomatic2_disk on platforms that have Boost process and can build the lwext4
     # library.  For now, just allow-list good ones here.
     #
@@ -249,6 +250,7 @@ def can_build_disk(target):
             return True
         if target.distro == 'rocky':
             return True
+    print("can't build disk!")
     return False
 
 def packages(name, packages, f):
