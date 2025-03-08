@@ -55,6 +55,7 @@
 #include "wx/templates_dialog.h"
 #include "wx/update_dialog.h"
 #include "wx/video_waveform_dialog.h"
+#include "wx/window_metrics.h"
 #include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
 #include "wx/wx_variant.h"
@@ -317,6 +318,7 @@ public:
 		, _splitter(new LimitedFrameSplitter(this))
 		, _right_panel(new wxPanel(_splitter, wxID_ANY))
 		, _film_viewer(_right_panel)
+		, _metrics(std::string{"dcpomatic"}, wxDefaultSize, this)
 	{
 		auto bar = new wxMenuBar;
 		setup_menu (bar);
@@ -405,6 +407,13 @@ public:
 		FocusManager::instance()->SetFocus.connect (boost::bind (&DOMFrame::remove_accelerators, this));
 		FocusManager::instance()->KillFocus.connect (boost::bind (&DOMFrame::add_accelerators, this));
 		add_accelerators ();
+
+		_metrics.bind();
+	}
+
+	void show()
+	{
+		_metrics.show();
 	}
 
 	~DOMFrame()
@@ -1605,6 +1614,7 @@ private:
 	bool _update_news_requested = false;
 	shared_ptr<Content> _clipboard;
 	bool _first_shown_called = false;
+	WindowMetrics _metrics;
 };
 
 
@@ -1707,7 +1717,6 @@ private:
 
 			_frame = new DOMFrame(variant::wx::dcpomatic());
 			SetTopWindow (_frame);
-			_frame->Maximize ();
 			close_splash ();
 
 			if (running_32_on_64 ()) {
@@ -1724,7 +1733,7 @@ private:
 					false);
 			}
 
-			_frame->Show ();
+			_frame->show();
 
 			signal_manager = new wxSignalManager (this);
 			Bind (wxEVT_IDLE, boost::bind (&App::idle, this, _1));

@@ -59,20 +59,29 @@ WindowMetrics::bind()
 void
 WindowMetrics::show() const
 {
+	auto frame = dynamic_cast<wxFrame*>(_window);
+
 #ifdef DCPOMATIC_LINUX
 	auto const position_before = _position;
 
-	_window->SetSize(_size);
-	_window->Show();
-
-	wxTheApp->CallAfter([this, position_before] {
-		_window->SetPosition(position_before);
-	});
+	if (_size == wxDefaultSize && frame) {
+		frame->Maximize();
+	} else {
+		_window->SetSize(_size);
+		wxTheApp->CallAfter([this, position_before] {
+			_window->SetPosition(position_before);
+		});
+	}
 #else
-	_window->SetSize(_size);
-	_window->SetPosition(_position);
-	_window->Show();
+	if (_size == wxDefaultSize && frame) {
+		frame->Maximize();
+	} else {
+		_window->SetSize(_size);
+		_window->SetPosition(_position);
+	}
 #endif
+
+	_window->Show();
 }
 
 
@@ -104,13 +113,19 @@ WindowMetrics::sized(wxSizeEvent& ev)
 void
 WindowMetrics::moved(wxMoveEvent& ev)
 {
-#ifdef DCPOMATIC_LINUX
-	_position = _window->ClientToScreen({0, 0});
-#else
 	int x;
 	int y;
 	_window->GetScreenPosition(&x, &y);
-	_position = { x, y };
+	auto const above_title_bar = wxPoint{ x, y };
+
+#ifdef DCPOMATIC_LINUX
+	if (dynamic_cast<wxFrame*>(_window)) {
+		_position = above_title_bar;
+	} else {
+		_position = _window->ClientToScreen({0, 0});
+	}
+#else
+	_position = above_title_bar;
 #endif
 	write_to_config();
 	ev.Skip();
