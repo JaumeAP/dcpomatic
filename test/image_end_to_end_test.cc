@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(monochrome_test)
 	auto film = new_test_film("monochrome_test", content);
 	make_and_verify_dcp(film);
 
-	auto player = std::make_shared<Player>(film, Image::Alignment::PADDED);
+	auto player = std::make_shared<Player>(film, Image::Alignment::PADDED, false);
 
 	std::shared_ptr<PlayerVideo> video;
 	player->Video.connect([&](std::shared_ptr<PlayerVideo> v, dcpomatic::DCPTime) {
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(monochrome_test)
 
 	auto dcp = std::make_shared<DCPContent>(film->dir(film->dcp_name()));
 	auto film2 = new_test_film("monochrome_test_reload", { dcp });
-	auto player2 = std::make_shared<Player>(film2, Image::Alignment::PADDED);
+	auto player2 = std::make_shared<Player>(film2, Image::Alignment::PADDED, false);
 
 	std::shared_ptr<PlayerVideo> video2;
 	player2->Video.connect([&](std::shared_ptr<PlayerVideo> v, dcpomatic::DCPTime) {
