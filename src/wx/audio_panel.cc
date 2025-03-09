@@ -415,7 +415,7 @@ AudioPanel::show_clicked ()
 	}
 
 	_audio_dialog.reset(this, _parent->film(), _parent->film_viewer(), ac.front());
-	_audio_dialog->Show ();
+	_audio_dialog->show();
 }
 
 

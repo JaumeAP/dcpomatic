@@ -78,6 +78,7 @@ AudioDialog::AudioDialog (wxWindow* parent, shared_ptr<Film> film, FilmViewer& v
 	, _content (content)
 	, _channels (film->audio_channels ())
 	, _plot (nullptr)
+	, _metrics("audio", { 800, 600 }, this)
 {
 	wxFont subheading_font (*wxNORMAL_FONT);
 	subheading_font.SetWeight (wxFONTWEIGHT_BOLD);
@@ -180,6 +181,8 @@ AudioDialog::AudioDialog (wxWindow* parent, shared_ptr<Film> film, FilmViewer& v
 	}
 
 	_plot->Cursor.connect (bind (&AudioDialog::set_cursor, this, _1, _2));
+
+	_metrics.bind();
 }
 
 
@@ -455,12 +458,11 @@ AudioDialog::setup_statistics ()
 	}
 }
 
-bool
-AudioDialog::Show (bool show)
+void
+AudioDialog::show()
 {
-	bool const r = wxDialog::Show (show);
+	_metrics.show();
 	try_to_load_analysis ();
-	return r;
 }
 
 void

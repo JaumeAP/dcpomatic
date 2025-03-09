@@ -1041,7 +1041,7 @@ DCPPanel::show_audio_clicked()
 	}
 
 	_audio_dialog.reset(_panel, _film, _viewer);
-	_audio_dialog->Show();
+	_audio_dialog->show();
 }
 
 

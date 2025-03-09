@@ -23,6 +23,7 @@
 #define DCPOMATIC_AUDIO_DIALOG_H
 
 
+#include "window_metrics.h"
 #include "lib/audio_analysis.h"
 #include "lib/constants.h"
 #include "lib/film_property.h"
@@ -50,8 +51,7 @@ class AudioDialog : public wxDialog
 public:
 	AudioDialog(wxWindow* parent, std::shared_ptr<Film> film, FilmViewer& viewer, std::shared_ptr<Content> content = std::shared_ptr<Content>());
 
-	bool Show (bool show = true) override;
-
+	void show();
 	void set_cursor (boost::optional<dcpomatic::DCPTime> time, boost::optional<float> db);
 
 private:
@@ -84,6 +84,7 @@ private:
 	boost::signals2::scoped_connection _film_connection;
 	boost::signals2::scoped_connection _film_content_connection;
 	boost::signals2::scoped_connection _analysis_finished_connection;
+	WindowMetrics _metrics;
 };
 
 
