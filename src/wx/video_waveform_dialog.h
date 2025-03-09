@@ -19,6 +19,7 @@
 */
 
 
+#include "window_metrics.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
@@ -36,6 +37,8 @@ class VideoWaveformDialog : public wxDialog
 public:
 	VideoWaveformDialog(wxWindow* parent, std::weak_ptr<const Film> film, FilmViewer& viewer);
 
+	void show();
+
 private:
 	void shown (wxShowEvent &);
 	void component_changed ();
@@ -48,4 +51,5 @@ private:
 	wxSlider* _contrast;
 	wxStaticText* _x_position;
 	wxStaticText* _value;
+	WindowMetrics _metrics;
 };

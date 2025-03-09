@@ -41,7 +41,7 @@ VideoWaveformDialog::VideoWaveformDialog(wxWindow* parent, weak_ptr<const Film> 
 		wxID_ANY,
 		_("Video Waveform"),
 		wxDefaultPosition,
-		wxSize (640, 512),
+		wxDefaultSize,
 #ifdef DCPOMATIC_OSX
 		/* I can't get wxFRAME_FLOAT_ON_PARENT to work on OS X, and although wxSTAY_ON_TOP keeps
 		   the window above all others (and not just our own) it's better than nothing for now.
@@ -52,6 +52,7 @@ VideoWaveformDialog::VideoWaveformDialog(wxWindow* parent, weak_ptr<const Film> 
 #endif
 		)
 	, _viewer (viewer)
+	, _metrics("video", { 640, 512 }, this)
 {
 	wxBoxSizer* overall_sizer = new wxBoxSizer (wxVERTICAL);
 
@@ -105,7 +106,17 @@ VideoWaveformDialog::VideoWaveformDialog(wxWindow* parent, weak_ptr<const Film> 
 
 	component_changed ();
 	contrast_changed ();
+
+	_metrics.bind();
 }
+
+
+void
+VideoWaveformDialog::show()
+{
+	_metrics.show();
+}
+
 
 void
 VideoWaveformDialog::shown (wxShowEvent& ev)

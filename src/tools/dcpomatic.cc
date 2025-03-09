@@ -1102,7 +1102,7 @@ private:
 			_video_waveform_dialog.reset(this, _film, _film_viewer);
 		}
 
-		_video_waveform_dialog->Show ();
+		_video_waveform_dialog->show();
 	}
 
 	void tools_system_information ()
