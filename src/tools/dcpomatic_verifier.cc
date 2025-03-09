@@ -33,6 +33,7 @@
 #include "wx/id.h"
 #include "wx/verify_dcp_progress_panel.h"
 #include "wx/verify_dcp_result_panel.h"
+#include "wx/window_metrics.h"
 #include "wx/wx_util.h"
 #include "wx/wx_variant.h"
 #include "lib/constants.h"
@@ -112,6 +113,7 @@ public:
 		   the dark-grey background on Windows.
 		*/
 		, _overall_panel(new wxPanel(this, wxID_ANY))
+		, _metrics(std::string{"dcpomatic-verifier"}, { 480, 640 }, this)
 	{
 		auto bar = new wxMenuBar;
 		setup_menu(bar);
@@ -142,6 +144,7 @@ public:
 		overall_sizer->Add(dcp_sizer, 0, wxEXPAND | wxALL, DCPOMATIC_DIALOG_BORDER);
 
 		auto options_sizer = new wxBoxSizer(wxVERTICAL);
+
 		_check_picture_details = new CheckBox(_overall_panel, _("Verify picture asset details"));
 		_check_picture_details->set(true);
 		_check_picture_details->SetToolTip(
@@ -172,6 +175,14 @@ public:
 		_verify->bind(&DOMFrame::verify_clicked, this);
 
 		setup_sensitivity();
+
+		Config::instance()->Changed.connect(boost::bind(&DOMFrame::config_changed, this));
+		_metrics.bind();
+	}
+
+	void show()
+	{
+		_metrics.show();
 	}
 
 private:
@@ -203,6 +214,13 @@ private:
 		help->Append(wxID_ABOUT, _("About"));
 #endif
 		m->Append(help, _("&Help"));
+	}
+
+	void config_changed()
+	{
+		try {
+			Config::instance()->write_config();
+		} catch (exception& e) {}
 	}
 
 	void setup_sensitivity()
@@ -288,6 +306,7 @@ private:
 	VerifyDCPProgressPanel* _progress_panel;
 	VerifyDCPResultPanel* _result_panel;
 	bool _cancel_pending = false;
+	WindowMetrics _metrics;
 };
 
 
@@ -345,8 +364,7 @@ private:
 
 			_frame = new DOMFrame(variant::wx::dcpomatic_verifier());
 			SetTopWindow(_frame);
-			_frame->Maximize();
-			_frame->Show();
+			_frame->show();
 		}
 		catch (exception& e)
 		{
