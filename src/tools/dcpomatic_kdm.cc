@@ -37,6 +37,7 @@
 #include "wx/short_kdm_output_panel.h"
 #include "wx/static_text.h"
 #include "wx/tall_kdm_output_panel.h"
+#include "wx/window_metrics.h"
 #include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
 #include "wx/wx_variant.h"
@@ -113,6 +114,7 @@ public:
 		: wxFrame (nullptr, -1, title)
 		, _config_dialog (nullptr)
 		, _job_view (nullptr)
+		, _metrics("dcpomatic-kdm", wxDefaultSize, this)
 	{
 #if defined(DCPOMATIC_WINDOWS)
 		if (Config::instance()->win32_console ()) {
@@ -262,6 +264,13 @@ public:
 		_output->MethodChanged.connect(boost::bind(&DOMFrame::setup_sensitivity, this));
 
 		setup_sensitivity ();
+
+		_metrics.bind();
+	}
+
+	void show()
+	{
+		_metrics.show();
 	}
 
 private:
@@ -862,6 +871,7 @@ private:
 	KDMOutputPanel* _output = nullptr;
 	JobViewDialog* _job_view;
 	Collator _collator;
+	WindowMetrics _metrics;
 };
 
 
@@ -926,12 +936,11 @@ private:
 
 			_frame = new DOMFrame(variant::wx::dcpomatic_kdm_creator());
 			SetTopWindow (_frame);
-			_frame->Maximize ();
 			if (splash) {
 				splash->Destroy ();
 				splash = nullptr;
 			}
-			_frame->Show ();
+			_frame->show();
 
 			signal_manager = new wxSignalManager (this);
 			Bind (wxEVT_IDLE, boost::bind (&App::idle, this));
