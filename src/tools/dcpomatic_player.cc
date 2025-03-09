@@ -34,6 +34,7 @@
 #include "wx/timer_display.h"
 #include "wx/update_dialog.h"
 #include "wx/verify_dcp_dialog.h"
+#include "wx/window_metrics.h"
 #include "wx/wx_ptr.h"
 #include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
@@ -211,6 +212,7 @@ public:
 		, _overall_panel(new wxPanel(this, wxID_ANY))
 		, _viewer(_overall_panel)
 		, _main_sizer (new wxBoxSizer(wxVERTICAL))
+		, _metrics(std::string{"dcpomatic-player"}, wxDefaultSize, this)
 	{
 		dcpomatic_log = make_shared<NullLog>();
 
@@ -319,6 +321,8 @@ public:
 		setup_http_server();
 
 		SetDropTarget(new DCPDropTarget(this));
+
+		_metrics.bind();
 	}
 
 	~DOMFrame ()
@@ -334,6 +338,11 @@ public:
 		} catch (...) {
 			LOG_ERROR_NC("Destructor threw");
 		}
+	}
+
+	void show()
+	{
+		_metrics.show();
 	}
 
 	void close(wxCloseEvent& ev)
@@ -1289,6 +1298,7 @@ private:
 	boost::thread _http_server_thread;
 	std::unique_ptr<HTTPServer> _http_server;
 	struct timeval _last_http_server_update = { 0, 0 };
+	WindowMetrics _metrics;
 };
 
 static const wxCmdLineEntryDesc command_line_description[] = {
@@ -1364,12 +1374,11 @@ private:
 
 			_frame = new DOMFrame ();
 			SetTopWindow (_frame);
-			_frame->Maximize ();
 			if (splash) {
 				splash->Destroy ();
 				splash = nullptr;
 			}
-			_frame->Show ();
+			_frame->show();
 
 			if (_dcp_to_load && dcp::filesystem::is_directory(*_dcp_to_load)) {
 				try {
