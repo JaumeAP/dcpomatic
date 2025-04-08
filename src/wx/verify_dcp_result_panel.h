@@ -27,7 +27,8 @@
 
 class Button;
 class VerifyDCPJob;
-class wxTreeCtrl;
+class wxGrid;
+class wxScrolledWindow;
 
 
 class VerifyDCPResultPanel : public wxPanel
@@ -35,15 +36,23 @@ class VerifyDCPResultPanel : public wxPanel
 public:
 	VerifyDCPResultPanel(wxWindow* parent);
 
-	void add(std::vector<std::shared_ptr<const VerifyDCPJob>> job);
+	void add_jobs(std::vector<std::shared_ptr<const VerifyDCPJob>> job);
 
 private:
-	std::map<dcp::VerificationNote::Type, int> add(std::shared_ptr<const VerifyDCPJob> job, bool many);
+	std::map<dcp::VerificationNote::Type, int> add_job(std::shared_ptr<const VerifyDCPJob> job);
+
 	void save_text_report();
 	void save_html_report();
 
 	wxStaticText* _summary;
-	std::map<dcp::VerificationNote::Type, wxTreeCtrl*> _pages;
+
+	struct Page {
+		wxScrolledWindow* window;
+		wxSizer* sizer;
+		wxGrid* grid;
+	};
+
+	std::map<dcp::VerificationNote::Type, Page> _pages;
 	Button* _save_text_report;
 	Button* _save_html_report;
 

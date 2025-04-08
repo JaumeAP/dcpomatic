@@ -204,7 +204,7 @@ private:
 		}
 
 		DCPOMATIC_ASSERT(_dcp_paths.size() == jobs.size());
-		_result_panel->add(jobs);
+		_result_panel->add_jobs(jobs);
 		if (_write_log->get()) {
 			for (size_t i = 0; i < _dcp_paths.size(); ++i) {
 				dcp::TextFormatter formatter(_dcp_paths[i] / "REPORT.txt");

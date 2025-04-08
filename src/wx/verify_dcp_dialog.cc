@@ -105,7 +105,7 @@ VerifyDCPDialog::verify_clicked()
 		EndModal(0);
 	} else {
 		_progress_panel->clear();
-		_result_panel->add({ _job });
+		_result_panel->add_jobs({ _job });
 		_cancel->Enable(false);
 		_verify->Enable(false);
 		_check_picture_details->Enable(false);
