@@ -19,6 +19,7 @@
 */
 
 
+#include "audio_level_calculator.h"
 #include "butler.h"
 #include "compose.hpp"
 #include "cross.h"
@@ -33,10 +34,12 @@
 using std::cout;
 using std::function;
 using std::make_pair;
+using std::make_shared;
 using std::pair;
 using std::shared_ptr;
 using std::string;
 using std::weak_ptr;
+using std::vector;
 using boost::bind;
 using boost::optional;
 using namespace dcpomatic;
@@ -88,6 +91,7 @@ Butler::Butler(
 	, _alignment(alignment)
 	, _fast(fast)
 	, _prepare_only_proxy(prepare_only_proxy)
+	, _enable_audio_level_calculation(false)
 {
 	_player_video_connection = _player.Video.connect(bind(&Butler::video, this, _1, _2));
 	_player_audio_connection = _player.Audio.connect(bind(&Butler::audio, this, _1, _2, _3));
@@ -312,6 +316,7 @@ Butler::seek_unlocked(DCPTime position, bool accurate)
 
 	_video.clear();
 	_audio.clear();
+	_audio_level_calculator.clear();
 	_closed_caption.clear();
 
 	_summon.notify_all();
@@ -371,6 +376,9 @@ Butler::audio(shared_ptr<AudioBuffers> audio, DCPTime time, int frame_rate)
 	}
 
 	_audio.put(remap(audio, _audio_channels, _audio_mapping), time, frame_rate);
+	if (_enable_audio_level_calculation) {
+		_audio_level_calculator.put(audio, time, frame_rate);
+	}
 }
 
 
@@ -479,5 +487,26 @@ Butler::Error::summary() const
 	}
 
 	return "";
+}
+
+
+void
+Butler::enable_audio_level_calculation(bool enable)
+{
+	_enable_audio_level_calculation = enable;
+}
+
+
+dcpomatic::DCPTime
+Butler::time_between_audio_level_measurements() const
+{
+	return _audio_level_calculator.time_between_measurements();
+}
+
+
+boost::optional<AudioLevels>
+Butler::get_audio_levels()
+{
+	return _audio_level_calculator.get();
 }
 

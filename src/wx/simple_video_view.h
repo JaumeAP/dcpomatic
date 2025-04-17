@@ -19,6 +19,7 @@
 */
 
 
+#include "simple_meters.h"
 #include "video_view.h"
 #include "lib/filter.h"
 #include "lib/position.h"
@@ -43,6 +44,10 @@ public:
 		return _panel;
 	}
 
+	wxWindow* get_meters() {
+		return _meters.get();
+	}
+
 	void update () override;
 	void start () override;
 	NextFrameResult display_next_frame (bool non_blocking) override;
@@ -60,4 +65,6 @@ private:
 
 	Filter _rec2020_filter;
 	VideoFilterGraphSet _rec2020_filter_graph;
+
+	SimpleMeters _meters;
 };

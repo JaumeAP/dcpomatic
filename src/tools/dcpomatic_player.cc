@@ -133,6 +133,7 @@ enum {
 	ID_view_full_screen = DCPOMATIC_MAIN_MENU + 200,
 	ID_view_dual_screen,
 	ID_view_closed_captions,
+	ID_view_meters,
 	ID_view_eye,
 	ID_view_eye_left,
 	ID_view_eye_right,
@@ -241,6 +242,7 @@ public:
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_full_screen, this), ID_view_full_screen);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_dual_screen, this), ID_view_dual_screen);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_closed_captions, this), ID_view_closed_captions);
+		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_meters, this), ID_view_meters);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_cpl, this, _1), ID_view_cpl, ID_view_cpl + MAX_CPLS);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_eye_changed, this, _1), ID_view_eye_left);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_eye_changed, this, _1), ID_view_eye_right);
@@ -644,6 +646,7 @@ private:
 		setup_menu ();
 		view->AppendSeparator();
 		view->Append(ID_view_closed_captions, _("Closed captions..."));
+		view->Append(ID_view_meters, _("Audio meters...\tCtrl-L"));
 		_view_eye_menu = new wxMenu;
 		_view_eye_left = _view_eye_menu->AppendRadioItem(ID_view_eye_left, _("Left"));
 		_view_eye_menu->AppendRadioItem(ID_view_eye_right, _("Right"));
@@ -987,6 +990,11 @@ private:
 	void view_closed_captions ()
 	{
 		_viewer.show_closed_captions();
+	}
+
+	void view_meters ()
+	{
+		_viewer.show_meters();
 	}
 
 	void tools_verify ()

@@ -23,6 +23,8 @@
 #define DCPOMATIC_BUTLER_H
 
 
+#include "audio_level_calculator.h"
+#include "audio_levels.h"
 #include "audio_mapping.h"
 #include "audio_ring_buffers.h"
 #include "change_signaller.h"
@@ -92,7 +94,11 @@ public:
 
 	std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime> get_video(Behaviour behaviour, Error* e = nullptr);
 	boost::optional<dcpomatic::DCPTime> get_audio(Behaviour behaviour, float* out, Frame frames);
+	boost::optional<AudioLevels> get_audio_levels();
 	boost::optional<TextRingBuffers::Data> get_closed_caption();
+
+	void enable_audio_level_calculation(bool enable);
+	dcpomatic::DCPTime time_between_audio_level_measurements() const;
 
 	std::pair<size_t, std::string> memory_used() const;
 
@@ -112,6 +118,7 @@ private:
 
 	VideoRingBuffers _video;
 	AudioRingBuffers _audio;
+	AudioLevelCalculator _audio_level_calculator;
 	TextRingBuffers _closed_caption;
 
 	boost::thread_group _prepare_pool;
@@ -153,6 +160,8 @@ private:
 	    seeking to.
 	*/
 	boost::optional<dcpomatic::DCPTime> _awaiting;
+
+	boost::atomic<bool> _enable_audio_level_calculation;
 
 	boost::signals2::scoped_connection _player_video_connection;
 	boost::signals2::scoped_connection _player_audio_connection;

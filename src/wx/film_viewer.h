@@ -48,6 +48,7 @@ class FFmpegPlayer;
 class Image;
 class Player;
 class PlayerVideo;
+class MetersDialog;
 class RGBPlusAlphaImage;
 class wxToggleButton;
 
@@ -71,6 +72,7 @@ public:
 	}
 
 	void show_closed_captions();
+	void show_meters();
 
 	void set_film(std::shared_ptr<Film>);
 	std::shared_ptr<Film> film() const {
@@ -184,6 +186,7 @@ private:
 	void film_length_change();
 	void ui_finished();
 	void start_audio_stream_if_open();
+	void meters_shown(wxShowEvent& ev);
 
 	dcpomatic::DCPTime uncorrected_time() const;
 
@@ -212,6 +215,7 @@ private:
 	Optimisation _optimisation = Optimisation::NONE;
 
 	ClosedCaptionsDialog* _closed_captions_dialog = nullptr;
+	MetersDialog* _meters_dialog = nullptr;
 
 	bool _outline_content = false;
 	boost::optional<dcpomatic::Rect<double>> _outline_subtitles;

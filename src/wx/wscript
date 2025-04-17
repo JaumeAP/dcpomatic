@@ -125,6 +125,8 @@ sources = """
           markers_panel.cc
           message_dialog.cc
           metadata_dialog.cc
+          meter_util.cc
+          meters_dialog.cc
           move_to_dialog.cc
           nag_dialog.cc
           name_format_editor.cc
@@ -160,6 +162,7 @@ sources = """
           server_dialog.cc
           servers_list_dialog.cc
           short_kdm_output_panel.cc
+          simple_meters.cc
           simple_video_view.cc
           smpte_metadata_dialog.cc
           sound_preferences_page.cc
@@ -174,6 +177,7 @@ sources = """
           tall_kdm_output_panel.cc
           templates_dialog.cc
           text_panel.cc
+          text_size_cache.cc
           text_view.cc
           time_picker.cc
           timer_display.cc
