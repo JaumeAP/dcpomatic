@@ -37,6 +37,7 @@
 #include <boost/thread/condition.hpp>
 
 
+class LevelCalculator;
 class Player;
 class PlayerVideo;
 
@@ -93,6 +94,8 @@ public:
 	std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime> get_video(Behaviour behaviour, Error* e = nullptr);
 	boost::optional<dcpomatic::DCPTime> get_audio(Behaviour behaviour, float* out, Frame frames);
 	boost::optional<TextRingBuffers::Data> get_closed_caption();
+
+	std::shared_ptr<LevelCalculator> level_calculator() const;
 
 	std::pair<size_t, std::string> memory_used() const;
 
@@ -153,6 +156,8 @@ private:
 	    seeking to.
 	*/
 	boost::optional<dcpomatic::DCPTime> _awaiting;
+
+	std::shared_ptr<LevelCalculator> _level_calculator;
 
 	boost::signals2::scoped_connection _player_video_connection;
 	boost::signals2::scoped_connection _player_audio_connection;

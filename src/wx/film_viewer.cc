@@ -28,6 +28,7 @@
 #include "closed_captions_dialog.h"
 #include "film_viewer.h"
 #include "gl_video_view.h"
+#include "meters_dialog.h"
 #include "nag_dialog.h"
 #include "playhead_to_frame_dialog.h"
 #include "playhead_to_timecode_dialog.h"
@@ -89,6 +90,7 @@ rtaudio_callback(void* out, void *, unsigned int frames, double, RtAudioStreamSt
 
 FilmViewer::FilmViewer(wxWindow* p)
 	: _closed_captions_dialog(new ClosedCaptionsDialog(p, this))
+	, _meters_dialog(new MetersDialog(p))
 {
 #if wxCHECK_VERSION(3, 1, 0)
 	switch (Config::instance()->video_view_type()) {
@@ -96,11 +98,17 @@ FilmViewer::FilmViewer(wxWindow* p)
 		_video_view = std::make_shared<GLVideoView>(this, p);
 		break;
 	case Config::VIDEO_VIEW_SIMPLE:
-		_video_view = std::make_shared<SimpleVideoView>(this, p);
+	{
+		auto simple = std::make_shared<SimpleVideoView>(this, p);
+		_meters_dialog->set_meters(simple->get_meters());
+		_video_view = simple;
+	}
 		break;
 	}
 #else
-	_video_view = std::make_shared<SimpleVideoView>(this, p);
+	auto simple = std::make_shared<SimpleVideoView>(this, p);
+	_meters_dialog->set_meters(simple->get_meters());
+	_video_view = simple;
 #endif
 
 	_video_view->Sized.connect(boost::bind(&FilmViewer::video_view_sized, this));
@@ -804,6 +812,13 @@ void
 FilmViewer::show_closed_captions()
 {
 	_closed_captions_dialog->Show();
+}
+
+
+void
+FilmViewer::show_meters()
+{
+	_meters_dialog->Show();
 }
 
 

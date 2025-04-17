@@ -24,6 +24,7 @@
 #include "cross.h"
 #include "dcpomatic_log.h"
 #include "exceptions.h"
+#include "level_calculator.h"
 #include "log.h"
 #include "player.h"
 #include "util.h"
@@ -33,6 +34,7 @@
 using std::cout;
 using std::function;
 using std::make_pair;
+using std::make_shared;
 using std::pair;
 using std::shared_ptr;
 using std::string;
@@ -88,6 +90,7 @@ Butler::Butler(
 	, _alignment(alignment)
 	, _fast(fast)
 	, _prepare_only_proxy(prepare_only_proxy)
+	, _level_calculator(make_shared<LevelCalculator>())
 {
 	_player_video_connection = _player.Video.connect(bind(&Butler::video, this, _1, _2));
 	_player_audio_connection = _player.Audio.connect(bind(&Butler::audio, this, _1, _2, _3));
@@ -312,6 +315,7 @@ Butler::seek_unlocked(DCPTime position, bool accurate)
 
 	_video.clear();
 	_audio.clear();
+	_level_calculator->clear();
 	_closed_caption.clear();
 
 	_summon.notify_all();
@@ -369,6 +373,8 @@ Butler::audio(shared_ptr<AudioBuffers> audio, DCPTime time, int frame_rate)
 		/* Don't store any audio in these cases */
 		return;
 	}
+
+	_level_calculator->put(audio, time, frame_rate);
 
 	_audio.put(remap(audio, _audio_channels, _audio_mapping), time, frame_rate);
 }
@@ -479,5 +485,12 @@ Butler::Error::summary() const
 	}
 
 	return "";
+}
+
+
+shared_ptr<LevelCalculator>
+Butler::level_calculator() const
+{
+	return _level_calculator;
 }
 
