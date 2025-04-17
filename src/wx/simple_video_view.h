@@ -19,6 +19,7 @@
 */
 
 
+#include "simple_audio_meters.h"
 #include "video_view.h"
 #include "lib/filter.h"
 #include "lib/position.h"
@@ -43,6 +44,10 @@ public:
 		return _panel;
 	}
 
+	wxWindow* get_audio_meters() {
+		return _audio_meters.get();
+	}
+
 	void update() override;
 	void update_crop_guess() override;
 	void start() override;
@@ -61,4 +66,6 @@ private:
 
 	Filter _rec2020_filter;
 	VideoFilterGraphSet _rec2020_filter_graph;
+
+	SimpleAudioMeters _audio_meters;
 };

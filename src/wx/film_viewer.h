@@ -34,7 +34,6 @@
 #include "lib/config.h"
 #include "lib/film_property.h"
 #include "lib/player.h"
-#include "lib/player_text.h"
 #include "lib/signaller.h"
 #include "lib/timer.h"
 #include <dcp/warnings.h>
@@ -45,6 +44,7 @@ LIBDCP_ENABLE_WARNINGS
 #include <vector>
 
 
+class AudioMetersDialog;
 class Butler;
 class ClosedCaptionsDialog;
 class DCPContent;
@@ -78,6 +78,7 @@ public:
 	}
 
 	void show_closed_captions();
+	void show_audio_meters();
 
 	void set_film(std::shared_ptr<Film>);
 	std::shared_ptr<Film> film() const {
@@ -191,6 +192,7 @@ private:
 	void film_length_change();
 	void ui_finished();
 	void start_audio_stream_if_open();
+	void audio_meters_shown(wxShowEvent& ev);
 
 	dcpomatic::DCPTime uncorrected_time() const;
 
@@ -219,6 +221,7 @@ private:
 	Optimisation _optimisation = Optimisation::NONE;
 
 	ClosedCaptionsDialog* _closed_captions_dialog = nullptr;
+	AudioMetersDialog* _audio_meters_dialog = nullptr;
 
 	bool _outline_content = false;
 	boost::optional<dcpomatic::Rect<double>> _outline_subtitles;

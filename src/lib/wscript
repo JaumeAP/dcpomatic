@@ -38,6 +38,7 @@ sources = """
           audio_delay.cc
           audio_filter.cc
           audio_filter_graph.cc
+          audio_level_calculator.cc
           audio_mapping.cc
           audio_merger.cc
           audio_point.cc

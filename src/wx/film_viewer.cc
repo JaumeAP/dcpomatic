@@ -25,6 +25,7 @@
 
 
 #include "audio_backend.h"
+#include "audio_meters_dialog.h"
 #include "closed_captions_dialog.h"
 #include "film_viewer.h"
 #include "gl_video_view.h"
@@ -88,6 +89,7 @@ rtaudio_callback(void* out, void *, unsigned int frames, double, RtAudioStreamSt
 
 FilmViewer::FilmViewer(wxWindow* p, bool wake)
 	: _closed_captions_dialog(new ClosedCaptionsDialog(p, this))
+	, _audio_meters_dialog(new AudioMetersDialog(p))
 	, _stream_time(0)
 	, _stream_time_update_needed(true)
 {
@@ -97,12 +99,20 @@ FilmViewer::FilmViewer(wxWindow* p, bool wake)
 		_video_view = std::make_shared<GLVideoView>(this, p, wake);
 		break;
 	case Config::VIDEO_VIEW_SIMPLE:
-		_video_view = std::make_shared<SimpleVideoView>(this, p, wake);
+	{
+		auto simple = std::make_shared<SimpleVideoView>(this, p, wake);
+		_audio_meters_dialog->set_meters(simple->get_audio_meters());
+		_video_view = simple;
+	}
 		break;
 	}
 #else
-	_video_view = std::make_shared<SimpleVideoView>(this, p, wake);
+	auto simple = std::make_shared<SimpleVideoView>(this, p, wake);
+	_audio_meters_dialog->set_meters(simple->get_audio_meters());
+	_video_view = simple;
 #endif
+
+	_audio_meters_dialog->Bind(wxEVT_SHOW, boost::bind(&FilmViewer::audio_meters_shown, this, _1));
 
 	_video_view->Sized.connect(boost::bind(&FilmViewer::video_view_sized, this));
 	_video_view->TooManyDropped.connect(boost::bind(boost::ref(TooManyDropped)));
@@ -117,6 +127,13 @@ FilmViewer::FilmViewer(wxWindow* p, bool wake)
 FilmViewer::~FilmViewer()
 {
 	stop();
+}
+
+
+void
+FilmViewer::audio_meters_shown(wxShowEvent& ev)
+{
+	_butler->enable_audio_level_calculation(ev.IsShown());
 }
 
 
@@ -812,6 +829,13 @@ void
 FilmViewer::show_closed_captions()
 {
 	_closed_captions_dialog->Show();
+}
+
+
+void
+FilmViewer::show_audio_meters()
+{
+	_audio_meters_dialog->Show();
 }
 
 
