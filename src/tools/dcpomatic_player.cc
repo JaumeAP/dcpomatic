@@ -646,7 +646,7 @@ private:
 		setup_menu ();
 		view->AppendSeparator();
 		view->Append(ID_view_closed_captions, _("Closed captions..."));
-		view->Append(ID_view_meters, _("Audio meters..."));
+		view->Append(ID_view_meters, _("Audio meters...\tCtrl-L"));
 		_view_eye_menu = new wxMenu;
 		_view_eye_left = _view_eye_menu->AppendRadioItem(ID_view_eye_left, _("Left"));
 		_view_eye_menu->AppendRadioItem(ID_view_eye_right, _("Right"));
