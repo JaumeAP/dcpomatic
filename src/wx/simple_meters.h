@@ -24,6 +24,7 @@
 
 
 #include "lib/dcpomatic_time.h"
+#include "text_size_cache.h"
 #include <memory>
 #include <vector>
 
@@ -57,7 +58,7 @@ private:
 
 	std::weak_ptr<LevelCalculator> _level_calculator;
 
-	std::vector<float> _label_widths;
+	TextSizeCache _sizes;
 };
 
 

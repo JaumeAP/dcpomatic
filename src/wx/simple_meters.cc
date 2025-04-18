@@ -32,9 +32,6 @@ LIBDCP_ENABLE_WARNINGS
 #include <algorithm>
 
 
-static auto constexpr min_db = -70.0f;
-
-
 using std::shared_ptr;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
@@ -58,31 +55,34 @@ SimpleMeters::get() const
 void
 SimpleMeters::paint()
 {
+	auto constexpr min_db = -70.0f;
+	auto constexpr border = 16;
+	auto constexpr scale_label_width = 28;
+
 	wxPaintDC dc(_panel);
 
 	dc.SetBackground(*wxBLACK_BRUSH);
 	dc.Clear();
 
-	if (_peaks.empty()) {
-		return;
-	}
-
 	auto const scale = 1 / dpi_scale_factor(_panel);
+	auto const panel_size = dcp::Size(_panel->GetSize().GetWidth() / scale, _panel->GetSize().GetHeight() / scale);
+	auto const meter_height = panel_size.height - 24 - 2 * border;
 	dc.SetLogicalScale(scale, scale);
 
-	auto const panel_size = dcp::Size(_panel->GetSize().GetWidth() / scale, _panel->GetSize().GetHeight() / scale);
+	auto db_to_y = [meter_height](float db) {
+		return border + meter_height - (db - min_db) * meter_height / -min_db;
+	};
 
-	auto const channel_width = panel_size.width / _peaks.size();
-	auto const meter_height = panel_size.height - 24;
-
-	int x = 0;
-	dc.SetBrush(*wxGREEN_BRUSH);
-	for (auto peak: _peaks) {
-		auto const peak_db = std::max(min_db, 20 * log10(peak));
-		auto const height = (peak_db - min_db) * meter_height / -min_db;
-		dc.DrawRectangle(x, meter_height - height, channel_width, height);
-		x += channel_width;
-	}
+	static auto const scales = std::vector<std::pair<int, wxString>>{
+		{ 0, wxT("0dB") },
+		{ -10, wxT("-10dB") },
+		{ -20, wxT("-20dB") },
+		{ -30, wxT("-30dB") },
+		{ -40, wxT("-40dB") },
+		{ -50, wxT("-50dB") },
+		{ -60, wxT("-60dB") },
+		{ -70, wxT("-70dB") },
+	};
 
 	auto gc = wxGraphicsContext::Create(dc);
 	if (!gc) {
@@ -92,20 +92,37 @@ SimpleMeters::paint()
 	gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
 	gc->SetFont(gc->CreateFont(*wxSMALL_FONT, *wxWHITE));
 
-	if (_label_widths.empty()) {
-		_label_widths.resize(MAX_DCP_AUDIO_CHANNELS);
-		for (auto i = 0; i < MAX_DCP_AUDIO_CHANNELS; ++i) {
-			wxDouble label_width;
-			wxDouble label_height;
-			wxDouble label_descent;
-			wxDouble label_leading;
-			gc->GetTextExtent(std_to_wx(short_audio_channel_name(i)), &label_width, &label_height, &label_descent, &label_leading);
-			_label_widths[i] = label_width;
-		}
+	/* Scale lines and labels (0dB, -10dB etc.) */
+	dc.SetPen(*wxGREY_PEN);
+	for (auto const& scale: scales) {
+		auto const y = static_cast<int>(std::round(db_to_y(scale.first)));
+		dc.DrawLine({ border + scale_label_width, y }, { panel_size.width - border, y });
+		auto const size = _sizes.get(gc, scale.second);
+		gc->DrawText(scale.second, border + scale_label_width - size.width - 4, y - size.height / 2);
 	}
 
+	if (_peaks.empty()) {
+		delete gc;
+		return;
+	}
+
+	auto const channel_width = (panel_size.width - 2 * border - scale_label_width) / _peaks.size();
+
+	/* Meter bars */
+	int x = border + scale_label_width;
+	dc.SetBrush(*wxGREEN_BRUSH);
+	dc.SetPen(*wxBLACK_PEN);
+	for (auto peak: _peaks) {
+		auto const peak_db = std::max(min_db, 20 * log10(peak));
+		auto const y = db_to_y(peak_db);
+		dc.DrawRectangle(x, y, channel_width, meter_height - y + border);
+		x += channel_width;
+	}
+
+	/* Channel name labels */
 	for (auto i = 0; i < MAX_DCP_AUDIO_CHANNELS; ++i) {
-		gc->DrawText(std_to_wx(short_audio_channel_name(i)), i * channel_width + (channel_width - _label_widths[i]) / 2, panel_size.height - 24);
+		auto name = std_to_wx(short_audio_channel_name(i));
+		gc->DrawText(name, border + scale_label_width + i * channel_width + (channel_width - _sizes.get(gc, name).width) / 2, panel_size.height - 24);
 	}
 
 	delete gc;
