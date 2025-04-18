@@ -56,6 +56,8 @@ private:
 	std::vector<float> _peaks;
 
 	std::weak_ptr<LevelCalculator> _level_calculator;
+
+	std::vector<float> _label_widths;
 };
 
 

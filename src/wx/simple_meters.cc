@@ -21,8 +21,13 @@
 
 #include "simple_meters.h"
 #include "wx_util.h"
+#include "lib/constants.h"
 #include "lib/level_calculator.h"
+#include "lib/util.h"
 #include <dcp/types.h>
+LIBDCP_DISABLE_WARNINGS
+#include <wx/graphics.h>
+LIBDCP_ENABLE_WARNINGS
 #include <wx/wx.h>
 #include <algorithm>
 
@@ -68,14 +73,42 @@ SimpleMeters::paint()
 	auto const panel_size = dcp::Size(_panel->GetSize().GetWidth() / scale, _panel->GetSize().GetHeight() / scale);
 
 	auto const channel_width = panel_size.width / _peaks.size();
+	auto const meter_height = panel_size.height - 24;
 
 	int x = 0;
 	dc.SetBrush(*wxGREEN_BRUSH);
 	for (auto peak: _peaks) {
 		auto const peak_db = std::max(min_db, 20 * log10(peak));
-		dc.DrawRectangle(x, panel_size.height, channel_width, (1 - (peak_db - min_db)) * panel_size.height / (-min_db));
+		auto const height = (peak_db - min_db) * meter_height / -min_db;
+		dc.DrawRectangle(x, meter_height - height, channel_width, height);
 		x += channel_width;
 	}
+
+	auto gc = wxGraphicsContext::Create(dc);
+	if (!gc) {
+		return;
+	}
+
+	gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+	gc->SetFont(gc->CreateFont(*wxSMALL_FONT, *wxWHITE));
+
+	if (_label_widths.empty()) {
+		_label_widths.resize(MAX_DCP_AUDIO_CHANNELS);
+		for (auto i = 0; i < MAX_DCP_AUDIO_CHANNELS; ++i) {
+			wxDouble label_width;
+			wxDouble label_height;
+			wxDouble label_descent;
+			wxDouble label_leading;
+			gc->GetTextExtent(std_to_wx(short_audio_channel_name(i)), &label_width, &label_height, &label_descent, &label_leading);
+			_label_widths[i] = label_width;
+		}
+	}
+
+	for (auto i = 0; i < MAX_DCP_AUDIO_CHANNELS; ++i) {
+		gc->DrawText(std_to_wx(short_audio_channel_name(i)), i * channel_width + (channel_width - _label_widths[i]) / 2, panel_size.height - 24);
+	}
+
+	delete gc;
 }
 
 
