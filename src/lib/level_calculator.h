@@ -34,7 +34,10 @@ class AudioBuffers;
 class LevelCalculator
 {
 public:
-	LevelCalculator();
+	/** @param calculation_frame_rate number of peak calculations to make per second
+	 *  @param falloff meter falloff in db/sec
+	 */
+	LevelCalculator(int calculation_frame_rate = 30, int falloff = 15);
 
 	LevelCalculator(LevelCalculator const&) = delete;
 	LevelCalculator& operator=(LevelCalculator const&) = delete;
@@ -46,6 +49,9 @@ public:
 	void enable(bool e);
 
 private:
+	int const _calculation_frame_rate;
+	float const _falloff_linear;
+
 	boost::mutex _current_mutex;
 	std::vector<float> _current_peaks;
 	int _current_frames = 0;

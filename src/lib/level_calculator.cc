@@ -28,11 +28,10 @@ using std::shared_ptr;
 using boost::optional;
 
 
-constexpr int frames_per_measurement = 48000 / 30;
-
-
-LevelCalculator::LevelCalculator()
-	: _enabled(false)
+LevelCalculator::LevelCalculator(int calculation_frame_rate, int falloff)
+	: _calculation_frame_rate(calculation_frame_rate)
+	, _falloff_linear(pow(10, -falloff / (calculation_frame_rate * 20.0f)))
+	, _enabled(false)
 {
 
 }
@@ -42,9 +41,10 @@ void
 LevelCalculator::put(shared_ptr<const AudioBuffers> audio, dcpomatic::DCPTime time, int frame_rate)
 {
 	if (!_enabled) {
-		std::cout << "no calcs for me.\n";
 		return;
 	}
+
+	int const frames_per_measurement = frame_rate / _calculation_frame_rate;
 
 	boost::mutex::scoped_lock lm(_current_mutex);
 
@@ -65,9 +65,11 @@ LevelCalculator::put(shared_ptr<const AudioBuffers> audio, dcpomatic::DCPTime ti
 		if (_current_frames == frames_per_measurement) {
 			{
 				boost::mutex::scoped_lock lm(_store_mutex);
-				_peaks.emplace_back(time + dcpomatic::DCPTime::from_frames(frame, frame_rate), _current_peaks);
+				_peaks.emplace_back(time + dcpomatic::DCPTime::from_frames(frame + 1, frame_rate), _current_peaks);
 			}
-			std::fill(_current_peaks.begin(), _current_peaks.end(), 0.0f);
+			for (auto channel = 0; channel < channels; ++channel) {
+				_current_peaks[channel] *= _falloff_linear;
+			}
 			_current_frames = 0;
 		}
 	}
