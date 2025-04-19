@@ -45,6 +45,8 @@ public:
 	GLView(wxWindow* parent);
 	virtual ~GLView();
 
+	virtual void update();
+
 	wxWindow* canvas() const {
 		return _canvas;
 	}
@@ -64,6 +66,7 @@ protected:
 	void start();
 	void stop();
 	void request_one_shot();
+	void ensure_context();
 
 	wxGLCanvas* _canvas;
 	boost::atomic<wxSize> _canvas_size;

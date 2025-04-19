@@ -92,7 +92,6 @@ private:
 
 	void set_image(std::shared_ptr<const PlayerVideo> pv);
 	void check_for_butler_errors();
-	void ensure_context();
 	void setup_shaders();
 	void set_outline_content_colour(GLuint program);
 	void set_crop_guess_colour(GLuint program);

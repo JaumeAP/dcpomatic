@@ -119,15 +119,7 @@ GLVideoView::check_for_butler_errors()
 void
 GLVideoView::update()
 {
-	if (!_canvas->IsShownOnScreen()) {
-		return;
-	}
-
-	/* It appears important to do this from the GUI thread; if we do it from the GL thread
-	 * on Linux we get strange failures to create the context for any version of GL higher
-	 * than 3.2.
-	 */
-	ensure_context();
+	GLView::update();
 
 #ifdef DCPOMATIC_OSX
 	/* macOS gives errors if we don't do this (and therefore [NSOpenGLContext setView:]) from the main thread */
@@ -136,12 +128,6 @@ GLVideoView::update()
 		_setup_shaders_done = true;
 	}
 #endif
-
-	start_thread_if_required();
-
-	request_one_shot();
-
-	rethrow();
 }
 
 
@@ -290,20 +276,6 @@ enum class FragmentType
 	REC2020_IMAGE = 5,
 	YUV420P_IMAGE = 6,
 };
-
-
-void
-GLVideoView::ensure_context()
-{
-	if (!_context) {
-		wxGLContextAttrs attrs;
-		attrs.PlatformDefaults().CoreProfile().OGLVersion(4, 1).EndList();
-		_context = new wxGLContext(_canvas, nullptr, &attrs);
-		if (!_context->IsOK()) {
-			boost::throw_exception(GLError("Making GL context", -1));
-		}
-	}
-}
 
 
 /* Offset and number of indices for the things in the indices array below */
