@@ -80,8 +80,6 @@ GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent)
 	: VideoView(viewer)
 	, GLView(parent)
 	, _rec2020(false)
-	, _playing(false)
-	, _one_shot(false)
 {
 	_canvas->Bind(wxEVT_PAINT, boost::bind(&GLVideoView::update, this));
 	_canvas->Bind(wxEVT_TIMER, boost::bind(&GLVideoView::check_for_butler_errors, this));
@@ -804,17 +802,13 @@ void
 GLVideoView::start()
 {
 	VideoView::start();
-
-	boost::mutex::scoped_lock lm(_playing_mutex);
-	_playing = true;
-	_thread_work_condition.notify_all();
+	GLView::start();
 }
 
 void
 GLVideoView::stop()
 {
-	boost::mutex::scoped_lock lm(_playing_mutex);
-	_playing = false;
+	GLView::stop();
 }
 
 
@@ -834,7 +828,7 @@ GLVideoView::thread_playing()
 	}
 
 	while (true) {
-		optional<int> n = time_until_next_frame();
+		auto n = time_until_next_frame();
 		if (!n || *n > 5) {
 			break;
 		}
@@ -869,48 +863,12 @@ GLVideoView::thread_setup()
 }
 
 
-void
-GLVideoView::thread_body()
-{
-	while (true) {
-		boost::mutex::scoped_lock lm(_playing_mutex);
-		while (!_playing && !_one_shot) {
-			_thread_work_condition.wait(lm);
-		}
-		lm.unlock();
-
-		if (_playing) {
-			thread_playing();
-		} else if (_one_shot) {
-			_one_shot = false;
-			draw();
-		}
-
-		boost::this_thread::interruption_point();
-		dcpomatic_sleep_milliseconds(time_until_next_frame().get_value_or(0));
-	}
-
-	/* XXX: leaks _context, but that seems preferable to deleting it here
-	 * without also deleting the wxGLCanvas.
-	 */
-}
-
-
 VideoView::NextFrameResult
 GLVideoView::display_next_frame(bool non_blocking)
 {
 	NextFrameResult const r = get_next_frame(non_blocking);
 	request_one_shot();
 	return r;
-}
-
-
-void
-GLVideoView::request_one_shot()
-{
-	boost::mutex::scoped_lock lm(_playing_mutex);
-	_one_shot = true;
-	_thread_work_condition.notify_all();
 }
 
 
@@ -1002,6 +960,13 @@ void
 GLVideoView::rethrow()
 {
 	GLView::rethrow();
+}
+
+
+optional<int>
+GLVideoView::time_until_next_frame () const
+{
+	return VideoView::time_until_next_frame();
 }
 
 

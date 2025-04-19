@@ -27,6 +27,7 @@ LIBDCP_DISABLE_WARNINGS
 LIBDCP_ENABLE_WARNINGS
 #include <boost/atomic.hpp>
 #include <boost/thread.hpp>
+#include <boost/thread/condition.hpp>
 
 
 /* The OpenGL API in wxWidgets 3.0.x is sufficiently different to make it awkward to support,
@@ -55,9 +56,14 @@ public:
 protected:
 	virtual void size_changed(wxSizeEvent const& ev);
 	virtual void thread_setup() = 0;
-	virtual void thread_body() = 0;
+	virtual void draw() = 0;
+	virtual void thread_playing() = 0;
+	virtual boost::optional<int> time_until_next_frame() const = 0;
 
 	void start_thread_if_required();
+	void start();
+	void stop();
+	void request_one_shot();
 
 	wxGLCanvas* _canvas;
 	boost::atomic<wxSize> _canvas_size;
@@ -68,6 +74,11 @@ private:
 
 	boost::thread _thread;
 	bool _vsync_enabled;
+
+	boost::mutex _playing_mutex;
+	boost::condition _thread_work_condition;
+	boost::atomic<bool> _playing;
+	boost::atomic<bool> _one_shot;
 };
 
 

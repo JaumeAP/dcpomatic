@@ -19,6 +19,7 @@
 */
 
 
+#include "lib/cross.h"
 #include "lib/dcpomatic_log.h"
 #include "gl_view.h"
 #include <wx/wx.h>
@@ -35,6 +36,8 @@ using namespace boost::placeholders;
 GLView::GLView(wxWindow* parent)
 	: _context(nullptr)
 	, _vsync_enabled(false)
+	, _playing(false)
+	, _one_shot(false)
 {
 	wxGLAttributes attributes;
 	/* We don't need a depth buffer, and indeed there is apparently a bug with Windows/Intel HD 630
@@ -114,7 +117,23 @@ try
 	_vsync_enabled = true;
 #endif
 
-	thread_body();
+	while (true) {
+		boost::mutex::scoped_lock lm(_playing_mutex);
+		while (!_playing && !_one_shot) {
+			_thread_work_condition.wait(lm);
+		}
+		lm.unlock();
+
+		if (_playing) {
+			thread_playing();
+		} else if (_one_shot) {
+			_one_shot = false;
+			draw();
+		}
+
+		boost::this_thread::interruption_point();
+		dcpomatic_sleep_milliseconds(time_until_next_frame().get_value_or(0));
+	}
 }
 catch (boost::thread_interrupted&)
 {
@@ -123,6 +142,32 @@ catch (boost::thread_interrupted&)
 catch (...)
 {
 	store_current();
+}
+
+
+void
+GLView::start()
+{
+	boost::mutex::scoped_lock lm(_playing_mutex);
+	_playing = true;
+	_thread_work_condition.notify_all();
+}
+
+
+void
+GLView::stop()
+{
+	boost::mutex::scoped_lock lm(_playing_mutex);
+	_playing = false;
+}
+
+
+void
+GLView::request_one_shot()
+{
+	boost::mutex::scoped_lock lm(_playing_mutex);
+	_one_shot = true;
+	_thread_work_condition.notify_all();
 }
 
 
