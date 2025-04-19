@@ -552,6 +552,11 @@ GLVideoView::set_crop_guess_colour(GLuint program)
 void
 GLVideoView::draw()
 {
+	auto pv = player_video().first;
+	if (pv) {
+		set_image(pv);
+	}
+
 	auto pad = pad_colour();
 	glClearColor(pad.Red() / 255.0, pad.Green() / 255.0, pad.Blue() / 255.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -603,6 +608,10 @@ GLVideoView::draw()
 	check_gl_error("glFlush");
 
 	_canvas->SwapBuffers();
+
+	if (pv) {
+		_viewer->image_changed(pv);
+	}
 }
 
 
@@ -821,7 +830,7 @@ GLVideoView::thread_playing()
 		}
 
 		get_next_frame(false);
-		set_image_and_draw();
+		draw();
 	}
 
 	while (true) {
@@ -831,22 +840,6 @@ GLVideoView::thread_playing()
 		}
 		get_next_frame(true);
 		add_dropped();
-	}
-}
-
-
-void
-GLVideoView::set_image_and_draw()
-{
-	auto pv = player_video().first;
-	if (pv) {
-		set_image(pv);
-	}
-
-	draw();
-
-	if (pv) {
-		_viewer->image_changed(pv);
 	}
 }
 
@@ -890,7 +883,7 @@ GLVideoView::thread_body()
 			thread_playing();
 		} else if (_one_shot) {
 			_one_shot = false;
-			set_image_and_draw();
+			draw();
 		}
 
 		boost::this_thread::interruption_point();

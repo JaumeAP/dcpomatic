@@ -89,7 +89,6 @@ private:
 	void thread_body() override;
 
 	void set_image(std::shared_ptr<const PlayerVideo> pv);
-	void set_image_and_draw();
 	void draw();
 	void thread_playing();
 	void request_one_shot();
