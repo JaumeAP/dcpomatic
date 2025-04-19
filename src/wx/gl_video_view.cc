@@ -25,7 +25,7 @@
 
 #include "gl_video_view.h"
 
-/* This will only build on an new-enough wxWidgets: see the comment in gl_video_view.h */
+/* This will only build on an new-enough wxWidgets: see the comment in gl_view.h */
 #if wxCHECK_VERSION(3,1,0)
 
 #include "film_viewer.h"
@@ -78,24 +78,13 @@ check_gl_error(char const * last)
 
 GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent)
 	: VideoView(viewer)
-	, _context(nullptr)
+	, GLView(parent)
 	, _rec2020(false)
 	, _vsync_enabled(false)
 	, _playing(false)
 	, _one_shot(false)
 {
-	wxGLAttributes attributes;
-	/* We don't need a depth buffer, and indeed there is apparently a bug with Windows/Intel HD 630
-	 * which puts green lines over the OpenGL display if you have a non-zero depth buffer size.
-	 * https://community.intel.com/t5/Graphics/Request-for-details-on-Intel-HD-630-green-lines-in-OpenGL-apps/m-p/1202179
-	 */
-	attributes.PlatformDefaults().MinRGBA(8, 8, 8, 8).DoubleBuffer().Depth(0).EndList();
-	_canvas = new wxGLCanvas(
-		parent, attributes, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE
-	);
 	_canvas->Bind(wxEVT_PAINT, boost::bind(&GLVideoView::update, this));
-	_canvas->Bind(wxEVT_SIZE, boost::bind(&GLVideoView::size_changed, this, _1));
-
 	_canvas->Bind(wxEVT_TIMER, boost::bind(&GLVideoView::check_for_butler_errors, this));
 	_timer.reset(new wxTimer(_canvas));
 	_timer->Start(2000);
@@ -105,11 +94,7 @@ GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent)
 void
 GLVideoView::size_changed(wxSizeEvent const& ev)
 {
-	auto const scale = _canvas->GetDPIScaleFactor();
-	int const width = std::round(ev.GetSize().GetWidth() * scale);
-	int const height = std::round(ev.GetSize().GetHeight() * scale);
-	_canvas_size = { width, height };
-	LOG_GENERAL("GLVideoView canvas size changed to %1x%2", width, height);
+	GLView::size_changed(ev);
 	Sized();
 }
 

@@ -19,6 +19,7 @@
 */
 
 
+#include "gl_view.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/glcanvas.h>
@@ -30,12 +31,7 @@ LIBDCP_ENABLE_WARNINGS
 #undef Status
 
 
-/* The OpenGL API in wxWidgets 3.0.x is sufficiently different to make it awkward to support,
- * and I think it may even have things missing that we require (e.g. the attributes parameter
- * to wxGLContext).  Hence we only support the GLVideoView on wxWidgets 3.1.0 and higher
- * (which only excludes the old macOS builds, since wxWidgets 3.1.x does not support macOS
- * 10.9 or earlier).
- */
+/* See comment in gl_canvas.h */
 #if wxCHECK_VERSION(3,1,0)
 
 
@@ -68,7 +64,7 @@ private:
 };
 
 
-class GLVideoView : public VideoView
+class GLVideoView : public VideoView, public GLView
 {
 public:
 	GLVideoView(FilmViewer* viewer, wxWindow* parent);
@@ -92,6 +88,8 @@ public:
 	}
 
 private:
+	void size_changed(wxSizeEvent const &) override;
+
 	void set_image(std::shared_ptr<const PlayerVideo> pv);
 	void set_image_and_draw();
 	void draw();
@@ -100,13 +98,9 @@ private:
 	void request_one_shot();
 	void check_for_butler_errors();
 	void ensure_context();
-	void size_changed(wxSizeEvent const &);
 	void setup_shaders();
 	void set_outline_content_colour(GLuint program);
 	void set_crop_guess_colour(GLuint program);
-
-	wxGLCanvas* _canvas;
-	wxGLContext* _context;
 
 	template <class T>
 	class Last
@@ -136,7 +130,6 @@ private:
 	Last<dcp::Size> _last_out_size;
 	Last<boost::optional<dcpomatic::Rect<float>>> _last_crop_guess;
 
-	boost::atomic<wxSize> _canvas_size;
 	boost::atomic<bool> _rec2020;
 	std::vector<std::unique_ptr<Texture>> _video_textures;
 	std::unique_ptr<Texture> _subtitle_texture;
