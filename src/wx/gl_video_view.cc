@@ -80,7 +80,6 @@ GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent)
 	: VideoView(viewer)
 	, GLView(parent)
 	, _rec2020(false)
-	, _vsync_enabled(false)
 	, _playing(false)
 	, _one_shot(false)
 {
@@ -98,16 +97,6 @@ GLVideoView::size_changed(wxSizeEvent const& ev)
 	Sized();
 }
 
-
-GLVideoView::~GLVideoView()
-{
-	boost::this_thread::disable_interruption dis;
-
-	try {
-		_thread.interrupt();
-		_thread.join();
-	} catch (...) {}
-}
 
 void
 GLVideoView::check_for_butler_errors()
@@ -150,9 +139,7 @@ GLVideoView::update()
 	}
 #endif
 
-	if (!_thread.joinable()) {
-		_thread = boost::thread(boost::bind(&GLVideoView::thread, this));
-	}
+	start_thread_if_required();
 
 	request_one_shot();
 
@@ -865,8 +852,7 @@ GLVideoView::set_image_and_draw()
 
 
 void
-GLVideoView::thread()
-try
+GLVideoView::thread_setup()
 {
 	start_of_thread("GLVideoView");
 
@@ -882,40 +868,17 @@ try
 	}
 #endif
 
-#if defined(DCPOMATIC_LINUX) && defined(DCPOMATIC_HAVE_GLX_SWAP_INTERVAL_EXT)
-	if (_canvas->IsExtensionSupported("GLX_EXT_swap_control")) {
-		/* Enable vsync */
-		Display* dpy = wxGetX11Display();
-		glXSwapIntervalEXT(dpy, DefaultScreen(dpy), 1);
-		_vsync_enabled = true;
-	}
-#endif
-
-#ifdef DCPOMATIC_WINDOWS
-	if (_canvas->IsExtensionSupported("WGL_EXT_swap_control")) {
-		/* Enable vsync */
-		PFNWGLSWAPINTERVALEXTPROC swap = (PFNWGLSWAPINTERVALEXTPROC) wglGetProcAddress("wglSwapIntervalEXT");
-		if (swap) {
-			swap(1);
-			_vsync_enabled = true;
-		}
-	}
-
-#endif
-
-#ifdef DCPOMATIC_OSX
-	/* Enable vsync */
-	GLint swapInterval = 1;
-	CGLSetParameter(CGLGetCurrentContext(), kCGLCPSwapInterval, &swapInterval);
-	_vsync_enabled = true;
-#endif
-
 	for (int i = 0; i < 3; ++i) {
 		std::unique_ptr<Texture> texture(new Texture(_optimisation == Optimisation::JPEG2000 ? 2 : 1, i));
 		_video_textures.push_back(std::move(texture));
 	}
 	_subtitle_texture.reset(new Texture(1, 3));
+}
 
+
+void
+GLVideoView::thread_body()
+{
 	while (true) {
 		boost::mutex::scoped_lock lm(_playing_mutex);
 		while (!_playing && !_one_shot) {
@@ -937,14 +900,6 @@ try
 	/* XXX: leaks _context, but that seems preferable to deleting it here
 	 * without also deleting the wxGLCanvas.
 	 */
-}
-catch (boost::thread_interrupted&)
-{
-
-}
-catch (...)
-{
-	store_current();
 }
 
 
@@ -1049,4 +1004,13 @@ Texture::set(shared_ptr<const Image> image, int component)
 	}
 }
 
+
+void
+GLVideoView::rethrow()
+{
+	GLView::rethrow();
+}
+
+
 #endif
+

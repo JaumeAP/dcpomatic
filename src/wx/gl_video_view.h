@@ -68,7 +68,6 @@ class GLVideoView : public VideoView, public GLView
 {
 public:
 	GLVideoView(FilmViewer* viewer, wxWindow* parent);
-	~GLVideoView();
 
 	wxWindow* get() const override {
 		return _canvas;
@@ -76,12 +75,9 @@ public:
 	void update() override;
 	void start() override;
 	void stop() override;
+	void rethrow() override;
 
 	NextFrameResult display_next_frame(bool) override;
-
-	bool vsync_enabled() const {
-		return _vsync_enabled;
-	}
 
 	std::map<GLenum, std::string> information() const {
 		return _information;
@@ -89,11 +85,12 @@ public:
 
 private:
 	void size_changed(wxSizeEvent const &) override;
+	void thread_setup() override;
+	void thread_body() override;
 
 	void set_image(std::shared_ptr<const PlayerVideo> pv);
 	void set_image_and_draw();
 	void draw();
-	void thread();
 	void thread_playing();
 	void request_one_shot();
 	void check_for_butler_errors();
@@ -134,8 +131,6 @@ private:
 	std::vector<std::unique_ptr<Texture>> _video_textures;
 	std::unique_ptr<Texture> _subtitle_texture;
 	bool _have_subtitle_to_render = false;
-	bool _vsync_enabled;
-	boost::thread _thread;
 
 	boost::mutex _playing_mutex;
 	boost::condition _thread_work_condition;

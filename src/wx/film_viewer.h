@@ -157,6 +157,8 @@ public:
 
 	Frame average_latency() const;
 
+	void rethrow();
+
 	/** The image we are viewing changed: call last_image() to get the image */
 	boost::signals2::signal<void ()> ImageChanged;
 	std::shared_ptr<const PlayerVideo> last_image() const;

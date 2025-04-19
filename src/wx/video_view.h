@@ -45,7 +45,7 @@ class PlayerVideo;
 class wxWindow;
 
 
-class VideoView : public ExceptionStore, public Signaller
+class VideoView : public Signaller
 {
 public:
 	VideoView (FilmViewer* viewer);
@@ -62,6 +62,7 @@ public:
 	virtual void start ();
 	/** Called when playback stops */
 	virtual void stop () {}
+	virtual void rethrow() {}
 
 	enum NextFrameResult {
 		FAIL,

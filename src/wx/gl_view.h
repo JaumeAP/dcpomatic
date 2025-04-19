@@ -18,12 +18,15 @@
 
 */
 
+
+#include "lib/exception_store.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/glcanvas.h>
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
 #include <boost/atomic.hpp>
+#include <boost/thread.hpp>
 
 
 /* The OpenGL API in wxWidgets 3.0.x is sufficiently different to make it awkward to support,
@@ -35,21 +38,36 @@ LIBDCP_ENABLE_WARNINGS
 #if wxCHECK_VERSION(3,1,0)
 
 
-class GLView
+class GLView : public ExceptionStore
 {
 public:
 	GLView(wxWindow* parent);
+	virtual ~GLView();
 
 	wxWindow* canvas() const {
 		return _canvas;
 	}
 
+	bool vsync_enabled() const {
+		return _vsync_enabled;
+	}
+
 protected:
 	virtual void size_changed(wxSizeEvent const& ev);
+	virtual void thread_setup() = 0;
+	virtual void thread_body() = 0;
+
+	void start_thread_if_required();
 
 	wxGLCanvas* _canvas;
 	boost::atomic<wxSize> _canvas_size;
 	wxGLContext* _context;
+
+private:
+	void thread();
+
+	boost::thread _thread;
+	bool _vsync_enabled;
 };
 
 

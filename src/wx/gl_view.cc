@@ -34,6 +34,7 @@ using namespace boost::placeholders;
 
 GLView::GLView(wxWindow* parent)
 	: _context(nullptr)
+	, _vsync_enabled(false)
 {
 	wxGLAttributes attributes;
 	/* We don't need a depth buffer, and indeed there is apparently a bug with Windows/Intel HD 630
@@ -48,6 +49,17 @@ GLView::GLView(wxWindow* parent)
 }
 
 
+GLView::~GLView()
+{
+	boost::this_thread::disable_interruption dis;
+
+	try {
+		_thread.interrupt();
+		_thread.join();
+	} catch (...) {}
+}
+
+
 void
 GLView::size_changed(wxSizeEvent const& ev)
 {
@@ -56,6 +68,61 @@ GLView::size_changed(wxSizeEvent const& ev)
 	int const height = std::round(ev.GetSize().GetHeight() * scale);
 	_canvas_size = { width, height };
 	LOG_GENERAL("GLView canvas size changed to %1x%2", width, height);
+}
+
+
+void
+GLView::start_thread_if_required()
+{
+	if (!_thread.joinable()) {
+		_thread = boost::thread(boost::bind(&GLView::thread, this));
+	}
+}
+
+
+void
+GLView::thread()
+try
+{
+	thread_setup();
+
+#if defined(DCPOMATIC_LINUX) && defined(DCPOMATIC_HAVE_GLX_SWAP_INTERVAL_EXT)
+	if (_canvas->IsExtensionSupported("GLX_EXT_swap_control")) {
+		/* Enable vsync */
+		Display* dpy = wxGetX11Display();
+		glXSwapIntervalEXT(dpy, DefaultScreen(dpy), 1);
+		_vsync_enabled = true;
+	}
+#endif
+
+#ifdef DCPOMATIC_WINDOWS
+	if (_canvas->IsExtensionSupported("WGL_EXT_swap_control")) {
+		/* Enable vsync */
+		PFNWGLSWAPINTERVALEXTPROC swap = (PFNWGLSWAPINTERVALEXTPROC) wglGetProcAddress("wglSwapIntervalEXT");
+		if (swap) {
+			swap(1);
+			_vsync_enabled = true;
+		}
+	}
+
+#endif
+
+#ifdef DCPOMATIC_OSX
+	/* Enable vsync */
+	GLint swapInterval = 1;
+	CGLSetParameter(CGLGetCurrentContext(), kCGLCPSwapInterval, &swapInterval);
+	_vsync_enabled = true;
+#endif
+
+	thread_body();
+}
+catch (boost::thread_interrupted&)
+{
+
+}
+catch (...)
+{
+	store_current();
 }
 
 

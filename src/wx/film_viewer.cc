@@ -435,7 +435,7 @@ FilmViewer::stop()
 	_video_view->stop();
 	Stopped();
 
-	_video_view->rethrow();
+	rethrow();
 	return true;
 }
 
@@ -929,3 +929,11 @@ FilmViewer::dcp() const
 
 	return {};
 }
+
+
+void
+FilmViewer::rethrow()
+{
+	_video_view->rethrow();
+}
+
