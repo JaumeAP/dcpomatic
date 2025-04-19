@@ -81,7 +81,6 @@ GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent)
 	, GLView(parent)
 	, _rec2020(false)
 {
-	_canvas->Bind(wxEVT_PAINT, boost::bind(&GLVideoView::update, this));
 	_canvas->Bind(wxEVT_TIMER, boost::bind(&GLVideoView::check_for_butler_errors, this));
 	_timer.reset(new wxTimer(_canvas));
 	_timer->Start(2000);

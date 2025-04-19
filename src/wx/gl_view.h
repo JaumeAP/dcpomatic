@@ -45,8 +45,6 @@ public:
 	GLView(wxWindow* parent);
 	virtual ~GLView();
 
-	virtual void update();
-
 	wxWindow* canvas() const {
 		return _canvas;
 	}
@@ -56,11 +54,13 @@ public:
 	}
 
 protected:
-	virtual void size_changed(wxSizeEvent const& ev);
 	virtual void thread_setup() = 0;
 	virtual void draw() = 0;
 	virtual void thread_playing() = 0;
 	virtual boost::optional<int> time_until_next_frame() const = 0;
+
+	virtual void size_changed(wxSizeEvent const& ev);
+	virtual void update();
 
 	void start_thread_if_required();
 	void start();

@@ -50,6 +50,7 @@ GLView::GLView(wxWindow* parent)
 		parent, attributes, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE
 	);
 	_canvas->Bind(wxEVT_SIZE, boost::bind(&GLView::size_changed, this, _1));
+	_canvas->Bind(wxEVT_PAINT, boost::bind(&GLView::update, this));
 }
 
 
