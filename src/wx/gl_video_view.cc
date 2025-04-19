@@ -71,7 +71,7 @@ check_gl_error(char const * last)
 {
 	GLenum const e = glGetError();
 	if (e != GL_NO_ERROR) {
-		throw GLError(last, e);
+		boost::throw_exception(GLError(last, e));
 	}
 }
 
@@ -330,7 +330,7 @@ GLVideoView::ensure_context()
 		attrs.PlatformDefaults().CoreProfile().OGLVersion(4, 1).EndList();
 		_context = new wxGLContext(_canvas, nullptr, &attrs);
 		if (!_context->IsOK()) {
-			throw GLError("Making GL context", -1);
+			boost::throw_exception(GLError("Making GL context", -1));
 		}
 	}
 }
@@ -379,7 +379,7 @@ GLVideoView::setup_shaders()
 #ifdef DCPOMATIC_WINDOWS
 	r = glewInit();
 	if (r != GLEW_OK) {
-		throw GLError(reinterpret_cast<char const*>(glewGetErrorString(r)));
+		boost::throw_exception(GLError(reinterpret_cast<char const*>(glewGetErrorString(r))));
 	}
 #endif
 
@@ -443,7 +443,7 @@ GLVideoView::setup_shaders()
 				log = string(log_char.data());
 			}
 			glDeleteShader(shader);
-			throw GLError(String::compose("Could not compile shader (%1)", log).c_str(), -1);
+			boost::throw_exception(GLError(String::compose("Could not compile shader (%1)", log).c_str(), -1));
 		}
 		return shader;
 	};
@@ -471,7 +471,7 @@ GLVideoView::setup_shaders()
 			log = string(log_char.data());
 		}
 		glDeleteProgram(program);
-		throw GLError(String::compose("Could not link shader (%1)", log).c_str(), -1);
+		boost::throw_exception(GLError(String::compose("Could not link shader (%1)", log).c_str(), -1));
 	}
 	glDeleteShader(vertex_shader);
 	glDeleteShader(fragment_shader);
@@ -1046,7 +1046,7 @@ Texture::set(shared_ptr<const Image> image, int component)
 		type = GL_UNSIGNED_SHORT;
 		break;
 	default:
-		throw PixelFormatError("Texture::set", image->pixel_format());
+		boost::throw_exception(PixelFormatError("Texture::set", image->pixel_format()));
 	}
 
 	bind();
