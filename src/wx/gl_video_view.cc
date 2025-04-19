@@ -953,6 +953,10 @@ try
 	 * without also deleting the wxGLCanvas.
 	 */
 }
+catch (boost::thread_interrupted&)
+{
+
+}
 catch (...)
 {
 	store_current();
