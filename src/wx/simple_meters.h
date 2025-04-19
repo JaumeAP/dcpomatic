@@ -56,8 +56,6 @@ private:
 	wxPanel* _panel;
 	std::vector<float> _peaks;
 
-	std::weak_ptr<LevelCalculator> _level_calculator;
-
 	TextSizeCache _sizes;
 };
 
