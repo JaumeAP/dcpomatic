@@ -41,6 +41,7 @@
 #include <GL/wglext.h>
 #endif
 
+extern GLuint compile_shader(GLenum type, char const* source);
 extern void check_gl_error(char const* last);
 
 #endif

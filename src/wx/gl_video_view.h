@@ -19,6 +19,7 @@
 */
 
 
+#include "gl_view.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/glcanvas.h>
@@ -30,12 +31,7 @@ LIBDCP_ENABLE_WARNINGS
 #undef Status
 
 
-/* The OpenGL API in wxWidgets 3.0.x is sufficiently different to make it awkward to support,
- * and I think it may even have things missing that we require (e.g. the attributes parameter
- * to wxGLContext).  Hence we only support the GLVideoView on wxWidgets 3.1.0 and higher
- * (which only excludes the old macOS builds, since wxWidgets 3.1.x does not support macOS
- * 10.9 or earlier).
- */
+/* This will only build on an new-enough wxWidgets: see the comment in gl_view.h */
 #if wxCHECK_VERSION(3,1,0)
 
 
@@ -72,10 +68,9 @@ class GLVideoView : public VideoView
 {
 public:
 	GLVideoView(FilmViewer* viewer, wxWindow* parent);
-	~GLVideoView();
 
 	wxWindow* get() const override {
-		return _canvas;
+		return _view.canvas();
 	}
 	void update() override;
 	void start() override;
@@ -84,7 +79,7 @@ public:
 	NextFrameResult display_next_frame(bool) override;
 
 	bool vsync_enabled() const {
-		return _vsync_enabled;
+		return _view.vsync_enabled();
 	}
 
 	std::map<GLenum, std::string> information() const {
@@ -93,20 +88,18 @@ public:
 
 private:
 	void set_image(std::shared_ptr<const PlayerVideo> pv);
-	void set_image_and_draw();
-	void draw();
-	void thread();
-	void thread_playing();
-	void request_one_shot();
 	void check_for_butler_errors();
 	void ensure_context();
-	void size_changed(wxSizeEvent const &);
-	void setup_shaders();
 	void set_outline_content_colour(GLuint program);
 	void set_crop_guess_colour(GLuint program);
 
-	wxGLCanvas* _canvas;
-	wxGLContext* _context;
+	void setup_shaders();
+	void create_textures();
+	void play_pre_draw();
+	void draw();
+	int play_post_draw();
+
+	GLView _view;
 
 	template <class T>
 	class Last
@@ -136,22 +129,12 @@ private:
 	Last<dcp::Size> _last_out_size;
 	Last<boost::optional<dcpomatic::Rect<float>>> _last_crop_guess;
 
-	boost::atomic<wxSize> _canvas_size;
 	boost::atomic<bool> _rec2020;
 	std::vector<std::unique_ptr<Texture>> _video_textures;
 	std::unique_ptr<Texture> _subtitle_texture;
 	bool _have_subtitle_to_render = false;
-	bool _vsync_enabled;
-	boost::thread _thread;
 
-	boost::mutex _playing_mutex;
-	boost::condition _thread_work_condition;
-	boost::atomic<bool> _playing;
-	boost::atomic<bool> _one_shot;
-
-	GLuint _vao;
 	GLint _fragment_type;
-	bool _setup_shaders_done = false;
 
 	std::shared_ptr<wxTimer> _timer;
 

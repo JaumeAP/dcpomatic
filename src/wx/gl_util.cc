@@ -31,6 +31,34 @@ using std::string;
 /* This will only build on an new-enough wxWidgets: see the comment in gl_video_view.h */
 #if wxCHECK_VERSION(3,1,0)
 
+GLuint
+compile_shader(GLenum type, char const* source)
+{
+	auto shader = glCreateShader(type);
+	DCPOMATIC_ASSERT(shader);
+	GLchar const * src[] = { static_cast<GLchar const *>(source) };
+	glShaderSource(shader, 1, src, nullptr);
+	check_gl_error("glShaderSource");
+	glCompileShader(shader);
+	check_gl_error("glCompileShader");
+	GLint ok;
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
+	if (!ok) {
+		GLint log_length;
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length);
+		string log;
+		if (log_length > 0) {
+			std::vector<char> log_char(log_length);
+			glGetShaderInfoLog(shader, log_length, nullptr, log_char.data());
+			log = string(log_char.data());
+		}
+		glDeleteShader(shader);
+		boost::throw_exception(GLError(String::compose("Could not compile shader (%1)", log).c_str(), -1));
+	}
+	return shader;
+}
+
+
 void
 check_gl_error(char const * last)
 {
