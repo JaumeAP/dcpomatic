@@ -1,0 +1,401 @@
+/*
+    Copyright (C) 2025 Carl Hetherington <cth@carlh.net>
+
+    This file is part of DCP-o-matic.
+
+    DCP-o-matic is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    DCP-o-matic is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with DCP-o-matic.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+
+#include "film_viewer.h"
+#include "gl_meters.h"
+#include "gl_util.h"
+#include "meter_util.h"
+#include "wx_util.h"
+#include "lib/butler.h"
+#include "lib/constants.h"
+#include "lib/image_png.h"
+LIBDCP_DISABLE_WARNINGS
+#include <wx/dcmemory.h>
+#include <wx/glcanvas.h>
+#include <wx/graphics.h>
+#include <wx/rawbmp.h>
+#include <wx/wx.h>
+LIBDCP_ENABLE_WARNINGS
+
+#ifdef DCPOMATIC_OSX
+#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
+#include <OpenGL/OpenGL.h>
+#include <OpenGL/gl3.h>
+#endif
+
+#ifdef DCPOMATIC_LINUX
+#include <GL/glu.h>
+#include <GL/glext.h>
+#endif
+
+#ifdef DCPOMATIC_WINDOWS
+#include <GL/glu.h>
+#include <GL/wglext.h>
+#endif
+
+
+using std::make_shared;
+using std::vector;
+#if BOOST_VERSION >= 106100
+using namespace boost::placeholders;
+#endif
+using namespace dcpomatic::gl;
+
+
+static constexpr char fragment_source[] =
+"#version 330 core\n"
+"\n"
+"in vec2 TexCoord;\n"
+"\n"
+"uniform sampler2D texture_sampler;\n"
+"\n"
+/* type = 0: draw meter bar
+ * type = 1: draw label texture
+ * type = 2: draw scale lines
+ * See FragmentType enum below.
+ */
+"uniform int type = 0;\n"
+"uniform vec4 meter_bar_colour;\n"
+"uniform vec4 meter_line_colour;\n"
+"uniform int height;\n"
+"\n"
+"out vec4 FragColor;\n"
+"\n"
+"void main()\n"
+"{\n"
+"	switch (type) {\n"
+"		case 0:\n"
+"                       float scale = gl_FragCoord.y / height;\n"
+"			FragColor = meter_bar_colour * vec4(scale, scale, scale, 1);\n"
+"			break;\n"
+"               case 1:\n"
+"			FragColor = texture(texture_sampler, TexCoord);\n"
+"                       break;\n"
+"               case 2:\n"
+"			FragColor = meter_line_colour;\n"
+"                       break;\n"
+"	}\n"
+"}\n";
+
+
+enum class FragmentType
+{
+	METER_BARS = 0,
+	LABEL = 1,
+	SCALE_LINE = 2,
+};
+
+
+auto constexpr label_texture_width = 32;
+auto constexpr label_texture_height = 16;
+
+
+GLMeters::GLMeters(wxWindow* parent, FilmViewer* viewer)
+	: _view(
+		parent,
+		boost::bind(&GLMeters::setup_shaders, this),
+		boost::bind(&GLMeters::create_textures, this),
+		boost::bind(&GLMeters::play_pre_draw, this),
+		boost::bind(&GLMeters::draw, this),
+		boost::bind(&GLMeters::play_post_draw, this),
+		fragment_source
+	)
+	, _viewer(viewer)
+{
+
+}
+
+
+void
+GLMeters::setup_shaders()
+{
+	vector<unsigned int> indices;
+	for (auto i = 0; i < MAX_DCP_AUDIO_CHANNELS; ++i) {
+		auto rectangle = _coords.add_filled_rectangle();
+		_meter_bars.push_back(rectangle);
+		_meter_bars_group.add(rectangle);
+	}
+	for (auto i = 0; i < MAX_DCP_AUDIO_CHANNELS; ++i) {
+		_channel_labels.push_back(_coords.add_filled_rectangle());
+	}
+	for (auto i = 0U; i < dcpomatic::meter::scales().size(); ++i) {
+		_scale_labels.push_back(_coords.add_filled_rectangle());
+		_scale_lines.push_back(_coords.add_line());
+	}
+
+	_coords.setup();
+
+	_fragment_type.setup(_view.program(), "type");
+	_texture_sampler.setup(_view.program(), "texture_sampler");
+
+	_meter_bar_colour.setup(_view.program(), "meter_bar_colour");
+	_meter_bar_colour.set(0, 1, 0, 1.0f);
+
+	_meter_line_colour.setup(_view.program(), "meter_line_colour");
+	_meter_line_colour.set(0.7, 0.7, 0.7, 1.0f);
+
+	_height.setup(_view.program(), "height");
+
+	glLineWidth(0.5f);
+	check_gl_error("glLineWidth");
+	glEnable(GL_BLEND);
+	check_gl_error("glEnable");
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	check_gl_error("glBlendFunc");
+}
+
+
+void
+GLMeters::get_next_frame()
+{
+	if (auto levels = _viewer->butler()->get_audio_levels()) {
+		_last_time = levels->time;
+		_peaks = levels->peaks;
+	} else {
+		_last_time = boost::none;
+		_peaks.clear();
+	}
+}
+
+
+void
+GLMeters::play_pre_draw()
+{
+	get_next_frame();
+}
+
+
+void
+GLMeters::draw()
+{
+	auto constexpr meter_gap = 2;
+
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
+	check_gl_error("glClear");
+
+	if (_peaks.empty()) {
+		glFlush();
+		check_gl_error("glFlush");
+		return;
+	}
+
+	using namespace dcpomatic::meter;
+
+	auto const width = _view.size().GetWidth();
+	auto const height = _view.size().GetHeight();
+	auto const meter_height = height - border() * 2 - channel_label_height();
+	auto const channel_width = (width - scale_label_width() - border() * 2) / _peaks.size();
+
+	_height.set(height);
+
+	/* Peak rectangles that we have data for */
+	auto const have_data = _peaks.size();
+	for (auto i = 0U; i < have_data; ++i) {
+		auto const y = db_to_y(meter_height, linear_level_to_db(_peaks[i]));
+		_meter_bars[i].set(
+			_view.size(),
+			border() + scale_label_width() + i * channel_width + meter_gap / 2,
+			y + border(),
+			wxSize{static_cast<int>(channel_width) - meter_gap, meter_height - y}
+		);
+	}
+
+	/* Scale coordinate labels and lines */
+	int index = 0;
+	for (auto const& i: dcpomatic::meter::scales()) {
+		auto const y = db_to_y(meter_height, i.first);
+		_scale_labels[index].set(
+			_view.size(),
+			border() + scale_label_width() - _scale_label_widths[index] - 4,
+			y + border(),
+			wxSize{label_texture_width, label_texture_height}
+		);
+		_scale_lines[index].set(_view.size(), 0, y + border(), width, y + border());
+		++index;
+	}
+
+	/* Channel labels */
+	for (int i = 0; i < MAX_DCP_AUDIO_CHANNELS; ++i) {
+		_channel_labels[i].set(
+			_view.size(),
+			border() + scale_label_width() + channel_width * i + (channel_width - _channel_label_widths[i]) / 2,
+			_view.size().GetHeight() - channel_label_height(),
+			wxSize{label_texture_width, label_texture_height}
+		);
+	}
+
+	_coords.set_array_buffer();
+
+	/* Draw the scales first so that the meter bars can overlay them */
+	_fragment_type.set(static_cast<GLint>(FragmentType::LABEL));
+	for (auto i = 0U; i < dcpomatic::meter::scales().size(); ++i) {
+		_scale_label_textures[i].bind();
+		_texture_sampler.set(i);
+		_scale_labels[i].draw();
+	}
+
+	for (int i = 0; i < MAX_DCP_AUDIO_CHANNELS; ++i) {
+		_channel_label_textures[i].bind();
+		_texture_sampler.set(dcpomatic::meter::scales().size() + i);
+		_channel_labels[i].draw();
+	}
+
+	_fragment_type.set(static_cast<GLint>(FragmentType::SCALE_LINE));
+	for (auto i = 0U; i < dcpomatic::meter::scales().size(); ++i) {
+		_scale_lines[i].draw();
+	}
+
+	_fragment_type.set(static_cast<GLint>(FragmentType::METER_BARS));
+	_meter_bars_group.draw();
+}
+
+
+int
+GLMeters::play_post_draw()
+{
+	auto time_until_next_frame = [this]() -> boost::optional<int> {
+		if (!_last_time) {
+			return {};
+		}
+
+		return dcpomatic::DCPTime(*_last_time - _viewer->position() + _viewer->butler()->time_between_audio_level_measurements()).seconds() * 1000;
+	};
+
+	while (true) {
+		auto const n = time_until_next_frame();
+		if (!n || *n > 5) {
+			break;
+		}
+		get_next_frame();
+	}
+
+	return time_until_next_frame().get_value_or(0);
+}
+
+
+wxWindow*
+GLMeters::get() const
+{
+	return _view.canvas();
+}
+
+
+void
+GLMeters::start()
+{
+	_view.start();
+}
+
+
+void
+GLMeters::stop()
+{
+	_view.stop();
+}
+
+
+void
+GLMeters::create_textures()
+{
+	auto label = [](wxString text) {
+
+		wxDouble width;
+
+		wxBitmap bitmap(label_texture_width, label_texture_height, 24);
+		{
+			wxMemoryDC dc(bitmap);
+			auto gc = wxGraphicsContext::Create(dc);
+			DCPOMATIC_ASSERT(gc);
+
+			gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+			gc->SetFont(gc->CreateFont(*wxSMALL_FONT, *wxWHITE));
+
+			dc.SetPen(*wxGREY_PEN);
+			gc->DrawText(text, 0, 0);
+
+			wxDouble height;
+			wxDouble descent;
+			wxDouble leading;
+			gc->GetTextExtent(text, &width, &height, &descent, &leading);
+
+			delete gc;
+		}
+
+		auto image = make_shared<Image>(AV_PIX_FMT_RGB24, dcp::Size{label_texture_width, label_texture_height}, Image::Alignment::COMPACT);
+		auto* p = image->data()[0];
+
+		wxNativePixelData data(bitmap);
+		wxNativePixelData::Iterator row(data);
+
+		for (auto y = 0; y < label_texture_height; ++y) {
+			auto q = row;
+			for (auto x = 0; x < label_texture_width; ++x) {
+				*p++ = q.Red();
+				*p++ = q.Green();
+				*p++ = q.Blue();
+				++q;
+			}
+
+			row.OffsetY(data, 1);
+		}
+
+		return make_pair(image, width);
+	};
+
+
+	int unit = 0;
+
+	for (auto scale: dcpomatic::meter::scales()) {
+		auto image_and_width = label(scale.second);
+
+		_scale_label_textures.emplace_back(1, unit++);
+		_scale_label_textures.back().set(image_and_width.first);
+		_scale_label_widths.push_back(image_and_width.second);
+		_scale_label_textures.back().bind();
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		check_gl_error("glTexParameteri");
+
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		check_gl_error("glTexParameterf");
+	}
+
+	for (int i = 0; i < MAX_DCP_AUDIO_CHANNELS; ++i) {
+		auto image_and_width = label(std_to_wx(short_audio_channel_name(i)));
+
+		_channel_label_textures.emplace_back(1, unit++);
+		_channel_label_textures.back().set(image_and_width.first);
+		_channel_label_widths.push_back(image_and_width.second);
+		_channel_label_textures.back().bind();
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		check_gl_error("glTexParameteri");
+
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		check_gl_error("glTexParameterf");
+	}
+}
+

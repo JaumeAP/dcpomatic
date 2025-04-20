@@ -44,7 +44,7 @@ public:
 		return _panel;
 	}
 
-	wxWindow* get_meters() {
+	wxWindow* get_meters() const override {
 		return _meters.get();
 	}
 

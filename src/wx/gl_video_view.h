@@ -19,6 +19,7 @@
 */
 
 
+#include "gl_meters.h"
 #include "gl_view.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -56,6 +57,10 @@ public:
 	void update() override;
 	void start() override;
 	void stop() override;
+
+	wxWindow* get_meters() const override {
+		return _meters.get();
+	}
 
 	NextFrameResult display_next_frame(bool) override;
 
@@ -124,6 +129,8 @@ private:
 	std::shared_ptr<wxTimer> _timer;
 
 	std::map<GLenum, std::string> _information;
+
+	GLMeters _meters;
 };
 
 #endif

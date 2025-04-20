@@ -23,6 +23,7 @@
 #define DCPOMATIC_GL_UTIL_H
 
 
+#include "lib/dcpomatic_assert.h"
 #include <dcp/types.h>
 #include <wx/wx.h>
 
@@ -119,6 +120,20 @@ public:
 		void draw() override;
 	};
 
+	class Line
+	{
+	public:
+		Line(Coords& coords);
+
+		void set(wxSize canvas_size, int x1, int y1, int x2, int y2);
+		void draw();
+
+	private:
+		Coords& _coords;
+		int _node;
+		int _index;
+	};
+
 	class FilledRectangleGroup
 	{
 	public:
@@ -132,6 +147,7 @@ public:
 
 	FilledRectangle add_filled_rectangle();
 	OutlineRectangle add_outline_rectangle();
+	Line add_line();
 
 	void setup();
 	void set_array_buffer();
