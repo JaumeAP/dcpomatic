@@ -506,75 +506,9 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 	_last_out_size.set_next(out_size);
 	_last_crop_guess.set_next(crop_guess);
 
-	class Rectangle
-	{
-	public:
-		Rectangle(wxSize canvas_size, float x, float y, dcp::Size size)
-			: _canvas_size(canvas_size)
-		{
-			auto const x1 = x_pixels_to_gl(x);
-			auto const y1 = y_pixels_to_gl(y);
-			auto const x2 = x_pixels_to_gl(x + size.width);
-			auto const y2 = y_pixels_to_gl(y + size.height);
-
-			/* The texture coordinates here have to account for the fact that when we put images into the texture OpenGL
-			 * expected us to start at the lower left but we actually started at the top left.  So although the
-			 * top of the texture is at 1.0 we pretend it's the other way round.
-			 */
-
-			// bottom right
-			_vertices[0] = x2;
-			_vertices[1] = y2;
-			_vertices[2] = 0.0f;
-			_vertices[3] = 1.0f;
-			_vertices[4] = 1.0f;
-
-			// top right
-			_vertices[5] = x2;
-			_vertices[6] = y1;
-			_vertices[7] = 0.0f;
-			_vertices[8] = 1.0f;
-			_vertices[9] = 0.0f;
-
-			// top left
-			_vertices[10] = x1;
-			_vertices[11] = y1;
-			_vertices[12] = 0.0f;
-			_vertices[13] = 0.0f;
-			_vertices[14] = 0.0f;
-
-			// bottom left
-			_vertices[15] = x1;
-			_vertices[16] = y2;
-			_vertices[17] = 0.0f;
-			_vertices[18] = 0.0f;
-			_vertices[19] = 1.0f;
-		}
-
-		float const * vertices() const {
-			return _vertices;
-		}
-
-		int const size() const {
-			return sizeof(_vertices);
-		}
-
-	private:
-		/* @param x x position in pixels where 0 is left and canvas_width is right on screen */
-		float x_pixels_to_gl(int x) const {
-			return (x * 2.0f / _canvas_size.GetWidth()) - 1.0f;
-		}
-
-		/* @param y y position in pixels where 0 is top and canvas_height is bottom on screen */
-		float y_pixels_to_gl(int y) const {
-			return 1.0f - (y * 2.0f / _canvas_size.GetHeight());
-		}
-
-		wxSize _canvas_size;
-		float _vertices[20];
-	};
-
 	auto const sizing_changed = _last_canvas_size.changed() || _last_inter_position.changed() || _last_inter_size.changed() || _last_out_size.changed();
+
+	using namespace dcpomatic::gl;
 
 	if (sizing_changed) {
 		const auto video = _optimisation == Optimisation::NONE
