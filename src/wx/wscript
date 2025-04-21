@@ -97,6 +97,7 @@ sources = """
           gdc_certificate_panel.cc
           general_preferences_page.cc
           gl_video_view.cc
+          gl_util.cc
           hints_dialog.cc
           html_dialog.cc
           image_sequence_dialog.cc

@@ -29,6 +29,7 @@
 #if wxCHECK_VERSION(3,1,0)
 
 #include "film_viewer.h"
+#include "gl_util.h"
 #include "wx_util.h"
 #include "lib/butler.h"
 #include "lib/cross.h"
@@ -64,16 +65,6 @@ using boost::optional;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
-
-
-static void
-check_gl_error(char const * last)
-{
-	GLenum const e = glGetError();
-	if (e != GL_NO_ERROR) {
-		boost::throw_exception(GLError(last, e));
-	}
-}
 
 
 GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent)
