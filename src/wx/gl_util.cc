@@ -22,10 +22,13 @@
 #include "gl_util.h"
 #include "lib/compose.hpp"
 #include "lib/dcpomatic_assert.h"
+#include "lib/image.h"
 #include <wx/wx.h>
 
 
+using std::shared_ptr;
 using std::string;
+using namespace dcpomatic::gl;
 
 
 /* This will only build on an new-enough wxWidgets: see the comment in gl_video_view.h */
@@ -65,6 +68,90 @@ check_gl_error(char const * last)
 	GLenum const e = glGetError();
 	if (e != GL_NO_ERROR) {
 		boost::throw_exception(GLError(last, e));
+	}
+}
+
+
+Texture::Texture(GLint unpack_alignment, int unit)
+	: _unpack_alignment(unpack_alignment)
+	, _unit(unit)
+{
+	glGenTextures(1, &_name);
+	check_gl_error("glGenTextures");
+}
+
+
+Texture::~Texture()
+{
+	glDeleteTextures(1, &_name);
+}
+
+
+void
+Texture::bind()
+{
+	glActiveTexture(GL_TEXTURE0 + _unit);
+	check_gl_error("glActiveTexture");
+	glBindTexture(GL_TEXTURE_2D, _name);
+	check_gl_error("glBindTexture");
+}
+
+
+void
+Texture::set(shared_ptr<const Image> image, int component)
+{
+	auto const create = !_size || image->size() != _size;
+	_size = image->size();
+
+	glPixelStorei(GL_UNPACK_ALIGNMENT, _unpack_alignment);
+	check_gl_error("glPixelStorei");
+
+	DCPOMATIC_ASSERT(image->alignment() == Image::Alignment::COMPACT);
+
+	GLint internal_format;
+	GLenum format;
+	GLenum type;
+	int subsample = 1;
+
+	switch (image->pixel_format()) {
+	case AV_PIX_FMT_YUV420P:
+		internal_format = GL_R8;
+		format = GL_RED;
+		type = GL_UNSIGNED_BYTE;
+		subsample = component > 0 ? 2 : 1;
+		break;
+	case AV_PIX_FMT_BGRA:
+		internal_format = GL_RGBA8;
+		format = GL_BGRA;
+		type = GL_UNSIGNED_BYTE;
+		break;
+	case AV_PIX_FMT_RGBA:
+		internal_format = GL_RGBA8;
+		format = GL_RGBA;
+		type = GL_UNSIGNED_BYTE;
+		break;
+	case AV_PIX_FMT_RGB24:
+		internal_format = GL_RGBA8;
+		format = GL_RGB;
+		type = GL_UNSIGNED_BYTE;
+		break;
+	case AV_PIX_FMT_XYZ12:
+		internal_format = GL_RGBA12;
+		format = GL_RGB;
+		type = GL_UNSIGNED_SHORT;
+		break;
+	default:
+		boost::throw_exception(PixelFormatError("Texture::set", image->pixel_format()));
+	}
+
+	bind();
+
+	if (create) {
+		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, _size->width / subsample, _size->height / subsample, 0, format, type, image->data()[component]);
+		check_gl_error("glTexImage2D");
+	} else {
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _size->width / subsample, _size->height / subsample, format, type, image->data()[component]);
+		check_gl_error("glTexSubImage2D");
 	}
 }
 

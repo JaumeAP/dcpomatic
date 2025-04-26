@@ -35,6 +35,7 @@ LIBDCP_ENABLE_WARNINGS
 #if wxCHECK_VERSION(3,1,0)
 
 
+#include "gl_util.h"
 #include "video_view.h"
 #include "lib/signaller.h"
 #include "lib/position.h"
@@ -42,26 +43,6 @@ LIBDCP_ENABLE_WARNINGS
 #include <boost/atomic.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/condition.hpp>
-
-
-class Texture
-{
-public:
-	Texture(GLint unpack_alignment, int unit = 0);
-	~Texture();
-
-	Texture(Texture const&) = delete;
-	Texture& operator=(Texture const&) = delete;
-
-	void bind();
-	void set(std::shared_ptr<const Image> image, int component = 0);
-
-private:
-	GLuint _name;
-	GLint _unpack_alignment;
-	int _unit;
-	boost::optional<dcp::Size> _size;
-};
 
 
 class GLVideoView : public VideoView
@@ -130,8 +111,8 @@ private:
 	Last<boost::optional<dcpomatic::Rect<float>>> _last_crop_guess;
 
 	boost::atomic<bool> _rec2020;
-	std::vector<std::unique_ptr<Texture>> _video_textures;
-	std::unique_ptr<Texture> _subtitle_texture;
+	std::vector<std::unique_ptr<dcpomatic::gl::Texture>> _video_textures;
+	std::unique_ptr<dcpomatic::gl::Texture> _subtitle_texture;
 	bool _have_subtitle_to_render = false;
 
 	GLint _fragment_type;

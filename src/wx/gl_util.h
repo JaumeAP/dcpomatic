@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_GL_UTIL_H
+#define DCPOMATIC_GL_UTIL_H
+
+
 #include <dcp/types.h>
 #include <wx/wx.h>
 
@@ -41,6 +45,10 @@
 #include <GL/glu.h>
 #include <GL/wglext.h>
 #endif
+
+
+class Image;
+
 
 extern GLuint compile_shader(GLenum type, char const* source);
 extern void check_gl_error(char const* last);
@@ -119,9 +127,30 @@ private:
 };
 
 
+class Texture
+{
+public:
+	Texture(GLint unpack_alignment, int unit = 0);
+	~Texture();
+
+	Texture(Texture const&) = delete;
+	Texture& operator=(Texture const&) = delete;
+
+	void bind();
+	void set(std::shared_ptr<const Image> image, int component = 0);
+
+private:
+	GLuint _name;
+	GLint _unpack_alignment;
+	int _unit;
+	boost::optional<dcp::Size> _size;
+};
+
+
 }
 }
 
 
+#endif
 #endif
 
