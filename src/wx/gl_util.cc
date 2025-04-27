@@ -81,6 +81,34 @@ Texture::Texture(GLint unpack_alignment, int unit)
 }
 
 
+Texture::Texture(Texture&& other)
+	: _name(other._name)
+	, _unpack_alignment(other._unpack_alignment)
+	, _unit(other._unit)
+	, _size(std::move(other._size))
+{
+	other._name = 0;
+}
+
+
+Texture&
+Texture::operator=(Texture&& other)
+{
+	if (this == &other) {
+		return *this;
+	}
+
+	_name = other._name;
+	_unpack_alignment = other._unpack_alignment;
+	_unit = other._unit;
+	_size = std::move(other._size);
+
+	other._name = 0;
+
+	return *this;
+}
+
+
 Texture::~Texture()
 {
 	glDeleteTextures(1, &_name);

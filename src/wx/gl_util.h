@@ -137,6 +137,9 @@ public:
 	Texture(Texture const&) = delete;
 	Texture& operator=(Texture const&) = delete;
 
+	Texture(Texture&&);
+	Texture& operator=(Texture&&);
+
 	void bind();
 	void set(std::shared_ptr<const Image> image, int component = 0);
 
