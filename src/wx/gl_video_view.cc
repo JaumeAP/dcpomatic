@@ -389,7 +389,7 @@ GLVideoView::draw()
 		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::REC709_IMAGE));
 	}
 	for (auto& texture: _video_textures) {
-		texture->bind();
+		texture.bind();
 	}
 	_image.draw();
 
@@ -441,10 +441,10 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 
 	if (_optimisation == Optimisation::MPEG2) {
 		for (int i = 0; i < 3; ++i) {
-			_video_textures[i]->set(video, i);
+			_video_textures[i].set(video, i);
 		}
 	} else {
-		_video_textures[0]->set(video, 0);
+		_video_textures[0].set(video, 0);
 	}
 
 	auto const text = pv->text();
@@ -502,7 +502,7 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 
 	/* opt: where should these go? */
 	for (auto i = 0; i < 3; ++i) {
-		_video_textures[i]->bind();
+		_video_textures[i].bind();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		check_gl_error("glTexParameteri");
@@ -579,10 +579,9 @@ void
 GLVideoView::create_textures()
 {
 	for (int i = 0; i < 3; ++i) {
-		std::unique_ptr<Texture> texture(new Texture(_optimisation == Optimisation::JPEG2000 ? 2 : 1, i));
-		_video_textures.push_back(std::move(texture));
+		_video_textures.emplace_back(_optimisation == Optimisation::JPEG2000 ? 2 : 1, i);
 	}
-	_subtitle_texture.reset(new Texture(1, 3));
+	_subtitle_texture.emplace(Texture(1, 3));
 }
 
 
