@@ -200,6 +200,10 @@ GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent)
 		fragment_source
 	)
 	, _rec2020(false)
+	, _image(_coords.add_filled_rectangle())
+	, _outline_content(_coords.add_outline_rectangle())
+	, _crop_guess(_coords.add_outline_rectangle())
+	, _subtitle(_coords.add_filled_rectangle())
 	, _meters(parent, viewer)
 {
 	_view.Sized.connect(boost::ref(Sized));
@@ -241,38 +245,6 @@ enum class FragmentType
 };
 
 
-/* Offset and number of indices for the things in the indices array below */
-static constexpr int indices_video_texture_offset = 0;
-static constexpr int indices_video_texture_number = 6;
-static constexpr int indices_subtitle_texture_offset = indices_video_texture_offset + indices_video_texture_number;
-static constexpr int indices_subtitle_texture_number = 6;
-static constexpr int indices_outline_content_offset = indices_subtitle_texture_offset + indices_subtitle_texture_number;
-static constexpr int indices_outline_content_number = 8;
-static constexpr int indices_crop_guess_offset = indices_outline_content_offset + indices_outline_content_number;
-static constexpr int indices_crop_guess_number = 8;
-
-static constexpr unsigned int indices[] = {
-	0, 1, 3, // video texture triangle #1
-	1, 2, 3, // video texture triangle #2
-	4, 5, 7, // subtitle texture triangle #1
-	5, 6, 7, // subtitle texture triangle #2
-	8, 9,    // outline content line #1
-	9, 10,   // outline content line #2
-	10, 11,  // outline content line #3
-	11, 8,   // outline content line #4
-	12, 13,  // crop guess line #1
-	13, 14,  // crop guess line #2
-	14, 15,  // crop guess line #3
-	15, 12,  // crop guess line #4
-};
-
-/* Offsets of things in the GL_ARRAY_BUFFER */
-static constexpr int array_buffer_video_offset = 0;
-static constexpr int array_buffer_subtitle_offset = array_buffer_video_offset + 4 * 5 * sizeof(float);
-static constexpr int array_buffer_outline_content_offset = array_buffer_subtitle_offset + 4 * 5 * sizeof(float);
-static constexpr int array_buffer_crop_guess_offset = array_buffer_outline_content_offset + 4 * 5 * sizeof(float);
-
-
 void
 GLVideoView::setup_shaders()
 {
@@ -288,8 +260,7 @@ GLVideoView::setup_shaders()
 	get_information(GL_VERSION);
 	get_information(GL_SHADING_LANGUAGE_VERSION);
 
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	check_gl_error("glBufferData");
+	_coords.setup();
 
 	auto texture_0 = glGetUniformLocation(_view.program(), "texture_sampler_0");
 	check_gl_error("glGetUniformLocation");
@@ -362,10 +333,6 @@ GLVideoView::setup_shaders()
 	check_gl_error("glEnable");
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	check_gl_error("glBlendFunc");
-
-	/* Reserve space for the GL_ARRAY_BUFFER */
-	glBufferData(GL_ARRAY_BUFFER, 16 * 5 * sizeof(float), nullptr, GL_STATIC_DRAW);
-	check_gl_error("glBufferData");
 }
 
 
@@ -424,21 +391,20 @@ GLVideoView::draw()
 	for (auto& texture: _video_textures) {
 		texture->bind();
 	}
-	glDrawElements(GL_TRIANGLES, indices_video_texture_number, GL_UNSIGNED_INT, reinterpret_cast<void*>(indices_video_texture_offset * sizeof(int)));
+	_image.draw();
+
 	if (_have_subtitle_to_render) {
 		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::REC709_SUBTITLE));
 		_subtitle_texture->bind();
-		glDrawElements(GL_TRIANGLES, indices_subtitle_texture_number, GL_UNSIGNED_INT, reinterpret_cast<void*>(indices_subtitle_texture_offset * sizeof(int)));
+		_subtitle.draw();
 	}
 	if (_viewer->outline_content()) {
 		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::OUTLINE_CONTENT));
-		glDrawElements(GL_LINES, indices_outline_content_number, GL_UNSIGNED_INT, reinterpret_cast<void*>(indices_outline_content_offset * sizeof(int)));
-		check_gl_error("glDrawElements");
+		_outline_content.draw();
 	}
 	if (auto guess = _viewer->crop_guess()) {
 		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::CROP_GUESS));
-		glDrawElements(GL_LINES, indices_crop_guess_number, GL_UNSIGNED_INT, reinterpret_cast<void*>(indices_crop_guess_offset * sizeof(int)));
-		check_gl_error("glDrawElements");
+		_crop_guess.draw();
 	}
 
 	if (pv) {
@@ -509,36 +475,27 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 
 	auto const sizing_changed = _last_canvas_size.changed() || _last_inter_position.changed() || _last_inter_size.changed() || _last_out_size.changed();
 
-	using namespace dcpomatic::gl;
-
 	if (sizing_changed) {
-		const auto video = _optimisation == Optimisation::NONE
-			? Rectangle(canvas_size, x_offset, y_offset, out_size)
-			: Rectangle(canvas_size, inter_position.x + x_offset, inter_position.y + y_offset, inter_size);
+		if (_optimisation == Optimisation::NONE) {
+			_image.set(canvas_size, x_offset, y_offset, out_size);
+		} else {
+			_image.set(canvas_size, inter_position.x + x_offset, inter_position.y + y_offset, inter_size);
+		}
 
-		glBufferSubData(GL_ARRAY_BUFFER, array_buffer_video_offset, video.size(), video.vertices());
-		check_gl_error("glBufferSubData (video)");
-
-		const auto outline_content = Rectangle(canvas_size, inter_position.x + x_offset, inter_position.y + y_offset, inter_size);
-		glBufferSubData(GL_ARRAY_BUFFER, array_buffer_outline_content_offset, outline_content.size(), outline_content.vertices());
-		check_gl_error("glBufferSubData (outline_content)");
+		_outline_content.set(canvas_size, inter_position.x + x_offset, inter_position.y + y_offset, inter_size);
 	}
 
 	if ((sizing_changed || _last_crop_guess.changed()) && crop_guess) {
-		auto const crop_guess_rectangle = Rectangle(
+		_crop_guess.set(
 			canvas_size,
 			inter_position.x + x_offset + inter_size.width * crop_guess->x,
 			inter_position.y + y_offset + inter_size.height * crop_guess->y,
-			dcp::Size(inter_size.width * crop_guess->width, inter_size.height * crop_guess->height)
+			wxSize(inter_size.width * crop_guess->width, inter_size.height * crop_guess->height)
 			);
-		glBufferSubData(GL_ARRAY_BUFFER, array_buffer_crop_guess_offset, crop_guess_rectangle.size(), crop_guess_rectangle.vertices());
-		check_gl_error("glBufferSubData (crop_guess_rectangle)");
 	}
 
 	if (_have_subtitle_to_render) {
-		const auto subtitle = Rectangle(canvas_size, inter_position.x + x_offset + text->position.x, inter_position.y + y_offset + text->position.y, text->image->size());
-		glBufferSubData(GL_ARRAY_BUFFER, array_buffer_subtitle_offset, subtitle.size(), subtitle.vertices());
-		check_gl_error("glBufferSubData (subtitle)");
+		_subtitle.set(canvas_size, inter_position.x + x_offset + text->position.x, inter_position.y + y_offset + text->position.y, text->image->size());
 	}
 
 	_rec2020 = pv->colour_conversion() && pv->colour_conversion()->about_equal(dcp::ColourConversion::rec2020_to_xyz(), 1e-6);
@@ -563,6 +520,10 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	check_gl_error("glTexParameterf");
+
+	if (sizing_changed || _have_subtitle_to_render) {
+		_coords.set_array_buffer();
+	}
 }
 
 
@@ -618,10 +579,10 @@ void
 GLVideoView::create_textures()
 {
 	for (int i = 0; i < 3; ++i) {
-		std::unique_ptr<dcpomatic::gl::Texture> texture(new dcpomatic::gl::Texture(_optimisation == Optimisation::JPEG2000 ? 2 : 1, i));
+		std::unique_ptr<Texture> texture(new Texture(_optimisation == Optimisation::JPEG2000 ? 2 : 1, i));
 		_video_textures.push_back(std::move(texture));
 	}
-	_subtitle_texture.reset(new dcpomatic::gl::Texture(1, 3));
+	_subtitle_texture.reset(new Texture(1, 3));
 }
 
 

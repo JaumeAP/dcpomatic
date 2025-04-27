@@ -184,5 +184,202 @@ Texture::set(shared_ptr<const Image> image, int component)
 }
 
 
+/** @param x x position in pixels where 0 is left and canvas_width is right on screen */
+static
+float
+x_pixels_to_gl(wxSize const& canvas_size, int x) {
+	return (x * 2.0f / canvas_size.GetWidth()) - 1.0f;
+}
+
+
+/** @param y y position in pixels where 0 is top and canvas_height is bottom on screen */
+static
+float
+y_pixels_to_gl(wxSize const& canvas_size, int y) {
+	return 1.0f - (y * 2.0f / canvas_size.GetHeight());
+}
+
+
+Coords::Rectangle::Rectangle(Coords& coords, int node, int index)
+	: _coords(coords)
+	, _node(node)
+	, _index(index)
+{
+	auto& c = _coords._coords;
+
+	auto offset = c.size();
+
+	c.resize(c.size() + 5 * 4);
+
+	c[offset + 2] = 0.0f;
+	c[offset + 3] = 1.0f;
+	c[offset + 4] = 1.0f;
+
+	c[offset + 7] = 0.0f;
+	c[offset + 8] = 1.0f;
+	c[offset + 9] = 0.0f;
+
+	c[offset + 12] = 0.0f;
+	c[offset + 13] = 0.0f;
+	c[offset + 14] = 0.0f;
+
+	c[offset + 17] = 0.0f;
+	c[offset + 18] = 0.0f;
+	c[offset + 19] = 1.0f;
+}
+
+
+void
+Coords::Rectangle::set(wxSize canvas_size, int x, int y, dcp::Size size)
+{
+	set(canvas_size, x, y, wxSize(size.width, size.height));
+}
+
+
+void
+Coords::Rectangle::set(wxSize canvas_size, int x, int y, wxSize size)
+{
+	auto const x1 = x_pixels_to_gl(canvas_size, x);
+	auto const y1 = y_pixels_to_gl(canvas_size, y);
+	auto const x2 = x_pixels_to_gl(canvas_size, x + size.GetWidth());
+	auto const y2 = y_pixels_to_gl(canvas_size, y + size.GetHeight());
+
+	/* The texture coordinates here have to account for the fact that when we put images into the texture OpenGL
+	 * expected us to start at the lower left but we actually started at the top left.  So although the
+	 * top of the texture is at 1.0 we pretend it's the other way round.
+	 */
+
+	auto& coords = _coords._coords;
+
+	auto const o = _node * 5;
+	DCPOMATIC_ASSERT((o + 16) < static_cast<int>(coords.size()));
+
+	// bottom right
+	coords[o] = x2;
+	coords[o + 1] = y2;
+
+	// top right
+	coords[o + 5] = x2;
+	coords[o + 6] = y1;
+
+	// top left
+	coords[o + 10] = x1;
+	coords[o + 11] = y1;
+
+	// bottom left
+	coords[o + 15] = x1;
+	coords[o + 16] = y2;
+}
+
+
+Coords::FilledRectangle::FilledRectangle(Coords& coords)
+	: Rectangle(coords, coords._nodes, coords._indices.size())
+{
+	auto& indices = coords._indices;
+	auto& nodes = coords._nodes;
+
+	indices.push_back(nodes + 0);
+	indices.push_back(nodes + 1);
+	indices.push_back(nodes + 3);
+	indices.push_back(nodes + 1);
+	indices.push_back(nodes + 2);
+	indices.push_back(nodes + 3);
+	nodes += 4;
+}
+
+
+void
+Coords::FilledRectangle::draw()
+{
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, reinterpret_cast<void*>(_index * sizeof(int)));
+	check_gl_error("glDrawElements");
+}
+
+
+Coords::FilledRectangle
+Coords::add_filled_rectangle()
+{
+	DCPOMATIC_ASSERT(!_setup);
+	return FilledRectangle(*this);
+}
+
+
+Coords::OutlineRectangle::OutlineRectangle(Coords& coords)
+	: Rectangle(coords, coords._nodes, coords._indices.size())
+{
+	auto& indices = _coords._indices;
+	auto& nodes = _coords._nodes;
+
+	indices.push_back(nodes + 0);
+	indices.push_back(nodes + 1);
+	indices.push_back(nodes + 1);
+	indices.push_back(nodes + 2);
+	indices.push_back(nodes + 2);
+	indices.push_back(nodes + 3);
+	indices.push_back(nodes + 3);
+	indices.push_back(nodes + 0);
+	nodes += 4;
+}
+
+
+void
+Coords::OutlineRectangle::draw()
+{
+	glDrawElements(GL_LINES, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(_index * sizeof(int)));
+	check_gl_error("glDrawElements");
+}
+
+
+Coords::OutlineRectangle
+Coords::add_outline_rectangle()
+{
+	DCPOMATIC_ASSERT(!_setup);
+	return OutlineRectangle(*this);
+}
+
+
+void
+Coords::FilledRectangleGroup::add(Coords::FilledRectangle const& rectangle)
+{
+	if (_index == -1) {
+		_index = rectangle.index();
+	} else {
+		DCPOMATIC_ASSERT(rectangle.index() == _index + _number);
+	}
+	_number += 6;
+}
+
+
+void
+Coords::FilledRectangleGroup::draw()
+{
+	glDrawElements(GL_TRIANGLES, _number, GL_UNSIGNED_INT, reinterpret_cast<void*>(_index * sizeof(int)));
+	check_gl_error("glDrawElements");
+}
+
+
+void
+Coords::setup()
+{
+	DCPOMATIC_ASSERT(!_setup);
+
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indices.size() * sizeof(unsigned int), _indices.data(), GL_STATIC_DRAW);
+	check_gl_error("glBufferData");
+	glBufferData(GL_ARRAY_BUFFER, _nodes * 5 * sizeof(float), nullptr, GL_STATIC_DRAW);
+	check_gl_error("glBufferData");
+
+	_setup = true;
+}
+
+
+void
+Coords::set_array_buffer()
+{
+	DCPOMATIC_ASSERT(_setup);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, _coords.size() * sizeof(float), _coords.data());
+	check_gl_error("glBufferSubData");
+}
+
+
 #endif
 
