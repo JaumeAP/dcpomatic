@@ -35,7 +35,7 @@ using namespace dcpomatic::gl;
 #if wxCHECK_VERSION(3,1,0)
 
 GLuint
-compile_shader(GLenum type, char const* source)
+dcpomatic::gl::compile_shader(GLenum type, char const* source)
 {
 	auto shader = glCreateShader(type);
 	DCPOMATIC_ASSERT(shader);
@@ -63,7 +63,7 @@ compile_shader(GLenum type, char const* source)
 
 
 void
-check_gl_error(char const * last)
+dcpomatic::gl::check_gl_error(char const * last)
 {
 	GLenum const e = glGetError();
 	if (e != GL_NO_ERROR) {

@@ -50,10 +50,6 @@
 class Image;
 
 
-extern GLuint compile_shader(GLenum type, char const* source);
-extern void check_gl_error(char const* last);
-
-
 namespace dcpomatic {
 namespace gl {
 
@@ -125,6 +121,8 @@ private:
 	wxSize _canvas_size;
 	float _vertices[20];
 };
+extern GLuint compile_shader(GLenum type, char const* source);
+extern void check_gl_error(char const* last);
 
 
 class Texture

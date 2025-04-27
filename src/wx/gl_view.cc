@@ -31,6 +31,7 @@ LIBDCP_ENABLE_WARNINGS
 
 
 using std::string;
+using namespace dcpomatic::gl;
 
 
 /* This will only build on an new-enough wxWidgets: see the comment in gl_view.h */
