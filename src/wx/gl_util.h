@@ -130,6 +130,7 @@ private:
 class Texture
 {
 public:
+	/** @param unit Unit, or index, of this texture (from 0 to GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS - 1) */
 	Texture(GLint unpack_alignment, int unit = 0);
 	~Texture();
 
