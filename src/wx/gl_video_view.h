@@ -71,8 +71,6 @@ private:
 	void set_image(std::shared_ptr<const PlayerVideo> pv);
 	void check_for_butler_errors();
 	void ensure_context();
-	void set_outline_content_colour(GLuint program);
-	void set_crop_guess_colour(GLuint program);
 
 	void setup_shaders();
 	void create_textures();
@@ -121,7 +119,7 @@ private:
 	dcpomatic::gl::Coords::OutlineRectangle _crop_guess;
 	dcpomatic::gl::Coords::FilledRectangle _subtitle;
 
-	GLint _fragment_type;
+	dcpomatic::gl::Uniform1i _fragment_type;
 
 	std::shared_ptr<wxTimer> _timer;
 

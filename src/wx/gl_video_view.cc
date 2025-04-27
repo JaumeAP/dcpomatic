@@ -262,27 +262,33 @@ GLVideoView::setup_shaders()
 
 	_coords.setup();
 
-	auto texture_0 = glGetUniformLocation(_view.program(), "texture_sampler_0");
-	check_gl_error("glGetUniformLocation");
-	glUniform1i(texture_0, 0);
-	check_gl_error("glUniform1i");
-	auto texture_1 = glGetUniformLocation(_view.program(), "texture_sampler_1");
-	check_gl_error("glGetUniformLocation");
-	glUniform1i(texture_1, 1);
-	check_gl_error("glUniform1i");
-	auto texture_2 = glGetUniformLocation(_view.program(), "texture_sampler_2");
-	check_gl_error("glGetUniformLocation");
-	glUniform1i(texture_2, 2);
-	check_gl_error("glUniform1i");
-	auto texture_3 = glGetUniformLocation(_view.program(), "texture_sampler_3");
-	check_gl_error("glGetUniformLocation");
-	glUniform1i(texture_3, 3);
-	check_gl_error("glUniform1i");
+	Uniform1i texture_0;
+	texture_0.setup(_view.program(), "texture_sampler_0");
+	texture_0.set(0);
 
-	_fragment_type = glGetUniformLocation(_view.program(), "type");
-	check_gl_error("glGetUniformLocation");
-	set_outline_content_colour(_view.program());
-	set_crop_guess_colour(_view.program());
+	Uniform1i texture_1;
+	texture_1.setup(_view.program(), "texture_sampler_1");
+	texture_1.set(0);
+
+	Uniform1i texture_2;
+	texture_2.setup(_view.program(), "texture_sampler_2");
+	texture_2.set(0);
+
+	Uniform1i texture_3;
+	texture_3.setup(_view.program(), "texture_sampler_3");
+	texture_3.set(0);
+
+	_fragment_type.setup(_view.program(), "type");
+
+	UniformVec4f outline_uniform;
+	outline_uniform.setup(_view.program(), "outline_content_colour");
+	auto outline = outline_content_colour();
+	outline_uniform.set(outline.Red() / 255.0f, outline.Green() / 255.0f, outline.Blue() / 255.0f, 1.0f);
+
+	UniformVec4f crop_uniform;
+	crop_uniform.setup(_view.program(), "crop_guess_colour");
+	auto crop = crop_guess_colour();
+	crop_uniform.set(crop.Red() / 255.0f, crop.Green() / 255.0f, crop.Blue() / 255.0f, 1.0f);
 
 	auto ublas_to_gl = [](boost::numeric::ublas::matrix<double> const& ublas, GLfloat* gl) {
 		gl[0] = static_cast<float>(ublas(0, 0));
@@ -337,28 +343,6 @@ GLVideoView::setup_shaders()
 
 
 void
-GLVideoView::set_outline_content_colour(GLuint program)
-{
-	auto uniform = glGetUniformLocation(program, "outline_content_colour");
-	check_gl_error("glGetUniformLocation");
-	auto colour = outline_content_colour();
-	glUniform4f(uniform, colour.Red() / 255.0f, colour.Green() / 255.0f, colour.Blue() / 255.0f, 1.0f);
-	check_gl_error("glUniform4f");
-}
-
-
-void
-GLVideoView::set_crop_guess_colour(GLuint program)
-{
-	auto uniform = glGetUniformLocation(program, "crop_guess_colour");
-	check_gl_error("glGetUniformLocation");
-	auto colour = crop_guess_colour();
-	glUniform4f(uniform, colour.Red() / 255.0f, colour.Green() / 255.0f, colour.Blue() / 255.0f, 1.0f);
-	check_gl_error("glUniform4f");
-}
-
-
-void
 GLVideoView::draw()
 {
 	auto pv = player_video().first;
@@ -380,13 +364,13 @@ GLVideoView::draw()
 	}
 
 	if (_optimisation == Optimisation::MPEG2) {
-		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::YUV420P_IMAGE));
+		_fragment_type.set(static_cast<GLint>(FragmentType::YUV420P_IMAGE));
 	} else if (_optimisation == Optimisation::JPEG2000) {
-		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::XYZ_IMAGE));
+		_fragment_type.set(static_cast<GLint>(FragmentType::XYZ_IMAGE));
 	} else if (_rec2020) {
-		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::REC2020_IMAGE));
+		_fragment_type.set(static_cast<GLint>(FragmentType::REC2020_IMAGE));
 	} else {
-		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::REC709_IMAGE));
+		_fragment_type.set(static_cast<GLint>(FragmentType::REC709_IMAGE));
 	}
 	for (auto& texture: _video_textures) {
 		texture.bind();
@@ -394,16 +378,16 @@ GLVideoView::draw()
 	_image.draw();
 
 	if (_have_subtitle_to_render) {
-		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::REC709_SUBTITLE));
+		_fragment_type.set(static_cast<GLint>(FragmentType::REC709_SUBTITLE));
 		_subtitle_texture->bind();
 		_subtitle.draw();
 	}
 	if (_viewer->outline_content()) {
-		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::OUTLINE_CONTENT));
+		_fragment_type.set(static_cast<GLint>(FragmentType::OUTLINE_CONTENT));
 		_outline_content.draw();
 	}
 	if (auto guess = _viewer->crop_guess()) {
-		glUniform1i(_fragment_type, static_cast<GLint>(FragmentType::CROP_GUESS));
+		_fragment_type.set(static_cast<GLint>(FragmentType::CROP_GUESS));
 		_crop_guess.draw();
 	}
 

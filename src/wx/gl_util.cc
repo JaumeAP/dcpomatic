@@ -381,5 +381,31 @@ Coords::set_array_buffer()
 }
 
 
+void
+Uniform::setup(int program, char const* name)
+{
+	_location = glGetUniformLocation(program, name);
+	check_gl_error("glGetUniformLocation");
+}
+
+
+void
+UniformVec4f::set(float a, float b, float c, float d)
+{
+	DCPOMATIC_ASSERT(_location != -1);
+	glUniform4f(_location, a, b, c, d);
+	check_gl_error("glUniform4f");
+}
+
+
+void
+Uniform1i::set(int v)
+{
+	DCPOMATIC_ASSERT(_location != -1);
+	glUniform1i(_location, v);
+	check_gl_error("glUniform1i");
+}
+
+
 #endif
 

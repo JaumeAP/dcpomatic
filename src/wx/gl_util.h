@@ -146,6 +146,30 @@ private:
 };
 
 
+class Uniform
+{
+public:
+	void setup(int program, char const* name);
+
+protected:
+	int _location = -1;
+};
+
+
+class UniformVec4f : public Uniform
+{
+public:
+	void set(float a, float b, float c, float d);
+};
+
+
+class Uniform1i : public Uniform
+{
+public:
+	void set(int v);
+};
+
+
 }
 }
 
