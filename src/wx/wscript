@@ -185,6 +185,7 @@ sources = """
           timeline_time_axis_view.cc
           timing_panel.cc
           try_unmount_dialog.cc
+          upload_destination_dialog.cc
           update_dialog.cc
           verify_dcp_dialog.cc
           verify_dcp_progress_panel.cc

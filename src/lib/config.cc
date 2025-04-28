@@ -69,7 +69,7 @@ using dcp::raw_convert;
 
 
 Config* Config::_instance = 0;
-int const Config::_current_version = 3;
+int const Config::_current_version = 4;
 boost::signals2::signal<void (Config::LoadFailure)> Config::FailedToLoad;
 boost::signals2::signal<void (string)> Config::Warning;
 boost::signals2::signal<bool (Config::BadReason)> Config::Bad;
@@ -98,12 +98,8 @@ Config::set_defaults()
 	_use_any_servers = true;
 	_servers.clear();
 	_only_servers_encode = false;
-	_tms_protocol = FileTransferProtocol::SCP;
-	_tms_passive = true;
-	_tms_ip = "";
-	_tms_path = ".";
-	_tms_user = "";
-	_tms_password = "";
+	_upload_destinations.clear();
+	_upload_after_make_dcp.clear();
 	_allow_any_dcp_frame_rate = false;
 	_allow_any_container = false;
 	_allow_96khz_audio = false;
@@ -118,7 +114,6 @@ Config::set_defaults()
 	_default_audio_delay = 0;
 	_default_interop = false;
 	_default_metadata.clear();
-	_upload_after_make_dcp = false;
 	_mail_server = "";
 	_mail_port = 25;
 	_mail_protocol = EmailProtocol::AUTO;
@@ -349,12 +344,34 @@ try
 	}
 
 	_only_servers_encode = f.optional_bool_child("OnlyServersEncode").get_value_or(false);
-	_tms_protocol = static_cast<FileTransferProtocol>(f.optional_number_child<int>("TMSProtocol").get_value_or(static_cast<int>(FileTransferProtocol::SCP)));
-	_tms_passive = f.optional_bool_child("TMSPassive").get_value_or(true);
-	_tms_ip = f.string_child("TMSIP");
-	_tms_path = f.string_child("TMSPath");
-	_tms_user = f.string_child("TMSUser");
-	_tms_password = f.string_child("TMSPassword");
+
+	if (f.optional_string_child("TMSIP")) {
+		_upload_destinations.emplace_back(
+			_("TMS"),
+			static_cast<FileTransferProtocol>(f.optional_number_child<int>("TMSProtocol").get_value_or(static_cast<int>(FileTransferProtocol::SCP))),
+			f.optional_bool_child("TMSPassive").get_value_or(true),
+			f.string_child("TMSIP"),
+			f.string_child("TMSPath"),
+			f.string_child("TMSUser"),
+			f.string_child("TMSPassword")
+		);
+	}
+
+	auto up = f.optional_bool_child("UploadAfterMakeDCP");
+	if (!up) {
+		up = f.optional_bool_child("DefaultUploadAfterMakeDCP");
+	}
+	if (up && *up) {
+		_upload_after_make_dcp = { _("TMS") };
+	}
+
+	for (auto i: f.node_children("UploadDestination")) {
+		_upload_destinations.push_back(UploadDestination(i));
+	}
+
+	for (auto i: f.node_children("UploadAfterMakeDCP")) {
+		_upload_after_make_dcp.push_back(i->content());
+	}
 
 	_language = f.optional_string_child("Language");
 
@@ -367,11 +384,6 @@ try
 		_dcp_issuer = f.string_child("DCPIssuer");
 	}
 
-	auto up = f.optional_bool_child("UploadAfterMakeDCP");
-	if (!up) {
-		up = f.optional_bool_child("DefaultUploadAfterMakeDCP");
-	}
-	_upload_after_make_dcp = up.get_value_or(false);
 	_dcp_creator = f.optional_string_child("DCPCreator").get_value_or("");
 	_dcp_company_name = f.optional_string_child("DCPCompanyName").get_value_or("");
 	_dcp_product_name = f.optional_string_child("DCPProductName").get_value_or("");
@@ -776,18 +788,15 @@ Config::write_config() const
 	   is done by the encoding servers.  0 to set the master to do some encoding as well as coordinating the job.
 	*/
 	cxml::add_text_child(root, "OnlyServersEncode", _only_servers_encode ? "1" : "0");
-	/* [XML] TMSProtocol Protocol to use to copy files to a TMS; 0 to use SCP, 1 for FTP. */
-	cxml::add_text_child(root, "TMSProtocol", fmt::to_string(static_cast<int>(_tms_protocol)));
-	/* [XML] TMSPassive True to use PASV mode with TMS FTP connections. */
-	cxml::add_text_child(root, "TMSPassive", _tms_passive ? "1" : "0");
-	/* [XML] TMSIP IP address of TMS. */
-	cxml::add_text_child(root, "TMSIP", _tms_ip);
-	/* [XML] TMSPath Path on the TMS to copy files to. */
-	cxml::add_text_child(root, "TMSPath", _tms_path);
-	/* [XML] TMSUser Username to log into the TMS with. */
-	cxml::add_text_child(root, "TMSUser", _tms_user);
-	/* [XML] TMSPassword Password to log into the TMS with. */
-	cxml::add_text_child(root, "TMSPassword", _tms_password);
+
+	for (auto i: _upload_destinations) {
+		i.as_xml(cxml::add_child(root, "UploadDestination"));
+	}
+
+	for (auto i: _upload_after_make_dcp) {
+		cxml::add_text_child(root, "UploadAfterMakeDCP", i);
+	}
+
 	if (_language) {
 		/* [XML:opt] Language Language to use in the GUI e.g. <code>fr_FR</code>. */
 		cxml::add_text_child(root, "Language", _language.get());
@@ -804,8 +813,6 @@ Config::write_config() const
 	cxml::add_text_child(root, "DCPProductVersion", _dcp_product_version);
 	/* [XML] DCPJ2KComment Comment to write into JPEG2000 data. */
 	cxml::add_text_child(root, "DCPJ2KComment", _dcp_j2k_comment);
-	/* [XML] UploadAfterMakeDCP 1 to upload to a TMS after making a DCP, 0 for no upload. */
-	cxml::add_text_child(root, "UploadAfterMakeDCP", _upload_after_make_dcp ? "1" : "0");
 
 	/* [XML] DefaultStillLength Default length (in seconds) for still images in new films. */
 	cxml::add_text_child(root, "DefaultStillLength", fmt::to_string(_default_still_length));

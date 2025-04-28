@@ -382,7 +382,8 @@ Film::subtitle_analysis_path(shared_ptr<const Content> content) const
 void
 Film::send_dcp_to_tms()
 {
-	JobManager::instance()->add(make_shared<UploadJob>(shared_from_this()));
+	/* XXX */
+	// JobManager::instance()->add(make_shared<UploadJob>(shared_from_this()));
 }
 
 shared_ptr<xmlpp::Document>

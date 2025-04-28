@@ -249,7 +249,7 @@ function copy_resources {
     cp $source/graphics/osx/preferences/kdm_email*.png "$dest"
     cp $source/graphics/osx/preferences/email*.png "$dest"
     cp $source/graphics/osx/preferences/servers*.png "$dest"
-    cp $source/graphics/osx/preferences/tms*.png "$dest"
+    cp $source/graphics/osx/preferences/upload*.png "$dest"
     cp $source/graphics/osx/preferences/keys*.png "$dest"
     cp $source/graphics/osx/preferences/cover_sheet*.png "$dest"
     cp $source/graphics/osx/preferences/notifications*.png "$dest"

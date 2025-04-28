@@ -23,6 +23,7 @@
 #define DCPOMATIC_UPLOADER_H
 
 
+#include "upload_destination.h"
 #include <boost/filesystem.hpp>
 
 
@@ -32,7 +33,7 @@ class Job;
 class Uploader
 {
 public:
-	Uploader(std::function<void (std::string)> set_status, std::function<void (float)> set_progress);
+	Uploader(UploadDestination destination, std::function<void (std::string)> set_status, std::function<void (float)> set_progress);
 	virtual ~Uploader() {}
 
 	void upload(boost::filesystem::path directory);
@@ -43,6 +44,7 @@ protected:
 	virtual void upload_file(boost::filesystem::path from, boost::filesystem::path to, boost::uintmax_t& transferred, boost::uintmax_t total_size) = 0;
 
 	std::function<void (float)> _set_progress;
+	UploadDestination _destination;
 
 private:
 	void upload_directory (boost::filesystem::path base, boost::filesystem::path directory, boost::uintmax_t& transferred, boost::uintmax_t total_size);

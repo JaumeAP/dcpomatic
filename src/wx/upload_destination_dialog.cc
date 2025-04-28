@@ -1,0 +1,105 @@
+/*
+    Copyright (C) 2025 Carl Hetherington <cth@carlh.net>
+
+    This file is part of DCP-o-matic.
+
+    DCP-o-matic is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    DCP-o-matic is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with DCP-o-matic.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+
+#include "check_box.h"
+#include "dcpomatic_choice.h"
+#include "password_entry.h"
+#include "upload_destination_dialog.h"
+#include "wx_util.h"
+#include "lib/upload_destination.h"
+
+
+using std::shared_ptr;
+using std::string;
+using std::vector;
+
+
+UploadDestinationDialog::UploadDestinationDialog(wxWindow* parent)
+	: TableDialog(parent, _("Upload destination"), 2, 1, true)
+{
+	add(_("Name"), true);
+	_name = add(new wxTextCtrl(this, wxID_ANY, {}, wxDefaultPosition, wxSize(480, -1)));
+	add(_("Protocol"), true);
+	_protocol = add(new Choice(this));
+	_passive = add(new CheckBox(this, _("Passive")));
+	add_spacer();
+	add(_("Host"), true);
+	_host = add(new wxTextCtrl(this, wxID_ANY));
+	add(_("Path"), true);
+	_path = add(new wxTextCtrl(this, wxID_ANY));
+	add(_("User"), true);
+	_user = add(new wxTextCtrl(this, wxID_ANY));
+	add(_("Password"), true);
+	_password = new PasswordEntry(this);
+	add(_password->get_panel());
+
+	_protocol->add_entry(_("SCP"));
+	_protocol->add_entry(_("FTP"));
+
+	_protocol->bind(&UploadDestinationDialog::protocol_changed, this);
+
+	layout();
+
+	_name->SetFocus();
+
+	_protocol->set(0);
+	protocol_changed();
+}
+
+
+void
+UploadDestinationDialog::protocol_changed()
+{
+	auto const ftp = _protocol->get() == 1;
+	_passive->Enable(ftp);
+	_passive->SetValue(ftp);
+}
+
+
+void
+UploadDestinationDialog::set(UploadDestination const& destination)
+{
+	checked_set(_name, destination.name);
+	checked_set(_protocol, static_cast<int>(destination.protocol));
+	checked_set(_passive, destination.passive_ftp);
+	checked_set(_host, destination.host);
+	checked_set(_path, destination.path);
+	checked_set(_user, destination.user);
+	checked_set(_password, destination.password);
+
+	protocol_changed();
+}
+
+vector<UploadDestination>
+UploadDestinationDialog::get () const
+{
+	return {
+		UploadDestination(
+			wx_to_std(_name->GetValue()),
+			static_cast<FileTransferProtocol>(_protocol->GetSelection()),
+			_passive->get(),
+			wx_to_std(_host->GetValue()),
+			wx_to_std(_path->GetValue()),
+			wx_to_std(_user->GetValue()),
+			_password->get()
+			)
+	};
+}

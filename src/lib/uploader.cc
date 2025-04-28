@@ -31,8 +31,9 @@ using std::shared_ptr;
 using std::function;
 
 
-Uploader::Uploader (function<void (string)> set_status, function<void (float)> set_progress)
+Uploader::Uploader(UploadDestination destination, function<void (string)> set_status, function<void (float)> set_progress)
 	: _set_progress (set_progress)
+	, _destination(std::move(destination))
 	, _set_status (set_status)
 {
 	_set_status (_("connecting"));

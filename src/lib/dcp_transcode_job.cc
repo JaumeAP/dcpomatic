@@ -46,8 +46,17 @@ DCPTranscodeJob::DCPTranscodeJob (shared_ptr<const Film> film, ChangedBehaviour 
 void
 DCPTranscodeJob::post_transcode ()
 {
-	if (Config::instance()->upload_after_make_dcp()) {
-		JobManager::instance()->add(make_shared<UploadJob>(_film));
+	auto destinations = Config::instance()->upload_destinations();
+	for (auto i: Config::instance()->upload_after_make_dcp()) {
+		auto iter = std::find_if(
+			destinations.begin(),
+			destinations.end(),
+			[i](UploadDestination const& destination) { return destination.name == i; }
+		);
+
+		if (iter != destinations.end()) {
+			JobManager::instance()->add(make_shared<UploadJob>(_film, *iter));
+		}
 	}
 
 	/* The first directory is the project's DCP, so the first CPL will also be from the project

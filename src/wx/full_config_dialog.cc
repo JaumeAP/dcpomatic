@@ -53,6 +53,7 @@
 #ifdef DCPOMATIC_GROK
 #include "grok/gpu_config_panel.h"
 #endif
+#include "upload_destination_dialog.h"
 #include "wx_util.h"
 #include "wx_variant.h"
 #include "lib/config.h"
@@ -513,129 +514,58 @@ private:
 };
 
 
-class TMSPage : public preferences::Page
+class UploadPage : public preferences::Page
 {
 public:
-	TMSPage(wxSize panel_size, int border)
+	UploadPage(wxSize panel_size, int border)
 		: Page(panel_size, border)
 	{}
 
 	wxString GetName() const override
 	{
-		return _("TMS");
+		return _("Upload");
 	}
 
 #ifdef DCPOMATIC_OSX
 	wxBitmap GetLargeIcon() const override
 	{
-		return wxBitmap(icon_path("tms"), wxBITMAP_TYPE_PNG);
+		return wxBitmap(icon_path("upload"), wxBITMAP_TYPE_PNG);
 	}
 #endif
 
 private:
 	void setup() override
 	{
-		_upload = new CheckBox(_panel, _("Upload DCP to TMS after creation"));
-		_panel->GetSizer()->Add(_upload, 0, wxALL | wxEXPAND, _border);
+		vector<EditableListColumn> columns;
+		columns.push_back(EditableListColumn(_("Name")));
+		columns.push_back(EditableListColumn(_("Host"), 256, true));
+		_destinations_list = new EditableList<UploadDestination, UploadDestinationDialog>(
+			_panel,
+			columns,
+			boost::bind(&Config::upload_destinations, Config::instance()),
+			boost::bind(&Config::set_upload_destinations, Config::instance(), _1),
+			[](UploadDestination const& destination, int column) -> std::string {
+				switch (column) {
+				case 0:
+					return destination.name;
+				case 1:
+					return destination.host;
+				}
+				return {};
+			},
+			EditableListTitle::VISIBLE,
+			EditableListButton::NEW | EditableListButton::EDIT | EditableListButton::REMOVE
+			);
 
-		wxFlexGridSizer* table = new wxFlexGridSizer(2, DCPOMATIC_SIZER_X_GAP, DCPOMATIC_SIZER_Y_GAP);
-		table->AddGrowableCol(1, 1);
-		_panel->GetSizer()->Add(table, 1, wxALL | wxEXPAND, _border);
-
-		add_label_to_sizer(table, _panel, _("Protocol"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-		_tms_protocol = new wxChoice(_panel, wxID_ANY);
-		table->Add(_tms_protocol, 1, wxEXPAND);
-
-		_tms_passive = new CheckBox(_panel, _("Passive mode"));
-		table->Add(_tms_passive, 1, wxEXPAND);
-		table->AddSpacer(0);
-
-		add_label_to_sizer(table, _panel, _("IP address"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-		_tms_ip = new wxTextCtrl(_panel, wxID_ANY);
-		table->Add(_tms_ip, 1, wxEXPAND);
-
-		add_label_to_sizer(table, _panel, _("Target path"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-		_tms_path = new wxTextCtrl(_panel, wxID_ANY);
-		table->Add(_tms_path, 1, wxEXPAND);
-
-		add_label_to_sizer(table, _panel, _("User name"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-		_tms_user = new wxTextCtrl(_panel, wxID_ANY);
-		table->Add(_tms_user, 1, wxEXPAND);
-
-		add_label_to_sizer(table, _panel, _("Password"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-		_tms_password = new PasswordEntry(_panel);
-		table->Add(_tms_password->get_panel(), 1, wxEXPAND);
-
-		_tms_protocol->Append(_("SCP (for AAM and Doremi)"));
-		_tms_protocol->Append(_("FTP (for Dolby)"));
-
-		_upload->bind(&TMSPage::upload_changed, this);
-		_tms_protocol->Bind(wxEVT_CHOICE, boost::bind(&TMSPage::tms_protocol_changed, this));
-		_tms_passive->bind(&TMSPage::tms_passive_changed, this);
-
-		_tms_ip->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_ip_changed, this));
-		_tms_path->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_path_changed, this));
-		_tms_user->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_user_changed, this));
-		_tms_password->Changed.connect(boost::bind(&TMSPage::tms_password_changed, this));
+		_panel->GetSizer()->Add(_destinations_list, 1, wxEXPAND | wxALL, _border);
 	}
 
 	void config_changed() override
 	{
-		auto config = Config::instance();
 
-		checked_set(_upload, config->upload_after_make_dcp());
-		checked_set(_tms_protocol, static_cast<int>(config->tms_protocol()));
-		checked_set(_tms_passive, config->tms_protocol() == FileTransferProtocol::FTP && config->tms_passive());
-		checked_set(_tms_ip, config->tms_ip());
-		checked_set(_tms_path, config->tms_path());
-		checked_set(_tms_user, config->tms_user());
-		checked_set(_tms_password, config->tms_password());
-
-		_tms_passive->Enable(config->tms_protocol() == FileTransferProtocol::FTP);
 	}
 
-	void upload_changed()
-	{
-		Config::instance()->set_upload_after_make_dcp(_upload->GetValue());
-	}
-
-	void tms_protocol_changed()
-	{
-		Config::instance()->set_tms_protocol(static_cast<FileTransferProtocol>(_tms_protocol->GetSelection()));
-	}
-
-	void tms_passive_changed()
-	{
-		Config::instance()->set_tms_passive(_tms_passive->get());
-	}
-
-	void tms_ip_changed()
-	{
-		Config::instance()->set_tms_ip(wx_to_std(_tms_ip->GetValue()));
-	}
-
-	void tms_path_changed()
-	{
-		Config::instance()->set_tms_path(wx_to_std(_tms_path->GetValue()));
-	}
-
-	void tms_user_changed()
-	{
-		Config::instance()->set_tms_user(wx_to_std(_tms_user->GetValue()));
-	}
-
-	void tms_password_changed()
-	{
-		Config::instance()->set_tms_password(_tms_password->get());
-	}
-
-	CheckBox* _upload;
-	CheckBox* _tms_passive;
-	wxChoice* _tms_protocol;
-	wxTextCtrl* _tms_ip;
-	wxTextCtrl* _tms_path;
-	wxTextCtrl* _tms_user;
-	PasswordEntry* _tms_password;
+	EditableList<UploadDestination, UploadDestinationDialog>* _destinations_list;
 };
 
 
@@ -1494,7 +1424,7 @@ create_full_config_dialog()
 	e->AddPage(new GPUPage(ps, border));
 #endif
 	e->AddPage(new preferences::KeysPage(ps, border));
-	e->AddPage(new TMSPage(ps, border));
+	e->AddPage(new UploadPage(ps, border));
 	e->AddPage(new preferences::EmailPage(ps, border));
 	e->AddPage(new preferences::KDMEmailPage(ps, border));
 	e->AddPage(new NotificationsPage(ps, border));
