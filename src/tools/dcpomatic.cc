@@ -54,6 +54,7 @@
 #include "wx/system_information_dialog.h"
 #include "wx/templates_dialog.h"
 #include "wx/update_dialog.h"
+#include "wx/upload_dialog.h"
 #include "wx/video_waveform_dialog.h"
 #include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
@@ -97,6 +98,7 @@
 #include "lib/transcode_job.h"
 #include "lib/unzipper.h"
 #include "lib/update_checker.h"
+#include "lib/upload_job.h"
 #include "lib/variant.h"
 #include "lib/version.h"
 #include "lib/video_content.h"
@@ -241,7 +243,7 @@ enum {
 	ID_jobs_make_self_dkdm,
 	ID_jobs_export_video_file,
 	ID_jobs_export_subtitles,
-	ID_jobs_send_dcp_to_tms,
+	ID_jobs_upload_dcp,
 	ID_jobs_show_dcp,
 	ID_jobs_open_dcp_in_player,
 	ID_view_closed_captions,
@@ -352,7 +354,7 @@ public:
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::jobs_make_self_dkdm, this),     ID_jobs_make_self_dkdm);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::jobs_export_video_file, this),  ID_jobs_export_video_file);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::jobs_export_subtitles, this),   ID_jobs_export_subtitles);
-		Bind (wxEVT_MENU, boost::bind (&DOMFrame::jobs_send_dcp_to_tms, this),    ID_jobs_send_dcp_to_tms);
+		Bind (wxEVT_MENU, boost::bind (&DOMFrame::jobs_upload_dcp, this),         ID_jobs_upload_dcp);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::jobs_show_dcp, this),           ID_jobs_show_dcp);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::jobs_open_dcp_in_player, this), ID_jobs_open_dcp_in_player);
 		Bind (wxEVT_MENU, boost::bind (&DOMFrame::view_closed_captions, this),    ID_view_closed_captions);
@@ -1068,9 +1070,14 @@ private:
 	}
 
 
-	void jobs_send_dcp_to_tms ()
+	void jobs_upload_dcp()
 	{
-		_film->send_dcp_to_tms ();
+		UploadDialog dialog(this);
+		if (dialog.ShowModal() == wxID_OK) {
+			for (auto const& destination: dialog.destinations()) {
+				JobManager::instance()->add(make_shared<UploadJob>(_film, destination));
+			}
+		}
 	}
 
 	void jobs_show_dcp ()
@@ -1403,7 +1410,7 @@ private:
 		add_item (jobs_menu, _("Export video file...\tCtrl-E"), ID_jobs_export_video_file, NEEDS_FILM);
 		add_item (jobs_menu, _("Export subtitles..."), ID_jobs_export_subtitles, NEEDS_FILM);
 		jobs_menu->AppendSeparator ();
-		add_item (jobs_menu, _("&Send DCP to TMS"), ID_jobs_send_dcp_to_tms, NEEDS_FILM | NOT_DURING_DCP_CREATION | NEEDS_CPL);
+		add_item (jobs_menu, _("&Upload DCP..."), ID_jobs_upload_dcp, NEEDS_FILM | NOT_DURING_DCP_CREATION | NEEDS_CPL);
 
 #if defined(DCPOMATIC_OSX)
 		add_item (jobs_menu, _("S&how DCP in Finder"), ID_jobs_show_dcp, NEEDS_FILM | NOT_DURING_DCP_CREATION | NEEDS_CPL);

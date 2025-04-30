@@ -64,7 +64,7 @@ UploadJob::~UploadJob ()
 string
 UploadJob::name () const
 {
-	return fmt::format(_("Copy DCP to {}"), _destination.name);
+	return fmt::format(_("Upload DCP to {}"), _destination.name);
 }
 
 

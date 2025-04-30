@@ -186,7 +186,9 @@ sources = """
           timing_panel.cc
           try_unmount_dialog.cc
           upload_destination_dialog.cc
+          upload_destination_panel.cc
           update_dialog.cc
+          upload_dialog.cc
           verify_dcp_dialog.cc
           verify_dcp_progress_panel.cc
           verify_dcp_result_panel.cc
