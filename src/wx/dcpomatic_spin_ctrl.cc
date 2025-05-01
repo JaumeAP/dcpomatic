@@ -43,6 +43,13 @@ SpinCtrl::SpinCtrl (wxWindow* parent, int width)
 }
 
 
+void
+SpinCtrl::set(int n)
+{
+	SetValue(n);
+}
+
+
 int
 SpinCtrl::get() const
 {
