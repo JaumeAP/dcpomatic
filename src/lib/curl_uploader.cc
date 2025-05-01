@@ -63,6 +63,9 @@ CurlUploader::CurlUploader(UploadDestination destination, function<void (string)
 	curl_easy_setopt(_curl, CURLOPT_READDATA, this);
 	curl_easy_setopt(_curl, CURLOPT_UPLOAD, 1L);
 	curl_easy_setopt(_curl, CURLOPT_FTP_CREATE_MISSING_DIRS, 1L);
+	if (destination.maximum_connections) {
+		curl_easy_setopt(_curl, CURLOPT_MAXCONNECTS, *destination.maximum_connections);
+	}
 	curl_easy_setopt(_curl, CURLOPT_READDATA, this);
 	curl_easy_setopt(_curl, CURLOPT_USERNAME, destination.user.c_str());
 	curl_easy_setopt(_curl, CURLOPT_PASSWORD, destination.password.c_str());

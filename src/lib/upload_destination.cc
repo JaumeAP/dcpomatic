@@ -21,12 +21,14 @@
 
 #include "upload_destination.h"
 #include <libcxml/cxml.h>
+#include <fmt/format.h>
 
 
 UploadDestination::UploadDestination(cxml::ConstNodePtr node)
 	: name(node->string_child("Name"))
 	, protocol(file_transfer_protocol_from_string(node->string_child("Protocol")))
 	, passive_ftp(node->bool_child("PassiveFTP"))
+	, maximum_connections(node->optional_number_child<int>("MaximumConnections"))
 	, host(node->string_child("Host"))
 	, path(node->string_child("Path"))
 	, user(node->string_child("User"))
@@ -42,6 +44,9 @@ UploadDestination::as_xml(xmlpp::Element* parent) const
 	cxml::add_text_child(parent, "Name", name);
 	cxml::add_text_child(parent, "Protocol", file_transfer_protocol_to_string(protocol));
 	cxml::add_text_child(parent, "PassiveFTP", passive_ftp ? "1" : "0");
+	if (maximum_connections) {
+		cxml::add_text_child(parent, "MaximumConnections", fmt::to_string(*maximum_connections));
+	}
 	cxml::add_text_child(parent, "Host", host);
 	cxml::add_text_child(parent, "Path", path);
 	cxml::add_text_child(parent, "User", user);
@@ -55,6 +60,7 @@ operator==(UploadDestination const& a, UploadDestination const& b)
 	return a.name == b.name
 		&& a.protocol == b.protocol
 		&& a.passive_ftp == b.passive_ftp
+		&& a.maximum_connections == b.maximum_connections
 		&& a.host == b.host
 		&& a.path == b.path
 		&& a.user == b.user

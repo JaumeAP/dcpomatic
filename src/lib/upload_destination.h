@@ -34,6 +34,7 @@ public:
 		std::string name_,
 		FileTransferProtocol protocol_,
 		bool passive_ftp_,
+		boost::optional<int> maximum_connections_,
 		std::string host_,
 		std::string path_,
 		std::string user_,
@@ -42,6 +43,7 @@ public:
 		: name(name_)
 		, protocol(protocol_)
 		, passive_ftp(passive_ftp_)
+		, maximum_connections(maximum_connections_)
 		, host(host_)
 		, path(path_)
 		, user(user_)
@@ -55,6 +57,7 @@ public:
 	std::string name;
 	FileTransferProtocol protocol;
 	bool passive_ftp = true;
+	boost::optional<int> maximum_connections;
 	std::string host;
 	std::string path;
 	std::string user;

@@ -27,6 +27,7 @@
 class CheckBox;
 class Choice;
 class PasswordEntry;
+class SpinCtrl;
 class wxTextCtrl;
 
 
@@ -40,10 +41,13 @@ public:
 
 private:
 	void protocol_changed();
+	void limit_connections_changed();
 
 	wxTextCtrl* _name;
 	Choice* _protocol;
 	CheckBox* _passive;
+	CheckBox* _limit_connections;
+	SpinCtrl* _maximum_connections;
 	wxTextCtrl* _host;
 	wxTextCtrl* _path;
 	wxTextCtrl* _user;
