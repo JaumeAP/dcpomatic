@@ -42,3 +42,18 @@ SpinCtrl::SpinCtrl (wxWindow* parent, int width)
 	Bind (wxEVT_TEXT_ENTER, boost::bind<void>(enter, _1));
 }
 
+
+void
+SpinCtrl::set(int n)
+{
+	SetValue(n);
+}
+
+
+int
+SpinCtrl::get() const
+{
+	return GetValue();
+}
+
+
