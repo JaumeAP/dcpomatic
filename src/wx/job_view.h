@@ -85,7 +85,7 @@ private:
 	wxStaticText* _message;
 	wxButton* _cancel;
 	wxButton* _details;
-	CheckBox* _notify;
+	CheckBox* _notify = nullptr;
 	/** sizer for all right-hand-size controls */
 	wxBoxSizer* _controls;
 	std::string _last_message;
