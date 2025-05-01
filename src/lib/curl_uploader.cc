@@ -91,11 +91,14 @@ CurlUploader::create_directory(boost::filesystem::path)
 void
 CurlUploader::upload_file(boost::filesystem::path from, boost::filesystem::path to, boost::uintmax_t& transferred, boost::uintmax_t total_size)
 {
-	curl_easy_setopt(
-		_curl, CURLOPT_URL,
-		/* Use generic_string so that we get forward-slashes in the path, even on Windows */
-		String::compose("ftp://%1/%2/%3", _destination.host, _destination.path, to.generic_string()).c_str()
-		);
+	string url = "ftp://" + _destination.host + "/";
+	if (!_destination.path.empty()) {
+		url += _destination.path + "/";
+	}
+	/* Use generic_string so that we get forward-slashes in the path, even on Windows */
+	url += to.generic_string();
+
+	curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
 
 	dcp::File file(from, "rb");
 	if (!file) {
