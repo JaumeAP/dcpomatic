@@ -97,6 +97,9 @@ CurlUploader::upload_file(boost::filesystem::path from, boost::filesystem::path 
 		String::compose("ftp://%1/%2/%3", _destination.host, _destination.path, to.generic_string()).c_str()
 		);
 
+	curl_easy_setopt(_curl, CURLOPT_RESUME_FROM_LARGE, static_cast<curl_off_t>(-1));
+	curl_easy_setopt(_curl, CURLOPT_INFILESIZE_LARGE, boost::filesystem::file_size(from));
+
 	dcp::File file(from, "rb");
 	if (!file) {
 		throw NetworkError(String::compose(_("Could not open %1 to send"), from));
