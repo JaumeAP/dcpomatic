@@ -87,10 +87,12 @@ JobView::setup()
 
 	_controls = new wxBoxSizer(wxVERTICAL);
 	_controls->Add(_buttons);
-	_notify = new CheckBox(_container, _("Notify when complete"));
-	_notify->bind(&JobView::notify_clicked, this);
-	_notify->SetValue(Config::instance()->default_notify());
-	_controls->Add(_notify, 0, wxTOP, DCPOMATIC_BUTTON_STACK_GAP);
+	if (_job->enable_notify()) {
+		_notify = new CheckBox(_container, _("Notify when complete"));
+		_notify->bind(&JobView::notify_clicked, this);
+		_notify->SetValue(Config::instance()->default_notify());
+		_controls->Add(_notify, 0, wxTOP, DCPOMATIC_BUTTON_STACK_GAP);
+	}
 
 	_table->Insert(n, _controls, 1, wxALIGN_CENTER_VERTICAL | wxALL, 3);
 
@@ -154,7 +156,9 @@ JobView::finished()
 	}
 
 	_cancel->Enable(false);
-	_notify->Enable(false);
+	if (_notify) {
+		_notify->Enable(false);
+	}
 	if (!_job->error_details().empty()) {
 		_details->Enable(true);
 	}
