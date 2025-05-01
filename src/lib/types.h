@@ -142,7 +142,8 @@ struct CPLSummary
 
 enum class FileTransferProtocol {
 	SCP,
-	FTP
+	FTP,
+	FTPS
 };
 
 

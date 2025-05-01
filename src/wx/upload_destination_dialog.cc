@@ -53,6 +53,7 @@ UploadDestinationDialog::UploadDestinationDialog(wxWindow* parent)
 
 	_protocol->add_entry(_("SCP"), file_transfer_protocol_to_string(FileTransferProtocol::SCP));
 	_protocol->add_entry(_("FTP"), file_transfer_protocol_to_string(FileTransferProtocol::FTP));
+	_protocol->add_entry(_("FTPS"), file_transfer_protocol_to_string(FileTransferProtocol::FTPS));
 
 	_protocol->bind(&UploadDestinationDialog::protocol_changed, this);
 
@@ -68,7 +69,7 @@ UploadDestinationDialog::UploadDestinationDialog(wxWindow* parent)
 void
 UploadDestinationDialog::protocol_changed()
 {
-	auto const ftp = _protocol->get() == 1;
+	auto const ftp = _protocol->get_data() == string("ftp") || _protocol->get_data() == string("ftps");
 	_passive->Enable(ftp);
 	_passive->SetValue(ftp);
 }

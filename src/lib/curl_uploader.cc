@@ -100,6 +100,10 @@ CurlUploader::upload_file(boost::filesystem::path from, boost::filesystem::path 
 
 	curl_easy_setopt(_curl, CURLOPT_URL, url.c_str());
 
+	if (_destination.protocol == FileTransferProtocol::FTPS) {
+		curl_easy_setopt(_curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+	}
+
 	dcp::File file(from, "rb");
 	if (!file) {
 		throw NetworkError(String::compose(_("Could not open %1 to send"), from));

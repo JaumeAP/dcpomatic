@@ -86,6 +86,7 @@ UploadJob::run ()
 		uploader.reset(new SCPUploader(_destination, bind(&UploadJob::set_status, this, _1), bind(&UploadJob::set_progress, this, _1, false)));
 		break;
 	case FileTransferProtocol::FTP:
+	case FileTransferProtocol::FTPS:
 		uploader.reset(new CurlUploader(_destination, bind(&UploadJob::set_status, this, _1), bind(&UploadJob::set_progress, this, _1, false)));
 		break;
 	}

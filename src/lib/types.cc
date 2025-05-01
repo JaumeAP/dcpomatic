@@ -119,6 +119,8 @@ file_transfer_protocol_from_string(string s)
 		return FileTransferProtocol::SCP;
 	} else if (s == "ftp") {
 		return FileTransferProtocol::FTP;
+	} else if (s == "ftps") {
+		return FileTransferProtocol::FTPS;
 	}
 
 	DCPOMATIC_ASSERT(false);
@@ -134,6 +136,8 @@ file_transfer_protocol_to_string(FileTransferProtocol p)
 		return "scp";
 	case FileTransferProtocol::FTP:
 		return "ftp";
+	case FileTransferProtocol::FTPS:
+		return "ftps";
 	default:
 		DCPOMATIC_ASSERT(false);
 	}
