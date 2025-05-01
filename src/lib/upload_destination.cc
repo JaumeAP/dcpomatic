@@ -25,7 +25,7 @@
 
 UploadDestination::UploadDestination(cxml::ConstNodePtr node)
 	: name(node->string_child("Name"))
-	, protocol(node->string_child("Protocol") == "SCP" ? FileTransferProtocol::SCP : FileTransferProtocol::FTP)
+	, protocol(file_transfer_protocol_from_string(node->string_child("Protocol")))
 	, passive_ftp(node->bool_child("PassiveFTP"))
 	, host(node->string_child("Host"))
 	, path(node->string_child("Path"))
@@ -40,7 +40,7 @@ void
 UploadDestination::as_xml(xmlpp::Element* parent) const
 {
 	cxml::add_text_child(parent, "Name", name);
-	cxml::add_text_child(parent, "Protocol", protocol == FileTransferProtocol::SCP ? "SCP" : "FTP");
+	cxml::add_text_child(parent, "Protocol", file_transfer_protocol_to_string(protocol));
 	cxml::add_text_child(parent, "PassiveFTP", passive_ftp ? "1" : "0");
 	cxml::add_text_child(parent, "Host", host);
 	cxml::add_text_child(parent, "Path", path);

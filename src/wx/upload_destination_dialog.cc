@@ -51,8 +51,8 @@ UploadDestinationDialog::UploadDestinationDialog(wxWindow* parent)
 	_password = new PasswordEntry(this);
 	add(_password->get_panel());
 
-	_protocol->add_entry(_("SCP"));
-	_protocol->add_entry(_("FTP"));
+	_protocol->add_entry(_("SCP"), file_transfer_protocol_to_string(FileTransferProtocol::SCP));
+	_protocol->add_entry(_("FTP"), file_transfer_protocol_to_string(FileTransferProtocol::FTP));
 
 	_protocol->bind(&UploadDestinationDialog::protocol_changed, this);
 
@@ -91,10 +91,15 @@ UploadDestinationDialog::set(UploadDestination const& destination)
 vector<UploadDestination>
 UploadDestinationDialog::get () const
 {
+	auto protocol = FileTransferProtocol::SCP;
+	if (auto protocol_name = _protocol->get_data()) {
+		protocol = file_transfer_protocol_from_string(*protocol_name);
+	}
+
 	return {
 		UploadDestination(
 			wx_to_std(_name->GetValue()),
-			static_cast<FileTransferProtocol>(_protocol->GetSelection()),
+			protocol,
 			_passive->get(),
 			wx_to_std(_host->GetValue()),
 			wx_to_std(_path->GetValue()),
