@@ -37,6 +37,9 @@ public:
 	std::string name() const override;
 	std::string json_name() const override;
 	void run() override;
+	bool enable_notify() const override {
+		return true;
+	}
 	std::string status() const override;
 
 private:
