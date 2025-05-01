@@ -117,11 +117,13 @@ reel_type_to_string(ReelType type)
 FileTransferProtocol
 file_transfer_protocol_from_string(string s)
 {
-       if (s == "scp") {
-               return FileTransferProtocol::SCP;
-       } else if (s == "ftp") {
-               return FileTransferProtocol::FTP;
-       }
+	if (s == "scp") {
+		return FileTransferProtocol::SCP;
+	} else if (s == "ftp") {
+		return FileTransferProtocol::FTP;
+	} else if (s == "ftps") {
+		return FileTransferProtocol::FTPS;
+	}
 
        DCPOMATIC_ASSERT(false);
        return FileTransferProtocol::SCP;
@@ -131,14 +133,16 @@ file_transfer_protocol_from_string(string s)
 string
 file_transfer_protocol_to_string(FileTransferProtocol p)
 {
-       switch (p) {
-       case FileTransferProtocol::SCP:
-               return "scp";
-       case FileTransferProtocol::FTP:
-               return "ftp";
-       default:
-               DCPOMATIC_ASSERT(false);
-       }
+	switch (p) {
+	case FileTransferProtocol::SCP:
+		return "scp";
+	case FileTransferProtocol::FTP:
+		return "ftp";
+	case FileTransferProtocol::FTPS:
+		return "ftps";
+	default:
+		DCPOMATIC_ASSERT(false);
+	}
 
        return "";
 }
