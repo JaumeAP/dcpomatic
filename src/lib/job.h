@@ -60,6 +60,10 @@ public:
 	virtual bool enable_notify () const {
 		return false;
 	}
+	virtual void retry() const;
+	virtual bool enable_retry() const {
+		return false;
+	}
 
 	void start ();
 	virtual void pause() {}

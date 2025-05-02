@@ -83,6 +83,13 @@ JobView::setup()
 	_details->Enable(false);
 	_buttons->Add(_details, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, DCPOMATIC_BUTTON_STACK_GAP);
 
+	if (_job->enable_retry()) {
+		_retry = new Button(_container, _("Retry"));
+		_retry->bind(&JobView::retry_clicked, this);
+		_buttons->Add(_retry, 0, wxTOP, DCPOMATIC_BUTTON_STACK_GAP);
+		_retry->Enable(false);
+	}
+
 	finish_setup(_container, _buttons);
 
 	_controls = new wxBoxSizer(wxVERTICAL);
@@ -162,6 +169,9 @@ JobView::finished()
 	if (!_job->error_details().empty()) {
 		_details->Enable(true);
 	}
+	if (_job->finished_in_error() && _retry) {
+		_retry->Enable(true);
+	}
 
 	if (_job->message()) {
 		MessageDialog dialog(_parent, std_to_wx(_job->name()), std_to_wx(_job->message().get()));
@@ -222,3 +232,11 @@ JobView::notify_clicked()
 {
 	Config::instance()->set_default_notify(_notify->GetValue());
 }
+
+
+void
+JobView::retry_clicked()
+{
+	_job->retry();
+}
+

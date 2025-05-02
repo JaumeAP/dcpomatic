@@ -26,6 +26,7 @@
 #include <boost/signals2.hpp>
 
 
+class Button;
 class CheckBox;
 class Job;
 class wxBoxSizer;
@@ -78,6 +79,7 @@ private:
 	void details_clicked(wxCommandEvent &);
 	void cancel_clicked(wxCommandEvent &);
 	void notify_clicked();
+	void retry_clicked();
 
 	wxWindow* _parent;
 	wxWindow* _container;
@@ -85,6 +87,7 @@ private:
 	wxStaticText* _message;
 	wxButton* _cancel;
 	wxButton* _details;
+	Button* _retry = nullptr;
 	CheckBox* _notify = nullptr;
 	/** sizer for all right-hand-size controls */
 	wxBoxSizer* _controls;

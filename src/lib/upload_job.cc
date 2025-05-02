@@ -30,6 +30,7 @@
 #include "dcpomatic_log.h"
 #include "film.h"
 #include "log.h"
+#include "job_manager.h"
 #include "scp_uploader.h"
 #include "upload_job.h"
 #include <fmt/format.h>
@@ -37,6 +38,7 @@
 #include "i18n.h"
 
 
+using std::make_shared;
 using std::min;
 using std::shared_ptr;
 using std::string;
@@ -117,3 +119,11 @@ UploadJob::set_status(string s)
 	boost::mutex::scoped_lock lm(_status_mutex);
 	_status = s;
 }
+
+
+void
+UploadJob::retry() const
+{
+	JobManager::instance()->add(make_shared<UploadJob>(film(), _destination));
+}
+
