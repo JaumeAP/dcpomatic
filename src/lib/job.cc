@@ -762,3 +762,9 @@ Job::set_rate_limit_progress(bool rate_limit)
 	_rate_limit_progress = rate_limit;
 }
 
+
+void
+Job::retry() const
+{
+	DCPOMATIC_ASSERT(false);
+}

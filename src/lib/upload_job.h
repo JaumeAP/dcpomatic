@@ -40,6 +40,10 @@ public:
 	bool enable_notify() const override {
 		return true;
 	}
+	void retry() const override;
+	bool enable_retry() const override {
+		return true;
+	}
 	std::string status () const override;
 
 private:
