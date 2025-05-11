@@ -569,13 +569,8 @@ dcpomatic_setup_c_and_gettext_i18n(string lang)
 #endif
 	}
 
-#ifndef DCPOMATIC_WINDOWS
-	// /* On Windows this seems to take us from the configured locale back to C,
-	//  * which is never what we want.  On macOS/Linux this has the opposite effect
-	//  * of making the configured language be applied to printf() etc.
-	//  */
-	// setlocale(LC_ALL, "");
-#endif
+	setlocale(LC_ALL, "");
+
 	textdomain("libdcpomatic2");
 	bindtextdomain("libdcpomatic2", mo_path().string().c_str());
 	bind_textdomain_codeset("libdcpomatic2", "UTF8");
