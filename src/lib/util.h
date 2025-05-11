@@ -74,9 +74,7 @@ extern std::string short_audio_channel_name(int);
 extern bool valid_image_file(boost::filesystem::path);
 extern bool valid_sound_file(boost::filesystem::path);
 extern bool valid_j2k_file(boost::filesystem::path);
-#ifdef DCPOMATIC_WINDOWS
 extern boost::filesystem::path mo_path();
-#endif
 extern std::string tidy_for_filename(std::string);
 extern dcp::Size fit_ratio_within(float ratio, dcp::Size);
 extern void set_backtrace_file(boost::filesystem::path);

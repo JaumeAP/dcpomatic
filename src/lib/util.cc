@@ -529,6 +529,15 @@ mo_path()
 }
 #endif
 
+#ifdef DCPOMATIC_LINUX
+boost::filesystem::path
+mo_path()
+{
+	return LINUX_LOCALE_PREFIX;
+}
+#endif
+
+
 void
 dcpomatic_setup_gettext_i18n(string lang)
 {
