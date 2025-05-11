@@ -26,11 +26,11 @@
 #include "lib/film.h"
 #include "lib/image.h"
 #include "lib/player_video.h"
-#include <dcp/locale_convert.h>
 #include <dcp/openjpeg_image.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/graphics.h>
+#include <wx/numformatter.h>
 #include <wx/rawbmp.h>
 LIBDCP_ENABLE_WARNINGS
 #include <boost/bind/bind.hpp>
@@ -45,7 +45,6 @@ using std::weak_ptr;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
-using dcp::locale_convert;
 
 
 int const VideoWaveformPlot::_vertical_margin = 8;
@@ -132,7 +131,7 @@ VideoWaveformPlot::paint ()
 		} else if (n < 1000) {
 			x += extra[2];
 		}
-		gc->DrawText (std_to_wx(locale_convert<string>(n)), x, y - (label_height / 2));
+		gc->DrawText(wxNumberFormatter::ToString(static_cast<long>(n)), x, y - (label_height / 2));
 	}
 
 	wxImage waveform (_waveform->size().width, height, _waveform->data()[0], true);

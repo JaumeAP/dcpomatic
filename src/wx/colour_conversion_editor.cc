@@ -26,7 +26,6 @@
 #include "lib/colour_conversion.h"
 #include <dcp/gamma_transfer_function.h>
 #include <dcp/identity_transfer_function.h>
-#include <dcp/locale_convert.h>
 #include <dcp/modified_gamma_transfer_function.h>
 #include <dcp/s_gamut3_transfer_function.h>
 #include <dcp/warnings.h>
@@ -41,7 +40,6 @@ using std::dynamic_pointer_cast;
 using std::make_shared;
 using std::string;
 using boost::bind;
-using dcp::locale_convert;
 
 
 int const ColourConversionEditor::INPUT_GAMMA = 0;
@@ -281,32 +279,21 @@ ColourConversionEditor::set (ColourConversion conversion)
 
 	_ignore_chromaticity_changed = true;
 
-	char buffer[256];
-	snprintf (buffer, sizeof (buffer), "%.6f", conversion.red().x);
-	_red_x->SetValue (std_to_wx (buffer));
-	snprintf (buffer, sizeof (buffer), "%.6f", conversion.red().y);
-	_red_y->SetValue (std_to_wx (buffer));
-	snprintf (buffer, sizeof (buffer), "%.6f", conversion.green().x);
-	_green_x->SetValue (std_to_wx (buffer));
-	snprintf (buffer, sizeof (buffer), "%.6f", conversion.green().y);
-	_green_y->SetValue (std_to_wx (buffer));
-	snprintf (buffer, sizeof (buffer), "%.6f", conversion.blue().x);
-	_blue_x->SetValue (std_to_wx (buffer));
-	snprintf (buffer, sizeof (buffer), "%.6f", conversion.blue().y);
-	_blue_y->SetValue (std_to_wx (buffer));
-	snprintf (buffer, sizeof (buffer), "%.6f", conversion.white().x);
-	_white_x->SetValue (std_to_wx (buffer));
-	snprintf (buffer, sizeof (buffer), "%.6f", conversion.white().y);
-	_white_y->SetValue (std_to_wx (buffer));
+	_red_x->SetValue(wxNumberFormatter::ToString(conversion.red().x, 6));
+	_red_y->SetValue(wxNumberFormatter::ToString(conversion.red().y, 6));
+	_green_x->SetValue(wxNumberFormatter::ToString(conversion.green().y, 6));
+	_green_y->SetValue(wxNumberFormatter::ToString(conversion.green().y, 6));
+	_blue_x->SetValue(wxNumberFormatter::ToString(conversion.blue().x, 6));
+	_blue_y->SetValue(wxNumberFormatter::ToString(conversion.blue().y, 6));
+	_white_x->SetValue(wxNumberFormatter::ToString(conversion.white().x, 6));
+	_white_y->SetValue(wxNumberFormatter::ToString(conversion.white().y, 6));
 
 	_ignore_chromaticity_changed = false;
 
 	if (conversion.adjusted_white ()) {
 		_adjust_white->SetValue (true);
-		snprintf (buffer, sizeof (buffer), "%.6f", conversion.adjusted_white().get().x);
-		_adjusted_white_x->SetValue (std_to_wx (buffer));
-		snprintf (buffer, sizeof (buffer), "%.6f", conversion.adjusted_white().get().y);
-		_adjusted_white_y->SetValue (std_to_wx (buffer));
+		_adjusted_white_x->SetValue(wxNumberFormatter::ToString(conversion.adjusted_white().get().x, 6));
+		_adjusted_white_y->SetValue(wxNumberFormatter::ToString(conversion.adjusted_white().get().x, 6));
 	} else {
 		_adjust_white->SetValue (false);
 	}
@@ -331,16 +318,24 @@ ColourConversionEditor::get () const
 			);
 		break;
 	case INPUT_GAMMA_LINEARISED:
+	{
 		/* Linearised gamma */
+		double threshold = 0;
+		double input_A = 0;
+		double input_B = 0;
+		wxNumberFormatter::FromString(_input_threshold->GetValue(), &threshold);
+		wxNumberFormatter::FromString(_input_A->GetValue(), &input_A);
+		wxNumberFormatter::FromString(_input_B->GetValue(), &input_B);
 		conversion.set_in (
 			make_shared<dcp::ModifiedGammaTransferFunction>(
 				_input_power->GetValue (),
-				locale_convert<double>(wx_to_std(_input_threshold->GetValue())),
-				locale_convert<double>(wx_to_std(_input_A->GetValue())),
-				locale_convert<double>(wx_to_std(_input_B->GetValue()))
+				threshold,
+				input_A,
+				input_B
 				)
 			);
 		break;
+	}
 	case INPUT_SGAMUT3:
 		/* SGamut3 */
 		conversion.set_in (make_shared<dcp::SGamut3TransferFunction>());
@@ -349,26 +344,30 @@ ColourConversionEditor::get () const
 
 	conversion.set_yuv_to_rgb (static_cast<dcp::YUVToRGB>(_yuv_to_rgb->GetSelection()));
 
-	conversion.set_red (
-		dcp::Chromaticity(locale_convert<double>(wx_to_std(_red_x->GetValue())), locale_convert<double>(wx_to_std(_red_y->GetValue())))
-		);
-	conversion.set_green (
-		dcp::Chromaticity(locale_convert<double>(wx_to_std(_green_x->GetValue())), locale_convert<double>(wx_to_std(_green_y->GetValue())))
-		);
-	conversion.set_blue (
-		dcp::Chromaticity(locale_convert<double>(wx_to_std(_blue_x->GetValue())), locale_convert<double>(wx_to_std(_blue_y->GetValue())))
-		);
-	conversion.set_white (
-		dcp::Chromaticity(locale_convert<double>(wx_to_std(_white_x->GetValue())), locale_convert<double>(wx_to_std(_white_y->GetValue())))
-		);
+	double red_x = 0;
+	double red_y = 0;
+	double green_x = 0;
+	double green_y = 0;
+	double blue_x = 0;
+	double blue_y = 0;
+
+	wxNumberFormatter::FromString(_red_x->GetValue(), &red_x);
+	wxNumberFormatter::FromString(_red_y->GetValue(), &red_y);
+	wxNumberFormatter::FromString(_green_x->GetValue(), &green_x);
+	wxNumberFormatter::FromString(_green_y->GetValue(), &green_y);
+	wxNumberFormatter::FromString(_blue_x->GetValue(), &blue_x);
+	wxNumberFormatter::FromString(_blue_y->GetValue(), &blue_y);
+
+	conversion.set_red(dcp::Chromaticity(red_x, red_y));
+	conversion.set_green(dcp::Chromaticity(green_x, green_y));
+	conversion.set_blue(dcp::Chromaticity(blue_x, blue_y));
 
 	if (_adjust_white->GetValue()) {
-		conversion.set_adjusted_white(
-			dcp::Chromaticity(
-				locale_convert<double>(wx_to_std(_adjusted_white_x->GetValue())),
-				locale_convert<double>(wx_to_std(_adjusted_white_y->GetValue()))
-				)
-			);
+		double white_x = 0;
+		double white_y = 0;
+		wxNumberFormatter::FromString(_adjusted_white_x->GetValue(), &white_x);
+		wxNumberFormatter::FromString(_adjusted_white_y->GetValue(), &white_y);
+		conversion.set_adjusted_white(dcp::Chromaticity(white_x, white_y));
 	} else {
 		conversion.unset_adjusted_white ();
 	}
@@ -423,12 +422,10 @@ ColourConversionEditor::update_bradford ()
 	_adjusted_white_x->Enable (_adjust_white->GetValue ());
 	_adjusted_white_y->Enable (_adjust_white->GetValue ());
 
-	auto m = get().bradford();
+	auto const m = get().bradford();
 	for (int i = 0; i < 3; ++i) {
 		for (int j = 0; j < 3; ++j) {
-			char buffer[256];
-			snprintf (buffer, sizeof (buffer), "%.7f", m (i, j));
-			_bradford[i][j]->SetLabel (std_to_wx (buffer));
+			_bradford[i][j]->SetLabel(wxNumberFormatter::ToString(m(i, j), 7));
 		}
 	}
 }
@@ -437,12 +434,10 @@ ColourConversionEditor::update_bradford ()
 void
 ColourConversionEditor::update_rgb_to_xyz ()
 {
-	auto m = get().rgb_to_xyz();
+	auto const m = get().rgb_to_xyz();
 	for (int i = 0; i < 3; ++i) {
 		for (int j = 0; j < 3; ++j) {
-			char buffer[256];
-			snprintf (buffer, sizeof (buffer), "%.7f", m (i, j));
-			_rgb_to_xyz[i][j]->SetLabel (std_to_wx (buffer));
+			_rgb_to_xyz[i][j]->SetLabel(wxNumberFormatter::ToString(m(i, j), 7));
 		}
 	}
 }
@@ -474,7 +469,5 @@ ColourConversionEditor::set_spin_ctrl (wxSpinCtrlDouble* control, double value)
 void
 ColourConversionEditor::set_text_ctrl (wxTextCtrl* control, double value)
 {
-	char buffer[256];
-	snprintf (buffer, sizeof (buffer), "%.7f", value);
-	control->SetValue (std_to_wx (buffer));
+	control->SetValue(wxNumberFormatter::ToString(value, 7));
 }

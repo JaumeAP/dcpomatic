@@ -37,6 +37,7 @@ LIBDCP_DISABLE_WARNINGS
 #include <wx/gbsizer.h>
 #include <wx/propgrid/property.h>
 #include <wx/propgrid/props.h>
+#include <wx/numformatter.h>
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
 #include <boost/bind/bind.hpp>
@@ -51,7 +52,6 @@ using boost::optional;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
-using dcp::locale_convert;
 
 
 
@@ -127,7 +127,7 @@ ContentAdvancedDialog::ContentAdvancedDialog (wxWindow* parent, shared_ptr<Conte
 
 	auto vfr = _content->video_frame_rate ();
 	if (vfr) {
-		_video_frame_rate->SetValue (std_to_wx(locale_convert<string>(*vfr)));
+		_video_frame_rate->SetValue(wxNumberFormatter::ToString(*vfr, 3));
 	}
 
 	_burnt_subtitle->SetValue (_content->video && static_cast<bool>(_content->video->burnt_subtitle_language()));
@@ -199,7 +199,9 @@ ContentAdvancedDialog::video_frame_rate() const
 		return {};
 	}
 
-	return locale_convert<double>(wx_to_std(_video_frame_rate->GetValue()));
+	double v = 0;
+	wxNumberFormatter::FromString(_video_frame_rate->GetValue(), &v);
+	return v;
 }
 
 

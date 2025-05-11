@@ -21,10 +21,7 @@
 
 #include "image_sequence_dialog.h"
 #include "wx_util.h"
-#include <dcp/locale_convert.h>
-
-
-using dcp::locale_convert;
+#include <wx/numformatter.h>
 
 
 ImageSequenceDialog::ImageSequenceDialog (wxWindow* parent)
@@ -38,11 +35,7 @@ ImageSequenceDialog::ImageSequenceDialog (wxWindow* parent)
 double
 ImageSequenceDialog::frame_rate () const
 {
-	try {
-		return locale_convert<double> (wx_to_std (_frame_rate->GetValue ()));
-	} catch (...) {
-
-	}
-
-	return 0;
+	double r = 0;
+	wxNumberFormatter::FromString(_frame_rate->GetValue(), &r);
+	return r;
 }

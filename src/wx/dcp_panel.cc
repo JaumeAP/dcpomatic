@@ -45,11 +45,11 @@
 #include "lib/text_content.h"
 #include "lib/util.h"
 #include "lib/video_content.h"
-#include <dcp/locale_convert.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/gbsizer.h>
 #include <wx/notebook.h>
+#include <wx/numformatter.h>
 #include <wx/spinctrl.h>
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
@@ -68,7 +68,6 @@ using boost::lexical_cast;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
-using dcp::locale_convert;
 
 
 DCPPanel::DCPPanel(wxNotebook* n, shared_ptr<Film> film, FilmViewer& viewer)
@@ -321,7 +320,7 @@ DCPPanel::audio_channels_changed()
 		return;
 	}
 
-	_film->set_audio_channels(locale_convert<int>(string_client_data(_audio_channels->GetClientObject(*_audio_channels->get()))));
+	_film->set_audio_channels(wxNumberFormatter::FromString(string_client_data(_audio_channels->GetClientObject(*_audio_channels->get()))));
 }
 
 
@@ -437,7 +436,7 @@ DCPPanel::film_changed(FilmProperty p)
 		if (_film->audio_channels() < minimum_allowed_audio_channels()) {
 			_film->set_audio_channels(minimum_allowed_audio_channels());
 		} else {
-			checked_set(_audio_channels, locale_convert<string>(max(minimum_allowed_audio_channels(), _film->audio_channels())));
+			checked_set(_audio_channels, wxNumberFormatter::ToString(static_cast<long>(max(minimum_allowed_audio_channels(), _film->audio_channels()))));
 			setup_dcp_name();
 		}
 		break;
