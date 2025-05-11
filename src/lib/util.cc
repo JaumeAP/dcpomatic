@@ -545,29 +545,29 @@ mo_path()
  *  is configured for the OS.
  */
 void
-dcpomatic_setup_c_and_gettext_i18n(string lang)
+dcpomatic_setup_c_and_gettext_i18n()
 {
-#ifdef DCPOMATIC_LINUX
-	lang += ".UTF8";
-#endif
+// #ifdef DCPOMATIC_LINUX
+// 	lang += ".UTF8";
+// #endif
 
-	if (!lang.empty()) {
-		/* Override the environment that we want gettext to use.  Note that
-		 * the caller must not free the string passed into putenv().
-		 */
-		string s = String::compose("LANGUAGE=%1", lang);
-		putenv(strdup(s.c_str()));
-#if defined(DCPOMATIC_WINDOWS) || defined(DCPOMATIC_LINUX)
-		/* On Linux and Windows this must not be "C" otherwise gettext doesn't work.
-		 * https://www.gnu.org/software/gettext/manual/html_node/The-LANGUAGE-variable.html
-		 *
-		 * On macOS doing this sets the number format to the forced language, which
-		 * means it disagrees with wxWidgets.
-		 */
-		s = String::compose("LANG=%1", lang);
-		putenv(strdup(s.c_str()));
-#endif
-	}
+// 	if (!lang.empty()) {
+// 		/* Override the environment that we want gettext to use.  Note that
+// 		 * the caller must not free the string passed into putenv().
+// 		 */
+// 		string s = String::compose("LANGUAGE=%1", lang);
+// 		putenv(strdup(s.c_str()));
+// #if defined(DCPOMATIC_WINDOWS) || defined(DCPOMATIC_LINUX)
+// 		/* On Linux and Windows this must not be "C" otherwise gettext doesn't work.
+// 		 * https://www.gnu.org/software/gettext/manual/html_node/The-LANGUAGE-variable.html
+// 		 *
+// 		 * On macOS doing this sets the number format to the forced language, which
+// 		 * means it disagrees with wxWidgets.
+// 		 */
+// 		s = String::compose("LANG=%1", lang);
+// 		putenv(strdup(s.c_str()));
+// #endif
+	// }
 
 	setlocale(LC_ALL, "");
 
