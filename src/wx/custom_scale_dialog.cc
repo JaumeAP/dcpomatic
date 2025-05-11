@@ -27,6 +27,7 @@
 LIBDCP_DISABLE_WARNINGS
 #include <wx/propgrid/property.h>
 #include <wx/propgrid/props.h>
+#include <wx/numformatter.h>
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
 
@@ -64,7 +65,7 @@ CustomScaleDialog::CustomScaleDialog (wxWindow* parent, dcp::Size initial, dcp::
 	if (custom_ratio) {
 		_ratio_to_fit->SetValue (true);
 		_size->SetValue (false);
-		_ratio->SetValue(wxString::Format(char_to_wx("%.2f"), *custom_ratio));
+		_ratio->SetValue(wxNumberFormatter::ToString(*custom_ratio, 2));
 		_width->SetValue (initial.width);
 		_height->SetValue (initial.height);
 	} else if (custom_size) {
