@@ -272,7 +272,7 @@ GeneralPage::language_changed()
 {
 	int const sel = _language->GetSelection();
 	if (sel != -1) {
-		Config::instance()->set_language(wx_string_client_data(_language->GetClientObject(sel)));
+		Config::instance()->set_language(std_string_client_data(_language->GetClientObject(sel)));
 	} else {
 		Config::instance()->unset_language();
 	}
