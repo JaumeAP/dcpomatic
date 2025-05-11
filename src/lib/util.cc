@@ -538,50 +538,49 @@ mo_path()
 #endif
 
 
+/** Set things up so that gettext uses the given language for translation without
+ *  altering the locale settings, in particular the decimal point.
+ *
+ *  The idea is the language can be overridden but the decimal point is whatever
+ *  is configured for the OS.
+ */
 void
-dcpomatic_setup_gettext_i18n(string lang)
+dcpomatic_setup_c_and_gettext_i18n(string lang)
 {
 #ifdef DCPOMATIC_LINUX
 	lang += ".UTF8";
 #endif
 
 	if (!lang.empty()) {
-		/* Override our environment language.  Note that the caller must not
-		   free the string passed into putenv().
-		*/
+		/* Override the environment that we want gettext to use.  Note that
+		 * the caller must not free the string passed into putenv().
+		 */
 		string s = String::compose("LANGUAGE=%1", lang);
 		putenv(strdup(s.c_str()));
-#ifdef DCPOMATIC_WINDOWS
-		/* On Windows this ensures that gettext i18n (for src/lib) works for the
-		 * "forced" language.  On macOS doing this sets the number format to the
-		 * forced language, which means it disagrees with wxWidgets.
+#if defined(DCPOMATIC_WINDOWS) || defined(DCPOMATIC_LINUX)
+		/* On Linux and Windows this must not be "C" otherwise gettext doesn't work.
+		 * https://www.gnu.org/software/gettext/manual/html_node/The-LANGUAGE-variable.html
+		 *
+		 * On macOS doing this sets the number format to the forced language, which
+		 * means it disagrees with wxWidgets.
 		 */
 		s = String::compose("LANG=%1", lang);
-		putenv(strdup(s.c_str()));
-#endif
-#ifdef DCPOMATIC_LINUX
-		s = String::compose("LC_NUMERIC=%1", lang);
 		putenv(strdup(s.c_str()));
 #endif
 	}
 
 #ifndef DCPOMATIC_WINDOWS
-	/* On Windows this seems to take us from the configured locale back to C,
-	 * which is never what we want.  On macOS/Linux this has the opposite effect,
-	 * of making the configured language be applied to printf() etc.
-	 */
-	setlocale(LC_ALL, "");
+	// /* On Windows this seems to take us from the configured locale back to C,
+	//  * which is never what we want.  On macOS/Linux this has the opposite effect
+	//  * of making the configured language be applied to printf() etc.
+	//  */
+	// setlocale(LC_ALL, "");
 #endif
 	textdomain("libdcpomatic2");
-
-#if defined(DCPOMATIC_WINDOWS) || defined(DCPOMATIC_OSX)
 	bindtextdomain("libdcpomatic2", mo_path().string().c_str());
 	bind_textdomain_codeset("libdcpomatic2", "UTF8");
-#endif
 
-#ifdef DCPOMATIC_LINUX
-	bindtextdomain("libdcpomatic2", LINUX_LOCALE_PREFIX);
-#endif
+	std::cout << "leaving setup with " << setlocale(LC_ALL, NULL) << " " << setlocale(LC_NUMERIC, NULL) << "\n";
 }
 
 /** Compute a digest of the first and last `size' bytes of a set of files. */

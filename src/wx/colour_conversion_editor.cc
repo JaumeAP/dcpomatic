@@ -351,7 +351,8 @@ ColourConversionEditor::get () const
 	double blue_x = 0;
 	double blue_y = 0;
 
-	std::cout << "from string for " << wx_to_std(_red_x->GetValue()) << " said " << wxNumberFormatter::FromString(_red_x->GetValue(), &red_x);
+	std::cout << "from string for " << wx_to_std(_red_x->GetValue()) << " said " << wxNumberFormatter::FromString(_red_x->GetValue(), &red_x) << "\n";
+	std::cout << "decimal separator is " << wxNumberFormatter::GetDecimalSeparator() << "\n";
 	wxNumberFormatter::FromString(_red_y->GetValue(), &red_y);
 	wxNumberFormatter::FromString(_green_x->GetValue(), &green_x);
 	wxNumberFormatter::FromString(_green_y->GetValue(), &green_y);

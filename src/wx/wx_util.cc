@@ -485,7 +485,7 @@ dcpomatic_setup_i18n()
 
 	wxTranslations::Set(translations);
 
-	dcpomatic_setup_gettext_i18n(config_lang.get_value_or(""));
+	dcpomatic_setup_c_and_gettext_i18n(config_lang.get_value_or(""));
 }
 
 #else
