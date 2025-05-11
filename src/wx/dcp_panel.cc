@@ -320,7 +320,9 @@ DCPPanel::audio_channels_changed()
 		return;
 	}
 
-	_film->set_audio_channels(wxNumberFormatter::FromString(wx_string_client_data(_audio_channels->GetClientObject(*_audio_channels->get()))));
+	long int c = 6;
+	wxNumberFormatter::FromString(wx_string_client_data(_audio_channels->GetClientObject(*_audio_channels->get())), &c);
+	_film->set_audio_channels(c);
 }
 
 
@@ -436,7 +438,7 @@ DCPPanel::film_changed(FilmProperty p)
 		if (_film->audio_channels() < minimum_allowed_audio_channels()) {
 			_film->set_audio_channels(minimum_allowed_audio_channels());
 		} else {
-			checked_set(_audio_channels, wxNumberFormatter::ToString(static_cast<long>(max(minimum_allowed_audio_channels(), _film->audio_channels()))));
+			checked_set(_audio_channels, max(minimum_allowed_audio_channels(), _film->audio_channels()));
 			setup_dcp_name();
 		}
 		break;
