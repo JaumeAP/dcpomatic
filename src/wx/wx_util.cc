@@ -518,7 +518,7 @@ dcpomatic_setup_i18n()
 	translations->AddAvailableCatalog(char_to_wx("dcpomatic2"));
 
 	/* Set up C library and gettext i18n */
-	dcpomatic_setup_gettext_i18n(wx_to_std(translations->GetBestTranslation(char_to_wx("dcpomatic2"))));
+	dcpomatic_setup_c_and_gettext_i18n(wx_to_std(translations->GetBestTranslation(char_to_wx("dcpomatic2"))));
 }
 
 #endif
