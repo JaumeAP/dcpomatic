@@ -37,7 +37,6 @@
 #include "lib/string_text_file_content.h"
 #include "lib/text_content.h"
 #include "lib/video_content.h"
-#include <dcp/locale_convert.h>
 #include <dcp/warnings.h>
 #if defined(__WXGTK20__) && !defined(__WXGTK3__)
 #define TIMING_PANEL_ALIGNMENT_HACK 1
@@ -57,7 +56,6 @@ using boost::optional;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
-using dcp::locale_convert;
 using namespace dcpomatic;
 
 

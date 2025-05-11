@@ -30,7 +30,6 @@
 #include "wx_util.h"
 #include "lib/audio_mapping.h"
 #include "lib/maths_util.h"
-#include <dcp/locale_convert.h>
 #include <dcp/types.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -53,7 +52,6 @@ using boost::optional;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
-using dcp::locale_convert;
 
 
 static constexpr auto INDICATOR_SIZE = 20;

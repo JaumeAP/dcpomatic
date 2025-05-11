@@ -20,7 +20,6 @@
 
 
 #include "image_filename_sorter.h"
-#include <dcp/locale_convert.h>
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <iostream>
@@ -28,7 +27,6 @@
 
 using std::list;
 using std::string;
-using dcp::locale_convert;
 using boost::optional;
 
 

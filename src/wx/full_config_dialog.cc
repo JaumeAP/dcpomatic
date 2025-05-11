@@ -66,7 +66,6 @@
 #include <dcp/certificate_chain.h>
 #include <dcp/exceptions.h>
 #include <dcp/filesystem.h>
-#include <dcp/locale_convert.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/filepicker.h>
@@ -92,7 +91,6 @@ using boost::optional;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
-using dcp::locale_convert;
 using namespace dcpomatic;
 
 
