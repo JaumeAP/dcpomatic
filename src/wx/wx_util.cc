@@ -38,7 +38,6 @@
 #include "lib/util.h"
 #include "lib/variant.h"
 #include "lib/version.h"
-#include <dcp/locale_convert.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/display.h>
@@ -51,6 +50,7 @@ LIBDCP_DISABLE_WARNINGS
 #include <wx/uilocale.h>
 #endif
 LIBDCP_ENABLE_WARNINGS
+#include <fmt/format.h>
 #include <boost/thread.hpp>
 
 
@@ -59,7 +59,6 @@ using std::vector;
 using std::pair;
 using std::shared_ptr;
 using boost::optional;
-using dcp::locale_convert;
 using namespace dcpomatic;
 
 
@@ -599,17 +598,17 @@ setup_audio_channels_choice (wxChoice* choice, int minimum)
 	vector<pair<string, string>> items;
 	for (int i = minimum; i <= 16; i += 2) {
 		if (i == 2) {
-			items.push_back (make_pair(wx_to_std(_("2 - stereo")), locale_convert<string>(i)));
+			items.push_back(make_pair(wx_to_std(_("2 - stereo")), fmt::to_string(i)));
 		} else if (i == 4) {
-			items.push_back (make_pair(wx_to_std(_("4 - L/C/R/Lfe")), locale_convert<string>(i)));
+			items.push_back(make_pair(wx_to_std(_("4 - L/C/R/Lfe")), fmt::to_string(i)));
 		} else if (i == 6) {
-			items.push_back (make_pair(wx_to_std(_("6 - 5.1")), locale_convert<string>(i)));
+			items.push_back(make_pair(wx_to_std(_("6 - 5.1")), fmt::to_string(i)));
 		} else if (i == 8) {
-			items.push_back (make_pair(wx_to_std(_("8 - 5.1/HI/VI")), locale_convert<string>(i)));
+			items.push_back(make_pair(wx_to_std(_("8 - 5.1/HI/VI")), fmt::to_string(i)));
 		} else if (i == 12) {
-			items.push_back (make_pair(wx_to_std(_("12 - 7.1/HI/VI")), locale_convert<string>(i)));
+			items.push_back(make_pair(wx_to_std(_("12 - 7.1/HI/VI")), fmt::to_string(i)));
 		} else {
-			items.push_back (make_pair(locale_convert<string> (i), locale_convert<string>(i)));
+			items.push_back(make_pair(fmt::to_string(i), fmt::to_string(i)));
 		}
 	}
 
