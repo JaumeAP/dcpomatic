@@ -551,13 +551,27 @@ dcpomatic_setup_gettext_i18n(string lang)
 		*/
 		string s = String::compose("LANGUAGE=%1", lang);
 		putenv(strdup(s.c_str()));
+#ifdef DCPOMATIC_WINDOWS
+		/* On Windows this ensures that gettext i18n (for src/lib) works for the
+		 * "forced" language.  On macOS doing this sets the number format to the
+		 * forced language, which means it disagrees with wxWidgets.
+		 */
 		s = String::compose("LANG=%1", lang);
 		putenv(strdup(s.c_str()));
-		s = String::compose("LC_ALL=%1", lang);
+#endif
+#ifdef DCPOMATIC_LINUX
+		s = String::compose("LC_NUMERIC=%1", lang);
 		putenv(strdup(s.c_str()));
+#endif
 	}
 
+#ifndef DCPOMATIC_WINDOWS
+	/* On Windows this seems to take us from the configured locale back to C,
+	 * which is never what we want.  On macOS/Linux this has the opposite effect,
+	 * of making the configured language be applied to printf() etc.
+	 */
 	setlocale(LC_ALL, "");
+#endif
 	textdomain("libdcpomatic2");
 
 #if defined(DCPOMATIC_WINDOWS) || defined(DCPOMATIC_OSX)

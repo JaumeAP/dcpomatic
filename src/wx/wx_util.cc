@@ -484,53 +484,34 @@ dcpomatic_setup_i18n()
 #else
 
 void
-dcpomatic_setup_i18n ()
+dcpomatic_setup_i18n()
 {
-	int language = wxLANGUAGE_DEFAULT;
+	/* Use the user's preference for decimal point etc. */
+	wxUILocale::UseDefault();
 
-	auto config_lang = Config::instance()->language ();
-	if (config_lang && !config_lang->empty ()) {
-		auto const li = wxLocale::FindLanguageInfo (std_to_wx (config_lang.get ()));
-		if (li) {
-			language = li->Language;
-		}
+	/* Tell wxWidgets where to find our .mo files */
+	wxFileTranslationsLoader::AddCatalogLookupPathPrefix(std_to_wx(mo_path().string()));
+
+	auto translations = new wxTranslations();
+	wxTranslations::Set(translations);
+
+	/* Force language if required */
+	if (auto config_lang = Config::instance()->language()) {
+		translations->SetLanguage(std_to_wx(*config_lang));
 	}
 
-	wxLocale* locale = nullptr;
-	if (wxLocale::IsAvailable (language)) {
-		locale = new wxLocale (language, wxLOCALE_LOAD_DEFAULT);
+	/* Set up wxWidgets catalogs */
+	translations->AddAvailableCatalog(char_to_wx("wxstd"));
+	translations->AddAvailableCatalog(char_to_wx("wxstd3"));
+	translations->AddAvailableCatalog(char_to_wx("wxstd-3.2"));
+	translations->AddAvailableCatalog(char_to_wx("dcpomatic2-wxstd"));
 
-#ifdef DCPOMATIC_WINDOWS
-		locale->AddCatalogLookupPathPrefix (std_to_wx (mo_path().string()));
-		locale->AddCatalog(char_to_wx("wxstd-3.1"));
-#endif
+	/* Set up DCP-o-matic catalogs */
+	translations->AddAvailableCatalog(char_to_wx("libdcpomatic2-wx"));
+	translations->AddAvailableCatalog(char_to_wx("dcpomatic2"));
 
-#ifdef DCPOMATIC_LINUX
-		locale->AddCatalogLookupPathPrefix(std_to_wx(LINUX_LOCALE_PREFIX));
-
-		/* We have to include the wxWidgets .mo in our distribution,
-		   so we rename it to avoid clashes with any other installation
-		   of wxWidgets.
-		*/
-		locale->AddCatalog(char_to_wx("dcpomatic2-wxstd"));
-
-		/* Fedora 29 (at least) installs wxstd3.mo instead of wxstd.mo */
-		locale->AddCatalog(char_to_wx("wxstd3"));
-#endif
-
-		locale->AddCatalog(char_to_wx("wxstd"));
-		locale->AddCatalog(char_to_wx("libdcpomatic2-wx"));
-		locale->AddCatalog(char_to_wx("dcpomatic2"));
-
-		if (!locale->IsOk()) {
-			delete locale;
-			locale = new wxLocale (wxLANGUAGE_ENGLISH);
-		}
-	}
-
-	if (locale) {
-		dcpomatic_setup_gettext_i18n (wx_to_std (locale->GetCanonicalName ()));
-	}
+	/* Set up C library and gettext i18n */
+	dcpomatic_setup_gettext_i18n(wx_to_std(translations->GetBestTranslation(char_to_wx("dcpomatic2"))));
 }
 
 #endif
