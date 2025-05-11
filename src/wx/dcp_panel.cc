@@ -320,7 +320,7 @@ DCPPanel::audio_channels_changed()
 		return;
 	}
 
-	_film->set_audio_channels(wxNumberFormatter::FromString(string_client_data(_audio_channels->GetClientObject(*_audio_channels->get()))));
+	_film->set_audio_channels(wxNumberFormatter::FromString(wx_string_client_data(_audio_channels->GetClientObject(*_audio_channels->get()))));
 }
 
 

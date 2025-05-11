@@ -110,7 +110,8 @@ extern wxString char_to_wx(char const* s);
 
 extern void dcpomatic_setup_i18n ();
 extern wxString context_translation(char const* s);
-extern std::string string_client_data (wxClientData* o);
+extern std::string std_string_client_data(wxClientData* o);
+extern wxString wx_string_client_data(wxClientData* o);
 extern wxString time_to_timecode (dcpomatic::DCPTime t, double fps);
 extern void setup_audio_channels_choice (wxChoice* choice, int minimum);
 extern wxSplashScreen* maybe_show_splash();

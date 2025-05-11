@@ -604,7 +604,7 @@ TextPanel::stream_changed ()
 
 	auto a = fcs->subtitle_streams ();
 	auto i = a.begin ();
-	auto const s = string_client_data (_stream->GetClientObject(_stream->GetSelection()));
+	auto const s = wx_string_client_data(_stream->GetClientObject(_stream->GetSelection()));
 	while (i != a.end() && (*i)->identifier () != s) {
 		++i;
 	}

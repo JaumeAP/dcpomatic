@@ -224,9 +224,16 @@ char_to_wx(char const* s)
 
 
 string
-string_client_data (wxClientData* o)
+std_string_client_data(wxClientData* o)
 {
-	return wx_to_std (dynamic_cast<wxStringClientData*>(o)->GetData());
+	return wx_to_std(dynamic_cast<wxStringClientData*>(o)->GetData());
+}
+
+
+wxString
+wx_string_client_data(wxClientData* o)
+{
+	return dynamic_cast<wxStringClientData*>(o)->GetData();
 }
 
 
@@ -296,9 +303,9 @@ checked_set (wxChoice* widget, string value)
 		o = widget->GetClientObject (widget->GetSelection ());
 	}
 
-	if (!o || string_client_data(o) != value) {
+	if (!o || std_string_client_data(o) != value) {
 		for (unsigned int i = 0; i < widget->GetCount(); ++i) {
-			if (string_client_data (widget->GetClientObject (i)) == value) {
+			if (std_string_client_data(widget->GetClientObject(i)) == value) {
 				widget->SetSelection (i);
 			}
 		}
@@ -314,7 +321,7 @@ checked_set (wxChoice* widget, vector<pair<string, string>> items)
                current.push_back (
                        make_pair(
                                wx_to_std(widget->GetString(i)),
-                               widget->GetClientData() ? string_client_data(widget->GetClientObject(i)) : ""
+                               widget->GetClientData() ? std_string_client_data(widget->GetClientObject(i)) : ""
                                )
                        );
        }
