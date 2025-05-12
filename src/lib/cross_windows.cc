@@ -230,7 +230,7 @@ boost::filesystem::path
 libdcp_resources_path()
 {
 	if (running_tests) {
-		return directory_containing_executable();
+		return directory_containing_executable().parent_path();
 	} else {
 		return resources_path();
 	}
@@ -240,7 +240,11 @@ libdcp_resources_path()
 boost::filesystem::path
 openssl_path()
 {
-	return directory_containing_executable() / "openssl.exe";
+	if (running_tests) {
+		return directory_containing_executable().parent_path() / "openssl.exe";
+	} else {
+		return directory_containing_executable() / "openssl.exe";
+	}
 }
 
 

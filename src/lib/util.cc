@@ -1048,7 +1048,7 @@ boost::filesystem::path
 default_font_file()
 {
 	if (running_tests) {
-		auto const liberation = directory_containing_executable().parent_path().parent_path() / "fonts" / "LiberationSans-Regular.ttf";
+		auto const liberation = directory_containing_executable().parent_path().parent_path().parent_path() / "fonts" / "LiberationSans-Regular.ttf";
 		DCPOMATIC_ASSERT(dcp::filesystem::exists(liberation));
 		return liberation;
 	}

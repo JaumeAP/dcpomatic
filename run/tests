@@ -62,8 +62,8 @@ if [ "$(uname)" == "Linux" ]; then
     cp -r ../libdcp/xsd build/test
     cp ../libdcp/ratings build/test
     # This must be our patched openssl or tests will fail
-    if [ ! -f build/test/dcpomatic2_openssl ]; then
-        ln -s ../../../openssl/apps/openssl build/test/dcpomatic2_openssl
+    if [ ! -f build/test/lib/dcpomatic2_openssl ]; then
+        ln -s ../../../../openssl/apps/openssl build/test/lib/dcpomatic2_openssl
     fi
     export DCPOMATIC_TEST_TOOLS_PATH=/opt/asdcplib/bin
     if [ -f /src/backports/dcp_inspect ]; then
@@ -107,7 +107,7 @@ if [ "$check" == "1" ]; then
 fi
 
 if [ "$type" == "debug" ]; then
-    gdb --args build/test/unit-tests --catch_system_errors=no --log_level=test_suite $*
+    gdb --args build/test/lib/unit-tests --catch_system_errors=no --log_level=test_suite $*
 elif [ "$type" == "backtrace" ]; then
     gdb -batch -ex "run" -ex "thread apply all bt" -return-child-result --args build/test/unit-tests --catch_system_errors=yes $*
 elif [ "$type" == "valgrind" ]; then
@@ -123,5 +123,5 @@ elif [ "$type" == "helgrind" ]; then
     valgrind --tool="helgrind" build/test/unit-tests $*
 else
     ulimit -c unlimited
-    build/test/unit-tests --catch_system_errors=no $*
+    build/test/lib/unit-tests --catch_system_errors=no $*
 fi

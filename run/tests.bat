@@ -4,4 +4,4 @@ xcopy ..\libdcp\tags build\test\tags\
 copy ..\libdcp\ratings build\test\
 copy ..\openssl\apps\openssl.exe build\test\
 copy fonts\fonts.conf.windows fonts\fonts.conf
-build\test\unit-tests.exe --log_level=test_suite %1 %2
+build\test\lib\unit-tests.exe --log_level=test_suite %1 %2

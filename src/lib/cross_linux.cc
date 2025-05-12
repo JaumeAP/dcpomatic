@@ -100,7 +100,7 @@ boost::filesystem::path
 libdcp_resources_path ()
 {
 	if (running_tests) {
-		return directory_containing_executable();
+		return directory_containing_executable().parent_path();
 	}
 
 	if (auto appdir = getenv("APPDIR")) {
