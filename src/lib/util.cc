@@ -534,6 +534,16 @@ mo_path()
 }
 #endif
 
+
+#ifdef DCPOMATIC_LINUX
+boost::filesystem::path
+mo_path()
+{
+	return LINUX_LOCALE_PREFIX;
+}
+#endif
+
+
 void
 dcpomatic_setup_gettext_i18n(string lang)
 {
@@ -556,14 +566,8 @@ dcpomatic_setup_gettext_i18n(string lang)
 	setlocale(LC_ALL, "");
 	textdomain("libdcpomatic2");
 
-#if defined(DCPOMATIC_WINDOWS) || defined(DCPOMATIC_OSX)
 	bindtextdomain("libdcpomatic2", mo_path().string().c_str());
 	bind_textdomain_codeset("libdcpomatic2", "UTF8");
-#endif
-
-#ifdef DCPOMATIC_LINUX
-	bindtextdomain("libdcpomatic2", LINUX_LOCALE_PREFIX);
-#endif
 }
 
 /** Compute a digest of the first and last `size' bytes of a set of files. */
