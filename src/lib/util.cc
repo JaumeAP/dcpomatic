@@ -137,8 +137,11 @@ using namespace dcpomatic;
 string program_name;
 bool is_batch_converter = false;
 bool running_tests = false;
+/** Override for the path to look for gettext .mo files, for tests */
+optional<boost::filesystem::path> override_mo_path;
 static boost::thread::id ui_thread;
 static boost::filesystem::path backtrace_file;
+
 
 /** Convert some number of seconds to a string representation
  *  in hours, minutes and seconds.
@@ -512,9 +515,9 @@ LIBDCP_ENABLE_WARNINGS
 	capture_ffmpeg_logs();
 }
 
-#ifdef DCPOMATIC_WINDOWS
+#if defined(DCPOMATIC_WINDOWS)
 boost::filesystem::path
-mo_path()
+mo_path_platform()
 {
 	wchar_t buffer[512];
 	GetModuleFileName(0, buffer, 512 * sizeof(wchar_t));
@@ -524,24 +527,30 @@ mo_path()
 	p /= "locale";
 	return p;
 }
-#endif
-
-#ifdef DCPOMATIC_OSX
+#elif DCPOMATIC_OSX
 boost::filesystem::path
-mo_path()
+mo_path_platform()
 {
 	return variant::dcpomatic_app() + "/Contents/Resources";
 }
-#endif
-
-
-#ifdef DCPOMATIC_LINUX
+#else
 boost::filesystem::path
-mo_path()
+mo_path_platform()
 {
 	return LINUX_LOCALE_PREFIX;
 }
 #endif
+
+
+boost::filesystem::path
+mo_path()
+{
+	if (override_mo_path) {
+		return *override_mo_path;
+	}
+
+	return mo_path_platform();
+}
 
 
 void

@@ -56,6 +56,7 @@ namespace dcp {
 extern std::string program_name;
 extern bool is_batch_converter;
 extern bool running_tests;
+extern boost::optional<boost::filesystem::path> override_mo_path;
 
 class AudioBuffers;
 class TextDecoder;
