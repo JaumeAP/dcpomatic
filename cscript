@@ -846,7 +846,8 @@ def make_manual(target):
 def test(target, options, test):
     target.set('LC_ALL', 'C')
     if target.platform == 'windows':
-        cmd = 'run\\tests '
+        import ctypes
+        cmd = 'run\\tests ' + str(ctypes.windll.kernel32.GetUserDefaultUILanguage()) + ' '
     else:
         cmd = 'run/tests '
     if target.environment_prefix:
