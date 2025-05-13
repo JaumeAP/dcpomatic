@@ -557,7 +557,16 @@ void
 dcpomatic_setup_gettext_i18n(string lang)
 {
 #ifdef DCPOMATIC_LINUX
-	lang += ".UTF8";
+	if (!lang.empty()) {
+		lang += ".utf8";
+	}
+#endif
+
+#ifdef DCPOMATIC_WINDOWS
+	/* gettext will not look up the user's preferred language using the Win32
+	 * APIs unless this is set.
+	 */
+	putenv("GETTEXT_MUI=1");
 #endif
 
 	if (!lang.empty()) {
@@ -568,16 +577,23 @@ dcpomatic_setup_gettext_i18n(string lang)
 		putenv(strdup(s.c_str()));
 		s = String::compose("LANG=%1", lang);
 		putenv(strdup(s.c_str()));
-		s = String::compose("LC_ALL=%1", lang);
-		putenv(strdup(s.c_str()));
 	}
 
+#ifdef DCPOMATIC_WINDOWS
+	/* setlocale(LC_ALL, "") works on Windows in a simple standalone program but
+	 * not in these tests for some reason.  Using .UTF8 instead makes it work.
+	 */
+	setlocale(LC_ALL, ".UTF8");
+#else
 	setlocale(LC_ALL, "");
+#endif
+
 	textdomain("libdcpomatic2");
 
 	bindtextdomain("libdcpomatic2", mo_path().string().c_str());
 	bind_textdomain_codeset("libdcpomatic2", "UTF8");
 }
+
 
 /** Compute a digest of the first and last `size' bytes of a set of files. */
 string

@@ -468,10 +468,19 @@ dcpomatic_setup_i18n()
 		}
 	}
 
+	auto add_source_tree_prefixes = []() {
+		wxFileTranslationsLoader::AddCatalogLookupPathPrefix(char_to_wx("build/src/wx/mo"));
+		wxFileTranslationsLoader::AddCatalogLookupPathPrefix(char_to_wx("build/src/tools/mo"));
+	};
+
+
 #ifdef DCPOMATIC_DEBUG
-	wxFileTranslationsLoader::AddCatalogLookupPathPrefix(char_to_wx("build/src/wx/mo"));
-	wxFileTranslationsLoader::AddCatalogLookupPathPrefix(char_to_wx("build/src/tools/mo"));
+	add_source_tree_prefixes();
 #endif
+
+	if (running_tests) {
+		add_source_tree_prefixes();
+	}
 
 	translations->AddStdCatalog();
 	translations->AddCatalog(char_to_wx("libdcpomatic2-wx"));
