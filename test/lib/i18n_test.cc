@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(i18n_test)
 	/* English language, German numbers */
 	putenv(strdup("LANG=en_GB.UTF-8"));
 	putenv(strdup("LC_NUMERIC=de_DE.UTF-8"));
-	dcpomatic_setup_gettext_i18n("");
+	dcpomatic_setup_c_and_gettext_i18n("");
 	tell_gettext_about_language_change();
 	fmt_en
 
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(i18n_test)
 
 	/* German language, German numbers */
 	putenv(strdup("LANG=de_DE.UTF-8"));
-	dcpomatic_setup_gettext_i18n("");
+	dcpomatic_setup_c_and_gettext_i18n("");
 	tell_gettext_about_language_change();
 	fmt_en
 
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(i18n_test)
 	numbers_de
 
 	/* German language, German numbers, forced to English */
-	dcpomatic_setup_gettext_i18n("en_GB");
+	dcpomatic_setup_c_and_gettext_i18n("en_GB");
 	tell_gettext_about_language_change();
 	fmt_en
 
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(i18n_test_en_de)
 	dcp::ScopeGuard sg = []() { restore(); };
 
 	/* English language, German numbers */
-	dcpomatic_setup_gettext_i18n("");
+	dcpomatic_setup_c_and_gettext_i18n("");
 	tell_gettext_about_language_change();
 	fmt_en
 
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(i18n_test_en_de)
 	numbers_de
 
 	/* English language, German numbers, forced to German */
-	dcpomatic_setup_gettext_i18n("de_DE");
+	dcpomatic_setup_c_and_gettext_i18n("de_DE");
 	tell_gettext_about_language_change();
 	fmt_en
 
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(i18n_test_de_de)
 	dcp::ScopeGuard sg = []() { restore(); };
 
 	/* German language, German numbers */
-	dcpomatic_setup_gettext_i18n("");
+	dcpomatic_setup_c_and_gettext_i18n("");
 	tell_gettext_about_language_change();
 	fmt_en
 
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(i18n_test_de_de)
 	numbers_de
 
 	/* German language, German numbers, forced back to English */
-	dcpomatic_setup_gettext_i18n("en_GB");
+	dcpomatic_setup_c_and_gettext_i18n("en_GB");
 	tell_gettext_about_language_change();
 	fmt_en
 

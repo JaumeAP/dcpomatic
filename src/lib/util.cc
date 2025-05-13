@@ -554,7 +554,7 @@ mo_path()
 
 
 void
-dcpomatic_setup_gettext_i18n(string lang)
+dcpomatic_setup_c_and_gettext_i18n(string lang)
 {
 #ifdef DCPOMATIC_LINUX
 	if (!lang.empty()) {
