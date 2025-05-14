@@ -64,7 +64,7 @@ try
 
 		auto grok = Config::instance()->grok();
 
-		if (_context->launch(frame, grok.selected) && _context->scheduleCompress(frame)) {
+		if (_context->launch(frame, grok.selected) && _context->schedule_compress(frame)) {
 			frame_guard.cancel();
 		}
 

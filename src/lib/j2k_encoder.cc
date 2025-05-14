@@ -227,7 +227,7 @@ J2KEncoder::end()
 	for (auto & i: _queue) {
 #ifdef DCPOMATIC_GROK
 		if (Config::instance()->grok().enable) {
-			if (!_context->scheduleCompress(i)){
+			if (!_context->schedule_compress(i)){
 				LOG_GENERAL (N_("[%1] J2KEncoder thread pushes frame %2 back onto queue after failure"), thread_id(), i.index());
 				// handle error
 			}

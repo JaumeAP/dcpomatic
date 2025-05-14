@@ -835,7 +835,9 @@ struct ScheduledMessenger : public Messenger
 	~ScheduledMessenger(void) {
 		shutdown();
 	}
-	bool scheduleCompress(F const& proxy, std::function<void(BufferSrc const&)> converter){
+
+	bool schedule_compress(F const& proxy, std::function<void(BufferSrc const&)> converter)
+	{
 		size_t frameSize = init_.uncompressedFrameSize_;
 		assert(frameSize >= init_.uncompressedFrameSize_);
 		BufferSrc src;
@@ -848,6 +850,7 @@ struct ScheduledMessenger : public Messenger
 
 		return true;
 	}
+
 	void processCompressed(const std::string &message, std::function<void(F,uint8_t*,uint32_t)> processor, bool needsRecompression) {
 		Msg msg(message);
 		msg.next();

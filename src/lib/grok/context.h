@@ -241,7 +241,7 @@ public:
 		return _launched;
 	}
 
-	bool scheduleCompress(DCPVideo const& vf)
+	bool schedule_compress(DCPVideo const& vf)
 	{
 		if (!_messenger) {
 			return false;
@@ -251,7 +251,7 @@ public:
 			vf.convert_to_xyz((uint16_t*)src.framePtr_);
 		};
 
-		return _messenger->scheduleCompress(vf, cvt);
+		return _messenger->schedule_compress(vf, cvt);
 	}
 
 private:
