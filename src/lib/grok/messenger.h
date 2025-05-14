@@ -845,8 +845,9 @@ struct ScheduledMessenger : public Messenger
 	bool schedule_compress(F const& proxy, std::function<void(BufferSrc const&)> converter)
 	{
 		BufferSrc src;
-		if(!availableBuffers_.waitAndPop(src))
+		if (!availableBuffers_.waitAndPop(src)) {
 			return false;
+		}
 		converter(src);
 		_scheduled_frames.store(proxy);
 		_frames_scheduled++;
