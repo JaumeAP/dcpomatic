@@ -130,7 +130,7 @@ public:
 					int const minimum_size = 16384;
 
 					bool needsRecompression = compressedFrameLength < minimum_size;
-					_messenger->processCompressed(str, processor, needsRecompression);
+					_messenger->process_compressed(str, processor, needsRecompression);
 
 					if (needsRecompression) {
 						auto vf = _messenger->retrieve(clientFrameId);

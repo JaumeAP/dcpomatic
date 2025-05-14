@@ -855,7 +855,7 @@ struct ScheduledMessenger : public Messenger
 		return true;
 	}
 
-	void processCompressed(const std::string &message, std::function<void(F,uint8_t*,uint32_t)> processor, bool needsRecompression) {
+	void process_compressed(const std::string &message, std::function<void(F,uint8_t*,uint32_t)> processor, bool needsRecompression) {
 		Msg msg(message);
 		msg.next();
 		auto clientFrameId = msg.nextUint();
