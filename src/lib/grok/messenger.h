@@ -833,8 +833,8 @@ struct ScheduledMessenger : public Messenger
 {
 	explicit ScheduledMessenger(MessengerInit init)
 		: Messenger(init)
-		, framesScheduled_(0)
-		, framesCompressed_(0)
+		, _frames_scheduled(0)
+		, _frames_compressed(0)
 	{}
 
 	~ScheduledMessenger()
@@ -848,8 +848,8 @@ struct ScheduledMessenger : public Messenger
 		if(!availableBuffers_.waitAndPop(src))
 			return false;
 		converter(src);
-		scheduledFrames_.store(proxy);
-		framesScheduled_++;
+		_scheduled_frames.store(proxy);
+		_frames_scheduled++;
 		send(GRK_MSGR_BATCH_SUBMIT_UNCOMPRESSED, proxy.index(), src.frameId_);
 
 		return true;
@@ -863,17 +863,17 @@ struct ScheduledMessenger : public Messenger
 		auto const compressedFrameId = msg.nextUint();
 		auto const compressedFrameLength = msg.nextUint();
 		if (!needsRecompression) {
-			auto src_frame = scheduledFrames_.retrieve(clientFrameId);
+			auto src_frame = _scheduled_frames.retrieve(clientFrameId);
 			if (!src_frame) {
 				return;
 			}
 			processor(*src_frame, getCompressedFrame(compressedFrameId),compressedFrameLength);
 		}
 
-		++framesCompressed_;
+		++_frames_compressed;
 		send(GRK_MSGR_BATCH_PROCESSSED_COMPRESSED, compressedFrameId);
 
-		if (_shutdown && framesCompressed_ == framesScheduled_) {
+		if (_shutdown && _frames_compressed == _frames_scheduled) {
 			shutdownCondition_.notify_all();
 		}
 	}
@@ -886,10 +886,10 @@ struct ScheduledMessenger : public Messenger
 				return;
 			}
 			_shutdown = true;
-			if (framesScheduled_) {
-				uint32_t scheduled = framesScheduled_;
+			if (_frames_scheduled) {
+				uint32_t scheduled = _frames_scheduled;
 				send(GRK_MSGR_BATCH_FLUSH, scheduled);
-				shutdownCondition_.wait(lk, [this] { return framesScheduled_ == framesCompressed_; });
+				shutdownCondition_.wait(lk, [this] { return _frames_scheduled == _frames_compressed; });
 			}
 			availableBuffers_.deactivate();
 			send(GRK_MSGR_BATCH_SHUTDOWN);
@@ -903,17 +903,17 @@ struct ScheduledMessenger : public Messenger
 	}
 
 	boost::optional<F> retrieve(size_t index) {
-		return scheduledFrames_.retrieve(index);
+		return _scheduled_frames.retrieve(index);
 	}
 
 	void store(F& val) {
-		scheduledFrames_.store(val);
+		_scheduled_frames.store(val);
 	}
 
 private:
-	ScheduledFrames<F> scheduledFrames_;
-	std::atomic<uint32_t> framesScheduled_;
-	std::atomic<uint32_t> framesCompressed_;
+	ScheduledFrames<F> _scheduled_frames;
+	std::atomic<uint32_t> _frames_scheduled;
+	std::atomic<uint32_t> _frames_compressed;
 };
 
 } // namespace grk_plugin
