@@ -842,7 +842,6 @@ struct ScheduledMessenger : public Messenger
 	bool schedule_compress(F const& proxy, std::function<void(BufferSrc const&)> converter)
 	{
 		size_t frameSize = init_.uncompressedFrameSize_;
-		assert(frameSize >= init_.uncompressedFrameSize_);
 		BufferSrc src;
 		if(!availableBuffers_.waitAndPop(src))
 			return false;
