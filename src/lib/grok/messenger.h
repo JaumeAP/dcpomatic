@@ -828,11 +828,14 @@ struct ScheduledFrames
 template<typename F>
 struct ScheduledMessenger : public Messenger
 {
-	explicit ScheduledMessenger(MessengerInit init) : Messenger(init),
-											framesScheduled_(0),
-											framesCompressed_(0)
+	explicit ScheduledMessenger(MessengerInit init)
+		: Messenger(init)
+		, framesScheduled_(0)
+		, framesCompressed_(0)
 	{}
-	~ScheduledMessenger(void) {
+
+	~ScheduledMessenger()
+	{
 		shutdown();
 	}
 
