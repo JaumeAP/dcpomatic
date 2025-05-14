@@ -250,7 +250,7 @@ public:
 			return false;
 		}
 
-		auto cvt = [this, &vf](BufferSrc src) {
+		auto cvt = [&vf](BufferSrc src) {
 			vf.convert_to_xyz((uint16_t*)src.framePtr_);
 		};
 
