@@ -148,9 +148,7 @@ struct MessengerInit
 		, compressedFrameSize_(0)
 		, numFrames_(0)
 	{
-		if (firstLaunch(true)) {
-			unlink();
-		}
+		unlink();
 	}
 
 	void unlink()
@@ -159,12 +157,6 @@ struct MessengerInit
 		shm_unlink(grokToClientMessageBuf.c_str());
 		shm_unlink(clientToGrokMessageBuf.c_str());
 #endif
-	}
-
-	static bool firstLaunch(bool isClient)
-	{
-		bool debugGrok = false;
-		return debugGrok != isClient;
 	}
 
 	std::string outboundMessageBuf;
@@ -198,15 +190,13 @@ struct Synch
 		: sentSemName_(sentSemName), receiveReadySemName_(receiveReadySemName)
 	{
 		// unlink semaphores in case of previous crash
-		if(MessengerInit::firstLaunch(true))
-			unlink();
+		unlink();
 		open();
 	}
 	~Synch()
 	{
 		close();
-		if(MessengerInit::firstLaunch(true))
-			unlink();
+		unlink();
 	}
 	void post(SynchDirection dir)
 	{
@@ -564,9 +554,7 @@ struct Messenger
 		if (async_result_.valid()) {
 			return true;
 		}
-		if (MessengerInit::firstLaunch(true)) {
-			init_.unlink();
-		}
+		init_.unlink();
 		startThreads();
 		char cmd[4096];
 		snprintf(cmd, sizeof(cmd),

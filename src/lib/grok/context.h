@@ -210,32 +210,29 @@ public:
 			return false;
 		}
 
-		if (MessengerInit::firstLaunch(true)) {
+		if (!fs::exists(_dcpomatic_context->location) || !fs::is_directory(_dcpomatic_context->location)) {
+			getMessengerLogger()->error("Invalid directory %s", _dcpomatic_context->location.c_str());
+			return false;
+		}
 
-			if (!fs::exists(_dcpomatic_context->location) || !fs::is_directory(_dcpomatic_context->location)) {
-				getMessengerLogger()->error("Invalid directory %s", _dcpomatic_context->location.c_str());
-				return false;
-			}
-
-			auto s = dcpv.get_size();
-			_dcpomatic_context->set_dimensions(s.width, s.height);
-			auto grok = Config::instance()->grok();
-			if (!_messenger->launch_grok(
-					_dcpomatic_context->location,
-					_dcpomatic_context->width,
-					_dcpomatic_context->width,
-					_dcpomatic_context->height,
-					3,
-					12,
-					device,
-					_dcpomatic_context->film->resolution() == Resolution::FOUR_K,
-					_dcpomatic_context->film->video_frame_rate(),
-					_dcpomatic_context->film->video_bit_rate(VideoEncoding::JPEG2000),
-					grok.licence_server,
-					grok.licence)) {
-				_launch_failed = true;
-				return false;
-			}
+		auto s = dcpv.get_size();
+		_dcpomatic_context->set_dimensions(s.width, s.height);
+		auto grok = Config::instance()->grok();
+		if (!_messenger->launch_grok(
+				_dcpomatic_context->location,
+				_dcpomatic_context->width,
+				_dcpomatic_context->width,
+				_dcpomatic_context->height,
+				3,
+				12,
+				device,
+				_dcpomatic_context->film->resolution() == Resolution::FOUR_K,
+				_dcpomatic_context->film->video_frame_rate(),
+				_dcpomatic_context->film->video_bit_rate(VideoEncoding::JPEG2000),
+				grok.licence_server,
+				grok.licence)) {
+			_launch_failed = true;
+			return false;
 		}
 
 		_launched = _messenger->waitForClientInit();
