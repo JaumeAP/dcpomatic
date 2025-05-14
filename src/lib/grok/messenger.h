@@ -855,12 +855,13 @@ struct ScheduledMessenger : public Messenger
 		return true;
 	}
 
-	void process_compressed(const std::string &message, std::function<void(F,uint8_t*,uint32_t)> processor, bool needsRecompression) {
+	void process_compressed(std::string const& message, std::function<void (F, uint8_t*, uint32_t)> processor, bool needsRecompression)
+	{
 		Msg msg(message);
 		msg.next();
-		auto clientFrameId = msg.nextUint();
-		auto compressedFrameId = msg.nextUint();
-		auto compressedFrameLength = msg.nextUint();
+		auto const clientFrameId = msg.nextUint();
+		auto const compressedFrameId = msg.nextUint();
+		auto const compressedFrameLength = msg.nextUint();
 		if (!needsRecompression) {
 			auto src_frame = scheduledFrames_.retrieve(clientFrameId);
 			if (!src_frame) {
@@ -868,16 +869,22 @@ struct ScheduledMessenger : public Messenger
 			}
 			processor(*src_frame, getCompressedFrame(compressedFrameId),compressedFrameLength);
 		}
+
 		++framesCompressed_;
 		send(GRK_MSGR_BATCH_PROCESSSED_COMPRESSED, compressedFrameId);
-		if (_shutdown && framesCompressed_ == framesScheduled_)
+
+		if (_shutdown && framesCompressed_ == framesScheduled_) {
 			shutdownCondition_.notify_all();
+		}
 	}
-	void shutdown(void){
+
+	void shutdown()
+	{
 		try {
 			std::unique_lock<std::mutex> lk(shutdownMutex_);
-			if (!async_result_.valid())
+			if (!async_result_.valid()) {
 				return;
+			}
 			_shutdown = true;
 			if (framesScheduled_) {
 				uint32_t scheduled = framesScheduled_;
@@ -887,12 +894,12 @@ struct ScheduledMessenger : public Messenger
 			availableBuffers_.deactivate();
 			send(GRK_MSGR_BATCH_SHUTDOWN);
 			int result = async_result_.get();
-			if(result != 0)
+			if(result != 0) {
 				getMessengerLogger()->error("Accelerator failed with return code: %d\n",result);
+			}
 		} catch (std::exception &ex) {
 			getMessengerLogger()->error("%s",ex.what());
 		}
-
 	}
 
 	boost::optional<F> retrieve(size_t index) {
