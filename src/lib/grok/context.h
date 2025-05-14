@@ -181,6 +181,9 @@ public:
 		delete _messenger;
 	}
 
+	/** Launch a Grok encoder process, preparing it to work on images like @ref dcpv.
+	 *  @return true if Grok is now running, false if not.
+	 */
 	bool launch(DCPVideo dcpv, int device)
 	{
 		namespace fs = boost::filesystem;
