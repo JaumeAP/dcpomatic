@@ -123,36 +123,50 @@ extern IMessengerLogger* sLogger;
 void setMessengerLogger(IMessengerLogger* logger);
 IMessengerLogger* getMessengerLogger(void);
 
+
 struct MessengerInit
 {
-	MessengerInit(const std::string &outBuf, const std::string &outSent,
-				  const std::string &outReceiveReady, const std::string &inBuf,
-				  const std::string &inSent,
-				  const std::string &inReceiveReady,
-				  std::function<void(std::string)> processor,
-				  size_t numProcessingThreads)
-		: outboundMessageBuf(outBuf), outboundSentSynch(outSent),
-		  outboundReceiveReadySynch(outReceiveReady), inboundMessageBuf(inBuf),
-		  inboundSentSynch(inSent), inboundReceiveReadySynch(inReceiveReady), processor_(processor),
-		  numProcessingThreads_(numProcessingThreads),
-		  uncompressedFrameSize_(0), compressedFrameSize_(0),
-		  numFrames_(0)
+	MessengerInit(
+		std::string const& outBuf,
+		std::string const& outSent,
+		std::string const& outReceiveReady,
+		std::string const& inBuf,
+		std::string const& inSent,
+		std::string const& inReceiveReady,
+		std::function<void(std::string)> processor,
+		size_t numProcessingThreads
+		)
+		: outboundMessageBuf(outBuf)
+		, outboundSentSynch(outSent)
+		, outboundReceiveReadySynch(outReceiveReady)
+		, inboundMessageBuf(inBuf)
+		, inboundSentSynch(inSent)
+		, inboundReceiveReadySynch(inReceiveReady)
+		, processor_(processor)
+		, numProcessingThreads_(numProcessingThreads)
+		, uncompressedFrameSize_(0)
+		, compressedFrameSize_(0)
+		, numFrames_(0)
 	{
-		if(firstLaunch(true))
+		if (firstLaunch(true)) {
 			unlink();
+		}
 	}
-	void unlink(void)
+
+	void unlink()
 	{
 #ifndef _WIN32
 		shm_unlink(grokToClientMessageBuf.c_str());
 		shm_unlink(clientToGrokMessageBuf.c_str());
 #endif
 	}
+
 	static bool firstLaunch(bool isClient)
 	{
 		bool debugGrok = false;
 		return debugGrok != isClient;
 	}
+
 	std::string outboundMessageBuf;
 	std::string outboundSentSynch;
 	std::string outboundReceiveReadySynch;
@@ -168,6 +182,7 @@ struct MessengerInit
 	size_t compressedFrameSize_;
 	size_t numFrames_;
 };
+
 
 /*************************** Synchronization *******************************/
 enum SynchDirection
