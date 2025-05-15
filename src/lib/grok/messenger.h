@@ -455,8 +455,9 @@ struct Messenger
 			inbound.join();
 		}
 
-		for(auto& p : processors_)
+		for(auto& p: processors_) {
 			p.join();
+		}
 
 		delete outboundSynch_;
 		delete inboundSynch_;
@@ -642,9 +643,10 @@ struct Messenger
 	std::mutex shutdownMutex_;
 	std::condition_variable shutdownCondition_;
 
-  protected:
+protected:
 	std::condition_variable clientInitializedCondition_;
-  private:
+
+private:
 	bool launch(std::string const& cmd, boost::filesystem::path const& dir)
 	{
 		// Change the working directory
@@ -681,6 +683,7 @@ struct Messenger
 	grk_handle uncompressed_fd_ = 0;
 	grk_handle compressed_fd_ = 0;
 };
+
 
 static void outboundThread(Messenger* messenger, const std::string &sendBuf, Synch* synch)
 {
