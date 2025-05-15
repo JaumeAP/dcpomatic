@@ -288,7 +288,7 @@ struct SharedMemoryManager
 
 		return *buffer != nullptr;
 	}
-	static bool deinitShm(const std::string &name, size_t len, grk_handle &shm_fd, char** buffer)
+	static bool deinit_shm(const std::string &name, size_t len, grk_handle &shm_fd, char** buffer)
 	{
 		if (!*buffer || !shm_fd)
 			return true;
@@ -463,7 +463,7 @@ struct Messenger
 		delete outboundSynch_;
 		delete inboundSynch_;
 
-		deinitShm();
+		deinit_shm();
 	}
 	void startThreads(void) {
 		outboundSynch_ =
@@ -496,17 +496,23 @@ struct Messenger
 		return rc;
 	}
 
-	bool deinitShm(void)
+	bool deinit_shm()
 	{
-		bool rc = SharedMemoryManager::deinitShm(grokUncompressedBuf,
-												 init_.uncompressedFrameSize_ * init_.numFrames_,
-												 uncompressed_fd_, &uncompressed_buffer_);
-		rc = rc && SharedMemoryManager::deinitShm(grokCompressedBuf,
-												  init_.compressedFrameSize_ * init_.numFrames_,
-												  compressed_fd_, &compressed_buffer_);
+		bool rc = SharedMemoryManager::deinit_shm(
+			grokUncompressedBuf,
+			init_.uncompressedFrameSize_ * init_.numFrames_,
+			uncompressed_fd_, &uncompressed_buffer_
+		);
+
+		rc = rc && SharedMemoryManager::deinit_shm(
+			grokCompressedBuf,
+			init_.compressedFrameSize_ * init_.numFrames_,
+			compressed_fd_, &compressed_buffer_
+		);
 
 		return rc;
 	}
+
 	template<typename... Args>
 	void send(const std::string& str, Args... args)
 	{
@@ -698,7 +704,7 @@ static void outboundThread(Messenger* messenger, const std::string &sendBuf, Syn
 		memcpy(send_buffer, message.c_str(), message.size() + 1);
 		synch->post(SYNCH_SENT);
 	}
-	SharedMemoryManager::deinitShm(sendBuf, messageBufferLen, shm_fd, &send_buffer);
+	SharedMemoryManager::deinit_shm(sendBuf, messageBufferLen, shm_fd, &send_buffer);
 }
 
 static void inboundThread(Messenger* messenger, const std::string &receiveBuf, Synch* synch)
@@ -717,7 +723,7 @@ static void inboundThread(Messenger* messenger, const std::string &receiveBuf, S
 		synch->post(SYNCH_RECEIVE_READY);
 		messenger->receiveQueue.push(message);
 	}
-	SharedMemoryManager::deinitShm(receiveBuf, messageBufferLen, shm_fd, &receive_buffer);
+	SharedMemoryManager::deinit_shm(receiveBuf, messageBufferLen, shm_fd, &receive_buffer);
 }
 struct Msg
 {
