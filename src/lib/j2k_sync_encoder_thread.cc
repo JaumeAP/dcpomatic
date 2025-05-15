@@ -57,9 +57,7 @@ try
 
 		LOG_TIMING("encoder-pop thread=%1 frame=%2 eyes=%3", thread_id(), frame.index(), static_cast<int>(frame.eyes()));
 
-		auto encoded = encode(frame);
-
-		if (encoded) {
+		if (auto encoded = encode(frame)) {
 			boost::this_thread::disable_interruption dis;
 			frame_guard.cancel();
 			_encoder.write(encoded, frame.index(), frame.eyes());
