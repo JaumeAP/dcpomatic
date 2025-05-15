@@ -351,23 +351,6 @@ class MessengerBlockingQueue
 
 		return rc;
 	}
-	bool waitAndPush(Data& value)
-	{
-		bool rc;
-		{
-			std::unique_lock<std::mutex> lk(mutex_);
-			if(!active_)
-				return false;
-			// in case of spurious wakeup, loop until predicate in lambda
-			// is satisfied.
-			can_push_.wait(lk, [this] { return queue_.size() < max_size_ || !active_; });
-			rc = push_(value);
-		}
-		if(rc)
-			can_pop_.notify_one();
-
-		return rc;
-	}
 	bool pop(Data& value)
 	{
 		bool rc;
