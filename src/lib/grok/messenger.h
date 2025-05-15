@@ -436,10 +436,8 @@ static void processor_thread(Messenger* messenger, std::function<void (std::stri
 struct Messenger
 {
 	explicit Messenger(MessengerInit init)
-		: running(true), _initialized(false), _shutdown(false), init_(init),
-		  outboundSynch_(nullptr),
-		  inboundSynch_(nullptr), uncompressed_buffer_(nullptr), compressed_buffer_(nullptr),
-		  uncompressed_fd_(0), compressed_fd_(0)
+		: running(true)
+		, init_(init)
 	{}
 	virtual ~Messenger(void)
 	{
@@ -633,8 +631,8 @@ struct Messenger
 		return (uint8_t*)(compressed_buffer_ + frameId * init_.compressedFrameSize_);
 	}
 	std::atomic_bool running;
-	bool _initialized;
-	bool _shutdown;
+	bool _initialized = false;
+	bool _shutdown = false;
 	MessengerBlockingQueue<std::string> sendQueue;
 	MessengerBlockingQueue<std::string> receiveQueue;
 	MessengerBlockingQueue<BufferSrc> availableBuffers_;
@@ -671,17 +669,17 @@ struct Messenger
 
 	}
 	std::thread outbound;
-	Synch* outboundSynch_;
+	Synch* outboundSynch_ = nullptr;
 
 	std::thread inbound;
-	Synch* inboundSynch_;
+	Synch* inboundSynch_ = nullptr;
 
 	std::vector<std::thread> processors_;
-	char* uncompressed_buffer_;
-	char* compressed_buffer_;
+	char* uncompressed_buffer_ = nullptr;
+	char* compressed_buffer_ = nullptr;
 
-	grk_handle uncompressed_fd_;
-	grk_handle compressed_fd_;
+	grk_handle uncompressed_fd_ = 0;
+	grk_handle compressed_fd_ = 0;
 };
 
 static void outboundThread(Messenger* messenger, const std::string &sendBuf, Synch* synch)
