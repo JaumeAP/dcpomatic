@@ -439,7 +439,8 @@ struct Messenger
 		: running(true)
 		, init_(init)
 	{}
-	virtual ~Messenger(void)
+
+	virtual ~Messenger()
 	{
 		running = false;
 		sendQueue.deactivate();
@@ -464,32 +465,37 @@ struct Messenger
 
 		deinit_shm();
 	}
-	void startThreads(void) {
-		outboundSynch_ =
-			new Synch(init_.outboundSentSynch, init_.outboundReceiveReadySynch);
+
+	void startThreads()
+	{
+		outboundSynch_ = new Synch(init_.outboundSentSynch, init_.outboundReceiveReadySynch);
 		outbound = std::thread(outboundThread, this, init_.outboundMessageBuf, outboundSynch_);
 
-		inboundSynch_ =
-			new Synch(init_.inboundSentSynch, init_.inboundReceiveReadySynch);
+		inboundSynch_ = new Synch(init_.inboundSentSynch, init_.inboundReceiveReadySynch);
 		inbound = std::thread(inboundThread, this, init_.inboundMessageBuf, inboundSynch_);
 
-		for(size_t i = 0; i < init_.numProcessingThreads_; ++i)
+		for (size_t i = 0; i < init_.numProcessingThreads_; ++i) {
 			processors_.push_back(std::thread(processor_thread, this, init_.processor_));
+		}
 	}
-	bool initBuffers(void)
+
+	bool initBuffers()
 	{
 		bool rc = true;
-		if(init_.uncompressedFrameSize_)
-		{
-			rc = rc && SharedMemoryManager::initShm(grokUncompressedBuf,
-													init_.uncompressedFrameSize_ * init_.numFrames_,
-													&uncompressed_fd_, &uncompressed_buffer_);
+		if (init_.uncompressedFrameSize_) {
+			rc = rc && SharedMemoryManager::initShm(
+				grokUncompressedBuf,
+				init_.uncompressedFrameSize_ * init_.numFrames_,
+				&uncompressed_fd_, &uncompressed_buffer_
+			);
 		}
-		if(init_.compressedFrameSize_)
-		{
-			rc = rc && SharedMemoryManager::initShm(grokCompressedBuf,
-													init_.compressedFrameSize_ * init_.numFrames_,
-													&compressed_fd_, &compressed_buffer_);
+
+		if (init_.compressedFrameSize_) {
+			rc = rc && SharedMemoryManager::initShm(
+				grokCompressedBuf,
+				init_.compressedFrameSize_ * init_.numFrames_,
+				&compressed_fd_, &compressed_buffer_
+			);
 		}
 
 		return rc;
@@ -554,6 +560,7 @@ struct Messenger
 
 		return launch(cmd, dir);
 	}
+
 	void initClient(size_t uncompressedFrameSize, size_t compressedFrameSize, size_t numFrames)
 	{
 		// client fills queue with pending uncompressed buffers
@@ -607,14 +614,17 @@ struct Messenger
 	{
 		return sizeof(uint16_t) * w * h * samplesPerPixel;
 	}
+
 	void reclaimCompressed(size_t frameId)
 	{
 		availableBuffers_.push(BufferSrc(0, frameId, getCompressedFrame(frameId)));
 	}
+
 	void reclaimUncompressed(size_t frameId)
 	{
 		availableBuffers_.push(BufferSrc(0, frameId, getUncompressedFrame(frameId)));
 	}
+
 	uint8_t* getUncompressedFrame(size_t frameId)
 	{
 		assert(frameId < init_.numFrames_);
@@ -623,6 +633,7 @@ struct Messenger
 
 		return (uint8_t*)(uncompressed_buffer_ + frameId * init_.uncompressedFrameSize_);
 	}
+
 	uint8_t* getCompressedFrame(size_t frameId)
 	{
 		assert(frameId < init_.numFrames_);
@@ -631,6 +642,7 @@ struct Messenger
 
 		return (uint8_t*)(compressed_buffer_ + frameId * init_.compressedFrameSize_);
 	}
+
 	std::atomic_bool running;
 	bool _initialized = false;
 	bool _shutdown = false;
