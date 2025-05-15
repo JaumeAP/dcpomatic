@@ -431,7 +431,7 @@ struct BufferSrc
 struct Messenger;
 static void outboundThread(Messenger* messenger, const std::string &sendBuf, Synch* synch);
 static void inboundThread(Messenger* messenger, const std::string &receiveBuf, Synch* synch);
-static void processorThread(Messenger* messenger, std::function<void(std::string)> processor);
+static void processor_thread(Messenger* messenger, std::function<void (std::string)> processor);
 
 struct Messenger
 {
@@ -475,7 +475,7 @@ struct Messenger
 		inbound = std::thread(inboundThread, this, init_.inboundMessageBuf, inboundSynch_);
 
 		for(size_t i = 0; i < init_.numProcessingThreads_; ++i)
-			processors_.push_back(std::thread(processorThread, this, init_.processor_));
+			processors_.push_back(std::thread(processor_thread, this, init_.processor_));
 	}
 	bool initBuffers(void)
 	{
@@ -756,7 +756,12 @@ struct Msg
 	size_t ct_;
 };
 
-static void processorThread(Messenger* messenger, std::function<void(std::string)> processor)
+
+/* One of these is created for each core, to receive messages (e.g. "frame is encoded")
+ * from the grok process and handle them.
+ */
+static void
+processor_thread(Messenger* messenger, std::function<void (std::string)> processor)
 {
 	while (messenger->running) {
 		std::string message;
@@ -788,6 +793,7 @@ static void processorThread(Messenger* messenger, std::function<void(std::string
 		processor(message);
 	}
 }
+
 
 template<typename F>
 struct ScheduledFrames
