@@ -184,79 +184,92 @@ struct MessengerInit
 };
 
 
-/*************************** Synchronization *******************************/
 enum SynchDirection
 {
 	SYNCH_SENT,
 	SYNCH_RECEIVE_READY
 };
 
-struct Synch
+
+class Synch
 {
-	Synch(const std::string &sentSemName, const std::string &receiveReadySemName)
-		: sentSemName_(sentSemName), receiveReadySemName_(receiveReadySemName)
+public:
+	Synch(std::string const& sent_sem_name, std::string const& receive_ready_sem_name)
+		: _sent_sem_name(sent_sem_name)
+		, _receive_ready_sem_name(receive_ready_sem_name)
 	{
 		// unlink semaphores in case of previous crash
 		unlink();
 		open();
 	}
+
 	~Synch()
 	{
 		close();
 		unlink();
 	}
+
 	void post(SynchDirection dir)
 	{
-		auto sem = (dir == SYNCH_SENT ? sentSem_ : receiveReadySem_);
-		int rc = sem_post(sem);
-		if(rc)
+		auto sem = dir == SYNCH_SENT ? _sent_sem : _receive_ready_sem;
+		if (sem_post(sem)) {
 			getMessengerLogger()->error("Error posting to semaphore: %s", strerror(errno));
+		}
 	}
+
 	void wait(SynchDirection dir)
 	{
-		auto sem = dir == SYNCH_SENT ? sentSem_ : receiveReadySem_;
-		int rc = sem_wait(sem);
-		if(rc)
+		auto sem = dir == SYNCH_SENT ? _sent_sem : _receive_ready_sem;
+		if (sem_wait(sem)) {
 			getMessengerLogger()->error("Error waiting for semaphore: %s", strerror(errno));
+		}
 	}
-	void open(void)
-	{
-		sentSem_ = sem_open(sentSemName_.c_str(), O_CREAT, 0666, 0);
-		if(!sentSem_)
-			getMessengerLogger()->error("Error opening shared memory: %s", strerror(errno));
-		receiveReadySem_ = sem_open(receiveReadySemName_.c_str(), O_CREAT, 0666, 1);
-		if(!receiveReadySem_)
-			getMessengerLogger()->error("Error opening shared memory: %s", strerror(errno));
-	}
-	void close(void)
-	{
-		int rc = sem_close(sentSem_);
-		if(rc)
-			getMessengerLogger()->error("Error closing semaphore %s: %s", sentSemName_.c_str(),
-										strerror(errno));
-		rc = sem_close(receiveReadySem_);
-		if(rc)
-			getMessengerLogger()->error("Error closing semaphore %s: %s",
-										receiveReadySemName_.c_str(), strerror(errno));
-	}
-	void unlink(void)
-	{
-		int rc = sem_unlink(sentSemName_.c_str());
-		if(rc == -1 && errno != ENOENT)
-			getMessengerLogger()->error("Error unlinking semaphore %s: %s", sentSemName_.c_str(),
-										strerror(errno));
-		rc = sem_unlink(receiveReadySemName_.c_str());
-		if(rc == -1 && errno != ENOENT)
-			getMessengerLogger()->error("Error unlinking semaphore %s: %s",
-										receiveReadySemName_.c_str(), strerror(errno));
-	}
-	sem_t* sentSem_;
-	sem_t* receiveReadySem_;
 
-  private:
-	std::string sentSemName_;
-	std::string receiveReadySemName_;
+	void open()
+	{
+		_sent_sem = sem_open(_sent_sem_name.c_str(), O_CREAT, 0666, 0);
+		if (!_sent_sem) {
+			getMessengerLogger()->error("Error opening shared memory: %s", strerror(errno));
+		}
+
+		_receive_ready_sem = sem_open(_receive_ready_sem_name.c_str(), O_CREAT, 0666, 1);
+		if (!_receive_ready_sem) {
+			getMessengerLogger()->error("Error opening shared memory: %s", strerror(errno));
+		}
+	}
+
+	void close()
+	{
+		if (sem_close(_sent_sem)) {
+			getMessengerLogger()->error("Error closing semaphore %s: %s", _sent_sem_name.c_str(), strerror(errno));
+		}
+
+		if (sem_close(_receive_ready_sem)) {
+			getMessengerLogger()->error("Error closing semaphore %s: %s", _receive_ready_sem_name.c_str(), strerror(errno));
+		}
+	}
+
+	void unlink()
+	{
+		int rc = sem_unlink(_sent_sem_name.c_str());
+		if (rc == -1 && errno != ENOENT) {
+			getMessengerLogger()->error("Error unlinking semaphore %s: %s", _sent_sem_name.c_str(), strerror(errno));
+		}
+		rc = sem_unlink(_receive_ready_sem_name.c_str());
+		if (rc == -1 && errno != ENOENT) {
+			getMessengerLogger()->error("Error unlinking semaphore %s: %s", _receive_ready_sem_name.c_str(), strerror(errno));
+		}
+	}
+
+private:
+	sem_t* _sent_sem;
+	sem_t* _receive_ready_sem;
+
+	std::string _sent_sem_name;
+	std::string _receive_ready_sem_name;
 };
+
+
 struct SharedMemoryManager
 {
 	static bool initShm(const std::string &name, size_t len, int* shm_fd, char** buffer)
