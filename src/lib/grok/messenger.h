@@ -331,63 +331,68 @@ public:
 };
 
 
-struct Msg
+class Message
 {
-	explicit Msg(const std::string &msg) : ct_(0)
+public:
+	explicit Message(std::string const& msg)
 	{
 		std::stringstream ss(msg);
-		while(ss.good())
-		{
+		while (ss.good()) {
 			std::string substr;
 			std::getline(ss, substr, ',');
-			cs_.push_back(substr);
+			_cs.push_back(substr);
 		}
-	}
-	std::string next()
-	{
-		if(ct_ == cs_.size())
-		{
-			getMessengerLogger()->error("Msg: comma separated list exhausted. returning empty.");
-			return "";
-		}
-		return cs_[ct_++];
 	}
 
-	uint32_t nextUint(void)
+	std::string next()
+	{
+		if (_ct == _cs.size()) {
+			getMessengerLogger()->error("Message: comma separated list exhausted. returning empty.");
+			return "";
+		}
+		return _cs[_ct++];
+	}
+
+	uint32_t nextUint()
 	{
 		return (uint32_t)std::stoi(next());
 	}
 
-	std::vector<std::string> cs_;
-	size_t ct_;
+private:
+	std::vector<std::string> _cs;
+	size_t _ct = 0;
 };
 
 
-struct ScheduledFrames
+class ScheduledFrames
 {
+public:
 	void store(DCPVideo const& val)
 	{
-		std::unique_lock<std::mutex> lk(mapMutex_);
-		auto it = map_.find(val.index());
-		if (it == map_.end())
-			map_.emplace(std::make_pair(val.index(), val));
+		std::unique_lock<std::mutex> lk(_mutex);
+		auto it = _map.find(val.index());
+		if (it == _map.end()) {
+			_map.emplace(std::make_pair(val.index(), val));
+		}
 	}
+
 	boost::optional<DCPVideo> retrieve(size_t index)
 	{
-		std::unique_lock<std::mutex> lk(mapMutex_);
-		auto it = map_.find(index);
-		if(it == map_.end())
+		std::unique_lock<std::mutex> lk(_mutex);
+		auto it = _map.find(index);
+		if (it == _map.end()) {
 			return {};
+		}
 
 		DCPVideo val = it->second;
-		map_.erase(index);
+		_map.erase(index);
 
 		return val;
 	}
 
- private:
-	std::mutex mapMutex_;
-	std::map<size_t, DCPVideo> map_;
+private:
+	std::mutex _mutex;
+	std::map<size_t, DCPVideo> _map;
 };
 
 

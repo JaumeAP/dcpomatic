@@ -100,7 +100,7 @@ Messenger::processor_thread()
 			break;
 		}
 
-		Msg msg(message);
+		Message msg(message);
 		auto tag = msg.next();
 		if (tag == GRK_MSGR_BATCH_COMPRESS_INIT) {
 			auto width = msg.nextUint();
@@ -413,7 +413,7 @@ Messenger::schedule_compress(DCPVideo const& proxy, std::function<void(BufferSrc
 void
 Messenger::process_compressed(std::string const& message, std::function<void (DCPVideo, uint8_t*, uint32_t)> processor, bool needsRecompression)
 {
-	Msg msg(message);
+	Message msg(message);
 	msg.next();
 	auto const clientFrameId = msg.nextUint();
 	auto const compressedFrameId = msg.nextUint();

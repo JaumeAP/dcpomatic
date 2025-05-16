@@ -115,7 +115,7 @@ public:
 
 		auto proc = [this](const std::string& str) {
 			try {
-				Msg msg(str);
+				Message msg(str);
 				auto tag = msg.next();
 				if (tag == GRK_MSGR_BATCH_SUBMIT_COMPRESSED) {
 					auto clientFrameId = msg.nextUint();
