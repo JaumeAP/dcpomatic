@@ -38,17 +38,17 @@ Messenger::Messenger(
 	: _running(true)
 	, _frames_scheduled(0)
 	, _frames_compressed(0)
-	, outboundMessageBuf(outBuf)
-	, outboundSentSynch(outSent)
-	, outboundReceiveReadySynch(outReceiveReady)
-	, inboundMessageBuf(inBuf)
-	, inboundSentSynch(inSent)
-	, inboundReceiveReadySynch(inReceiveReady)
-	, processor_(processor)
-	, numProcessingThreads_(numProcessingThreads)
-	, uncompressedFrameSize_(0)
-	, compressedFrameSize_(0)
-	, numFrames_(0)
+	, _outbound_message_buf(outBuf)
+	, _outbound_sent_synch(outSent)
+	, _outbound_receive_ready_synch(outReceiveReady)
+	, _inbound_message_buf(inBuf)
+	, _inbound_sent_synch(inSent)
+	, _inbound_receive_ready_synch(inReceiveReady)
+	, _processor(processor)
+	, _num_processing_threads(numProcessingThreads)
+	, _uncompressed_frame_size(0)
+	, _compressed_frame_size(0)
+	, _num_frames(0)
 {
 	shm_unlink(grokToClientMessageBuf.c_str());
 	shm_unlink(clientToGrokMessageBuf.c_str());
@@ -108,7 +108,7 @@ Messenger::processor_thread()
 			auto height = msg.nextUint();
 			auto samples_per_pixel = msg.nextUint();
 			msg.nextUint(); // depth
-			uncompressedFrameSize_ = Messenger::uncompressedFrameSize(width, height, samples_per_pixel);
+			_uncompressed_frame_size = Messenger::uncompressedFrameSize(width, height, samples_per_pixel);
 			auto compressed_frame_size = msg.nextUint();
 			auto num_frames = msg.nextUint();
 			initClient(compressed_frame_size, compressed_frame_size, num_frames);
@@ -119,7 +119,7 @@ Messenger::processor_thread()
 		}
 
 		/* Handle writing J2K data to disk */
-		processor_(message);
+		_processor(message);
 	}
 }
 
@@ -130,7 +130,7 @@ Messenger::outbound_thread()
 	int shm_fd = 0;
 	char* send_buffer = nullptr;
 
-	if (!SharedMemoryManager::initShm(outboundMessageBuf, messageBufferLen, &shm_fd, &send_buffer)) {
+	if (!SharedMemoryManager::initShm(_outbound_message_buf, messageBufferLen, &shm_fd, &send_buffer)) {
 		return;
 	}
 
@@ -150,7 +150,7 @@ Messenger::outbound_thread()
 		_outbound_synch->post(SYNCH_SENT);
 	}
 
-	SharedMemoryManager::deinit_shm(outboundMessageBuf, messageBufferLen, shm_fd, &send_buffer);
+	SharedMemoryManager::deinit_shm(_outbound_message_buf, messageBufferLen, shm_fd, &send_buffer);
 }
 
 
@@ -160,7 +160,7 @@ Messenger::inbound_thread()
 	int shm_fd = 0;
 	char* receive_buffer = nullptr;
 
-	if (!SharedMemoryManager::initShm(inboundMessageBuf, messageBufferLen, &shm_fd, &receive_buffer)) {
+	if (!SharedMemoryManager::initShm(_inbound_message_buf, messageBufferLen, &shm_fd, &receive_buffer)) {
 		return;
 	}
 
@@ -174,20 +174,20 @@ Messenger::inbound_thread()
 		_receive_queue.push(message);
 	}
 
-	SharedMemoryManager::deinit_shm(inboundMessageBuf, messageBufferLen, shm_fd, &receive_buffer);
+	SharedMemoryManager::deinit_shm(_inbound_message_buf, messageBufferLen, shm_fd, &receive_buffer);
 }
 
 
 void
 Messenger::startThreads()
 {
-	_outbound_synch = new Synch(outboundSentSynch, outboundReceiveReadySynch);
+	_outbound_synch = new Synch(_outbound_sent_synch, _outbound_receive_ready_synch);
 	_outbound = std::thread(&Messenger::outbound_thread, this);
 
-	_inbound_synch = new Synch(inboundSentSynch, inboundReceiveReadySynch);
+	_inbound_synch = new Synch(_inbound_sent_synch, _inbound_receive_ready_synch);
 	_inbound = std::thread(&Messenger::inbound_thread, this);
 
-	for (size_t i = 0; i < numProcessingThreads_; ++i) {
+	for (size_t i = 0; i < _num_processing_threads; ++i) {
 		_processors.push_back(std::thread(&Messenger::processor_thread, this));
 	}
 }
@@ -197,18 +197,18 @@ bool
 Messenger::initBuffers()
 {
 	bool rc = true;
-	if (uncompressedFrameSize_) {
+	if (_uncompressed_frame_size) {
 		rc = rc && SharedMemoryManager::initShm(
 			grokUncompressedBuf,
-			uncompressedFrameSize_ * numFrames_,
+			_uncompressed_frame_size * _num_frames,
 			&_uncompressed_fd, &_uncompressed_buffer
 		);
 	}
 
-	if (compressedFrameSize_) {
+	if (_compressed_frame_size) {
 		rc = rc && SharedMemoryManager::initShm(
 			grokCompressedBuf,
-			compressedFrameSize_ * numFrames_,
+			_compressed_frame_size * _num_frames,
 			&_compressed_fd, &_compressed_buffer
 		);
 	}
@@ -222,13 +222,13 @@ Messenger::deinit_shm()
 {
 	bool rc = SharedMemoryManager::deinit_shm(
 		grokUncompressedBuf,
-		uncompressedFrameSize_ * numFrames_,
+		_uncompressed_frame_size * _num_frames,
 		_uncompressed_fd, &_uncompressed_buffer
 	);
 
 	rc = rc && SharedMemoryManager::deinit_shm(
 		grokCompressedBuf,
-		compressedFrameSize_ * numFrames_,
+		_compressed_frame_size * _num_frames,
 		_compressed_fd, &_compressed_buffer
 	);
 
@@ -277,15 +277,15 @@ void
 Messenger::initClient(size_t uncompressedFrameSize, size_t compressedFrameSize, size_t numFrames)
 {
 	// client fills queue with pending uncompressed buffers
-	uncompressedFrameSize_ = uncompressedFrameSize;
-	compressedFrameSize_ = compressedFrameSize;
-	numFrames_ = numFrames;
+	_uncompressed_frame_size = uncompressedFrameSize;
+	_compressed_frame_size = compressedFrameSize;
+	_num_frames = numFrames;
 	initBuffers();
 	auto ptr = _uncompressed_buffer;
-	for(size_t i = 0; i < numFrames_; ++i)
+	for(size_t i = 0; i < _num_frames; ++i)
 	{
 		_available_buffers.push(BufferSrc(0, i, (uint8_t*)ptr));
-		ptr += uncompressedFrameSize_;
+		ptr += _uncompressed_frame_size;
 	}
 
 	std::unique_lock<std::mutex> lk(_shutdown_mutex);
@@ -349,22 +349,24 @@ Messenger::reclaimUncompressed(size_t frameId)
 uint8_t*
 Messenger::getUncompressedFrame(size_t frameId)
 {
-	assert(frameId < numFrames_);
-	if(frameId >= numFrames_)
+	assert(frameId < _num_frames);
+	if (frameId >= _num_frames) {
 		return nullptr;
+	}
 
-	return (uint8_t*)(_uncompressed_buffer + frameId * uncompressedFrameSize_);
+	return (uint8_t*)(_uncompressed_buffer + frameId * _uncompressed_frame_size);
 }
 
 
 uint8_t*
 Messenger::getCompressedFrame(size_t frameId)
 {
-	assert(frameId < numFrames_);
-	if(frameId >= numFrames_)
+	assert(frameId < _num_frames);
+	if (frameId >= _num_frames) {
 		return nullptr;
+	}
 
-	return (uint8_t*)(_compressed_buffer + frameId * compressedFrameSize_);
+	return (uint8_t*)(_compressed_buffer + frameId * _compressed_frame_size);
 }
 
 bool

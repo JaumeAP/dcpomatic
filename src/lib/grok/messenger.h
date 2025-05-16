@@ -494,11 +494,11 @@ private:
 
 	std::vector<std::thread> _processors;
 	/** Shared memory buffer for passing input (uncompressed) image data.
-	  * Allocated to _init.numFrames_ BufferSrc objects in _available_buffers
+	  * Allocated to _init._num_frames BufferSrc objects in _available_buffers
 	  */
 	char* _uncompressed_buffer = nullptr;
 	/** Shared memory buffer for passing output (compressed) image data.
-	 *  Contains multiple frames at a spacing of _init.compressedFrameSize_ bytes
+	 *  Contains multiple frames at a spacing of _init._compressed_frame_size bytes
 	 */
 	char* _compressed_buffer = nullptr;
 
@@ -516,20 +516,20 @@ private:
 	std::atomic<uint32_t> _frames_scheduled;
 	std::atomic<uint32_t> _frames_compressed;
 
-	std::string outboundMessageBuf;
-	std::string outboundSentSynch;
-	std::string outboundReceiveReadySynch;
+	std::string _outbound_message_buf;
+	std::string _outbound_sent_synch;
+	std::string _outbound_receive_ready_synch;
 
-	std::string inboundMessageBuf;
-	std::string inboundSentSynch;
-	std::string inboundReceiveReadySynch;
+	std::string _inbound_message_buf;
+	std::string _inbound_sent_synch;
+	std::string _inbound_receive_ready_synch;
 
-	std::function<void(std::string)> processor_;
-	size_t numProcessingThreads_;
+	std::function<void(std::string)> _processor;
+	size_t _num_processing_threads;
 
-	size_t uncompressedFrameSize_;
-	size_t compressedFrameSize_;
-	size_t numFrames_;
+	size_t _uncompressed_frame_size;
+	size_t _compressed_frame_size;
+	size_t _num_frames;
 };
 
 } // namespace grk_plugin
