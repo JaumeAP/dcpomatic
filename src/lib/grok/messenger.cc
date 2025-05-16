@@ -64,7 +64,7 @@ Messenger::~Messenger()
  * from the grok process and handle them.
  */
 void
-Messenger::processor_thread(std::function<void (std::string)> processor)
+Messenger::processor_thread()
 {
 	while (running) {
 		std::string message;
@@ -93,7 +93,7 @@ Messenger::processor_thread(std::function<void (std::string)> processor)
 		} else if (tag == GRK_MSGR_BATCH_PROCESSSED_COMPRESSED) {
 			reclaimCompressed(msg.nextUint());
 		}
-		processor(message);
+		init_.processor_(message);
 	}
 }
 
@@ -151,7 +151,7 @@ Messenger::startThreads()
 	inbound = std::thread(inboundThread, this, init_.inboundMessageBuf, inboundSynch_);
 
 	for (size_t i = 0; i < init_.numProcessingThreads_; ++i) {
-		processors_.push_back(std::thread(&Messenger::processor_thread, this, init_.processor_));
+		processors_.push_back(std::thread(&Messenger::processor_thread, this));
 	}
 }
 
