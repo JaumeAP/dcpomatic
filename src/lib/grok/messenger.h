@@ -428,13 +428,15 @@ struct BufferSrc
 	uint8_t* framePtr_;
 };
 
-struct Messenger;
+class Messenger;
 static void outboundThread(Messenger* messenger, const std::string &sendBuf, Synch* synch);
 static void inboundThread(Messenger* messenger, const std::string &receiveBuf, Synch* synch);
 static void processor_thread(Messenger* messenger, std::function<void (std::string)> processor);
 
-struct Messenger
+
+class Messenger
 {
+public:
 	explicit Messenger(MessengerInit init)
 		: running(true)
 		, init_(init)
