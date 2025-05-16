@@ -437,87 +437,6 @@ struct BufferSrc
 };
 
 
-class Messenger
-{
-public:
-	explicit Messenger(MessengerInit init);
-	virtual ~Messenger();
-
-	void startThreads();
-	bool initBuffers();
-	bool deinit_shm();
-
-	template<typename... Args>
-	void send(const std::string& str, Args... args)
-	{
-		std::ostringstream oss;
-		oss << str;
-		int dummy[] = {0, ((void)(oss << ',' << args), 0)...};
-		static_cast<void>(dummy);
-
-		_send_queue.push(oss.str());
-	}
-
-	bool launch_grok(
-		boost::filesystem::path const& dir,
-		uint32_t width,
-		uint32_t stride,
-		uint32_t height,
-		uint32_t samplesPerPixel,
-		uint32_t depth,
-		int device,
-		bool is4K,
-		uint32_t fps,
-		uint32_t bandwidth,
-		const std::string server,
-		const std::string license
-		);
-
-	void initClient(size_t uncompressedFrameSize, size_t compressedFrameSize, size_t numFrames);
-	bool waitForClientInit();
-
-	void reclaimCompressed(size_t frameId);
-	void reclaimUncompressed(size_t frameId);
-	uint8_t* getUncompressedFrame(size_t frameId);
-	uint8_t* getCompressedFrame(size_t frameId);
-
-	static size_t uncompressedFrameSize(uint32_t w, uint32_t h, uint32_t samplesPerPixel);
-
-protected:
-	std::condition_variable _client_initialized_condition;
-	MessengerBlockingQueue<BufferSrc> _available_buffers;
-	std::future<int> _async_result;
-	std::condition_variable _shutdown_condition;
-	bool _shutdown = false;
-	std::mutex _shutdown_mutex;
-
-private:
-	bool launch(std::string const& cmd, boost::filesystem::path const& dir);
-	void processor_thread();
-	void outbound_thread();
-	void inbound_thread();
-
-	std::atomic_bool _running;
-	MessengerInit _init;
-	bool _initialized = false;
-	MessengerBlockingQueue<std::string> _send_queue;
-	MessengerBlockingQueue<std::string> _receive_queue;
-
-	std::thread _outbound;
-	Synch* _outbound_synch = nullptr;
-
-	std::thread _inbound;
-	Synch* _inbound_synch = nullptr;
-
-	std::vector<std::thread> _processors;
-	char* _uncompressed_buffer = nullptr;
-	char* _compressed_buffer = nullptr;
-
-	grk_handle _uncompressed_fd = 0;
-	grk_handle _compressed_fd = 0;
-};
-
-
 struct Msg
 {
 	explicit Msg(const std::string &msg) : ct_(0)
@@ -578,18 +497,51 @@ struct ScheduledFrames
 };
 
 
-struct ScheduledMessenger : public Messenger
+class ScheduledMessenger
 {
-	explicit ScheduledMessenger(MessengerInit init)
-		: Messenger(init)
-		, _frames_scheduled(0)
-		, _frames_compressed(0)
-	{}
+public:
+	explicit ScheduledMessenger(MessengerInit init);
+	~ScheduledMessenger();
 
-	~ScheduledMessenger()
+	void startThreads();
+	bool initBuffers();
+	bool deinit_shm();
+
+	template<typename... Args>
+	void send(const std::string& str, Args... args)
 	{
-		shutdown();
+		std::ostringstream oss;
+		oss << str;
+		int dummy[] = {0, ((void)(oss << ',' << args), 0)...};
+		static_cast<void>(dummy);
+
+		_send_queue.push(oss.str());
 	}
+
+	bool launch_grok(
+		boost::filesystem::path const& dir,
+		uint32_t width,
+		uint32_t stride,
+		uint32_t height,
+		uint32_t samplesPerPixel,
+		uint32_t depth,
+		int device,
+		bool is4K,
+		uint32_t fps,
+		uint32_t bandwidth,
+		const std::string server,
+		const std::string license
+		);
+
+	void initClient(size_t uncompressedFrameSize, size_t compressedFrameSize, size_t numFrames);
+	bool waitForClientInit();
+
+	void reclaimCompressed(size_t frameId);
+	void reclaimUncompressed(size_t frameId);
+	uint8_t* getUncompressedFrame(size_t frameId);
+	uint8_t* getCompressedFrame(size_t frameId);
+
+	static size_t uncompressedFrameSize(uint32_t w, uint32_t h, uint32_t samplesPerPixel);
 
 	bool schedule_compress(DCPVideo const& proxy, std::function<void(BufferSrc const&)> converter)
 	{
@@ -663,6 +615,37 @@ struct ScheduledMessenger : public Messenger
 	}
 
 private:
+	bool launch(std::string const& cmd, boost::filesystem::path const& dir);
+	void processor_thread();
+	void outbound_thread();
+	void inbound_thread();
+
+	std::atomic_bool _running;
+	MessengerInit _init;
+	bool _initialized = false;
+	MessengerBlockingQueue<std::string> _send_queue;
+	MessengerBlockingQueue<std::string> _receive_queue;
+
+	std::thread _outbound;
+	Synch* _outbound_synch = nullptr;
+
+	std::thread _inbound;
+	Synch* _inbound_synch = nullptr;
+
+	std::vector<std::thread> _processors;
+	char* _uncompressed_buffer = nullptr;
+	char* _compressed_buffer = nullptr;
+
+	grk_handle _uncompressed_fd = 0;
+	grk_handle _compressed_fd = 0;
+
+	std::condition_variable _client_initialized_condition;
+	MessengerBlockingQueue<BufferSrc> _available_buffers;
+	std::future<int> _async_result;
+	std::condition_variable _shutdown_condition;
+	bool _shutdown = false;
+	std::mutex _shutdown_mutex;
+
 	ScheduledFrames _scheduled_frames;
 	std::atomic<uint32_t> _frames_scheduled;
 	std::atomic<uint32_t> _frames_compressed;
