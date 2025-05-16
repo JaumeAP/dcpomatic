@@ -496,6 +496,7 @@ protected:
 
 private:
 	bool launch(std::string const& cmd, boost::filesystem::path const& dir);
+	void processor_thread(std::function<void (std::string)> processor);
 
 	std::thread outbound;
 	Synch* outboundSynch_ = nullptr;

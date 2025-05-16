@@ -63,16 +63,16 @@ Messenger::~Messenger()
 /* One of these is created for each core, to receive messages (e.g. "frame is encoded")
  * from the grok process and handle them.
  */
-static void
-processor_thread(Messenger* messenger, std::function<void (std::string)> processor)
+void
+Messenger::processor_thread(std::function<void (std::string)> processor)
 {
-	while (messenger->running) {
+	while (running) {
 		std::string message;
-		if (!messenger->receiveQueue.waitAndPop(message)) {
+		if (!receiveQueue.waitAndPop(message)) {
 			break;
 		}
 
-		if (!messenger->running) {
+		if (!running) {
 			break;
 		}
 
@@ -84,14 +84,14 @@ processor_thread(Messenger* messenger, std::function<void (std::string)> process
 			auto height = msg.nextUint();
 			auto samples_per_pixel = msg.nextUint();
 			msg.nextUint(); // depth
-			messenger->init_.uncompressedFrameSize_ = Messenger::uncompressedFrameSize(width, height, samples_per_pixel);
+			init_.uncompressedFrameSize_ = Messenger::uncompressedFrameSize(width, height, samples_per_pixel);
 			auto compressed_frame_size = msg.nextUint();
 			auto num_frames = msg.nextUint();
-			messenger->initClient(compressed_frame_size, compressed_frame_size, num_frames);
+			initClient(compressed_frame_size, compressed_frame_size, num_frames);
 		} else if (tag == GRK_MSGR_BATCH_PROCESSED_UNCOMPRESSED) {
-			messenger->reclaimUncompressed(msg.nextUint());
+			reclaimUncompressed(msg.nextUint());
 		} else if (tag == GRK_MSGR_BATCH_PROCESSSED_COMPRESSED) {
-			messenger->reclaimCompressed(msg.nextUint());
+			reclaimCompressed(msg.nextUint());
 		}
 		processor(message);
 	}
@@ -151,7 +151,7 @@ Messenger::startThreads()
 	inbound = std::thread(inboundThread, this, init_.inboundMessageBuf, inboundSynch_);
 
 	for (size_t i = 0; i < init_.numProcessingThreads_; ++i) {
-		processors_.push_back(std::thread(processor_thread, this, init_.processor_));
+		processors_.push_back(std::thread(&Messenger::processor_thread, this, init_.processor_));
 	}
 }
 
