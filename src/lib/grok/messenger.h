@@ -252,7 +252,7 @@ class MessengerBlockingQueue
 		bool rc;
 		{
 			std::unique_lock<std::mutex> lk(mutex_);
-			rc = push_(value);
+			rc = push_unlocked(value);
 		}
 		if(rc)
 			can_pop_.notify_one();
@@ -264,7 +264,7 @@ class MessengerBlockingQueue
 		bool rc;
 		{
 			std::unique_lock<std::mutex> lk(mutex_);
-			rc = pop_(value);
+			rc = pop_unlocked(value);
 		}
 		if(rc)
 			can_push_.notify_one();
@@ -281,7 +281,7 @@ class MessengerBlockingQueue
 			// in case of spurious wakeup, loop until predicate in lambda
 			// is satisfied.
 			can_pop_.wait(lk, [this] { return !queue_.empty() || !active_; });
-			rc = pop_(value);
+			rc = pop_unlocked(value);
 		}
 		if(rc)
 			can_push_.notify_one();
@@ -290,7 +290,7 @@ class MessengerBlockingQueue
 	}
 
   private:
-	bool push_(Data const& value)
+	bool push_unlocked(Data const& value)
 	{
 		if(queue_.size() == max_size_ || !active_)
 			return false;
@@ -298,7 +298,8 @@ class MessengerBlockingQueue
 
 		return true;
 	}
-	bool pop_(Data& value)
+
+	bool pop_unlocked(Data& value)
 	{
 		if(queue_.empty() || !active_)
 			return false;
