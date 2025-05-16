@@ -490,8 +490,8 @@ protected:
 private:
 	bool launch(std::string const& cmd, boost::filesystem::path const& dir);
 	void processor_thread();
-	void outbound_thread(const std::string &sendBuf, Synch* synch);
-	void inbound_thread(const std::string &receiveBuf, Synch* synch);
+	void outbound_thread();
+	void inbound_thread();
 
 	std::atomic_bool _running;
 	MessengerInit _init;
