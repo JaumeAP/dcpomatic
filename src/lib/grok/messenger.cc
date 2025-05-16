@@ -98,28 +98,35 @@ Messenger::processor_thread()
 }
 
 
-static void outboundThread(Messenger* messenger, const std::string &sendBuf, Synch* synch)
+void
+Messenger::outbound_thread(const std::string &sendBuf, Synch* synch)
 {
 	grk_handle shm_fd = 0;
 	char* send_buffer = nullptr;
 
-	if(!SharedMemoryManager::initShm(sendBuf, messageBufferLen, &shm_fd, &send_buffer))
+	if (!SharedMemoryManager::initShm(sendBuf, messageBufferLen, &shm_fd, &send_buffer)) {
 		return;
-	while(messenger->running)
-	{
+	}
+
+	while (running) {
 		synch->wait(SYNCH_RECEIVE_READY);
-		if(!messenger->running)
+		if (!running) {
 			break;
+		}
 		std::string message;
-		if(!messenger->sendQueue.waitAndPop(message))
+		if (!sendQueue.waitAndPop(message)) {
 			break;
-		if(!messenger->running)
+		}
+		if (!running) {
 			break;
+		}
 		memcpy(send_buffer, message.c_str(), message.size() + 1);
 		synch->post(SYNCH_SENT);
 	}
+
 	SharedMemoryManager::deinit_shm(sendBuf, messageBufferLen, shm_fd, &send_buffer);
 }
+
 
 static void inboundThread(Messenger* messenger, const std::string &receiveBuf, Synch* synch)
 {
@@ -145,7 +152,7 @@ void
 Messenger::startThreads()
 {
 	outboundSynch_ = new Synch(init_.outboundSentSynch, init_.outboundReceiveReadySynch);
-	outbound = std::thread(outboundThread, this, init_.outboundMessageBuf, outboundSynch_);
+	outbound = std::thread(&Messenger::outbound_thread, this, init_.outboundMessageBuf, outboundSynch_);
 
 	inboundSynch_ = new Synch(init_.inboundSentSynch, init_.inboundReceiveReadySynch);
 	inbound = std::thread(inboundThread, this, init_.inboundMessageBuf, inboundSynch_);
