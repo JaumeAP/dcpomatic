@@ -248,7 +248,7 @@ public:
 		}
 
 		auto cvt = [&vf](BufferSrc src) {
-			vf.convert_to_xyz((uint16_t*)src.framePtr_);
+			vf.convert_to_xyz((uint16_t*) src.frame_ptr);
 		};
 
 		return _messenger->schedule_compress(vf, cvt);

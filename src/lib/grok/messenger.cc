@@ -403,7 +403,7 @@ Messenger::schedule_compress(DCPVideo const& proxy, std::function<void(BufferSrc
 	converter(src);
 	_scheduled_frames.store(proxy);
 	_frames_scheduled++;
-	send(GRK_MSGR_BATCH_SUBMIT_UNCOMPRESSED, proxy.index(), src.frameId_);
+	send(GRK_MSGR_BATCH_SUBMIT_UNCOMPRESSED, proxy.index(), src.frame_id);
 
 	return true;
 }

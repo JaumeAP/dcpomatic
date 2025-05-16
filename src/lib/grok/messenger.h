@@ -319,26 +319,43 @@ class MessengerBlockingQueue
 	bool active_;
 	size_t max_size_;
 };
+
+
 struct BufferSrc
 {
-	BufferSrc(void) : BufferSrc("") {}
-	explicit BufferSrc(const std::string &file) : file_(file), clientFrameId_(0), frameId_(0), framePtr_(nullptr)
+public:
+	BufferSrc()
+		: BufferSrc("")
 	{}
-	BufferSrc(size_t clientFrameId, size_t frameId, uint8_t* framePtr)
-		: file_(""), clientFrameId_(clientFrameId), frameId_(frameId), framePtr_(framePtr)
+
+	explicit BufferSrc(std::string const& file)
+		: _file(file)
+		, _client_frame_id(0)
 	{}
-	bool fromDisk(void)
+
+	BufferSrc(size_t client_frame_id, size_t frame_id_, uint8_t* frame_ptr_)
+		: frame_id(frame_id_)
+		, frame_ptr(frame_ptr_)
+		, _file("")
+		, _client_frame_id(client_frame_id)
+	{}
+
+	bool from_disk()
 	{
-		return !file_.empty() && framePtr_ == nullptr;
+		return !_file.empty() && frame_ptr == nullptr;
 	}
+
 	size_t index() const
 	{
-		return clientFrameId_;
+		return _client_frame_id;
 	}
-	std::string file_;
-	size_t clientFrameId_;
-	size_t frameId_;
-	uint8_t* framePtr_;
+
+	size_t frame_id = 0;
+	uint8_t* frame_ptr = nullptr;
+
+private:
+	std::string _file;
+	size_t _client_frame_id;
 };
 
 
