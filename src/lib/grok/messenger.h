@@ -602,6 +602,7 @@ struct ScheduledMessenger : public Messenger
 		return true;
 	}
 
+	/** @param processor function taking compressed J2K data and sending it to the Writer */
 	void process_compressed(std::string const& message, std::function<void (F, uint8_t*, uint32_t)> processor, bool needsRecompression)
 	{
 		Msg msg(message);
@@ -614,7 +615,8 @@ struct ScheduledMessenger : public Messenger
 			if (!src_frame) {
 				return;
 			}
-			processor(*src_frame, getCompressedFrame(compressedFrameId),compressedFrameLength);
+			/* Write the compressed J2K data out */
+			processor(*src_frame, getCompressedFrame(compressedFrameId), compressedFrameLength);
 		}
 
 		++_frames_compressed;

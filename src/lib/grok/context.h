@@ -129,10 +129,12 @@ public:
 
 					int const minimum_size = 16384;
 
+					/* Write the compressed data out and tidy up */
 					bool needsRecompression = compressedFrameLength < minimum_size;
 					_messenger->process_compressed(str, processor, needsRecompression);
 
 					if (needsRecompression) {
+						/* The JPEG2000 frame data was too small, so handle it with the CPU encoder */
 						auto vf = _messenger->retrieve(clientFrameId);
 						if (!vf) {
 							return;

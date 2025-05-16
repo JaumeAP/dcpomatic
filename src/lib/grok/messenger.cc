@@ -93,6 +93,8 @@ Messenger::processor_thread()
 		} else if (tag == GRK_MSGR_BATCH_PROCESSSED_COMPRESSED) {
 			reclaimCompressed(msg.nextUint());
 		}
+
+		/* Handle writing J2K data to disk */
 		_init.processor_(message);
 	}
 }
