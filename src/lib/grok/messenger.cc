@@ -284,7 +284,7 @@ Messenger::initClient(size_t uncompressedFrameSize, size_t compressedFrameSize, 
 	auto ptr = _uncompressed_buffer;
 	for(size_t i = 0; i < _num_frames; ++i)
 	{
-		_available_buffers.push(BufferSrc(0, i, (uint8_t*)ptr));
+		_available_buffers.push(BufferSrc(i, (uint8_t*)ptr));
 		ptr += _uncompressed_frame_size;
 	}
 
@@ -335,14 +335,14 @@ Messenger::uncompressedFrameSize(uint32_t w, uint32_t h, uint32_t samplesPerPixe
 void
 Messenger::reclaimCompressed(size_t frameId)
 {
-	_available_buffers.push(BufferSrc(0, frameId, getCompressedFrame(frameId)));
+	_available_buffers.push(BufferSrc(frameId, getCompressedFrame(frameId)));
 }
 
 
 void
 Messenger::reclaimUncompressed(size_t frameId)
 {
-	_available_buffers.push(BufferSrc(0, frameId, getUncompressedFrame(frameId)));
+	_available_buffers.push(BufferSrc(frameId, getUncompressedFrame(frameId)));
 }
 
 

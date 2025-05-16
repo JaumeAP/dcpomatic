@@ -324,38 +324,15 @@ class MessengerBlockingQueue
 struct BufferSrc
 {
 public:
-	BufferSrc()
-		: BufferSrc("")
-	{}
+	BufferSrc() = default;
 
-	explicit BufferSrc(std::string const& file)
-		: _file(file)
-		, _client_frame_id(0)
-	{}
-
-	BufferSrc(size_t client_frame_id, size_t frame_id_, uint8_t* frame_ptr_)
+	BufferSrc(size_t frame_id_, uint8_t* frame_ptr_)
 		: frame_id(frame_id_)
 		, frame_ptr(frame_ptr_)
-		, _file("")
-		, _client_frame_id(client_frame_id)
 	{}
-
-	bool from_disk()
-	{
-		return !_file.empty() && frame_ptr == nullptr;
-	}
-
-	size_t index() const
-	{
-		return _client_frame_id;
-	}
 
 	size_t frame_id = 0;
 	uint8_t* frame_ptr = nullptr;
-
-private:
-	std::string _file;
-	size_t _client_frame_id;
 };
 
 
