@@ -497,11 +497,11 @@ struct ScheduledFrames
 };
 
 
-class ScheduledMessenger
+class Messenger
 {
 public:
-	explicit ScheduledMessenger(MessengerInit init);
-	~ScheduledMessenger();
+	explicit Messenger(MessengerInit init);
+	~Messenger();
 
 	void startThreads();
 	bool initBuffers();

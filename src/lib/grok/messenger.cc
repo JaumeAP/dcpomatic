@@ -25,7 +25,7 @@
 using namespace grk_plugin;
 
 
-ScheduledMessenger::ScheduledMessenger(MessengerInit init)
+Messenger::Messenger(MessengerInit init)
 	: _running(true)
 	, _init(init)
 	, _frames_scheduled(0)
@@ -35,7 +35,7 @@ ScheduledMessenger::ScheduledMessenger(MessengerInit init)
 }
 
 
-ScheduledMessenger::~ScheduledMessenger()
+Messenger::~Messenger()
 {
 	shutdown();
 
@@ -68,7 +68,7 @@ ScheduledMessenger::~ScheduledMessenger()
  * from the grok process and handle them.
  */
 void
-ScheduledMessenger::processor_thread()
+Messenger::processor_thread()
 {
 	while (_running) {
 		std::string message;
@@ -88,7 +88,7 @@ ScheduledMessenger::processor_thread()
 			auto height = msg.nextUint();
 			auto samples_per_pixel = msg.nextUint();
 			msg.nextUint(); // depth
-			_init.uncompressedFrameSize_ = ScheduledMessenger::uncompressedFrameSize(width, height, samples_per_pixel);
+			_init.uncompressedFrameSize_ = Messenger::uncompressedFrameSize(width, height, samples_per_pixel);
 			auto compressed_frame_size = msg.nextUint();
 			auto num_frames = msg.nextUint();
 			initClient(compressed_frame_size, compressed_frame_size, num_frames);
@@ -105,7 +105,7 @@ ScheduledMessenger::processor_thread()
 
 
 void
-ScheduledMessenger::outbound_thread()
+Messenger::outbound_thread()
 {
 	grk_handle shm_fd = 0;
 	char* send_buffer = nullptr;
@@ -135,7 +135,7 @@ ScheduledMessenger::outbound_thread()
 
 
 void
-ScheduledMessenger::inbound_thread()
+Messenger::inbound_thread()
 {
 	grk_handle shm_fd = 0;
 	char* receive_buffer = nullptr;
@@ -159,22 +159,22 @@ ScheduledMessenger::inbound_thread()
 
 
 void
-ScheduledMessenger::startThreads()
+Messenger::startThreads()
 {
 	_outbound_synch = new Synch(_init.outboundSentSynch, _init.outboundReceiveReadySynch);
-	_outbound = std::thread(&ScheduledMessenger::outbound_thread, this);
+	_outbound = std::thread(&Messenger::outbound_thread, this);
 
 	_inbound_synch = new Synch(_init.inboundSentSynch, _init.inboundReceiveReadySynch);
-	_inbound = std::thread(&ScheduledMessenger::inbound_thread, this);
+	_inbound = std::thread(&Messenger::inbound_thread, this);
 
 	for (size_t i = 0; i < _init.numProcessingThreads_; ++i) {
-		_processors.push_back(std::thread(&ScheduledMessenger::processor_thread, this));
+		_processors.push_back(std::thread(&Messenger::processor_thread, this));
 	}
 }
 
 
 bool
-ScheduledMessenger::initBuffers()
+Messenger::initBuffers()
 {
 	bool rc = true;
 	if (_init.uncompressedFrameSize_) {
@@ -198,7 +198,7 @@ ScheduledMessenger::initBuffers()
 
 
 bool
-ScheduledMessenger::deinit_shm()
+Messenger::deinit_shm()
 {
 	bool rc = SharedMemoryManager::deinit_shm(
 		grokUncompressedBuf,
@@ -217,7 +217,7 @@ ScheduledMessenger::deinit_shm()
 
 
 bool
-ScheduledMessenger::launch_grok(
+Messenger::launch_grok(
 	boost::filesystem::path const& dir,
 	uint32_t width,
 	uint32_t stride,
@@ -251,7 +251,7 @@ ScheduledMessenger::launch_grok(
 
 
 void
-ScheduledMessenger::initClient(size_t uncompressedFrameSize, size_t compressedFrameSize, size_t numFrames)
+Messenger::initClient(size_t uncompressedFrameSize, size_t compressedFrameSize, size_t numFrames)
 {
 	// client fills queue with pending uncompressed buffers
 	_init.uncompressedFrameSize_ = uncompressedFrameSize;
@@ -271,7 +271,7 @@ ScheduledMessenger::initClient(size_t uncompressedFrameSize, size_t compressedFr
 }
 
 bool
-ScheduledMessenger::waitForClientInit()
+Messenger::waitForClientInit()
 {
 	if (_initialized) {
 		return true;
@@ -303,28 +303,28 @@ ScheduledMessenger::waitForClientInit()
 
 
 size_t
-ScheduledMessenger::uncompressedFrameSize(uint32_t w, uint32_t h, uint32_t samplesPerPixel)
+Messenger::uncompressedFrameSize(uint32_t w, uint32_t h, uint32_t samplesPerPixel)
 {
 	return sizeof(uint16_t) * w * h * samplesPerPixel;
 }
 
 
 void
-ScheduledMessenger::reclaimCompressed(size_t frameId)
+Messenger::reclaimCompressed(size_t frameId)
 {
 	_available_buffers.push(BufferSrc(0, frameId, getCompressedFrame(frameId)));
 }
 
 
 void
-ScheduledMessenger::reclaimUncompressed(size_t frameId)
+Messenger::reclaimUncompressed(size_t frameId)
 {
 	_available_buffers.push(BufferSrc(0, frameId, getUncompressedFrame(frameId)));
 }
 
 
 uint8_t*
-ScheduledMessenger::getUncompressedFrame(size_t frameId)
+Messenger::getUncompressedFrame(size_t frameId)
 {
 	assert(frameId < _init.numFrames_);
 	if(frameId >= _init.numFrames_)
@@ -335,7 +335,7 @@ ScheduledMessenger::getUncompressedFrame(size_t frameId)
 
 
 uint8_t*
-ScheduledMessenger::getCompressedFrame(size_t frameId)
+Messenger::getCompressedFrame(size_t frameId)
 {
 	assert(frameId < _init.numFrames_);
 	if(frameId >= _init.numFrames_)
@@ -345,7 +345,7 @@ ScheduledMessenger::getCompressedFrame(size_t frameId)
 }
 
 bool
-ScheduledMessenger::launch(std::string const& cmd, boost::filesystem::path const& dir)
+Messenger::launch(std::string const& cmd, boost::filesystem::path const& dir)
 {
 	// Change the working directory
 	if(!dir.empty())

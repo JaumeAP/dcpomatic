@@ -161,7 +161,7 @@ public:
 			std::thread::hardware_concurrency()
 			);
 
-		_messenger = new ScheduledMessenger(clientInit);
+		_messenger = new Messenger(clientInit);
 	}
 
 	~GrokContext()
@@ -263,7 +263,7 @@ private:
 	}
 
 	DcpomaticContext* _dcpomatic_context;
-	ScheduledMessenger* _messenger = nullptr;
+	Messenger* _messenger = nullptr;
 	bool _launched = false;
 	bool _launch_failed = false;
 };
