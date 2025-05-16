@@ -133,58 +133,6 @@ void setMessengerLogger(IMessengerLogger* logger);
 IMessengerLogger* getMessengerLogger(void);
 
 
-struct MessengerInit
-{
-	MessengerInit(
-		std::string const& outBuf,
-		std::string const& outSent,
-		std::string const& outReceiveReady,
-		std::string const& inBuf,
-		std::string const& inSent,
-		std::string const& inReceiveReady,
-		std::function<void(std::string)> processor,
-		size_t numProcessingThreads
-		)
-		: outboundMessageBuf(outBuf)
-		, outboundSentSynch(outSent)
-		, outboundReceiveReadySynch(outReceiveReady)
-		, inboundMessageBuf(inBuf)
-		, inboundSentSynch(inSent)
-		, inboundReceiveReadySynch(inReceiveReady)
-		, processor_(processor)
-		, numProcessingThreads_(numProcessingThreads)
-		, uncompressedFrameSize_(0)
-		, compressedFrameSize_(0)
-		, numFrames_(0)
-	{
-		unlink();
-	}
-
-	void unlink()
-	{
-#ifndef _WIN32
-		shm_unlink(grokToClientMessageBuf.c_str());
-		shm_unlink(clientToGrokMessageBuf.c_str());
-#endif
-	}
-
-	std::string outboundMessageBuf;
-	std::string outboundSentSynch;
-	std::string outboundReceiveReadySynch;
-
-	std::string inboundMessageBuf;
-	std::string inboundSentSynch;
-	std::string inboundReceiveReadySynch;
-
-	std::function<void(std::string)> processor_;
-	size_t numProcessingThreads_;
-
-	size_t uncompressedFrameSize_;
-	size_t compressedFrameSize_;
-	size_t numFrames_;
-};
-
-
 enum SynchDirection
 {
 	SYNCH_SENT,
@@ -457,7 +405,17 @@ struct ScheduledFrames
 class Messenger
 {
 public:
-	explicit Messenger(MessengerInit init);
+	Messenger(
+		std::string const& outBuf,
+		std::string const& outSent,
+		std::string const& outReceiveReady,
+		std::string const& inBuf,
+		std::string const& inSent,
+		std::string const& inReceiveReady,
+		std::function<void(std::string)> processor,
+		size_t numProcessingThreads
+	);
+
 	~Messenger();
 
 	void startThreads();
@@ -522,7 +480,6 @@ private:
 	void inbound_thread();
 
 	std::atomic_bool _running;
-	MessengerInit _init;
 	bool _initialized = false;
 	/** a queue of messages sent (by outbound_thread) via shared memory to the Grok process */
 	MessengerBlockingQueue<std::string> _send_queue;
@@ -558,6 +515,21 @@ private:
 	ScheduledFrames _scheduled_frames;
 	std::atomic<uint32_t> _frames_scheduled;
 	std::atomic<uint32_t> _frames_compressed;
+
+	std::string outboundMessageBuf;
+	std::string outboundSentSynch;
+	std::string outboundReceiveReadySynch;
+
+	std::string inboundMessageBuf;
+	std::string inboundSentSynch;
+	std::string inboundReceiveReadySynch;
+
+	std::function<void(std::string)> processor_;
+	size_t numProcessingThreads_;
+
+	size_t uncompressedFrameSize_;
+	size_t compressedFrameSize_;
+	size_t numFrames_;
 };
 
 } // namespace grk_plugin

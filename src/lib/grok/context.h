@@ -150,7 +150,7 @@ public:
 			}
 		};
 
-		auto clientInit = MessengerInit(
+		_messenger = new Messenger(
 			clientToGrokMessageBuf,
 			clientSentSynch,
 			grokReceiveReadySynch,
@@ -160,8 +160,6 @@ public:
 			proc,
 			std::thread::hardware_concurrency()
 			);
-
-		_messenger = new Messenger(clientInit);
 	}
 
 	~GrokContext()
