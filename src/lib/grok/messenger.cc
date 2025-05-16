@@ -36,8 +36,8 @@ Messenger::Messenger(MessengerInit init)
 Messenger::~Messenger()
 {
 	_running = false;
-	sendQueue.deactivate();
-	receiveQueue.deactivate();
+	_send_queue.deactivate();
+	_receive_queue.deactivate();
 
 	if (outboundSynch_) {
 		outboundSynch_->post(SYNCH_RECEIVE_READY);
@@ -68,7 +68,7 @@ Messenger::processor_thread()
 {
 	while (_running) {
 		std::string message;
-		if (!receiveQueue.waitAndPop(message)) {
+		if (!_receive_queue.waitAndPop(message)) {
 			break;
 		}
 
@@ -114,7 +114,7 @@ Messenger::outbound_thread(const std::string &sendBuf, Synch* synch)
 			break;
 		}
 		std::string message;
-		if (!sendQueue.waitAndPop(message)) {
+		if (!_send_queue.waitAndPop(message)) {
 			break;
 		}
 		if (!_running) {
@@ -145,7 +145,7 @@ Messenger::inbound_thread(const std::string &receiveBuf, Synch* synch)
 		}
 		auto message = std::string(receive_buffer);
 		synch->post(SYNCH_RECEIVE_READY);
-		receiveQueue.push(message);
+		_receive_queue.push(message);
 	}
 
 	SharedMemoryManager::deinit_shm(receiveBuf, messageBufferLen, shm_fd, &receive_buffer);
@@ -226,8 +226,8 @@ Messenger::launch_grok(
 	const std::string license
 	)
 {
-	std::unique_lock<std::mutex> lk(shutdownMutex_);
-	if (async_result_.valid()) {
+	std::unique_lock<std::mutex> lk(_shutdown_mutex);
+	if (_async_result.valid()) {
 		return true;
 	}
 	_init.unlink();
@@ -255,13 +255,13 @@ Messenger::initClient(size_t uncompressedFrameSize, size_t compressedFrameSize, 
 	auto ptr = uncompressed_buffer_;
 	for(size_t i = 0; i < _init.numFrames_; ++i)
 	{
-		availableBuffers_.push(BufferSrc(0, i, (uint8_t*)ptr));
+		_available_buffers.push(BufferSrc(0, i, (uint8_t*)ptr));
 		ptr += _init.uncompressedFrameSize_;
 	}
 
-	std::unique_lock<std::mutex> lk(shutdownMutex_);
+	std::unique_lock<std::mutex> lk(_shutdown_mutex);
 	_initialized = true;
-	clientInitializedCondition_.notify_all();
+	_client_initialized_condition.notify_all();
 }
 
 bool
@@ -273,7 +273,7 @@ Messenger::waitForClientInit()
 		return false;
 	}
 
-	std::unique_lock<std::mutex> lk(shutdownMutex_);
+	std::unique_lock<std::mutex> lk(_shutdown_mutex);
 
 	if (_initialized) {
 		return true;
@@ -282,10 +282,10 @@ Messenger::waitForClientInit()
 	}
 
 	while (true) {
-		if (clientInitializedCondition_.wait_for(lk, std::chrono::seconds(1), [this]{ return _initialized || _shutdown; })) {
+		if (_client_initialized_condition.wait_for(lk, std::chrono::seconds(1), [this]{ return _initialized || _shutdown; })) {
 			break;
 		}
-		auto status = async_result_.wait_for(std::chrono::milliseconds(100));
+		auto status = _async_result.wait_for(std::chrono::milliseconds(100));
 		if (status == std::future_status::ready) {
 			getMessengerLogger()->error("Grok exited unexpectedly during initialization");
 			return false;
@@ -306,14 +306,14 @@ Messenger::uncompressedFrameSize(uint32_t w, uint32_t h, uint32_t samplesPerPixe
 void
 Messenger::reclaimCompressed(size_t frameId)
 {
-	availableBuffers_.push(BufferSrc(0, frameId, getCompressedFrame(frameId)));
+	_available_buffers.push(BufferSrc(0, frameId, getCompressedFrame(frameId)));
 }
 
 
 void
 Messenger::reclaimUncompressed(size_t frameId)
 {
-	availableBuffers_.push(BufferSrc(0, frameId, getUncompressedFrame(frameId)));
+	_available_buffers.push(BufferSrc(0, frameId, getUncompressedFrame(frameId)));
 }
 
 
@@ -352,10 +352,10 @@ Messenger::launch(std::string const& cmd, boost::filesystem::path const& dir)
 		}
 	}
 	// Execute the command using std::async and std::system
-	cmd_ = cmd;
+	_cmd = cmd;
 	getMessengerLogger()->info(cmd.c_str());
-	async_result_ = std::async(std::launch::async, [this]() { return std::system(cmd_.c_str()); });
-	bool success = async_result_.valid();
+	_async_result = std::async(std::launch::async, [this]() { return std::system(_cmd.c_str()); });
+	bool success = _async_result.valid();
 	if (!success)
 		getMessengerLogger()->error("Grok launch failed");
 

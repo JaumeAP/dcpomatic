@@ -451,7 +451,7 @@ public:
 		int dummy[] = {0, ((void)(oss << ',' << args), 0)...};
 		static_cast<void>(dummy);
 
-		sendQueue.push(oss.str());
+		_send_queue.push(oss.str());
 	}
 
 	bool launch_grok(
@@ -479,18 +479,13 @@ public:
 
 	static size_t uncompressedFrameSize(uint32_t w, uint32_t h, uint32_t samplesPerPixel);
 
-	bool _initialized = false;
-	bool _shutdown = false;
-	MessengerBlockingQueue<std::string> sendQueue;
-	MessengerBlockingQueue<std::string> receiveQueue;
-	MessengerBlockingQueue<BufferSrc> availableBuffers_;
-	std::string cmd_;
-	std::future<int> async_result_;
-	std::mutex shutdownMutex_;
-	std::condition_variable shutdownCondition_;
-
 protected:
-	std::condition_variable clientInitializedCondition_;
+	std::condition_variable _client_initialized_condition;
+	MessengerBlockingQueue<BufferSrc> _available_buffers;
+	std::future<int> _async_result;
+	std::condition_variable _shutdown_condition;
+	bool _shutdown = false;
+	std::mutex _shutdown_mutex;
 
 private:
 	bool launch(std::string const& cmd, boost::filesystem::path const& dir);
@@ -500,6 +495,10 @@ private:
 
 	std::atomic_bool _running;
 	MessengerInit _init;
+	bool _initialized = false;
+	MessengerBlockingQueue<std::string> _send_queue;
+	MessengerBlockingQueue<std::string> _receive_queue;
+	std::string _cmd;
 
 	std::thread outbound;
 	Synch* outboundSynch_ = nullptr;
@@ -593,7 +592,7 @@ struct ScheduledMessenger : public Messenger
 	bool schedule_compress(F const& proxy, std::function<void(BufferSrc const&)> converter)
 	{
 		BufferSrc src;
-		if (!availableBuffers_.waitAndPop(src)) {
+		if (!_available_buffers.waitAndPop(src)) {
 			return false;
 		}
 		converter(src);
@@ -623,26 +622,26 @@ struct ScheduledMessenger : public Messenger
 		send(GRK_MSGR_BATCH_PROCESSSED_COMPRESSED, compressedFrameId);
 
 		if (_shutdown && _frames_compressed == _frames_scheduled) {
-			shutdownCondition_.notify_all();
+			_shutdown_condition.notify_all();
 		}
 	}
 
 	void shutdown()
 	{
 		try {
-			std::unique_lock<std::mutex> lk(shutdownMutex_);
-			if (!async_result_.valid()) {
+			std::unique_lock<std::mutex> lk(_shutdown_mutex);
+			if (!_async_result.valid()) {
 				return;
 			}
 			_shutdown = true;
 			if (_frames_scheduled) {
 				uint32_t scheduled = _frames_scheduled;
 				send(GRK_MSGR_BATCH_FLUSH, scheduled);
-				shutdownCondition_.wait(lk, [this] { return _frames_scheduled == _frames_compressed; });
+				_shutdown_condition.wait(lk, [this] { return _frames_scheduled == _frames_compressed; });
 			}
-			availableBuffers_.deactivate();
+			_available_buffers.deactivate();
 			send(GRK_MSGR_BATCH_SHUTDOWN);
-			int result = async_result_.get();
+			int result = _async_result.get();
 			if(result != 0) {
 				getMessengerLogger()->error("Accelerator failed with return code: %d\n",result);
 			}
