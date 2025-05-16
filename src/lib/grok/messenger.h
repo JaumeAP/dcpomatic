@@ -191,7 +191,6 @@ enum SynchDirection
 	SYNCH_RECEIVE_READY
 };
 
-typedef int grk_handle;
 struct Synch
 {
 	Synch(const std::string &sentSemName, const std::string &receiveReadySemName)
@@ -260,7 +259,7 @@ struct Synch
 };
 struct SharedMemoryManager
 {
-	static bool initShm(const std::string &name, size_t len, grk_handle* shm_fd, char** buffer)
+	static bool initShm(const std::string &name, size_t len, int* shm_fd, char** buffer)
 	{
 		*shm_fd = shm_open(name.c_str(), O_CREAT | O_RDWR, 0666);
 		if(*shm_fd < 0)
@@ -296,7 +295,7 @@ struct SharedMemoryManager
 
 		return *buffer != nullptr;
 	}
-	static bool deinit_shm(const std::string &name, size_t len, grk_handle &shm_fd, char** buffer)
+	static bool deinit_shm(const std::string &name, size_t len, int &shm_fd, char** buffer)
 	{
 		if (!*buffer || !shm_fd)
 			return true;
@@ -580,8 +579,8 @@ private:
 	char* _uncompressed_buffer = nullptr;
 	char* _compressed_buffer = nullptr;
 
-	grk_handle _uncompressed_fd = 0;
-	grk_handle _compressed_fd = 0;
+	int _uncompressed_fd = 0;
+	int _compressed_fd = 0;
 
 	std::condition_variable _client_initialized_condition;
 	MessengerBlockingQueue<BufferSrc> _available_buffers;

@@ -107,7 +107,7 @@ Messenger::processor_thread()
 void
 Messenger::outbound_thread()
 {
-	grk_handle shm_fd = 0;
+	int shm_fd = 0;
 	char* send_buffer = nullptr;
 
 	if (!SharedMemoryManager::initShm(_init.outboundMessageBuf, messageBufferLen, &shm_fd, &send_buffer)) {
@@ -137,7 +137,7 @@ Messenger::outbound_thread()
 void
 Messenger::inbound_thread()
 {
-	grk_handle shm_fd = 0;
+	int shm_fd = 0;
 	char* receive_buffer = nullptr;
 
 	if (!SharedMemoryManager::initShm(_init.inboundMessageBuf, messageBufferLen, &shm_fd, &receive_buffer)) {
