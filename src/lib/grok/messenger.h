@@ -498,7 +498,6 @@ private:
 	bool _initialized = false;
 	MessengerBlockingQueue<std::string> _send_queue;
 	MessengerBlockingQueue<std::string> _receive_queue;
-	std::string _cmd;
 
 	std::thread outbound;
 	Synch* outboundSynch_ = nullptr;

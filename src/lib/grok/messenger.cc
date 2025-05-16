@@ -352,9 +352,8 @@ Messenger::launch(std::string const& cmd, boost::filesystem::path const& dir)
 		}
 	}
 	// Execute the command using std::async and std::system
-	_cmd = cmd;
 	getMessengerLogger()->info(cmd.c_str());
-	_async_result = std::async(std::launch::async, [this]() { return std::system(_cmd.c_str()); });
+	_async_result = std::async(std::launch::async, [cmd]() { return std::system(cmd.c_str()); });
 	bool success = _async_result.valid();
 	if (!success)
 		getMessengerLogger()->error("Grok launch failed");
