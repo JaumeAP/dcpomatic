@@ -566,7 +566,9 @@ private:
 	std::atomic_bool _running;
 	MessengerInit _init;
 	bool _initialized = false;
+	/** a queue of messages sent (by outbound_thread) via shared memory to the Grok process */
 	MessengerBlockingQueue<std::string> _send_queue;
+	/** a queue of messages received (by inbound_thread) via shared memory from the Grok process */
 	MessengerBlockingQueue<std::string> _receive_queue;
 
 	std::thread _outbound;
@@ -576,7 +578,13 @@ private:
 	Synch* _inbound_synch = nullptr;
 
 	std::vector<std::thread> _processors;
+	/** Shared memory buffer for passing input (uncompressed) image data.
+	  * Allocated to _init.numFrames_ BufferSrc objects in _available_buffers
+	  */
 	char* _uncompressed_buffer = nullptr;
+	/** Shared memory buffer for passing output (compressed) image data.
+	 *  Contains multiple frames at a spacing of _init.compressedFrameSize_ bytes
+	 */
 	char* _compressed_buffer = nullptr;
 
 	int _uncompressed_fd = 0;
