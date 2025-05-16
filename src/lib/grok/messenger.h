@@ -499,18 +499,18 @@ private:
 	MessengerBlockingQueue<std::string> _send_queue;
 	MessengerBlockingQueue<std::string> _receive_queue;
 
-	std::thread outbound;
-	Synch* outboundSynch_ = nullptr;
+	std::thread _outbound;
+	Synch* _outbound_synch = nullptr;
 
-	std::thread inbound;
-	Synch* inboundSynch_ = nullptr;
+	std::thread _inbound;
+	Synch* _inbound_synch = nullptr;
 
-	std::vector<std::thread> processors_;
-	char* uncompressed_buffer_ = nullptr;
-	char* compressed_buffer_ = nullptr;
+	std::vector<std::thread> _processors;
+	char* _uncompressed_buffer = nullptr;
+	char* _compressed_buffer = nullptr;
 
-	grk_handle uncompressed_fd_ = 0;
-	grk_handle compressed_fd_ = 0;
+	grk_handle _uncompressed_fd = 0;
+	grk_handle _compressed_fd = 0;
 };
 
 

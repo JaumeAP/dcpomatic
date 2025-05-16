@@ -39,22 +39,22 @@ Messenger::~Messenger()
 	_send_queue.deactivate();
 	_receive_queue.deactivate();
 
-	if (outboundSynch_) {
-		outboundSynch_->post(SYNCH_RECEIVE_READY);
-		outbound.join();
+	if (_outbound_synch) {
+		_outbound_synch->post(SYNCH_RECEIVE_READY);
+		_outbound.join();
 	}
 
-	if (inboundSynch_) {
-		inboundSynch_->post(SYNCH_SENT);
-		inbound.join();
+	if (_inbound_synch) {
+		_inbound_synch->post(SYNCH_SENT);
+		_inbound.join();
 	}
 
-	for(auto& p: processors_) {
+	for(auto& p: _processors) {
 		p.join();
 	}
 
-	delete outboundSynch_;
-	delete inboundSynch_;
+	delete _outbound_synch;
+	delete _inbound_synch;
 
 	deinit_shm();
 }
@@ -155,14 +155,14 @@ Messenger::inbound_thread(const std::string &receiveBuf, Synch* synch)
 void
 Messenger::startThreads()
 {
-	outboundSynch_ = new Synch(_init.outboundSentSynch, _init.outboundReceiveReadySynch);
-	outbound = std::thread(&Messenger::outbound_thread, this, _init.outboundMessageBuf, outboundSynch_);
+	_outbound_synch = new Synch(_init.outboundSentSynch, _init.outboundReceiveReadySynch);
+	_outbound = std::thread(&Messenger::outbound_thread, this, _init.outboundMessageBuf, _outbound_synch);
 
-	inboundSynch_ = new Synch(_init.inboundSentSynch, _init.inboundReceiveReadySynch);
-	inbound = std::thread(&Messenger::inbound_thread, this, _init.inboundMessageBuf, inboundSynch_);
+	_inbound_synch = new Synch(_init.inboundSentSynch, _init.inboundReceiveReadySynch);
+	_inbound = std::thread(&Messenger::inbound_thread, this, _init.inboundMessageBuf, _inbound_synch);
 
 	for (size_t i = 0; i < _init.numProcessingThreads_; ++i) {
-		processors_.push_back(std::thread(&Messenger::processor_thread, this));
+		_processors.push_back(std::thread(&Messenger::processor_thread, this));
 	}
 }
 
@@ -175,7 +175,7 @@ Messenger::initBuffers()
 		rc = rc && SharedMemoryManager::initShm(
 			grokUncompressedBuf,
 			_init.uncompressedFrameSize_ * _init.numFrames_,
-			&uncompressed_fd_, &uncompressed_buffer_
+			&_uncompressed_fd, &_uncompressed_buffer
 		);
 	}
 
@@ -183,7 +183,7 @@ Messenger::initBuffers()
 		rc = rc && SharedMemoryManager::initShm(
 			grokCompressedBuf,
 			_init.compressedFrameSize_ * _init.numFrames_,
-			&compressed_fd_, &compressed_buffer_
+			&_compressed_fd, &_compressed_buffer
 		);
 	}
 
@@ -197,13 +197,13 @@ Messenger::deinit_shm()
 	bool rc = SharedMemoryManager::deinit_shm(
 		grokUncompressedBuf,
 		_init.uncompressedFrameSize_ * _init.numFrames_,
-		uncompressed_fd_, &uncompressed_buffer_
+		_uncompressed_fd, &_uncompressed_buffer
 	);
 
 	rc = rc && SharedMemoryManager::deinit_shm(
 		grokCompressedBuf,
 		_init.compressedFrameSize_ * _init.numFrames_,
-		compressed_fd_, &compressed_buffer_
+		_compressed_fd, &_compressed_buffer
 	);
 
 	return rc;
@@ -252,7 +252,7 @@ Messenger::initClient(size_t uncompressedFrameSize, size_t compressedFrameSize, 
 	_init.compressedFrameSize_ = compressedFrameSize;
 	_init.numFrames_ = numFrames;
 	initBuffers();
-	auto ptr = uncompressed_buffer_;
+	auto ptr = _uncompressed_buffer;
 	for(size_t i = 0; i < _init.numFrames_; ++i)
 	{
 		_available_buffers.push(BufferSrc(0, i, (uint8_t*)ptr));
@@ -324,7 +324,7 @@ Messenger::getUncompressedFrame(size_t frameId)
 	if(frameId >= _init.numFrames_)
 		return nullptr;
 
-	return (uint8_t*)(uncompressed_buffer_ + frameId * _init.uncompressedFrameSize_);
+	return (uint8_t*)(_uncompressed_buffer + frameId * _init.uncompressedFrameSize_);
 }
 
 
@@ -335,7 +335,7 @@ Messenger::getCompressedFrame(size_t frameId)
 	if(frameId >= _init.numFrames_)
 		return nullptr;
 
-	return (uint8_t*)(compressed_buffer_ + frameId * _init.compressedFrameSize_);
+	return (uint8_t*)(_compressed_buffer + frameId * _init.compressedFrameSize_);
 }
 
 bool
