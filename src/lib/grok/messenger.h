@@ -68,6 +68,8 @@ static const std::string GRK_MSGR_BATCH_PROCESSSED_COMPRESSED =
 static const std::string GRK_MSGR_BATCH_SHUTDOWN = "GRK_MSGR_BATCH_SHUTDOWN";
 static const std::string GRK_MSGR_BATCH_FLUSH = "GRK_MSGR_BATCH_FLUSH";
 static const size_t messageBufferLen = 256;
+
+
 struct IMessengerLogger
 {
 	virtual ~IMessengerLogger(void) = default;
@@ -86,6 +88,8 @@ struct IMessengerLogger
 		return std::string(message);
 	}
 };
+
+
 struct MessengerLogger : public IMessengerLogger
 {
 	explicit MessengerLogger(const std::string &preamble) : preamble_(preamble) {}
