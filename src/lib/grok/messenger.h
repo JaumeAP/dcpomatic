@@ -20,39 +20,30 @@
 
 #pragma once
 
-#include "../dcp_video.h"
 
+#include "../dcp_video.h"
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
-
-#include <iostream>
-#include <string>
-#include <cstring>
 #include <atomic>
-#include <functional>
-#include <sstream>
-#include <future>
-#include <map>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <queue>
 #include <cassert>
-#include <cstdarg>
 #include <climits>
-
-#ifdef _WIN32
-#include <windows.h>
-#include <direct.h>
-#include <tlhelp32.h>
-#pragma warning(disable : 4100)
-#else
+#include <condition_variable>
+#include <cstdarg>
+#include <cstring>
+#include <functional>
+#include <future>
+#include <iostream>
+#include <map>
+#include <mutex>
+#include <queue>
+#include <sstream>
+#include <string>
+#include <thread>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <semaphore.h>
 #include <signal.h>
-#endif
 
 
 
