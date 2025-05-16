@@ -19,6 +19,8 @@
 */
 #pragma once
 
+#include "../dcp_video.h"
+
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 
@@ -50,6 +52,8 @@
 #include <semaphore.h>
 #include <signal.h>
 #endif
+
+
 
 namespace grk_plugin
 {
@@ -546,24 +550,23 @@ struct Msg
 };
 
 
-template<typename F>
 struct ScheduledFrames
 {
-	void store(F const& val)
+	void store(DCPVideo const& val)
 	{
 		std::unique_lock<std::mutex> lk(mapMutex_);
 		auto it = map_.find(val.index());
 		if (it == map_.end())
 			map_.emplace(std::make_pair(val.index(), val));
 	}
-	boost::optional<F> retrieve(size_t index)
+	boost::optional<DCPVideo> retrieve(size_t index)
 	{
 		std::unique_lock<std::mutex> lk(mapMutex_);
 		auto it = map_.find(index);
 		if(it == map_.end())
 			return {};
 
-		F val = it->second;
+		DCPVideo val = it->second;
 		map_.erase(index);
 
 		return val;
@@ -571,10 +574,10 @@ struct ScheduledFrames
 
  private:
 	std::mutex mapMutex_;
-	std::map<size_t, F> map_;
+	std::map<size_t, DCPVideo> map_;
 };
 
-template<typename F>
+
 struct ScheduledMessenger : public Messenger
 {
 	explicit ScheduledMessenger(MessengerInit init)
@@ -588,7 +591,7 @@ struct ScheduledMessenger : public Messenger
 		shutdown();
 	}
 
-	bool schedule_compress(F const& proxy, std::function<void(BufferSrc const&)> converter)
+	bool schedule_compress(DCPVideo const& proxy, std::function<void(BufferSrc const&)> converter)
 	{
 		BufferSrc src;
 		if (!_available_buffers.waitAndPop(src)) {
@@ -603,7 +606,7 @@ struct ScheduledMessenger : public Messenger
 	}
 
 	/** @param processor function taking compressed J2K data and sending it to the Writer */
-	void process_compressed(std::string const& message, std::function<void (F, uint8_t*, uint32_t)> processor, bool needsRecompression)
+	void process_compressed(std::string const& message, std::function<void (DCPVideo, uint8_t*, uint32_t)> processor, bool needsRecompression)
 	{
 		Msg msg(message);
 		msg.next();
@@ -651,16 +654,16 @@ struct ScheduledMessenger : public Messenger
 		}
 	}
 
-	boost::optional<F> retrieve(size_t index) {
+	boost::optional<DCPVideo> retrieve(size_t index) {
 		return _scheduled_frames.retrieve(index);
 	}
 
-	void store(F& val) {
+	void store(DCPVideo& val) {
 		_scheduled_frames.store(val);
 	}
 
 private:
-	ScheduledFrames<F> _scheduled_frames;
+	ScheduledFrames _scheduled_frames;
 	std::atomic<uint32_t> _frames_scheduled;
 	std::atomic<uint32_t> _frames_compressed;
 };
