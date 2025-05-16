@@ -479,13 +479,11 @@ public:
 
 	static size_t uncompressedFrameSize(uint32_t w, uint32_t h, uint32_t samplesPerPixel);
 
-	std::atomic_bool running;
 	bool _initialized = false;
 	bool _shutdown = false;
 	MessengerBlockingQueue<std::string> sendQueue;
 	MessengerBlockingQueue<std::string> receiveQueue;
 	MessengerBlockingQueue<BufferSrc> availableBuffers_;
-	MessengerInit init_;
 	std::string cmd_;
 	std::future<int> async_result_;
 	std::mutex shutdownMutex_;
@@ -498,6 +496,10 @@ private:
 	bool launch(std::string const& cmd, boost::filesystem::path const& dir);
 	void processor_thread();
 	void outbound_thread(const std::string &sendBuf, Synch* synch);
+	void inbound_thread(const std::string &receiveBuf, Synch* synch);
+
+	std::atomic_bool _running;
+	MessengerInit _init;
 
 	std::thread outbound;
 	Synch* outboundSynch_ = nullptr;
