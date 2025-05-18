@@ -206,3 +206,9 @@ def build(bld):
 
     obj.target = 'unit-tests'
     obj.install_path = ''
+
+    obj = bld(features='cxx cxxprogram')
+    obj.name = 'mockgrok'
+    obj.source = 'mock_grok.cc'
+    obj.target = 'grk_compress'
+    obj.uselib = 'DCP'
