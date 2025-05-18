@@ -19,6 +19,7 @@
 */
 
 
+#include "shm.h"
 #include "messenger.h"
 
 
@@ -130,7 +131,7 @@ Messenger::outbound_thread()
 	int shm_fd = 0;
 	char* send_buffer = nullptr;
 
-	if (!SharedMemoryManager::init_shm(_outbound_message_buf, messageBufferLen, &shm_fd, &send_buffer)) {
+	if (!init_shm(_outbound_message_buf, messageBufferLen, &shm_fd, &send_buffer)) {
 		return;
 	}
 
@@ -150,7 +151,7 @@ Messenger::outbound_thread()
 		_outbound_synch->post(SYNCH_SENT);
 	}
 
-	SharedMemoryManager::deinit_shm(_outbound_message_buf, messageBufferLen, shm_fd, &send_buffer);
+	::deinit_shm(_outbound_message_buf, messageBufferLen, shm_fd, &send_buffer);
 }
 
 
@@ -160,7 +161,7 @@ Messenger::inbound_thread()
 	int shm_fd = 0;
 	char* receive_buffer = nullptr;
 
-	if (!SharedMemoryManager::init_shm(_inbound_message_buf, messageBufferLen, &shm_fd, &receive_buffer)) {
+	if (!init_shm(_inbound_message_buf, messageBufferLen, &shm_fd, &receive_buffer)) {
 		return;
 	}
 
@@ -174,7 +175,7 @@ Messenger::inbound_thread()
 		_receive_queue.push(message);
 	}
 
-	SharedMemoryManager::deinit_shm(_inbound_message_buf, messageBufferLen, shm_fd, &receive_buffer);
+	::deinit_shm(_inbound_message_buf, messageBufferLen, shm_fd, &receive_buffer);
 }
 
 
@@ -198,7 +199,7 @@ Messenger::initBuffers()
 {
 	bool rc = true;
 	if (_uncompressed_frame_size) {
-		rc = rc && SharedMemoryManager::init_shm(
+		rc = rc && init_shm(
 			grokUncompressedBuf,
 			_uncompressed_frame_size * _num_frames,
 			&_uncompressed_fd, &_uncompressed_buffer
@@ -206,7 +207,7 @@ Messenger::initBuffers()
 	}
 
 	if (_compressed_frame_size) {
-		rc = rc && SharedMemoryManager::init_shm(
+		rc = rc && init_shm(
 			grokCompressedBuf,
 			_compressed_frame_size * _num_frames,
 			&_compressed_fd, &_compressed_buffer
@@ -220,13 +221,13 @@ Messenger::initBuffers()
 bool
 Messenger::deinit_shm()
 {
-	bool rc = SharedMemoryManager::deinit_shm(
+	bool rc = ::deinit_shm(
 		grokUncompressedBuf,
 		_uncompressed_frame_size * _num_frames,
 		_uncompressed_fd, &_uncompressed_buffer
 	);
 
-	rc = rc && SharedMemoryManager::deinit_shm(
+	rc = rc && ::deinit_shm(
 		grokCompressedBuf,
 		_compressed_frame_size * _num_frames,
 		_compressed_fd, &_compressed_buffer
