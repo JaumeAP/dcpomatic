@@ -365,38 +365,6 @@ private:
 };
 
 
-class ScheduledFrames
-{
-public:
-	void store(DCPVideo const& val)
-	{
-		std::unique_lock<std::mutex> lk(_mutex);
-		auto it = _map.find(val.index());
-		if (it == _map.end()) {
-			_map.emplace(std::make_pair(val.index(), val));
-		}
-	}
-
-	boost::optional<DCPVideo> retrieve(size_t index)
-	{
-		std::unique_lock<std::mutex> lk(_mutex);
-		auto it = _map.find(index);
-		if (it == _map.end()) {
-			return {};
-		}
-
-		DCPVideo val = it->second;
-		_map.erase(index);
-
-		return val;
-	}
-
-private:
-	std::mutex _mutex;
-	std::map<size_t, DCPVideo> _map;
-};
-
-
 class Messenger
 {
 public:
