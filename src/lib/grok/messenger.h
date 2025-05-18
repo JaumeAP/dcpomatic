@@ -144,59 +144,70 @@ private:
 
 struct SharedMemoryManager
 {
-	static bool initShm(const std::string &name, size_t len, int* shm_fd, char** buffer)
+	static bool init_shm(std::string const& name, size_t len, int* shm_fd, char** buffer)
 	{
 		*shm_fd = shm_open(name.c_str(), O_CREAT | O_RDWR, 0666);
-		if(*shm_fd < 0)
-		{
+
+		if (*shm_fd < 0) {
 			getMessengerLogger()->error("Error opening shared memory: %s", strerror(errno));
 			return false;
 		}
+
 		int rc = ftruncate(*shm_fd, sizeof(char) * len);
-		if(rc)
-		{
+
+		if (rc) {
 			getMessengerLogger()->error("Error truncating shared memory: %s", strerror(errno));
-			rc = close(*shm_fd);
-			if(rc)
+			if (close(*shm_fd)) {
 				getMessengerLogger()->error("Error closing shared memory: %s", strerror(errno));
+			}
 			rc = shm_unlink(name.c_str());
-			// 2 == No such file or directory
-			if(rc && errno != 2)
+			if (rc && errno != ENOENT) {
 				getMessengerLogger()->error("Error unlinking shared memory: %s", strerror(errno));
+			}
 			return false;
 		}
+
 		*buffer = static_cast<char*>(mmap(0, len, PROT_WRITE, MAP_SHARED, *shm_fd, 0));
-		if(!*buffer)
-		{
+
+		if (!*buffer) {
 			getMessengerLogger()->error("Error mapping shared memory: %s", strerror(errno));
-			rc = close(*shm_fd);
-			if(rc)
+			if (close(*shm_fd)) {
 				getMessengerLogger()->error("Error closing shared memory: %s", strerror(errno));
+			}
 			rc = shm_unlink(name.c_str());
-			// 2 == No such file or directory
-			if(rc && errno != 2)
+			if (rc && errno != ENOENT) {
 				getMessengerLogger()->error("Error unlinking shared memory: %s", strerror(errno));
+			}
 		}
 
 		return *buffer != nullptr;
 	}
+
 	static bool deinit_shm(const std::string &name, size_t len, int &shm_fd, char** buffer)
 	{
-		if (!*buffer || !shm_fd)
+		if (!*buffer || !shm_fd) {
 			return true;
+		}
 
 		int rc = munmap(*buffer, len);
 		*buffer = nullptr;
-		if(rc)
+
+		if (rc) {
 			getMessengerLogger()->error("Error unmapping shared memory %s: %s", name.c_str(), strerror(errno));
+		}
+
 		rc = close(shm_fd);
 		shm_fd = 0;
-		if(rc)
+
+		if (rc) {
 			getMessengerLogger()->error("Error closing shared memory %s: %s", name.c_str(), strerror(errno));
+		}
+
 		rc = shm_unlink(name.c_str());
-		// 2 == No such file or directory
-		if(rc && errno != 2)
-			fprintf(stderr,"Error unlinking shared memory %s : %s\n", name.c_str(), strerror(errno));
+
+		if (rc && errno != ENOENT) {
+			getMessengerLogger()->error("Error unlinking shared memory %s : %s", name.c_str(), strerror(errno));
+		}
 
 		return true;
 	}

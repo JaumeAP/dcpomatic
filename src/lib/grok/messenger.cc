@@ -130,7 +130,7 @@ Messenger::outbound_thread()
 	int shm_fd = 0;
 	char* send_buffer = nullptr;
 
-	if (!SharedMemoryManager::initShm(_outbound_message_buf, messageBufferLen, &shm_fd, &send_buffer)) {
+	if (!SharedMemoryManager::init_shm(_outbound_message_buf, messageBufferLen, &shm_fd, &send_buffer)) {
 		return;
 	}
 
@@ -160,7 +160,7 @@ Messenger::inbound_thread()
 	int shm_fd = 0;
 	char* receive_buffer = nullptr;
 
-	if (!SharedMemoryManager::initShm(_inbound_message_buf, messageBufferLen, &shm_fd, &receive_buffer)) {
+	if (!SharedMemoryManager::init_shm(_inbound_message_buf, messageBufferLen, &shm_fd, &receive_buffer)) {
 		return;
 	}
 
@@ -198,7 +198,7 @@ Messenger::initBuffers()
 {
 	bool rc = true;
 	if (_uncompressed_frame_size) {
-		rc = rc && SharedMemoryManager::initShm(
+		rc = rc && SharedMemoryManager::init_shm(
 			grokUncompressedBuf,
 			_uncompressed_frame_size * _num_frames,
 			&_uncompressed_fd, &_uncompressed_buffer
@@ -206,7 +206,7 @@ Messenger::initBuffers()
 	}
 
 	if (_compressed_frame_size) {
-		rc = rc && SharedMemoryManager::initShm(
+		rc = rc && SharedMemoryManager::init_shm(
 			grokCompressedBuf,
 			_compressed_frame_size * _num_frames,
 			&_compressed_fd, &_compressed_buffer
