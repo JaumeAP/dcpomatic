@@ -18,37 +18,21 @@
 
 */
 
+
 #pragma once
 
 
 #include "../dcp_video.h"
-#include <boost/filesystem.hpp>
-#include <boost/optional.hpp>
-#include <atomic>
-#include <cassert>
-#include <climits>
-#include <condition_variable>
-#include <cstdarg>
-#include <cstring>
-#include <functional>
+#include "scheduled_frames.h"
 #include <future>
-#include <iostream>
-#include <map>
-#include <mutex>
 #include <queue>
-#include <sstream>
-#include <string>
-#include <thread>
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <semaphore.h>
-#include <signal.h>
 
 
+namespace grk_plugin {
 
-namespace grk_plugin
-{
 static std::string grokToClientMessageBuf = "Global\\grok_to_client_message";
 static std::string grokSentSynch = "Global\\grok_sent";
 static std::string clientReceiveReadySynch = "Global\\client_receive_ready";
