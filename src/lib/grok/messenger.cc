@@ -112,7 +112,7 @@ Messenger::processor_thread()
 			_uncompressed_frame_size = Messenger::uncompressedFrameSize(width, height, samples_per_pixel);
 			auto compressed_frame_size = msg.nextUint();
 			auto num_frames = msg.nextUint();
-			initClient(compressed_frame_size, compressed_frame_size, num_frames);
+			initClient(_uncompressed_frame_size, compressed_frame_size, num_frames);
 		} else if (tag == GRK_MSGR_BATCH_PROCESSED_UNCOMPRESSED) {
 			reclaimUncompressed(msg.nextUint());
 		} else if (tag == GRK_MSGR_BATCH_PROCESSSED_COMPRESSED) {
