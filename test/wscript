@@ -18,7 +18,19 @@
 #
 
 def configure(conf):
-    conf.recurse('lib')
+    boost_test_suffix=''
+    if conf.env.TARGET_WINDOWS_64:
+        boost_test_suffix='-mt-x64'
+    elif conf.env.TARGET_WINDOWS_32:
+        boost_test_suffix='-mt-x32'
+
+    conf.check_cfg(package='sndfile', args='--cflags --libs', uselib_store='SNDFILE', mandatory=True)
+
+    conf.check_cxx(fragment="""
+                            #define BOOST_TEST_MODULE Config test\n
+                            #include <boost/test/unit_test.hpp>\n
+                            int main() {}
+                            """, msg = 'Checking for boost unit testing library', lib = 'boost_unit_test_framework%s' % boost_test_suffix, uselib_store = 'BOOST_TEST')
 
 def build(bld):
     bld.recurse('lib')
