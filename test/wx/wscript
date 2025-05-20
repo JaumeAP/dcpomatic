@@ -1,0 +1,38 @@
+#
+#    Copyright (C) 2025 Carl Hetherington <cth@carlh.net>
+#
+#    This file is part of DCP-o-matic.
+#
+#    DCP-o-matic is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    DCP-o-matic is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with DCP-o-matic.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+
+def build(bld):
+    obj = bld(features='cxx cxxprogram')
+    obj.name   = 'unit-tests'
+    obj.uselib =  'BOOST_TEST BOOST_THREAD BOOST_FILESYSTEM SNDFILE DCP PNG '
+    obj.uselib += 'AVFORMAT AVFILTER AVCODEC AVUTIL SWSCALE SWRESAMPLE '
+    obj.uselib += 'WXWIDGETS LIBZ GLIB ICU CURL PANGO CAIRO SSH PANGOMM FONTCONFIG NETTLE CXML '
+    obj.uselib += 'XMLPP SUB XMLSEC SAMPLERATE SQLITE3 LEQM_NRT ZIP BOOST_REGEX '
+    if bld.env.TARGET_WINDOWS_64 or bld.env.TARGET_WINDOWS_32:
+        obj.uselib += 'WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE '
+    if bld.env.TARGET_LINUX:
+        obj.uselib += 'DL '
+    if bld.env.BUILD_STATIC or bld.env.TARGET_LINUX:
+        obj.uselib += 'GTK '
+    obj.use    = 'libdcpomatic2-wx'
+    obj.source = "../test.cc i18n_test.cc"
+    obj.target = 'unit-tests'
+    obj.install_path = ''
+                  

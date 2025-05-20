@@ -123,5 +123,15 @@ elif [ "$type" == "helgrind" ]; then
     valgrind --tool="helgrind" build/test/unit-tests $*
 else
     ulimit -c unlimited
-    build/test/lib/unit-tests --catch_system_errors=no $*
+    if [ "$(uname)" == "Darwin" ]; then
+        if [ "$(defaults read -g AppleLocale)" == "en_DE" ]; then
+            build/test/lib/unit-tests --catch_system_errors=no $*
+            build/test/wx/unit-tests --catch_system_errors=no $* -t !i18n_test_de_de
+        else
+            build/test/wx/unit-tests --catch_system_errors=no $* -t i18n_test_de_de
+        fi
+    else
+        build/test/lib/unit-tests --catch_system_errors=no $*
+        build/test/wx/unit-tests --catch_system_errors=no $*
+    fi
 fi
