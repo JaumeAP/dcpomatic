@@ -80,6 +80,7 @@ extern void make_and_verify_dcp(std::shared_ptr<Film> film, std::vector<dcp::Ver
 extern void check_int_close (int a, int b, int d);
 extern void check_int_close (std::pair<int, int>, std::pair<int, int>, int d);
 extern boost::filesystem::path find_file (boost::filesystem::path dir, std::string filename_part);
+extern void tell_gettext_about_language_change();
 
 
 class LogSwitcher

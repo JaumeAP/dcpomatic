@@ -1095,3 +1095,13 @@ Editor::replace(string a, string b)
 	boost::algorithm::replace_all(_content, a, b);
 	BOOST_REQUIRE(_content != old_content);
 }
+
+
+/* From https://www.gnu.org/software/gettext/manual/gettext.html */
+void tell_gettext_about_language_change()
+{
+	extern int _nl_msg_cat_cntr;
+	_nl_msg_cat_cntr++;
+}
+
+

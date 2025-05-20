@@ -38,14 +38,6 @@ using std::string;
 #define numbers_de BOOST_CHECK_EQUAL(dcp::locale_convert<string>(1.23), "1,23");
 
 
-/* From https://www.gnu.org/software/gettext/manual/gettext.html */
-static void tell_gettext_about_language_change()
-{
-	extern int _nl_msg_cat_cntr;
-	_nl_msg_cat_cntr++;
-}
-
-
 static void restore()
 {
 	dcpomatic_setup_c_and_gettext_i18n("C");
