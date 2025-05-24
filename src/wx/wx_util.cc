@@ -442,14 +442,11 @@ dcpomatic_setup_i18n()
 		return string(buffer);
 	};
 
-	auto translations = new wxTranslations();
-
-	string lib_lang;
+	string translation_lang;
 
 	auto config_lang = Config::instance()->language();
 	if (config_lang && !config_lang->empty()) {
-		translations->SetLanguage(std_to_wx(*config_lang));
-		lib_lang = *config_lang;
+		translation_lang = config_lang->substr(0, 2);
 	} else {
 		/* We want to use the user's preferred language.  It seems that if we use the wxWidgets default we will get the
 		 * language for the locale, which may not be what we want (e.g. for a machine in Germany, configured for DE locale,
@@ -458,18 +455,19 @@ dcpomatic_setup_i18n()
 		 * Instead, the the language code from macOS then get the corresponding canonical language string with region,
 		 * which wxTranslations::SetLanguage will accept.
 		 */
-		auto const language_code = get_locale_value(kCFLocaleLanguageCode);
-		lib_lang = fmt::format("{}_{}", language_code, get_locale_value(kCFLocaleCountryCode));
-		/* Ideally this would be wxUILocale (as wxLocale is deprecated) but we want to keep this building
-		 * with the old wxWidgets we use for the older macOS builds.
-		 */
-		if (auto const info = wxLocale::FindLanguageInfo(std_to_wx(language_code))) {
+		translation_lang = get_locale_value(kCFLocaleLanguageCode);
+	}
+
+	/* Ideally this would be wxUILocale (as wxLocale is deprecated) but we want to keep this building
+	 * with the old wxWidgets we use for the older macOS builds.
+	 */
+	auto translations = new wxTranslations();
+	if (auto const info = wxLocale::FindLanguageInfo(std_to_wx(translation_lang))) {
 #if wxCHECK_VERSION(3, 1, 6)
-			translations->SetLanguage(info->GetCanonicalWithRegion());
+		translations->SetLanguage(info->GetCanonicalWithRegion());
 #else
-			translations->SetLanguage(info->CanonicalName);
+		translations->SetLanguage(info->CanonicalName);
 #endif
-		}
 	}
 
 	auto add_source_tree_prefixes = []() {
@@ -492,7 +490,7 @@ dcpomatic_setup_i18n()
 
 	wxTranslations::Set(translations);
 
-	dcpomatic_setup_c_and_gettext_i18n(lib_lang);
+	dcpomatic_setup_c_and_gettext_i18n(fmt::format("{}_{}", translation_lang, get_locale_value(kCFLocaleCountryCode)));
 }
 
 #else
