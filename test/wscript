@@ -33,6 +33,13 @@ def configure(conf):
                             """, msg = 'Checking for boost unit testing library', lib = 'boost_unit_test_framework%s' % boost_test_suffix, uselib_store = 'BOOST_TEST')
 
 def build(bld):
+    obj = bld(features='cxx cxxstlib')
+    obj.name = 'test'
+    obj.source = 'test.cc'
+    obj.use = 'libdcpomatic2'
+    obj.uselib = 'DCP'
+    obj.target = 'test'
+
     bld.recurse('lib')
     bld.recurse('wx')
 
