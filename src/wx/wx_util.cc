@@ -500,6 +500,8 @@ dcpomatic_setup_i18n ()
 {
 	int language = wxLANGUAGE_DEFAULT;
 
+	wxUILocale::UseDefault();
+
 	auto config_lang = Config::instance()->language ();
 	if (config_lang && !config_lang->empty ()) {
 		auto const li = wxLocale::FindLanguageInfo (std_to_wx (config_lang.get ()));
