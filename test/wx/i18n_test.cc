@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(i18n_test_de_de)
 
 	/* SSHing in brings the client's LANG and LC_*, so reset those here */
 	putenv(strdup("LANG=de_DE.UTF-8"));
-	putenv(strdup("LC_NUMERIC=de_DE.UTF-8"));
+	putenv(strdup("LC_NUMERIC="));
 
 	/* German language, German numbers */
 	dcpomatic_setup_i18n();
