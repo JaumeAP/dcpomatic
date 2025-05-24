@@ -31,8 +31,8 @@ def build(bld):
         obj.uselib += 'DL '
     if bld.env.BUILD_STATIC or bld.env.TARGET_LINUX:
         obj.uselib += 'GTK '
-    obj.use    = 'libdcpomatic2-wx'
-    obj.source = "../test.cc i18n_test.cc"
+    obj.use    = 'libdcpomatic2-wx test'
+    obj.source = "i18n_test.cc"
     obj.target = 'unit-tests'
     obj.install_path = ''
                   
