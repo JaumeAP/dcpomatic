@@ -513,7 +513,7 @@ dcpomatic_setup_i18n ()
 
 #ifdef DCPOMATIC_WINDOWS
 	wxFileTranslationsLoader::AddCatalogLookupPathPrefix (std_to_wx (mo_path().string()));
-	wxFileTranslationsLoader::AddCatalog(char_to_wx("wxstd-3.1"));
+	translations->AddCatalog(LookupPathPrefix(char_to_wx("wxstd-3.1")));
 #endif
 
 #ifdef DCPOMATIC_LINUX
