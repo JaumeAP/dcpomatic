@@ -239,29 +239,10 @@ public:
 class Message
 {
 public:
-	explicit Message(std::string const& msg)
-	{
-		std::stringstream ss(msg);
-		while (ss.good()) {
-			std::string substr;
-			std::getline(ss, substr, ',');
-			_cs.push_back(substr);
-		}
-	}
+	explicit Message(std::string const& msg);
 
-	std::string next()
-	{
-		if (_ct == _cs.size()) {
-			getMessengerLogger()->error("Message: comma separated list exhausted. returning empty.");
-			return "";
-		}
-		return _cs[_ct++];
-	}
-
-	uint32_t nextUint()
-	{
-		return (uint32_t)std::stoi(next());
-	}
+	std::string next();
+	uint32_t nextUint();
 
 private:
 	std::vector<std::string> _cs;
