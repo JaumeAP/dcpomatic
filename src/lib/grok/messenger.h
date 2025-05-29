@@ -50,14 +50,44 @@ static const std::string GRK_MSGR_BATCH_FLUSH = "GRK_MSGR_BATCH_FLUSH";
 static const size_t messageBufferLen = 256;
 
 
-struct IMessengerLogger
+struct MessengerLogger
 {
-	virtual ~IMessengerLogger(void) = default;
-	virtual void info(const char* fmt, ...) = 0;
-	virtual void warn(const char* fmt, ...) = 0;
-	virtual void error(const char* fmt, ...) = 0;
+	explicit MessengerLogger(const std::string &preamble)
+		: preamble_(preamble)
+	{
 
-  protected:
+	}
+
+	virtual ~MessengerLogger() = default;
+
+	virtual void info(const char* fmt, ...)
+	{
+		va_list args;
+		std::string new_fmt = preamble_ + fmt + "\n";
+		va_start(args, fmt);
+		vfprintf(stdout, new_fmt.c_str(), args);
+		va_end(args);
+	}
+
+	virtual void warn(const char* fmt, ...)
+	{
+		va_list args;
+		std::string new_fmt = preamble_ + fmt + "\n";
+		va_start(args, fmt);
+		vfprintf(stdout, new_fmt.c_str(), args);
+		va_end(args);
+	}
+
+	virtual void error(const char* fmt, ...)
+	{
+		va_list args;
+		std::string new_fmt = preamble_ + fmt + "\n";
+		va_start(args, fmt);
+		vfprintf(stderr, new_fmt.c_str(), args);
+		va_end(args);
+	}
+
+protected:
 	template<typename... Args>
 	std::string log_message(char const* const format, Args&... args) noexcept
 	{
@@ -67,45 +97,14 @@ struct IMessengerLogger
 		std::snprintf(message, message_size, format, args...);
 		return std::string(message);
 	}
-};
 
-
-struct MessengerLogger : public IMessengerLogger
-{
-	explicit MessengerLogger(const std::string &preamble) : preamble_(preamble) {}
-	virtual ~MessengerLogger() = default;
-	virtual void info(const char* fmt, ...) override
-	{
-		va_list args;
-		std::string new_fmt = preamble_ + fmt + "\n";
-		va_start(args, fmt);
-		vfprintf(stdout, new_fmt.c_str(), args);
-		va_end(args);
-	}
-	virtual void warn(const char* fmt, ...) override
-	{
-		va_list args;
-		std::string new_fmt = preamble_ + fmt + "\n";
-		va_start(args, fmt);
-		vfprintf(stdout, new_fmt.c_str(), args);
-		va_end(args);
-	}
-	virtual void error(const char* fmt, ...) override
-	{
-		va_list args;
-		std::string new_fmt = preamble_ + fmt + "\n";
-		va_start(args, fmt);
-		vfprintf(stderr, new_fmt.c_str(), args);
-		va_end(args);
-	}
-
-  protected:
 	std::string preamble_;
 };
 
-extern IMessengerLogger* sLogger;
-void setMessengerLogger(IMessengerLogger* logger);
-IMessengerLogger* getMessengerLogger(void);
+
+extern MessengerLogger* sLogger;
+void setMessengerLogger(MessengerLogger* logger);
+MessengerLogger* getMessengerLogger();
 
 
 template<typename Data>

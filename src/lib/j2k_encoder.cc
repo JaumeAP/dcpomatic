@@ -64,13 +64,13 @@ using namespace dcpomatic;
 
 namespace grk_plugin {
 
-IMessengerLogger* sLogger = nullptr;
+MessengerLogger* sLogger = nullptr;
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
-void setMessengerLogger(grk_plugin::IMessengerLogger* logger)
+void setMessengerLogger(grk_plugin::MessengerLogger* logger)
 {
  	delete sLogger;
  	sLogger = logger;
@@ -78,7 +78,7 @@ void setMessengerLogger(grk_plugin::IMessengerLogger* logger)
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
-grk_plugin::IMessengerLogger* getMessengerLogger(void)
+grk_plugin::MessengerLogger* getMessengerLogger()
 {
 	return sLogger;
 }
