@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(mock_grok_encode_test)
 {
 	ConfigRestorer cr;
 
-	grk_plugin::setMessengerLogger(new grk_plugin::GrokLogger("[GROK] "));
+	grk_plugin::setGrokLogger(new grk_plugin::GrokLogger("[GROK] "));
 
 	auto grok = Config::instance()->grok();
 	grok.enable = true;

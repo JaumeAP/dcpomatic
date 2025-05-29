@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(transcode_stops_when_gpu_enabled_with_no_gpu)
 {
 	ConfigRestorer cr;
 
-	grk_plugin::setMessengerLogger(new grk_plugin::GrokLogger("[GROK] "));
+	grk_plugin::setGrokLogger(new grk_plugin::GrokLogger("[GROK] "));
 
 	Config::Grok grok;
 	grok.enable = true;

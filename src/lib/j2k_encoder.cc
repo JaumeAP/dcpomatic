@@ -60,33 +60,6 @@ using boost::optional;
 using dcp::Data;
 using namespace dcpomatic;
 
-#ifdef DCPOMATIC_GROK
-
-namespace grk_plugin {
-
-MessengerLogger* sLogger = nullptr;
-
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#endif
-void setMessengerLogger(grk_plugin::MessengerLogger* logger)
-{
- 	delete sLogger;
- 	sLogger = logger;
-}
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
-grk_plugin::MessengerLogger* getMessengerLogger()
-{
-	return sLogger;
-}
-
-}
-
-#endif
-
 
 /** @param film Film that we are encoding.
  *  @param writer Writer that we are using.

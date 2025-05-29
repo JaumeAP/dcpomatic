@@ -35,29 +35,56 @@
 namespace grk_plugin
 {
 
-struct GrokLogger : public MessengerLogger {
-	explicit GrokLogger(const std::string &preamble) : MessengerLogger(preamble)
-	{}
-	virtual ~GrokLogger() = default;
-	void info(const char* fmt, ...) override{
+struct GrokLogger
+{
+	explicit GrokLogger(std::string const& preamble)
+		: _preamble(preamble)
+	{
+
+	}
+
+	void info(char const* fmt, ...)
+	{
 		va_list arg;
 		va_start(arg, fmt);
-		dcpomatic_log->log(preamble_ + log_message(fmt, arg),LogEntry::TYPE_GENERAL);
+		dcpomatic_log->log(_preamble + log_message(fmt, arg),LogEntry::TYPE_GENERAL);
 		va_end(arg);
 	}
-	void warn(const char* fmt, ...) override{
+
+	void warn(char const* fmt, ...)
+	{
 		va_list arg;
 		va_start(arg, fmt);
-		dcpomatic_log->log(preamble_ + log_message(fmt, arg),LogEntry::TYPE_WARNING);
+		dcpomatic_log->log(_preamble + log_message(fmt, arg),LogEntry::TYPE_WARNING);
 		va_end(arg);
 	}
-	void error(const char* fmt, ...) override{
+
+	void error(char const* fmt, ...)
+	{
 		va_list arg;
 		va_start(arg, fmt);
-		dcpomatic_log->log(preamble_ + log_message(fmt, arg),LogEntry::TYPE_ERROR);
+		dcpomatic_log->log(_preamble + log_message(fmt, arg),LogEntry::TYPE_ERROR);
 		va_end(arg);
 	}
+
+private:
+	template<typename... Args>
+	std::string log_message(char const* const format, Args&... args) noexcept
+	{
+		constexpr size_t message_size = 512;
+		char message[message_size];
+
+		std::snprintf(message, message_size, format, args...);
+		return std::string(message);
+	}
+
+	std::string _preamble;
 };
+
+
+extern GrokLogger* sLogger;
+void setGrokLogger(GrokLogger* logger);
+GrokLogger* getGrokLogger();
 
 
 struct DcpomaticContext

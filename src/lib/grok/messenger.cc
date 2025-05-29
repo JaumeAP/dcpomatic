@@ -19,6 +19,7 @@
 */
 
 
+#include "context.h"
 #include "shm.h"
 #include "synch.h"
 #include "messenger.h"
@@ -313,7 +314,7 @@ Messenger::waitForClientInit()
 		}
 		auto status = _async_result.wait_for(std::chrono::milliseconds(100));
 		if (status == std::future_status::ready) {
-			getMessengerLogger()->error("Grok exited unexpectedly during initialization");
+			getGrokLogger()->error("Grok exited unexpectedly during initialization");
 			return false;
 		}
 	}
@@ -371,12 +372,12 @@ Messenger::launch(std::string const& cmd, boost::filesystem::path const& dir)
 {
 	// Execute the command using std::async and std::system
 	auto const cmd_with_dir = dir / cmd;
-	getMessengerLogger()->info(cmd_with_dir.string().c_str());
+	getGrokLogger()->info(cmd_with_dir.string().c_str());
 	_async_result = std::async(std::launch::async, [cmd_with_dir]() { return std::system(cmd_with_dir.string().c_str()); });
 
 	auto const success = _async_result.valid();
 	if (!success) {
-		getMessengerLogger()->error("Grok launch failed");
+		getGrokLogger()->error("Grok launch failed");
 	}
 
 	return success;
@@ -443,9 +444,9 @@ Messenger::shutdown()
 		send(GRK_MSGR_BATCH_SHUTDOWN);
 		int result = _async_result.get();
 		if(result != 0) {
-			getMessengerLogger()->error("Accelerator failed with return code: %d\n",result);
+			getGrokLogger()->error("Accelerator failed with return code: %d\n",result);
 		}
 	} catch (std::exception &ex) {
-		getMessengerLogger()->error("%s",ex.what());
+		getGrokLogger()->error("%s",ex.what());
 	}
 }

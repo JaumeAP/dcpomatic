@@ -576,7 +576,7 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 	}
 
 #ifdef DCPOMATIC_GROK
-	grk_plugin::setMessengerLogger(new grk_plugin::GrokLogger("[GROK] "));
+	grk_plugin::setGrokLogger(new grk_plugin::GrokLogger("[GROK] "));
 	setup_grok_library_path();
 #endif
 

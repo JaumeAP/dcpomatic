@@ -19,6 +19,7 @@
 */
 
 
+#include "context.h"
 #include "messenger.h"
 #include <string>
 
@@ -41,7 +42,7 @@ string
 Message::next()
 {
 	if (_ct == _cs.size()) {
-		getMessengerLogger()->error("Message: comma separated list exhausted. returning empty.");
+		getGrokLogger()->error("Message: comma separated list exhausted. returning empty.");
 		return "";
 	}
 	return _cs[_ct++];

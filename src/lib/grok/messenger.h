@@ -50,63 +50,6 @@ static const std::string GRK_MSGR_BATCH_FLUSH = "GRK_MSGR_BATCH_FLUSH";
 static const size_t messageBufferLen = 256;
 
 
-struct MessengerLogger
-{
-	explicit MessengerLogger(const std::string &preamble)
-		: preamble_(preamble)
-	{
-
-	}
-
-	virtual ~MessengerLogger() = default;
-
-	virtual void info(const char* fmt, ...)
-	{
-		va_list args;
-		std::string new_fmt = preamble_ + fmt + "\n";
-		va_start(args, fmt);
-		vfprintf(stdout, new_fmt.c_str(), args);
-		va_end(args);
-	}
-
-	virtual void warn(const char* fmt, ...)
-	{
-		va_list args;
-		std::string new_fmt = preamble_ + fmt + "\n";
-		va_start(args, fmt);
-		vfprintf(stdout, new_fmt.c_str(), args);
-		va_end(args);
-	}
-
-	virtual void error(const char* fmt, ...)
-	{
-		va_list args;
-		std::string new_fmt = preamble_ + fmt + "\n";
-		va_start(args, fmt);
-		vfprintf(stderr, new_fmt.c_str(), args);
-		va_end(args);
-	}
-
-protected:
-	template<typename... Args>
-	std::string log_message(char const* const format, Args&... args) noexcept
-	{
-		constexpr size_t message_size = 512;
-		char message[message_size];
-
-		std::snprintf(message, message_size, format, args...);
-		return std::string(message);
-	}
-
-	std::string preamble_;
-};
-
-
-extern MessengerLogger* sLogger;
-void setMessengerLogger(MessengerLogger* logger);
-MessengerLogger* getMessengerLogger();
-
-
 template<typename Data>
 class MessengerBlockingQueue
 {

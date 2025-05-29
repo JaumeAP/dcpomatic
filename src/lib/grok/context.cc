@@ -39,7 +39,7 @@ GrokContext::GrokContext(DcpomaticContext* dcpomatic_context)
 	boost::filesystem::path folder(_dcpomatic_context->location);
 	boost::filesystem::path binary_path = folder / "grk_compress";
 	if (!boost::filesystem::exists(binary_path)) {
-		getMessengerLogger()->error(
+		getGrokLogger()->error(
 			"Invalid binary location %s", _dcpomatic_context->location.c_str()
 			);
 		return;
@@ -78,7 +78,7 @@ GrokContext::GrokContext(DcpomaticContext* dcpomatic_context)
 				}
 			}
 		} catch (std::exception& ex) {
-			getMessengerLogger()->error("%s",ex.what());
+			getGrokLogger()->error("%s",ex.what());
 		}
 	};
 
@@ -134,7 +134,7 @@ GrokContext::launch(DCPVideo dcpv, int device)
 	}
 
 	if (!fs::exists(_dcpomatic_context->location) || !fs::is_directory(_dcpomatic_context->location)) {
-		getMessengerLogger()->error("Invalid directory %s", _dcpomatic_context->location.c_str());
+		getGrokLogger()->error("Invalid directory %s", _dcpomatic_context->location.c_str());
 		return false;
 	}
 
@@ -184,5 +184,23 @@ void
 GrokContext::frame_done()
 {
 	_dcpomatic_context->history.event();
+}
+
+
+GrokLogger* grk_plugin::sLogger = nullptr;
+
+
+void
+grk_plugin::setGrokLogger(grk_plugin::GrokLogger* logger)
+{
+ 	delete sLogger;
+ 	sLogger = logger;
+}
+
+
+grk_plugin::GrokLogger*
+grk_plugin::getGrokLogger()
+{
+	return sLogger;
 }
 
