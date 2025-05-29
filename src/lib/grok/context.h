@@ -151,7 +151,6 @@ public:
 		};
 
 		_messenger = new Messenger(
-			grokReceiveReadySynch,
 			grokToClientMessageBuf,
 			grokSentSynch,
 			clientReceiveReadySynch,
