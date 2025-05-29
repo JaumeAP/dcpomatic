@@ -151,7 +151,6 @@ public:
 		};
 
 		_messenger = new Messenger(
-			grokSentSynch,
 			clientReceiveReadySynch,
 			proc,
 			std::thread::hardware_concurrency()

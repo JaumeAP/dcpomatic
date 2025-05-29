@@ -30,10 +30,10 @@ auto constexpr CLIENT_TO_GROK_MESSAGE = "Global\\client_to_grok_message";
 auto constexpr CLIENT_SENT = "Global\\client_sent";
 auto constexpr GROK_RECEIVE_READY = "Global\\grok_receive_ready";
 auto constexpr GROK_TO_CLIENT_MESSAGE = "Global\\grok_to_client_message";
+auto constexpr GROK_SENT = "Global\\grok_sent";
 
 
 Messenger::Messenger(
-	std::string const& inSent,
 	std::string const& inReceiveReady,
 	std::function<void(std::string)> processor,
 	size_t numProcessingThreads
@@ -41,7 +41,6 @@ Messenger::Messenger(
 	: _running(true)
 	, _frames_scheduled(0)
 	, _frames_compressed(0)
-	, _inbound_sent_synch(inSent)
 	, _inbound_receive_ready_synch(inReceiveReady)
 	, _processor(processor)
 	, _num_processing_threads(numProcessingThreads)
@@ -183,7 +182,7 @@ Messenger::startThreads()
 	_outbound_synch = new Synch(CLIENT_SENT, GROK_RECEIVE_READY);
 	_outbound = std::thread(&Messenger::outbound_thread, this);
 
-	_inbound_synch = new Synch(_inbound_sent_synch.c_str(), _inbound_receive_ready_synch.c_str());
+	_inbound_synch = new Synch(GROK_SENT, _inbound_receive_ready_synch.c_str());
 	_inbound = std::thread(&Messenger::inbound_thread, this);
 
 	for (size_t i = 0; i < _num_processing_threads; ++i) {
