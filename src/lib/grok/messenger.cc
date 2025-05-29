@@ -32,6 +32,8 @@ auto constexpr GROK_RECEIVE_READY = "Global\\grok_receive_ready";
 auto constexpr GROK_TO_CLIENT_MESSAGE = "Global\\grok_to_client_message";
 auto constexpr GROK_SENT = "Global\\grok_sent";
 auto constexpr CLIENT_RECEIVE_READY = "Global\\client_receive_ready";
+auto constexpr GROK_UNCOMPRESSED_BUFFER = "Global\\grok_uncompressed_buf";
+auto constexpr GROK_COMPRESSED_BUFFER = "Global\\grok_compressed_buf";
 
 
 Messenger::Messenger(std::function<void(std::string)> processor, size_t numProcessingThreads)
@@ -193,7 +195,7 @@ Messenger::initBuffers()
 	bool rc = true;
 	if (_uncompressed_frame_size) {
 		rc = rc && init_shm(
-			grokUncompressedBuf.c_str(),
+			GROK_UNCOMPRESSED_BUFFER,
 			_uncompressed_frame_size * _num_frames,
 			&_uncompressed_fd, &_uncompressed_buffer
 		);
@@ -201,7 +203,7 @@ Messenger::initBuffers()
 
 	if (_compressed_frame_size) {
 		rc = rc && init_shm(
-			grokCompressedBuf.c_str(),
+			GROK_COMPRESSED_BUFFER,
 			_compressed_frame_size * _num_frames,
 			&_compressed_fd, &_compressed_buffer
 		);
@@ -215,13 +217,13 @@ bool
 Messenger::deinit_shm()
 {
 	bool rc = ::deinit_shm(
-		grokUncompressedBuf.c_str(),
+		GROK_UNCOMPRESSED_BUFFER,
 		_uncompressed_frame_size * _num_frames,
 		_uncompressed_fd, &_uncompressed_buffer
 	);
 
 	rc = rc && ::deinit_shm(
-		grokCompressedBuf.c_str(),
+		GROK_COMPRESSED_BUFFER,
 		_compressed_frame_size * _num_frames,
 		_compressed_fd, &_compressed_buffer
 	);

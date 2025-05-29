@@ -33,8 +33,6 @@
 
 namespace grk_plugin {
 
-static std::string grokUncompressedBuf = "Global\\grok_uncompressed_buf";
-static std::string grokCompressedBuf = "Global\\grok_compressed_buf";
 static const std::string GRK_MSGR_BATCH_IMAGE = "GRK_MSGR_BATCH_IMAGE";
 static const std::string GRK_MSGR_BATCH_COMPRESS_INIT = "GRK_MSGR_BATCH_COMPRESS_INIT";
 static const std::string GRK_MSGR_BATCH_SUBMIT_UNCOMPRESSED = "GRK_MSGR_BATCH_SUBMIT_UNCOMPRESSED";
