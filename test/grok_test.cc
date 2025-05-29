@@ -20,7 +20,11 @@
 
 
 #include "lib/config.h"
+#include "lib/content_factory.h"
+#ifdef DCPOMATIC_GROK
+#include "lib/grok/context.h"
 #include "lib/grok/util.h"
+#endif
 #include "test.h"
 #include <boost/test/unit_test.hpp>
 
@@ -40,4 +44,23 @@ BOOST_AUTO_TEST_CASE(get_gpu_names_test)
 	BOOST_CHECK_EQUAL(names[1], "Spondoolix Mega Kompute 2000");
 	BOOST_CHECK_EQUAL(names[2], "Energy Sink-o-matic");
 }
+
+
+BOOST_AUTO_TEST_CASE(mock_grok_encode_test)
+{
+	ConfigRestorer cr;
+
+	grk_plugin::setMessengerLogger(new grk_plugin::GrokLogger("[GROK] "));
+
+	auto grok = Config::instance()->grok();
+	grok.enable = true;
+	grok.binary_location = "build/test";
+	Config::instance()->set_grok(grok);
+
+	auto content = content_factory(TestPaths::private_data() / "arrietty_JP-EN.mkv");
+	auto film = new_test_film("mock_grok_encode_test", content);
+
+	make_and_verify_dcp(film);
+}
+
 #endif

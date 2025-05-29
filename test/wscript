@@ -34,6 +34,12 @@ def configure(conf):
 
 def build(bld):
     obj = bld(features='cxx cxxprogram')
+    obj.name = 'mockgrok'
+    obj.source = 'mock_grok.cc'
+    obj.target = 'grk_compress'
+    obj.uselib = 'DCP'
+
+    obj = bld(features='cxx cxxprogram')
     obj.name   = 'unit-tests'
     obj.uselib =  'BOOST_TEST BOOST_THREAD BOOST_FILESYSTEM BOOST_DATETIME SNDFILE SAMPLERATE DCP FONTCONFIG CAIROMM PANGOMM XMLPP '
     obj.uselib += 'AVFORMAT AVFILTER AVCODEC AVUTIL SWSCALE SWRESAMPLE POSTPROC CXML SUB GLIB CURL SSH XMLSEC BOOST_REGEX ICU NETTLE PNG JPEG '
@@ -112,7 +118,7 @@ def build(bld):
                  font_id_allocator_test.cc
                  frame_interval_checker_test.cc
                  frame_rate_test.cc
-                 grok_util_test.cc
+                 grok_test.cc
                  guess_crop_test.cc
                  hints_test.cc
                  image_content_fade_test.cc
@@ -206,9 +212,3 @@ def build(bld):
 
     obj.target = 'unit-tests'
     obj.install_path = ''
-
-    obj = bld(features='cxx cxxprogram')
-    obj.name = 'mockgrok'
-    obj.source = 'mock_grok.cc'
-    obj.target = 'grk_compress'
-    obj.uselib = 'DCP'
