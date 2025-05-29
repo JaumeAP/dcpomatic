@@ -150,11 +150,7 @@ public:
 			}
 		};
 
-		_messenger = new Messenger(
-			clientReceiveReadySynch,
-			proc,
-			std::thread::hardware_concurrency()
-			);
+		_messenger = new Messenger(proc, std::thread::hardware_concurrency());
 	}
 
 	~GrokContext()
