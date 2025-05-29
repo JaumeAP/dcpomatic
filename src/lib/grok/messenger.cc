@@ -27,10 +27,10 @@ using namespace grk_plugin;
 
 
 auto constexpr CLIENT_TO_GROK_MESSAGE = "Global\\client_to_grok_message";
+auto constexpr CLIENT_SENT = "Global\\client_sent";
 
 
 Messenger::Messenger(
-	std::string const& outSent,
 	std::string const& outReceiveReady,
 	std::string const& inBuf,
 	std::string const& inSent,
@@ -41,7 +41,6 @@ Messenger::Messenger(
 	: _running(true)
 	, _frames_scheduled(0)
 	, _frames_compressed(0)
-	, _outbound_sent_synch(outSent)
 	, _outbound_receive_ready_synch(outReceiveReady)
 	, _inbound_message_buf(inBuf)
 	, _inbound_sent_synch(inSent)
@@ -183,7 +182,7 @@ Messenger::inbound_thread()
 void
 Messenger::startThreads()
 {
-	_outbound_synch = new Synch(_outbound_sent_synch.c_str(), _outbound_receive_ready_synch.c_str());
+	_outbound_synch = new Synch(CLIENT_SENT, _outbound_receive_ready_synch.c_str());
 	_outbound = std::thread(&Messenger::outbound_thread, this);
 
 	_inbound_synch = new Synch(_inbound_sent_synch.c_str(), _inbound_receive_ready_synch.c_str());
