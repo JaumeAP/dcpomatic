@@ -147,18 +147,6 @@ template<typename Data>
 class MessengerBlockingQueue
 {
 public:
-	explicit MessengerBlockingQueue(size_t max)
-		: _max_size(max)
-	{
-
-	}
-
-	MessengerBlockingQueue()
-		: MessengerBlockingQueue(UINT_MAX)
-	{
-
-	}
-
 	size_t size() const
 	{
 		return _queue.size();
@@ -265,7 +253,7 @@ private:
 	std::condition_variable _can_pop;
 	std::condition_variable _can_push;
 	bool _active = true;
-	size_t _max_size;
+	size_t _max_size = UINT_MAX;
 };
 
 
