@@ -26,7 +26,7 @@ using namespace grk_plugin;
 
 
 
-Synch::Synch(std::string const& sent_sem_name, std::string const& receive_ready_sem_name)
+Synch::Synch(char const* sent_sem_name, char const* receive_ready_sem_name)
 	: _sent_sem_name(sent_sem_name)
 	, _receive_ready_sem_name(receive_ready_sem_name)
 {

@@ -183,10 +183,10 @@ Messenger::inbound_thread()
 void
 Messenger::startThreads()
 {
-	_outbound_synch = new Synch(_outbound_sent_synch, _outbound_receive_ready_synch);
+	_outbound_synch = new Synch(_outbound_sent_synch.c_str(), _outbound_receive_ready_synch.c_str());
 	_outbound = std::thread(&Messenger::outbound_thread, this);
 
-	_inbound_synch = new Synch(_inbound_sent_synch, _inbound_receive_ready_synch);
+	_inbound_synch = new Synch(_inbound_sent_synch.c_str(), _inbound_receive_ready_synch.c_str());
 	_inbound = std::thread(&Messenger::inbound_thread, this);
 
 	for (size_t i = 0; i < _num_processing_threads; ++i) {

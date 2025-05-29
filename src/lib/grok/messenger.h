@@ -121,7 +121,7 @@ enum SynchDirection
 class Synch
 {
 public:
-	Synch(std::string const& sent_sem_name, std::string const& receive_ready_sem_name);
+	Synch(char const* sent_sem_name, char const* receive_ready_sem_name);
 	~Synch();
 
 	void post(SynchDirection dir);
