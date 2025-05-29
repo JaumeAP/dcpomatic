@@ -93,7 +93,7 @@ Messenger::processor_thread()
 {
 	while (_running) {
 		std::string message;
-		if (!_receive_queue.waitAndPop(message)) {
+		if (!_receive_queue.wait_and_pop(message)) {
 			break;
 		}
 
@@ -141,7 +141,7 @@ Messenger::outbound_thread()
 			break;
 		}
 		std::string message;
-		if (!_send_queue.waitAndPop(message)) {
+		if (!_send_queue.wait_and_pop(message)) {
 			break;
 		}
 		if (!_running) {
@@ -398,7 +398,7 @@ bool
 Messenger::schedule_compress(DCPVideo const& proxy, std::function<void(BufferSrc const&)> converter)
 {
 	BufferSrc src;
-	if (!_available_buffers.waitAndPop(src)) {
+	if (!_available_buffers.wait_and_pop(src)) {
 		return false;
 	}
 	converter(src);
