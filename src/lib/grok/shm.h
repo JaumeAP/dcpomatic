@@ -25,8 +25,8 @@
 namespace grk_plugin {
 
 
-bool init_shm(std::string const& name, size_t len, int* shm_fd, char** buffer);
-bool deinit_shm(std::string const& name, size_t len, int &shm_fd, char** buffer);
+bool init_shm(char const* name, size_t len, int* shm_fd, char** buffer);
+bool deinit_shm(char const* name, size_t len, int &shm_fd, char** buffer);
 
 
 }

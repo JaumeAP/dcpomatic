@@ -24,9 +24,9 @@
 
 
 bool
-grk_plugin::init_shm(std::string const& name, size_t len, int* shm_fd, char** buffer)
+grk_plugin::init_shm(char const* name, size_t len, int* shm_fd, char** buffer)
 {
-	*shm_fd = shm_open(name.c_str(), O_CREAT | O_RDWR, 0666);
+	*shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
 
 	if (*shm_fd < 0) {
 		getMessengerLogger()->error("Error opening shared memory: %s", strerror(errno));
@@ -40,7 +40,7 @@ grk_plugin::init_shm(std::string const& name, size_t len, int* shm_fd, char** bu
 		if (close(*shm_fd)) {
 			getMessengerLogger()->error("Error closing shared memory: %s", strerror(errno));
 		}
-		rc = shm_unlink(name.c_str());
+		rc = shm_unlink(name);
 		if (rc && errno != ENOENT) {
 			getMessengerLogger()->error("Error unlinking shared memory: %s", strerror(errno));
 		}
@@ -54,7 +54,7 @@ grk_plugin::init_shm(std::string const& name, size_t len, int* shm_fd, char** bu
 		if (close(*shm_fd)) {
 			getMessengerLogger()->error("Error closing shared memory: %s", strerror(errno));
 		}
-		rc = shm_unlink(name.c_str());
+		rc = shm_unlink(name);
 		if (rc && errno != ENOENT) {
 			getMessengerLogger()->error("Error unlinking shared memory: %s", strerror(errno));
 		}
@@ -65,7 +65,7 @@ grk_plugin::init_shm(std::string const& name, size_t len, int* shm_fd, char** bu
 
 
 bool
-grk_plugin::deinit_shm(const std::string &name, size_t len, int &shm_fd, char** buffer)
+grk_plugin::deinit_shm(char const* name, size_t len, int &shm_fd, char** buffer)
 {
 	if (!*buffer || !shm_fd) {
 		return true;
@@ -75,20 +75,20 @@ grk_plugin::deinit_shm(const std::string &name, size_t len, int &shm_fd, char** 
 	*buffer = nullptr;
 
 	if (rc) {
-		getMessengerLogger()->error("Error unmapping shared memory %s: %s", name.c_str(), strerror(errno));
+		getMessengerLogger()->error("Error unmapping shared memory %s: %s", name, strerror(errno));
 	}
 
 	rc = close(shm_fd);
 	shm_fd = 0;
 
 	if (rc) {
-		getMessengerLogger()->error("Error closing shared memory %s: %s", name.c_str(), strerror(errno));
+		getMessengerLogger()->error("Error closing shared memory %s: %s", name, strerror(errno));
 	}
 
-	rc = shm_unlink(name.c_str());
+	rc = shm_unlink(name);
 
 	if (rc && errno != ENOENT) {
-		getMessengerLogger()->error("Error unlinking shared memory %s : %s", name.c_str(), strerror(errno));
+		getMessengerLogger()->error("Error unlinking shared memory %s : %s", name, strerror(errno));
 	}
 
 	return true;
