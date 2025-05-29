@@ -369,22 +369,15 @@ Messenger::getCompressedFrame(size_t frameId)
 bool
 Messenger::launch(std::string const& cmd, boost::filesystem::path const& dir)
 {
-	// Change the working directory
-	if(!dir.empty())
-	{
-		boost::system::error_code ec;
-		boost::filesystem::current_path(dir, ec);
-		if (ec) {
-			getMessengerLogger()->error("Error: failed to change the working directory");
-			return false;
-		}
-	}
 	// Execute the command using std::async and std::system
-	getMessengerLogger()->info(cmd.c_str());
-	_async_result = std::async(std::launch::async, [cmd]() { return std::system(cmd.c_str()); });
-	bool success = _async_result.valid();
-	if (!success)
+	auto const cmd_with_dir = dir / cmd;
+	getMessengerLogger()->info(cmd_with_dir.string().c_str());
+	_async_result = std::async(std::launch::async, [cmd_with_dir]() { return std::system(cmd_with_dir.string().c_str()); });
+
+	auto const success = _async_result.valid();
+	if (!success) {
 		getMessengerLogger()->error("Grok launch failed");
+	}
 
 	return success;
 }
