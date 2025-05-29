@@ -32,8 +32,6 @@
 #include <boost/filesystem.hpp>
 
 
-static std::mutex launchMutex;
-
 namespace grk_plugin
 {
 

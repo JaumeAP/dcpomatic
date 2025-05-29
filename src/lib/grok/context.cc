@@ -25,6 +25,8 @@
 using namespace grk_plugin;
 
 
+static std::mutex launchMutex;
+
 
 GrokContext::GrokContext(DcpomaticContext* dcpomatic_context)
 	: _dcpomatic_context(dcpomatic_context)
