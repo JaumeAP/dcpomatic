@@ -20,6 +20,7 @@
 
 
 #include "shm.h"
+#include "synch.h"
 #include "messenger.h"
 
 

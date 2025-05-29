@@ -20,6 +20,7 @@
 
 
 #include "messenger.h"
+#include "synch.h"
 
 
 using namespace grk_plugin;
@@ -51,6 +52,7 @@ Synch::post(SynchDirection dir)
 		getMessengerLogger()->error("Error posting to semaphore: %s", strerror(errno));
 	}
 }
+
 
 void
 Synch::wait(SynchDirection dir)

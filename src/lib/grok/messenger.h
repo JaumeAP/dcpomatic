@@ -33,6 +33,10 @@
 
 namespace grk_plugin {
 
+
+class Synch;
+
+
 static const std::string GRK_MSGR_BATCH_IMAGE = "GRK_MSGR_BATCH_IMAGE";
 static const std::string GRK_MSGR_BATCH_COMPRESS_INIT = "GRK_MSGR_BATCH_COMPRESS_INIT";
 static const std::string GRK_MSGR_BATCH_SUBMIT_UNCOMPRESSED = "GRK_MSGR_BATCH_SUBMIT_UNCOMPRESSED";
@@ -102,37 +106,6 @@ struct MessengerLogger : public IMessengerLogger
 extern IMessengerLogger* sLogger;
 void setMessengerLogger(IMessengerLogger* logger);
 IMessengerLogger* getMessengerLogger(void);
-
-
-enum SynchDirection
-{
-	SYNCH_SENT,
-	SYNCH_RECEIVE_READY
-};
-
-
-class Synch
-{
-public:
-	Synch(char const* sent_sem_name, char const* receive_ready_sem_name);
-	~Synch();
-
-	void post(SynchDirection dir);
-	void wait(SynchDirection dir);
-
-	void open();
-	void close();
-
-	void unlink();
-
-private:
-	sem_t* _sent_sem;
-	sem_t* _receive_ready_sem;
-
-	std::string _sent_sem_name;
-	std::string _receive_ready_sem_name;
-};
-
 
 
 template<typename Data>
