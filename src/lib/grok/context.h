@@ -96,166 +96,24 @@ struct DcpomaticContext
 class GrokContext
 {
 public:
-	explicit GrokContext(DcpomaticContext* dcpomatic_context)
-		: _dcpomatic_context(dcpomatic_context)
-	{
-		auto grok = Config::instance()->grok();
-		if (!grok.enable) {
-			return;
-		}
-
-		boost::filesystem::path folder(_dcpomatic_context->location);
-		boost::filesystem::path binary_path = folder / "grk_compress";
-		if (!boost::filesystem::exists(binary_path)) {
-			getMessengerLogger()->error(
-				"Invalid binary location %s", _dcpomatic_context->location.c_str()
-				);
-			return;
-		}
-
-		auto proc = [this](const std::string& str) {
-			try {
-				Message msg(str);
-				auto tag = msg.next();
-				if (tag == GRK_MSGR_BATCH_SUBMIT_COMPRESSED) {
-					auto clientFrameId = msg.nextUint();
-					msg.nextUint(); // compressed frame ID
-					auto compressedFrameLength = msg.nextUint();
-					auto processor = [this](DCPVideo srcFrame, uint8_t* compressed, uint32_t compressedFrameLength) {
-						auto compressed_data = std::make_shared<dcp::ArrayData>(compressed, compressedFrameLength);
-						_dcpomatic_context->writer.write(compressed_data, srcFrame.index(), srcFrame.eyes());
-						frame_done ();
-					};
-
-					int const minimum_size = 16384;
-
-					/* Write the compressed data out and tidy up */
-					bool needsRecompression = compressedFrameLength < minimum_size;
-					_messenger->process_compressed(str, processor, needsRecompression);
-
-					if (needsRecompression) {
-						/* The JPEG2000 frame data was too small, so handle it with the CPU encoder */
-						auto vf = _messenger->retrieve(clientFrameId);
-						if (!vf) {
-							return;
-						}
-
-						auto encoded = std::make_shared<dcp::ArrayData>(vf->encode_locally());
-						_dcpomatic_context->writer.write(encoded, vf->index(), vf->eyes());
-						frame_done ();
-					}
-				}
-			} catch (std::exception& ex) {
-				getMessengerLogger()->error("%s",ex.what());
-			}
-		};
-
-		_messenger = new Messenger(proc, std::thread::hardware_concurrency());
-	}
-
-	~GrokContext()
-	{
-		if (!_messenger) {
-			return;
-		}
-
-		std::unique_lock<std::mutex> lk_global(launchMutex);
-
-		if (!_messenger) {
-			return;
-		}
-
-		if (_launched) {
-			_messenger->shutdown();
-		}
-
-		delete _messenger;
-	}
+	explicit GrokContext(DcpomaticContext* dcpomatic_context);
+	~GrokContext();
 
 	/** Launch a Grok encoder process, preparing it to work on images like @ref dcpv.
 	 *  @return true if Grok is now running, false if not.
 	 */
-	bool launch(DCPVideo dcpv, int device)
-	{
-		namespace fs = boost::filesystem;
-
-		if (!_messenger) {
-			return false;
-		}
-		if (_launched) {
-			return true;
-		}
-		if (_launch_failed) {
-			return false;
-		}
-
-		std::unique_lock<std::mutex> lk_global(launchMutex);
-
-		if (!_messenger) {
-			return false;
-		}
-		if (_launched) {
-			return true;
-		}
-		if (_launch_failed) {
-			return false;
-		}
-
-		if (!fs::exists(_dcpomatic_context->location) || !fs::is_directory(_dcpomatic_context->location)) {
-			getMessengerLogger()->error("Invalid directory %s", _dcpomatic_context->location.c_str());
-			return false;
-		}
-
-		auto s = dcpv.get_size();
-		_dcpomatic_context->set_dimensions(s.width, s.height);
-		auto grok = Config::instance()->grok();
-		if (!_messenger->launch_grok(
-				_dcpomatic_context->location,
-				_dcpomatic_context->width,
-				_dcpomatic_context->width,
-				_dcpomatic_context->height,
-				3,
-				12,
-				device,
-				_dcpomatic_context->film->resolution() == Resolution::FOUR_K,
-				_dcpomatic_context->film->video_frame_rate(),
-				_dcpomatic_context->film->video_bit_rate(VideoEncoding::JPEG2000),
-				grok.licence_server,
-				grok.licence)) {
-			_launch_failed = true;
-			return false;
-		}
-
-		_launched = _messenger->waitForClientInit();
-		_launch_failed = _launched;
-
-		return _launched;
-	}
-
-	bool schedule_compress(DCPVideo const& vf)
-	{
-		if (!_messenger) {
-			return false;
-		}
-
-		auto cvt = [&vf](BufferSrc src) {
-			vf.convert_to_xyz((uint16_t*) src.frame_ptr);
-		};
-
-		return _messenger->schedule_compress(vf, cvt);
-	}
+	bool launch(DCPVideo dcpv, int device);
+	bool schedule_compress(DCPVideo const& vf);
 
 private:
-	void frame_done()
-	{
-		_dcpomatic_context->history.event();
-	}
+	void frame_done();
 
 	DcpomaticContext* _dcpomatic_context;
 	Messenger* _messenger = nullptr;
 	bool _launched = false;
 	bool _launch_failed = false;
 };
+
 
 }
 
