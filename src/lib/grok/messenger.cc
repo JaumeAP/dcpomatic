@@ -26,8 +26,10 @@
 using namespace grk_plugin;
 
 
+auto constexpr CLIENT_TO_GROK_MESSAGE = "Global\\client_to_grok_message";
+
+
 Messenger::Messenger(
-	std::string const& outBuf,
 	std::string const& outSent,
 	std::string const& outReceiveReady,
 	std::string const& inBuf,
@@ -39,7 +41,6 @@ Messenger::Messenger(
 	: _running(true)
 	, _frames_scheduled(0)
 	, _frames_compressed(0)
-	, _outbound_message_buf(outBuf)
 	, _outbound_sent_synch(outSent)
 	, _outbound_receive_ready_synch(outReceiveReady)
 	, _inbound_message_buf(inBuf)
@@ -52,7 +53,7 @@ Messenger::Messenger(
 	, _num_frames(0)
 {
 	shm_unlink(grokToClientMessageBuf.c_str());
-	shm_unlink(clientToGrokMessageBuf.c_str());
+	shm_unlink(CLIENT_TO_GROK_MESSAGE);
 }
 
 
@@ -131,7 +132,7 @@ Messenger::outbound_thread()
 	int shm_fd = 0;
 	char* send_buffer = nullptr;
 
-	if (!init_shm(_outbound_message_buf.c_str(), messageBufferLen, &shm_fd, &send_buffer)) {
+	if (!init_shm(CLIENT_TO_GROK_MESSAGE, messageBufferLen, &shm_fd, &send_buffer)) {
 		return;
 	}
 
@@ -151,7 +152,7 @@ Messenger::outbound_thread()
 		_outbound_synch->post(SYNCH_SENT);
 	}
 
-	::deinit_shm(_outbound_message_buf.c_str(), messageBufferLen, shm_fd, &send_buffer);
+	::deinit_shm(CLIENT_TO_GROK_MESSAGE, messageBufferLen, shm_fd, &send_buffer);
 }
 
 
@@ -259,7 +260,7 @@ Messenger::launch_grok(
 	}
 
 	shm_unlink(grokToClientMessageBuf.c_str());
-	shm_unlink(clientToGrokMessageBuf.c_str());
+	shm_unlink(CLIENT_TO_GROK_MESSAGE);
 
 	startThreads();
 	char cmd[4096];

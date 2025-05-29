@@ -36,7 +36,6 @@ namespace grk_plugin {
 static std::string grokToClientMessageBuf = "Global\\grok_to_client_message";
 static std::string grokSentSynch = "Global\\grok_sent";
 static std::string clientReceiveReadySynch = "Global\\client_receive_ready";
-static std::string clientToGrokMessageBuf = "Global\\client_to_grok_message";
 static std::string clientSentSynch = "Global\\client_sent";
 static std::string grokReceiveReadySynch = "Global\\grok_receive_ready";
 static std::string grokUncompressedBuf = "Global\\grok_uncompressed_buf";
@@ -309,7 +308,6 @@ class Messenger
 {
 public:
 	Messenger(
-		std::string const& outBuf,
 		std::string const& outSent,
 		std::string const& outReceiveReady,
 		std::string const& inBuf,
@@ -419,7 +417,6 @@ private:
 	std::atomic<uint32_t> _frames_scheduled;
 	std::atomic<uint32_t> _frames_compressed;
 
-	std::string _outbound_message_buf;
 	std::string _outbound_sent_synch;
 	std::string _outbound_receive_ready_synch;
 
