@@ -123,6 +123,13 @@ int main(int argc, char* argv[])
 	boost::algorithm::split(parameters, argv[2], boost::is_any_of(","));
 	std::cout << "Parameters: " << argv[2] << "\n";
 
+	string licence;
+	if (argc >= 12) {
+		licence = argv[12];
+	}
+
+	std::cout << "Licence: " << licence << "\n";
+
 	if (parameters.size() != 6) {
 		std::cerr << "Unexpected parameter count.\n";
 		exit(EXIT_FAILURE);
@@ -223,7 +230,9 @@ int main(int argc, char* argv[])
 			int const dcp_frame = dcp::raw_convert<int>(parameters[1]);
 			int const frame_id = dcp::raw_convert<int>(parameters[2]);
 			send(fmt::format("{},{}", GROK_PROCESSED_UNCOMPRESSED, frame_id).c_str());
-			send(fmt::format("{},{},{},{}", GROK_SUBMIT_COMPRESSED, dcp_frame, frame_id, j2k.size()).c_str());
+			if (licence == "random_drop" && (rand() % 16 != 0)) {
+				send(fmt::format("{},{},{},{}", GROK_SUBMIT_COMPRESSED, dcp_frame, frame_id, j2k.size()).c_str());
+			}
 		} else if (parameters[0] == GROK_SHUTDOWN) {
 			break;
 		}

@@ -63,4 +63,24 @@ BOOST_AUTO_TEST_CASE(mock_grok_encode_test)
 	make_and_verify_dcp(film);
 }
 
+
+BOOST_AUTO_TEST_CASE(mock_grok_encode_test_with_lost_frames)
+{
+	ConfigRestorer cr;
+
+	grk_plugin::setGrokLogger(new grk_plugin::GrokLogger("[GROK] "));
+
+	auto grok = Config::instance()->grok();
+	grok.enable = true;
+	grok.binary_location = "build/test";
+	/* This tells the mock grk_compress to drop some frames */
+	grok.licence = "random_drop";
+	Config::instance()->set_grok(grok);
+
+	auto content = content_factory(TestPaths::private_data() / "arrietty_JP-EN.mkv");
+	auto film = new_test_film("mock_grok_encode_test_with_lost_frames", content);
+
+	make_and_verify_dcp(film);
+}
+
 #endif
