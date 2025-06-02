@@ -36,6 +36,8 @@ public:
 
 	std::vector<UploadDestination> destinations() const;
 
+	void set_selected(std::vector<std::string> const& selected);
+
 	boost::signals2::signal<void ()> DestinationsChanged;
 
 private:

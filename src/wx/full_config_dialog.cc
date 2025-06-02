@@ -53,7 +53,7 @@
 #ifdef DCPOMATIC_GROK
 #include "grok/gpu_config_panel.h"
 #endif
-#include "upload_destination_dialog.h"
+#include "upload_destination_panel.h"
 #include "wx_util.h"
 #include "wx_variant.h"
 #include "lib/config.h"
@@ -536,36 +536,57 @@ public:
 private:
 	void setup() override
 	{
-		vector<EditableListColumn> columns;
-		columns.push_back(EditableListColumn(_("Name")));
-		columns.push_back(EditableListColumn(_("Host"), 256, true));
-		_destinations_list = new EditableList<UploadDestination, UploadDestinationDialog>(
-			_panel,
-			columns,
-			boost::bind(&Config::upload_destinations, Config::instance()),
-			boost::bind(&Config::set_upload_destinations, Config::instance(), _1),
-			[](UploadDestination const& destination, int column) -> std::string {
-				switch (column) {
-				case 0:
-					return destination.name;
-				case 1:
-					return destination.host;
-				}
-				return {};
-			},
-			EditableListTitle::VISIBLE,
-			EditableListButton::NEW | EditableListButton::EDIT | EditableListButton::REMOVE
-			);
+		_automatic_upload = new CheckBox(_panel, _("Upload DCPs automatically to"));
+		_panel->GetSizer()->Add(_automatic_upload, 0, wxEXPAND | wxALL, DCPOMATIC_SIZER_GAP);
+		_upload_destination_panel = new UploadDestinationPanel(_panel);
+		_panel->GetSizer()->Add(_upload_destination_panel, 1, wxEXPAND | wxALL, _border);
 
-		_panel->GetSizer()->Add(_destinations_list, 1, wxEXPAND | wxALL, _border);
+		_automatic_upload->bind(&UploadPage::automatic_upload_changed, this);
+		_upload_destination_panel->DestinationsChanged.connect(boost::bind(&UploadPage::destinations_changed, this));
+
+		setup_sensitivity();
 	}
 
 	void config_changed() override
 	{
-
+		for (auto
+		_automatic_upload->set(!Config::instance()->upload_after_make_dcp().empty());
 	}
 
-	EditableList<UploadDestination, UploadDestinationDialog>* _destinations_list;
+	void set_uploads()
+	{
+		vector<string> names;
+		for (auto destination: _upload_destination_panel->destinations()) {
+			names.push_back(destination.name);
+		}
+
+		Config::instance()->set_upload_after_make_dcp(names);
+	}
+
+	void automatic_upload_changed()
+	{
+		vector<string> names;
+		if (_automatic_upload->get()) {
+			set_uploads();
+		} else {
+			Config::instance()->set_upload_after_make_dcp({});
+		}
+
+		setup_sensitivity();
+	}
+
+	void destinations_changed()
+	{
+		set_uploads();
+	}
+
+	void setup_sensitivity()
+	{
+		_upload_destination_panel->Enable(_automatic_upload->get());
+	}
+
+	CheckBox* _automatic_upload;
+	UploadDestinationPanel* _upload_destination_panel;
 };
 
 

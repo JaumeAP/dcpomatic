@@ -27,6 +27,7 @@
 #include <wx/treelist.h>
 
 
+using std::string;
 using std::vector;
 using boost::optional;
 #if BOOST_VERSION >= 106100
@@ -64,6 +65,14 @@ UploadDestinationPanel::UploadDestinationPanel(wxWindow* parent)
 	sizer->Add(_list, 1, wxEXPAND);
 	sizer->Add(buttons, 0, wxEXPAND | wxLEFT, DCPOMATIC_SIZER_X_GAP);
 	SetSizerAndFit(sizer);
+}
+
+
+void
+UploadDestinationPanel::set_selected(vector<string> const& selected)
+{
+	for (auto  // wip!
+	_list->SetItemState();
 }
 
 
