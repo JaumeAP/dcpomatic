@@ -216,6 +216,7 @@ sources = """
           stdout_log.cc
           unzipper.cc
           update_checker.cc
+          upload_destination.cc
           upload_job.cc
           uploader.cc
           upmixer_a.cc

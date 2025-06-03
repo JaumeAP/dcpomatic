@@ -19,8 +19,8 @@
 */
 
 
-#include <dcp/warnings.h>
 #include "uploader.h"
+#include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <libssh/libssh.h>
 LIBDCP_ENABLE_WARNINGS
@@ -29,7 +29,7 @@ LIBDCP_ENABLE_WARNINGS
 class SCPUploader : public Uploader
 {
 public:
-	SCPUploader(std::function<void (std::string)> set_status, std::function<void (float)> set_progress);
+	SCPUploader(UploadDestination destination, std::function<void (std::string)> set_status, std::function<void (float)> set_progress);
 	~SCPUploader();
 
 protected:

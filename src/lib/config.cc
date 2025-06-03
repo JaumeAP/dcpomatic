@@ -98,12 +98,7 @@ Config::set_defaults()
 	_use_any_servers = true;
 	_servers.clear();
 	_only_servers_encode = false;
-	_tms_protocol = FileTransferProtocol::SCP;
-	_tms_passive = true;
-	_tms_ip = "";
-	_tms_path = ".";
-	_tms_user = "";
-	_tms_password = "";
+	_tms = boost::none;
 	_allow_any_dcp_frame_rate = false;
 	_allow_any_container = false;
 	_allow_96khz_audio = false;
@@ -349,12 +344,23 @@ try
 	}
 
 	_only_servers_encode = f.optional_bool_child("OnlyServersEncode").get_value_or(false);
-	_tms_protocol = static_cast<FileTransferProtocol>(f.optional_number_child<int>("TMSProtocol").get_value_or(static_cast<int>(FileTransferProtocol::SCP)));
-	_tms_passive = f.optional_bool_child("TMSPassive").get_value_or(true);
-	_tms_ip = f.string_child("TMSIP");
-	_tms_path = f.string_child("TMSPath");
-	_tms_user = f.string_child("TMSUser");
-	_tms_password = f.string_child("TMSPassword");
+
+	if (f.optional_string_child("TMSIP")) {
+		_tms = UploadDestination(
+			_("TMS"),
+			static_cast<FileTransferProtocol>(f.optional_number_child<int>("TMSProtocol").get_value_or(static_cast<int>(FileTransferProtocol::SCP))),
+			f.optional_bool_child("TMSPassive").get_value_or(true),
+			boost::none,
+			f.string_child("TMSIP"),
+			f.string_child("TMSPath"),
+			f.string_child("TMSUser"),
+			f.string_child("TMSPassword")
+			);
+	}
+
+	if (auto node = f.optional_node_child("TMS")) {
+		_tms = UploadDestination(node);
+	}
 
 	_language = f.optional_string_child("Language");
 
@@ -778,18 +784,11 @@ Config::write_config() const
 	   is done by the encoding servers.  0 to set the master to do some encoding as well as coordinating the job.
 	*/
 	cxml::add_text_child(root, "OnlyServersEncode", _only_servers_encode ? "1" : "0");
-	/* [XML] TMSProtocol Protocol to use to copy files to a TMS; 0 to use SCP, 1 for FTP. */
-	cxml::add_text_child(root, "TMSProtocol", fmt::to_string(static_cast<int>(_tms_protocol)));
-	/* [XML] TMSPassive True to use PASV mode with TMS FTP connections. */
-	cxml::add_text_child(root, "TMSPassive", _tms_passive ? "1" : "0");
-	/* [XML] TMSIP IP address of TMS. */
-	cxml::add_text_child(root, "TMSIP", _tms_ip);
-	/* [XML] TMSPath Path on the TMS to copy files to. */
-	cxml::add_text_child(root, "TMSPath", _tms_path);
-	/* [XML] TMSUser Username to log into the TMS with. */
-	cxml::add_text_child(root, "TMSUser", _tms_user);
-	/* [XML] TMSPassword Password to log into the TMS with. */
-	cxml::add_text_child(root, "TMSPassword", _tms_password);
+
+	if (_tms) {
+		_tms->as_xml(cxml::add_child(root, "TMS"));
+	}
+
 	if (_language) {
 		/* [XML:opt] Language Language to use in the GUI e.g. <code>fr_FR</code>. */
 		cxml::add_text_child(root, "Language", _language.get());

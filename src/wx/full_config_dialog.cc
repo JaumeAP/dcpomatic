@@ -570,13 +570,13 @@ private:
 		_tms_protocol->Append(_("FTP (for Dolby)"));
 
 		_upload->bind(&TMSPage::upload_changed, this);
-		_tms_protocol->Bind(wxEVT_CHOICE, boost::bind(&TMSPage::tms_protocol_changed, this));
-		_tms_passive->bind(&TMSPage::tms_passive_changed, this);
+		_tms_protocol->Bind(wxEVT_CHOICE, boost::bind(&TMSPage::tms_changed, this));
+		_tms_passive->bind(&TMSPage::tms_changed, this);
 
-		_tms_ip->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_ip_changed, this));
-		_tms_path->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_path_changed, this));
-		_tms_user->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_user_changed, this));
-		_tms_password->Changed.connect(boost::bind(&TMSPage::tms_password_changed, this));
+		_tms_ip->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_changed, this));
+		_tms_path->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_changed, this));
+		_tms_user->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_changed, this));
+		_tms_password->Changed.connect(boost::bind(&TMSPage::tms_changed, this));
 	}
 
 	void config_changed() override
@@ -584,14 +584,21 @@ private:
 		auto config = Config::instance();
 
 		checked_set(_upload, config->upload_after_make_dcp());
-		checked_set(_tms_protocol, static_cast<int>(config->tms_protocol()));
-		checked_set(_tms_passive, config->tms_protocol() == FileTransferProtocol::FTP && config->tms_passive());
-		checked_set(_tms_ip, config->tms_ip());
-		checked_set(_tms_path, config->tms_path());
-		checked_set(_tms_user, config->tms_user());
-		checked_set(_tms_password, config->tms_password());
-
-		_tms_passive->Enable(config->tms_protocol() == FileTransferProtocol::FTP);
+		if (auto tms = Config::instance()->tms()) {
+			checked_set(_tms_protocol, static_cast<int>(tms->protocol));
+			checked_set(_tms_passive, tms->protocol == FileTransferProtocol::FTP && tms->passive_ftp);
+			checked_set(_tms_ip, tms->host);
+			checked_set(_tms_path, tms->path);
+			checked_set(_tms_user, tms->user);
+			checked_set(_tms_password, tms->password);
+		} else {
+			checked_set(_tms_protocol, static_cast<int>(FileTransferProtocol::FTP));
+			checked_set(_tms_passive, false);
+			checked_set(_tms_ip, "");
+			checked_set(_tms_path, "");
+			checked_set(_tms_user, "");
+			checked_set(_tms_password, "");
+		}
 	}
 
 	void upload_changed()
@@ -599,34 +606,18 @@ private:
 		Config::instance()->set_upload_after_make_dcp(_upload->GetValue());
 	}
 
-	void tms_protocol_changed()
+	void tms_changed()
 	{
-		Config::instance()->set_tms_protocol(static_cast<FileTransferProtocol>(_tms_protocol->GetSelection()));
-	}
-
-	void tms_passive_changed()
-	{
-		Config::instance()->set_tms_passive(_tms_passive->get());
-	}
-
-	void tms_ip_changed()
-	{
-		Config::instance()->set_tms_ip(wx_to_std(_tms_ip->GetValue()));
-	}
-
-	void tms_path_changed()
-	{
-		Config::instance()->set_tms_path(wx_to_std(_tms_path->GetValue()));
-	}
-
-	void tms_user_changed()
-	{
-		Config::instance()->set_tms_user(wx_to_std(_tms_user->GetValue()));
-	}
-
-	void tms_password_changed()
-	{
-		Config::instance()->set_tms_password(_tms_password->get());
+		Config::instance()->set_tms({
+			wx_to_std(_("TMS")),
+			static_cast<FileTransferProtocol>(_tms_protocol->GetSelection()),
+			_tms_passive->get(),
+			boost::none,
+			wx_to_std(_tms_ip->GetValue()),
+			wx_to_std(_tms_path->GetValue()),
+			wx_to_std(_tms_user->GetValue()),
+			_tms_password->get()
+		});
 	}
 
 	CheckBox* _upload;

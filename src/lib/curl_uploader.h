@@ -19,6 +19,7 @@
 */
 
 
+#include "upload_destination.h"
 #include "uploader.h"
 #include <dcp/file.h>
 #include <curl/curl.h>
@@ -27,7 +28,7 @@
 class CurlUploader : public Uploader
 {
 public:
-	CurlUploader(std::function<void (std::string)> set_status, std::function<void (float)> set_progress);
+	CurlUploader(UploadDestination destination, std::function<void (std::string)> set_status, std::function<void (float)> set_progress);
 	~CurlUploader();
 
 	size_t read_callback(void* ptr, size_t size, size_t nmemb);

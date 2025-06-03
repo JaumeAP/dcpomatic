@@ -32,22 +32,23 @@
 #include "log.h"
 #include "scp_uploader.h"
 #include "upload_job.h"
-#include <iostream>
+#include <fmt/format.h>
 
 #include "i18n.h"
 
 
-using std::string;
 using std::min;
 using std::shared_ptr;
+using std::string;
 using boost::scoped_ptr;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
 
 
-UploadJob::UploadJob(shared_ptr<const Film> film)
+UploadJob::UploadJob(shared_ptr<const Film> film, UploadDestination destination)
 	: Job(film)
+	, _destination(destination)
 	, _status(_("Waiting"))
 {
 
@@ -63,7 +64,7 @@ UploadJob::~UploadJob()
 string
 UploadJob::name() const
 {
-	return _("Copy DCP to TMS");
+	return fmt::format(_("Upload DCP to {}"), _destination.name);
 }
 
 
@@ -80,12 +81,12 @@ UploadJob::run()
 	LOG_GENERAL_NC(N_("Upload job starting"));
 
 	scoped_ptr<Uploader> uploader;
-	switch (Config::instance()->tms_protocol()) {
+	switch (_destination.protocol) {
 	case FileTransferProtocol::SCP:
-		uploader.reset(new SCPUploader(bind(&UploadJob::set_status, this, _1), bind(&UploadJob::set_progress, this, _1, false)));
+		uploader.reset(new SCPUploader(_destination, bind(&UploadJob::set_status, this, _1), bind(&UploadJob::set_progress, this, _1, false)));
 		break;
 	case FileTransferProtocol::FTP:
-		uploader.reset(new CurlUploader(bind(&UploadJob::set_status, this, _1), bind(&UploadJob::set_progress, this, _1, false)));
+		uploader.reset(new CurlUploader(_destination, bind(&UploadJob::set_status, this, _1), bind(&UploadJob::set_progress, this, _1, false)));
 		break;
 	}
 

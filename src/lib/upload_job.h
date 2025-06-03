@@ -19,18 +19,19 @@
 */
 
 
-/** @file src/upload_job.h
- *  @brief A job to copy DCPs to a server using libcurl.
+/** @file  src/upload_job.h
+ *  @brief A job to copy DCPs to a server.
  */
 
 
 #include "job.h"
+#include "upload_destination.h"
 
 
 class UploadJob : public Job
 {
 public:
-	explicit UploadJob(std::shared_ptr<const Film>);
+	UploadJob(std::shared_ptr<const Film>, UploadDestination destination);
 	~UploadJob();
 
 	std::string name() const override;
@@ -40,6 +41,8 @@ public:
 
 private:
 	void set_status(std::string);
+
+	UploadDestination _destination;
 
 	mutable boost::mutex _status_mutex;
 	std::string _status;

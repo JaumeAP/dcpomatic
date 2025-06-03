@@ -51,8 +51,8 @@ curl_debug_shim(CURL* curl, curl_infotype type, char* data, size_t size, void* u
 }
 
 
-CurlUploader::CurlUploader(function<void (string)> set_status, function<void (float)> set_progress)
-	: Uploader(set_status, set_progress)
+CurlUploader::CurlUploader(UploadDestination destination, function<void (string)> set_status, function<void (float)> set_progress)
+	: Uploader(destination, set_status, set_progress)
 {
 	_curl = curl_easy_init();
 	if (!_curl) {
@@ -64,9 +64,9 @@ CurlUploader::CurlUploader(function<void (string)> set_status, function<void (fl
 	curl_easy_setopt(_curl, CURLOPT_UPLOAD, 1L);
 	curl_easy_setopt(_curl, CURLOPT_FTP_CREATE_MISSING_DIRS, 1L);
 	curl_easy_setopt(_curl, CURLOPT_READDATA, this);
-	curl_easy_setopt(_curl, CURLOPT_USERNAME, Config::instance()->tms_user().c_str());
-	curl_easy_setopt(_curl, CURLOPT_PASSWORD, Config::instance()->tms_password().c_str());
-	if (!Config::instance()->tms_passive()) {
+	curl_easy_setopt(_curl, CURLOPT_USERNAME, _destination.user.c_str());
+	curl_easy_setopt(_curl, CURLOPT_PASSWORD, _destination.password.c_str());
+	if (!_destination.passive_ftp) {
 		curl_easy_setopt(_curl, CURLOPT_FTPPORT, "-");
 	}
 	curl_easy_setopt(_curl, CURLOPT_VERBOSE, 1L);
@@ -94,7 +94,7 @@ CurlUploader::upload_file(boost::filesystem::path from, boost::filesystem::path 
 	curl_easy_setopt(
 		_curl, CURLOPT_URL,
 		/* Use generic_string so that we get forward-slashes in the path, even on Windows */
-		String::compose("ftp://%1/%2/%3", Config::instance()->tms_ip(), Config::instance()->tms_path(), to.generic_string()).c_str()
+		String::compose("ftp://%1/%2/%3", _destination.host, _destination.path, to.generic_string()).c_str()
 		);
 
 	dcp::File file(from, "rb");

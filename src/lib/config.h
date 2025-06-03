@@ -32,6 +32,7 @@
 #include "export_config.h"
 #include "rough_duration.h"
 #include "state.h"
+#include "upload_destination.h"
 #include "video_encoding.h"
 #include <dcp/name_format.h>
 #include <dcp/certificate_chain.h>
@@ -154,32 +155,8 @@ public:
 		return _only_servers_encode;
 	}
 
-	FileTransferProtocol tms_protocol() const {
-		return _tms_protocol;
-	}
-
-	bool tms_passive() const {
-		return _tms_passive;
-	}
-
-	/** @return The IP address of a TMS that we can copy DCPs to */
-	std::string tms_ip() const {
-		return _tms_ip;
-	}
-
-	/** @return The path on a TMS that we should changed DCPs to */
-	std::string tms_path() const {
-		return _tms_path;
-	}
-
-	/** @return User name to log into the TMS with */
-	std::string tms_user() const {
-		return _tms_user;
-	}
-
-	/** @return Password to log into the TMS with */
-	std::string tms_password() const {
-		return _tms_password;
+	boost::optional<UploadDestination> tms() const {
+		return _tms;
 	}
 
 	std::list<int> allowed_dcp_frame_rates() const {
@@ -720,32 +697,9 @@ public:
 		maybe_set(_only_servers_encode, o);
 	}
 
-	void set_tms_protocol(FileTransferProtocol p) {
-		maybe_set(_tms_protocol, p);
-	}
-
-	void set_tms_passive(bool passive) {
-		maybe_set(_tms_passive, passive);
-	}
-
-	/** @param i IP address of a TMS that we can copy DCPs to */
-	void set_tms_ip(std::string i) {
-		maybe_set(_tms_ip, i);
-	}
-
-	/** @param p Path on a TMS that we should changed DCPs to */
-	void set_tms_path(std::string p) {
-		maybe_set(_tms_path, p);
-	}
-
-	/** @param u User name to log into the TMS with */
-	void set_tms_user(std::string u) {
-		maybe_set(_tms_user, u);
-	}
-
-	/** @param p Password to log into the TMS with */
-	void set_tms_password(std::string p) {
-		maybe_set(_tms_password, p);
+	void set_tms(UploadDestination tms) {
+		_tms = tms;
+		changed();
 	}
 
 	void set_allowed_dcp_frame_rates(std::list<int> const & r) {
@@ -1365,16 +1319,7 @@ private:
 	/** J2K encoding servers that should definitely be used */
 	std::vector<std::string> _servers;
 	bool _only_servers_encode;
-	FileTransferProtocol _tms_protocol;
-	bool _tms_passive;
-	/** The IP address of a TMS that we can copy DCPs to */
-	std::string _tms_ip;
-	/** The path on a TMS that we should write DCPs to */
-	std::string _tms_path;
-	/** User name to log into the TMS with */
-	std::string _tms_user;
-	/** Password to log into the TMS with */
-	std::string _tms_password;
+	boost::optional<UploadDestination> _tms;
 	/** The list of possible DCP frame rates that DCP-o-matic will use */
 	std::list<int> _allowed_dcp_frame_rates;
 	/** Allow any video frame rate for the DCP; if true, overrides _allowed_dcp_frame_rates */
