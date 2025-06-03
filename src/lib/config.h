@@ -155,6 +155,10 @@ public:
 		return _only_servers_encode;
 	}
 
+	std::vector<UploadDestination> upload_destinations() const {
+		return _upload_destinations;
+	}
+
 	boost::optional<UploadDestination> tms() const {
 		return _tms;
 	}
@@ -695,6 +699,10 @@ public:
 
 	void set_only_servers_encode(bool o) {
 		maybe_set(_only_servers_encode, o);
+	}
+
+	void set_upload_destinations(std::vector<UploadDestination> const& destinations) {
+		maybe_set(_upload_destinations, destinations);
 	}
 
 	void set_tms(UploadDestination tms) {
@@ -1319,6 +1327,7 @@ private:
 	/** J2K encoding servers that should definitely be used */
 	std::vector<std::string> _servers;
 	bool _only_servers_encode;
+	std::vector<UploadDestination> _upload_destinations;
 	boost::optional<UploadDestination> _tms;
 	/** The list of possible DCP frame rates that DCP-o-matic will use */
 	std::list<int> _allowed_dcp_frame_rates;

@@ -362,6 +362,10 @@ try
 		_tms = UploadDestination(node);
 	}
 
+	for (auto i: f.node_children("UploadDestination")) {
+		_upload_destinations.push_back(UploadDestination(i));
+	}
+
 	_language = f.optional_string_child("Language");
 
 	_default_dcp_content_type = DCPContentType::from_isdcf_name(f.optional_string_child("DefaultDCPContentType").get_value_or("FTR"));
@@ -787,6 +791,10 @@ Config::write_config() const
 
 	if (_tms) {
 		_tms->as_xml(cxml::add_child(root, "TMS"));
+	}
+
+	for (auto i: _upload_destinations) {
+		i.as_xml(cxml::add_child(root, "UploadDestination"));
 	}
 
 	if (_language) {
