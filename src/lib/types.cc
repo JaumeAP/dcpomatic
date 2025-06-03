@@ -111,3 +111,34 @@ reel_type_to_string(ReelType type)
 	DCPOMATIC_ASSERT(false);
 	return "single";
 }
+
+
+
+FileTransferProtocol
+file_transfer_protocol_from_string(string s)
+{
+       if (s == "scp") {
+               return FileTransferProtocol::SCP;
+       } else if (s == "ftp") {
+               return FileTransferProtocol::FTP;
+       }
+
+       DCPOMATIC_ASSERT(false);
+       return FileTransferProtocol::SCP;
+}
+
+
+string
+file_transfer_protocol_to_string(FileTransferProtocol p)
+{
+       switch (p) {
+       case FileTransferProtocol::SCP:
+               return "scp";
+       case FileTransferProtocol::FTP:
+               return "ftp";
+       default:
+               DCPOMATIC_ASSERT(false);
+       }
+
+       return "";
+}

@@ -139,10 +139,16 @@ struct CPLSummary
 	time_t last_write_time;
 };
 
+
 enum class FileTransferProtocol {
 	SCP,
 	FTP
 };
+
+
+FileTransferProtocol file_transfer_protocol_from_string(std::string s);
+std::string file_transfer_protocol_to_string(FileTransferProtocol p);
+
 
 enum class EmailProtocol {
 	AUTO,
