@@ -513,22 +513,22 @@ private:
 };
 
 
-class TMSPage : public preferences::Page
+class UploadPage : public preferences::Page
 {
 public:
-	TMSPage(wxSize panel_size, int border)
+	UploadPage(wxSize panel_size, int border)
 		: Page(panel_size, border)
 	{}
 
 	wxString GetName() const override
 	{
-		return _("TMS");
+		return _("Upload");
 	}
 
 #ifdef DCPOMATIC_OSX
 	wxBitmap GetLargeIcon() const override
 	{
-		return wxBitmap(icon_path("tms"), wxBITMAP_TYPE_PNG);
+		return wxBitmap(icon_path("upload"), wxBITMAP_TYPE_PNG);
 	}
 #endif
 
@@ -569,14 +569,14 @@ private:
 		_tms_protocol->Append(_("SCP (for AAM and Doremi)"));
 		_tms_protocol->Append(_("FTP (for Dolby)"));
 
-		_upload->bind(&TMSPage::upload_changed, this);
-		_tms_protocol->Bind(wxEVT_CHOICE, boost::bind(&TMSPage::tms_changed, this));
-		_tms_passive->bind(&TMSPage::tms_changed, this);
+		_upload->bind(&UploadPage::upload_changed, this);
+		_tms_protocol->Bind(wxEVT_CHOICE, boost::bind(&UploadPage::tms_changed, this));
+		_tms_passive->bind(&UploadPage::tms_changed, this);
 
-		_tms_ip->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_changed, this));
-		_tms_path->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_changed, this));
-		_tms_user->Bind(wxEVT_TEXT, boost::bind(&TMSPage::tms_changed, this));
-		_tms_password->Changed.connect(boost::bind(&TMSPage::tms_changed, this));
+		_tms_ip->Bind(wxEVT_TEXT, boost::bind(&UploadPage::tms_changed, this));
+		_tms_path->Bind(wxEVT_TEXT, boost::bind(&UploadPage::tms_changed, this));
+		_tms_user->Bind(wxEVT_TEXT, boost::bind(&UploadPage::tms_changed, this));
+		_tms_password->Changed.connect(boost::bind(&UploadPage::tms_changed, this));
 	}
 
 	void config_changed() override
@@ -1485,7 +1485,7 @@ create_full_config_dialog()
 	e->AddPage(new GPUPage(ps, border));
 #endif
 	e->AddPage(new preferences::KeysPage(ps, border));
-	e->AddPage(new TMSPage(ps, border));
+	e->AddPage(new UploadPage(ps, border));
 	e->AddPage(new preferences::EmailPage(ps, border));
 	e->AddPage(new preferences::KDMEmailPage(ps, border));
 	e->AddPage(new NotificationsPage(ps, border));
