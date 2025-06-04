@@ -1463,13 +1463,14 @@ private:
 		try {
 			Config::instance()->write_config();
 		} catch (exception& e) {
-			error_dialog (
+			error_dialog(
 				this,
-				wxString::Format (
+				wxString::Format(
 					_("Could not write to config file at %s.  Your changes have not been saved."),
-					std_to_wx (Config::instance()->cinemas_file().string()).data()
-					)
-				);
+					std_to_wx(Config::config_write_file().string())
+				),
+				std_to_wx(e.what())
+			);
 		}
 
 		for (int i = 0; i < _history_items; ++i) {
