@@ -107,8 +107,6 @@ public:
 	boost::filesystem::path subtitle_analysis_path(std::shared_ptr<const Content>) const;
 	boost::filesystem::path assets_path() const;
 
-	void send_dcp_to_tms();
-
 	/** @return Logger.
 	 *  It is safe to call this from any thread.
 	 */

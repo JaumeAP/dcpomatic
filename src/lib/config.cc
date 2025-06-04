@@ -98,7 +98,6 @@ Config::set_defaults()
 	_use_any_servers = true;
 	_servers.clear();
 	_only_servers_encode = false;
-	_tms = boost::none;
 	_allow_any_dcp_frame_rate = false;
 	_allow_any_container = false;
 	_allow_96khz_audio = false;
@@ -113,7 +112,6 @@ Config::set_defaults()
 	_default_audio_delay = 0;
 	_default_interop = false;
 	_default_metadata.clear();
-	_upload_after_make_dcp = false;
 	_mail_server = "";
 	_mail_port = 25;
 	_mail_protocol = EmailProtocol::AUTO;
@@ -346,24 +344,34 @@ try
 	_only_servers_encode = f.optional_bool_child("OnlyServersEncode").get_value_or(false);
 
 	if (f.optional_string_child("TMSIP")) {
-		_tms = UploadDestination(
-			_("TMS"),
-			static_cast<FileTransferProtocol>(f.optional_number_child<int>("TMSProtocol").get_value_or(static_cast<int>(FileTransferProtocol::SCP))),
-			f.optional_bool_child("TMSPassive").get_value_or(true),
-			boost::none,
-			f.string_child("TMSIP"),
-			f.string_child("TMSPath"),
-			f.string_child("TMSUser"),
-			f.string_child("TMSPassword")
+		_upload_destinations.push_back(
+			UploadDestination(
+				_("TMS"),
+				static_cast<FileTransferProtocol>(f.optional_number_child<int>("TMSProtocol").get_value_or(static_cast<int>(FileTransferProtocol::SCP))),
+				f.optional_bool_child("TMSPassive").get_value_or(true),
+				boost::none,
+				f.string_child("TMSIP"),
+				f.string_child("TMSPath"),
+				f.string_child("TMSUser"),
+				f.string_child("TMSPassword")
+				)
 			);
-	}
 
-	if (auto node = f.optional_node_child("TMS")) {
-		_tms = UploadDestination(node);
+		auto up = f.optional_bool_child("UploadAfterMakeDCP");
+		if (!up) {
+			up = f.optional_bool_child("DefaultUploadAfterMakeDCP");
+		}
+		if (up && *up) {
+			_auto_upload_destinations.push_back(_("TMS"));
+		}
 	}
 
 	for (auto i: f.node_children("UploadDestination")) {
 		_upload_destinations.push_back(UploadDestination(i));
+	}
+
+	for (auto i: f.node_children("AutoUploadDestination")) {
+		_auto_upload_destinations.push_back(i->content());
 	}
 
 	_language = f.optional_string_child("Language");
@@ -377,11 +385,6 @@ try
 		_dcp_issuer = f.string_child("DCPIssuer");
 	}
 
-	auto up = f.optional_bool_child("UploadAfterMakeDCP");
-	if (!up) {
-		up = f.optional_bool_child("DefaultUploadAfterMakeDCP");
-	}
-	_upload_after_make_dcp = up.get_value_or(false);
 	_dcp_creator = f.optional_string_child("DCPCreator").get_value_or("");
 	_dcp_company_name = f.optional_string_child("DCPCompanyName").get_value_or("");
 	_dcp_product_name = f.optional_string_child("DCPProductName").get_value_or("");
@@ -789,12 +792,12 @@ Config::write_config() const
 	*/
 	cxml::add_text_child(root, "OnlyServersEncode", _only_servers_encode ? "1" : "0");
 
-	if (_tms) {
-		_tms->as_xml(cxml::add_child(root, "TMS"));
+	for (auto const& i: _upload_destinations) {
+		i.as_xml(cxml::add_child(root, "UploadDestination"));
 	}
 
-	for (auto i: _upload_destinations) {
-		i.as_xml(cxml::add_child(root, "UploadDestination"));
+	for (auto i: _auto_upload_destinations) {
+		cxml::add_text_child(root, "AutoUploadDestination", i);
 	}
 
 	if (_language) {
@@ -813,8 +816,6 @@ Config::write_config() const
 	cxml::add_text_child(root, "DCPProductVersion", _dcp_product_version);
 	/* [XML] DCPJ2KComment Comment to write into JPEG2000 data. */
 	cxml::add_text_child(root, "DCPJ2KComment", _dcp_j2k_comment);
-	/* [XML] UploadAfterMakeDCP 1 to upload to a TMS after making a DCP, 0 for no upload. */
-	cxml::add_text_child(root, "UploadAfterMakeDCP", _upload_after_make_dcp ? "1" : "0");
 
 	/* [XML] DefaultStillLength Default length (in seconds) for still images in new films. */
 	cxml::add_text_child(root, "DefaultStillLength", fmt::to_string(_default_still_length));

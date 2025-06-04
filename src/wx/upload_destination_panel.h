@@ -37,6 +37,11 @@ public:
 	/** @return ticked, i.e. "enabled" destinations */
 	std::vector<UploadDestination> destinations() const;
 
+	void set_upload_destinations(std::vector<UploadDestination> const& destinations);
+
+	/** Specify a list of upload destination names to enable (tick) */
+	void enable_upload_destinations(std::vector<std::string> const& names);
+
 	boost::signals2::signal<void ()> DestinationsChanged;
 
 private:

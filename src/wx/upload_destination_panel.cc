@@ -41,9 +41,7 @@ UploadDestinationPanel::UploadDestinationPanel(wxWindow* parent)
 	_list = new wxTreeListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTL_NO_HEADER | wxTL_3STATE);
 	_list->AppendColumn(char_to_wx("foo"), 640);
 
-	for (auto destination: Config::instance()->upload_destinations()) {
-		add_destination(destination);
-	}
+	set_upload_destinations(Config::instance()->upload_destinations());
 
 	auto buttons = new wxBoxSizer(wxVERTICAL);
 
@@ -185,5 +183,26 @@ UploadDestinationPanel::destinations() const
 	}
 
 	return checked;
+}
+
+
+void
+UploadDestinationPanel::set_upload_destinations(vector<UploadDestination> const& destinations)
+{
+	_list->DeleteAllItems();
+	_destinations.clear();
+
+	for (auto destination: destinations) {
+		add_destination(destination);
+	}
+}
+
+
+void
+UploadDestinationPanel::enable_upload_destinations(vector<string> const& names)
+{
+	for (auto const& dest: _destinations) {
+		_list->CheckItem(dest.first, std::find(names.begin(), names.end(), dest.second.name) != names.end() ? wxCHK_CHECKED : wxCHK_UNCHECKED);
+	}
 }
 

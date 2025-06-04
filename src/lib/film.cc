@@ -376,15 +376,6 @@ Film::subtitle_analysis_path(shared_ptr<const Content> content) const
 }
 
 
-/** Start a job to send our DCP to the configured TMS */
-void
-Film::send_dcp_to_tms()
-{
-	if (Config::instance()->tms()) {
-		JobManager::instance()->add(make_shared<UploadJob>(shared_from_this(), *Config::instance()->tms()));
-	}
-}
-
 shared_ptr<xmlpp::Document>
 Film::metadata(bool with_content_paths) const
 {

@@ -159,8 +159,8 @@ public:
 		return _upload_destinations;
 	}
 
-	boost::optional<UploadDestination> tms() const {
-		return _tms;
+	std::vector<std::string> auto_upload_destinations() const {
+		return _auto_upload_destinations;
 	}
 
 	std::list<int> allowed_dcp_frame_rates() const {
@@ -249,10 +249,6 @@ public:
 
 	std::map<std::string, std::string> default_metadata() const {
 		return _default_metadata;
-	}
-
-	bool upload_after_make_dcp() {
-		return _upload_after_make_dcp;
 	}
 
 	void set_default_kdm_directory(boost::filesystem::path d) {
@@ -705,9 +701,8 @@ public:
 		maybe_set(_upload_destinations, destinations);
 	}
 
-	void set_tms(UploadDestination tms) {
-		_tms = tms;
-		changed();
+	void set_auto_upload_destinations(std::vector<std::string> const& destinations) {
+		maybe_set(_auto_upload_destinations, destinations);
 	}
 
 	void set_allowed_dcp_frame_rates(std::list<int> const & r) {
@@ -789,10 +784,6 @@ public:
 
 	void unset_default_audio_language() {
 		maybe_set(_default_audio_language, boost::optional<dcp::LanguageTag>());
-	}
-
-	void set_upload_after_make_dcp(bool u) {
-		maybe_set(_upload_after_make_dcp, u);
 	}
 
 	void set_mail_server(std::string s) {
@@ -1328,7 +1319,7 @@ private:
 	std::vector<std::string> _servers;
 	bool _only_servers_encode;
 	std::vector<UploadDestination> _upload_destinations;
-	boost::optional<UploadDestination> _tms;
+	std::vector<std::string> _auto_upload_destinations;
 	/** The list of possible DCP frame rates that DCP-o-matic will use */
 	std::list<int> _allowed_dcp_frame_rates;
 	/** Allow any video frame rate for the DCP; if true, overrides _allowed_dcp_frame_rates */
@@ -1363,7 +1354,6 @@ private:
 	    the home directory will be offered.
 	*/
 	boost::optional<boost::filesystem::path> _default_kdm_directory;
-	bool _upload_after_make_dcp;
 	std::string _mail_server;
 	int _mail_port;
 	EmailProtocol _mail_protocol;
