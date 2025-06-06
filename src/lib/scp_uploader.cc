@@ -70,7 +70,7 @@ LIBDCP_ENABLE_WARNINGS
 	}
 
 LIBDCP_DISABLE_WARNINGS
-	_scp = ssh_scp_new(_session, SSH_SCP_WRITE | SSH_SCP_RECURSIVE, _destination.path.c_str());
+	_scp = ssh_scp_new(_session, SSH_SCP_WRITE | SSH_SCP_RECURSIVE, _destination.path.empty() ? "." : _destination.path.c_str());
 LIBDCP_ENABLE_WARNINGS
 	if (!_scp) {
 		throw NetworkError(String::compose(_("SSH error [%1] (%2)"), "ssh_scp_new", ssh_get_error(_session)));
