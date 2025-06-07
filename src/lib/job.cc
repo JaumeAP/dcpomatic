@@ -258,6 +258,12 @@ Job::run_wrapper ()
 		set_progress(1);
 		set_state(FINISHED_ERROR);
 
+	} catch (NetworkError& e) {
+
+		set_error(e.summary(), e.detail().get_value_or(""));
+		set_progress(1);
+		set_state(FINISHED_ERROR);
+
 	} catch (std::exception& e) {
 
 		set_error (

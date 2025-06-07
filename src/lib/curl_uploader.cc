@@ -26,6 +26,7 @@
 #include "cross.h"
 #include "compose.hpp"
 #include "dcpomatic_assert.h"
+#include <fmt/format.h>
 #include <iostream>
 
 #include "i18n.h"
@@ -121,8 +122,8 @@ CurlUploader::upload_file(boost::filesystem::path from, boost::filesystem::path 
 	auto const r = curl_easy_perform(_curl);
 	if (r != CURLE_OK) {
 		throw NetworkError(
-			String::compose(_("Could not write to remote file %1"), to.generic_string()),
-			string(curl_easy_strerror(r))
+			_("Could not write to remote file"),
+			fmt::format(_("File: {} error: {}"), to.generic_string(), string(curl_easy_strerror(r)))
 		);
 	}
 

@@ -135,7 +135,10 @@ LIBDCP_DISABLE_WARNINGS
 		int const r = ssh_scp_write(_scp, buffer.data(), t);
 LIBDCP_ENABLE_WARNINGS
 		if (r != SSH_OK) {
-			throw NetworkError(String::compose(_("Could not write to remote file (%1)"), ssh_get_error(_session)));
+			throw NetworkError(
+				_("Could not write to remote file"),
+				string(ssh_get_error(_session))
+			);
 		}
 		to_do -= t;
 		transferred += t;
