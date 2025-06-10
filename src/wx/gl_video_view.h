@@ -81,7 +81,7 @@ public:
 	void start() override;
 	void stop() override;
 
-	NextFrameResult display_next_frame(bool) override;
+	NextFrameResult display_next_frame(Behaviour behaviour) override;
 
 	bool vsync_enabled() const {
 		return _vsync_enabled;

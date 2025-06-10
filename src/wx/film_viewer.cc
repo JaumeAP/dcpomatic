@@ -140,7 +140,7 @@ FilmViewer::idle_handler()
 		return;
 	}
 
-	if (_video_view->display_next_frame(true) == VideoView::AGAIN) {
+	if (_video_view->display_next_frame(Behaviour::NON_BLOCKING) == VideoView::AGAIN) {
 		/* get() could not complete quickly so we'll try again later */
 		signal_manager->when_idle(boost::bind(&FilmViewer::idle_handler, this));
 	} else {
@@ -586,7 +586,7 @@ FilmViewer::seek(DCPTime t, bool accurate)
 		/* We're going to start playing again straight away
 		   so wait for the seek to finish.
 		*/
-		while (_video_view->display_next_frame(false) == VideoView::AGAIN) {}
+		while (_video_view->display_next_frame(Behaviour::BLOCKING) == VideoView::AGAIN) {}
 	}
 
 	resume();

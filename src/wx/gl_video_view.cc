@@ -848,7 +848,7 @@ GLVideoView::thread_playing()
 			return;
 		}
 
-		get_next_frame(false);
+		get_next_frame(Behaviour::BLOCKING);
 		set_image_and_draw();
 	}
 
@@ -857,7 +857,7 @@ GLVideoView::thread_playing()
 		if (!n || *n > 5) {
 			break;
 		}
-		get_next_frame(true);
+		get_next_frame(Behaviour::NON_BLOCKING);
 		add_dropped();
 	}
 }
@@ -960,9 +960,9 @@ catch (...)
 
 
 VideoView::NextFrameResult
-GLVideoView::display_next_frame(bool non_blocking)
+GLVideoView::display_next_frame(Behaviour behaviour)
 {
-	NextFrameResult const r = get_next_frame(non_blocking);
+	NextFrameResult const r = get_next_frame(behaviour);
 	request_one_shot();
 	return r;
 }

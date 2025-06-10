@@ -54,12 +54,13 @@ VideoView::clear ()
 
 
 /** Could be called from any thread.
- *  @param non_blocking true to return false quickly if no video is available quickly.
+ *  @param behaviour NON_BLOCKING to return false quickly if no video is available quickly,
+ *  otherwise BLOCKING.
  *  @return FAIL if there's no frame, AGAIN if the method should be called again, or SUCCESS
  *  if there is a frame.
  */
 VideoView::NextFrameResult
-VideoView::get_next_frame (bool non_blocking)
+VideoView::get_next_frame(Behaviour behaviour)
 {
 	if (length() == dcpomatic::DCPTime()) {
 		return FAIL;
@@ -75,7 +76,7 @@ VideoView::get_next_frame (bool non_blocking)
 
 	do {
 		Butler::Error e;
-		auto pv = butler->get_video(non_blocking ? Behaviour::NON_BLOCKING : Behaviour::BLOCKING, &e);
+		auto pv = butler->get_video(behaviour, &e);
 		if (e.code == Butler::Error::Code::DIED) {
 			LOG_ERROR ("Butler died with %1", e.summary());
 		}

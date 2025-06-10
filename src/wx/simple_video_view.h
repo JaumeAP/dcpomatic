@@ -45,7 +45,7 @@ public:
 
 	void update () override;
 	void start () override;
-	NextFrameResult display_next_frame (bool non_blocking) override;
+	NextFrameResult display_next_frame(Behaviour behaviour) override;
 
 private:
 	void refresh_panel ();
