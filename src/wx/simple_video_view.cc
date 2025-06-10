@@ -192,7 +192,7 @@ SimpleVideoView::start ()
 /** Try to get a frame from the butler and display it.
  *  @param behaviour NON_BLOCKING to return false quickly if no video is available quickly
  *  (i.e. we are waiting for the butler).
- *  BLOCKING to ask the butler to block until it has video (unless it is suspended).
+ *  BLOCKING to ask the butler to block until it has video.
  *  @return true on success, false if we did nothing because it would have taken too long.
  */
 VideoView::NextFrameResult
