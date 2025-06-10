@@ -113,8 +113,10 @@ private:
 	dcpomatic::io_context _prepare_context;
 	boost::optional<dcpomatic::work_guard> _prepare_work;
 
-	/** mutex to protect _pending_seek_position, _pending_seek_accurate, _finished, _died, _stop_thread */
 	boost::mutex _mutex;
+	/** mutex to protect _pending_seek_position, _pending_seek_accurate, _suspended,
+	 *  _finished, _died, _died_message, _stop_thread.
+	 */
 	boost::condition _summon;
 	boost::condition _arrived;
 	boost::optional<dcpomatic::DCPTime> _pending_seek_position;
