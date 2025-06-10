@@ -85,11 +85,6 @@ public:
 		std::string summary() const;
 	};
 
-	enum class Behaviour {
-		BLOCKING,
-		NON_BLOCKING
-	};
-
 	std::pair<std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime> get_video(Behaviour behaviour, Error* e = nullptr);
 	boost::optional<dcpomatic::DCPTime> get_audio(Behaviour behaviour, float* out, Frame frames);
 	boost::optional<TextRingBuffers::Data> get_closed_caption();

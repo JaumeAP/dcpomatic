@@ -189,7 +189,7 @@ FFmpegFilmEncoder::go()
 
 		for (int j = 0; j < gets_per_frame; ++j) {
 			Butler::Error e;
-			auto video = _butler.get_video(Butler::Behaviour::BLOCKING, &e);
+			auto video = _butler.get_video(Behaviour::BLOCKING, &e);
 			_butler.rethrow();
 			if (video.first) {
 				auto fe = encoder->get(video.first->eyes());
@@ -217,7 +217,7 @@ FFmpegFilmEncoder::go()
 
 		waker.nudge ();
 
-		_butler.get_audio(Butler::Behaviour::BLOCKING, interleaved.data(), audio_frames);
+		_butler.get_audio(Behaviour::BLOCKING, interleaved.data(), audio_frames);
 		/* XXX: inefficient; butler interleaves and we deinterleave again */
 		float* p = interleaved.data();
 		for (int j = 0; j < audio_frames; ++j) {

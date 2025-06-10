@@ -283,8 +283,8 @@ BOOST_AUTO_TEST_CASE (threed_test_butler_overfill)
 	butler->seek(dcpomatic::DCPTime(), true);
 	Butler::Error error;
 	for (auto i = 0; i < 960; ++i) {
-		butler->get_video(Butler::Behaviour::BLOCKING, &error);
-		butler->get_audio(Butler::Behaviour::BLOCKING, audio.data(), audio_frames);
+		butler->get_video(Behaviour::BLOCKING, &error);
+		butler->get_audio(Behaviour::BLOCKING, audio.data(), audio_frames);
 	}
 	BOOST_REQUIRE (error.code == Butler::Error::Code::NONE);
 }

@@ -152,4 +152,9 @@ enum class EmailProtocol {
 };
 
 
+enum class Behaviour {
+	BLOCKING,
+	NON_BLOCKING
+};
+
 #endif
