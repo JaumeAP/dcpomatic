@@ -1310,12 +1310,6 @@ Film::signal_change(ChangeType type, FilmProperty p)
 	if (type == ChangeType::DONE) {
 		set_dirty(true);
 
-		if (p == FilmProperty::CONTENT) {
-			if (!_user_explicit_video_frame_rate) {
-				set_video_frame_rate(best_video_frame_rate());
-			}
-		}
-
 		emit(boost::bind(boost::ref(Change), type, p));
 
 		if (p == FilmProperty::VIDEO_FRAME_RATE || p == FilmProperty::SEQUENCE) {
@@ -1573,7 +1567,9 @@ Film::playlist_content_change(ChangeType type, weak_ptr<Content> c, int p, bool 
 {
 	switch (p) {
 	case ContentProperty::VIDEO_FRAME_RATE:
-		signal_change(type, FilmProperty::CONTENT);
+		if (!_user_explicit_video_frame_rate) {
+			set_video_frame_rate(best_video_frame_rate());
+		}
 		break;
 	case AudioContentProperty::STREAMS:
 		signal_change(type, FilmProperty::NAME);
@@ -1603,6 +1599,10 @@ Film::playlist_change(ChangeType type)
 {
 	signal_change(type, FilmProperty::CONTENT);
 	signal_change(type, FilmProperty::NAME);
+
+	if (!_user_explicit_video_frame_rate) {
+		set_video_frame_rate(best_video_frame_rate());
+	}
 
 	if (type == ChangeType::DONE) {
 		check_settings_consistency();
