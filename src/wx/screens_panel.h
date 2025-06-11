@@ -22,13 +22,13 @@
 #include "lib/cinema_list.h"
 #include "lib/collator.h"
 #include "lib/config.h"
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/srchctrl.h>
 #include <wx/treelist.h>
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 #include <list>
 #include <map>
 #include <set>
@@ -57,7 +57,7 @@ public:
 
 	dcp::UTCOffset best_utc_offset() const;
 
-	boost::signals2::signal<void ()> ScreensChanged;
+	UISignal<void ()> ScreensChanged;
 
 private:
 	void add_cinemas ();

@@ -26,6 +26,7 @@
 #include "optimisation.h"
 #include "lib/dcpomatic_time.h"
 #include "lib/exception_store.h"
+#include "lib/signal.h"
 #include "lib/signaller.h"
 #include "lib/timer.h"
 #include "lib/types.h"
@@ -76,9 +77,9 @@ public:
 	bool reset_metadata (std::shared_ptr<const Film> film, dcp::Size player_video_container_size);
 
 	/** Emitted from the GUI thread when our display changes in size */
-	boost::signals2::signal<void()> Sized;
+	UISignal<void()> Sized;
 	/** Emitted from the GUI thread when a lot of frames are being dropped */
-	boost::signals2::signal<void()> TooManyDropped;
+	UISignal<void()> TooManyDropped;
 
 
 	/* Accessors for FilmViewer */

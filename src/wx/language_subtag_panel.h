@@ -20,6 +20,7 @@
 
 
 #include "subtag_list_ctrl.h"
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/srchctrl.h>
@@ -39,8 +40,8 @@ public:
 	void set(dcp::LanguageTag::SubtagType type, std::string search, boost::optional<dcp::LanguageTag::SubtagData> subtag = boost::optional<dcp::LanguageTag::SubtagData>());
 	boost::optional<dcp::LanguageTag::RegionSubtag> get() const;
 
-	boost::signals2::signal<void (boost::optional<dcp::LanguageTag::SubtagData>)> SelectionChanged;
-	boost::signals2::signal<void (std::string)> SearchChanged;
+	UISignal<void (boost::optional<dcp::LanguageTag::SubtagData>)> SelectionChanged;
+	UISignal<void (std::string)> SearchChanged;
 
 private:
 	void search_changed();

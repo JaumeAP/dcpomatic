@@ -27,6 +27,7 @@
 #include "config.h"
 #include "encode_server_description.h"
 #include "exception_store.h"
+#include "signal.h"
 #include "signaller.h"
 #include <boost/signals2.hpp>
 #include <boost/thread/condition.hpp>
@@ -53,7 +54,7 @@ public:
 	std::list<EncodeServerDescription> servers () const;
 
 	/** Emitted whenever the list of servers changes */
-	boost::signals2::signal<void ()> ServersListChanged;
+	UISignal<void ()> ServersListChanged;
 
 private:
 	EncodeServerFinder ();

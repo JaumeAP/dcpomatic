@@ -19,6 +19,7 @@
 */
 
 
+#include "lib/signal.h"
 #include <boost/signals2.hpp>
 
 
@@ -38,9 +39,9 @@ class FocusManager
 {
 public:
 	/** emitted when any add()ed TextCtrl gets focus */
-	boost::signals2::signal<void ()> SetFocus;
+	UISignal<void ()> SetFocus;
 	/** emitted when any add()ed TextCtrl loses focus */
-	boost::signals2::signal<void ()> KillFocus;
+	UISignal<void ()> KillFocus;
 
 	void add(wxTextCtrl* c);
 

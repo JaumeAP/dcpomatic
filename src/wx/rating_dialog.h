@@ -19,12 +19,12 @@
 */
 
 
+#include "lib/signal.h"
 #include <dcp/rating.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 
 
 class wxChoice;
@@ -43,7 +43,7 @@ public:
 	/** Emitted when the page has been changed, the parameter being true if OK
 	 *  should now be enabled in the main dialogue.
 	 */
-	boost::signals2::signal<void (bool)> Changed;
+	UISignal<void (bool)> Changed;
 };
 
 

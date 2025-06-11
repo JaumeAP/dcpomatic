@@ -19,11 +19,11 @@
 */
 
 
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 #include <boost/filesystem.hpp>
 
 
@@ -62,7 +62,7 @@ public:
 		_suspended = s;
 	}
 
-	boost::signals2::signal<void (boost::filesystem::path)> LoadDCP;
+	UISignal<void (boost::filesystem::path)> LoadDCP;
 
 private:
 	void check_commands ();

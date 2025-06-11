@@ -38,6 +38,7 @@
 #include "named_channel.h"
 #include "remembered_asset.h"
 #include "resolution.h"
+#include "signal.h"
 #include "signaller.h"
 #include "territory_type.h"
 #include "transcode_job.h"
@@ -440,20 +441,20 @@ public:
 	boost::filesystem::path info_file(dcpomatic::DCPTimePeriod p) const;
 
 	/** Emitted when some property has of the Film is about to change or has changed */
-	mutable boost::signals2::signal<void (ChangeType, FilmProperty)> Change;
+	mutable UISignal<void (ChangeType, FilmProperty)> Change;
 
 	/** Emitted when some property of our content has changed */
-	mutable boost::signals2::signal<void (ChangeType, std::weak_ptr<Content>, int, bool)> ContentChange;
+	mutable UISignal<void (ChangeType, std::weak_ptr<Content>, int, bool)> ContentChange;
 
 	/** Emitted when the film's length might have changed; this is not like a normal
 	    property as its value is derived from the playlist, so it has its own signal.
 	*/
-	mutable boost::signals2::signal<void ()> LengthChange;
+	mutable UISignal<void ()> LengthChange;
 
-	boost::signals2::signal<void (bool)> DirtyChange;
+	UISignal<void (bool)> DirtyChange;
 
 	/** Emitted when we have something important to tell the user */
-	boost::signals2::signal<void (std::string)> Message;
+	UISignal<void (std::string)> Message;
 
 	/** Current version number of the state file */
 	static int const current_state_version;

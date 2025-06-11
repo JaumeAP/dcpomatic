@@ -38,7 +38,7 @@ PasswordEntry::PasswordEntry (wxWindow* parent)
 	_panel->SetSizerAndFit (sizer);
 
 	_show->bind(&PasswordEntry::show_clicked, this);
-	_text->Bind(wxEVT_TEXT, boost::bind(boost::ref(Changed)));
+	_text->Bind(wxEVT_TEXT, [this](wxCommandEvent const&) { Changed(); });
 }
 
 wxPanel *
@@ -59,7 +59,7 @@ PasswordEntry::show_clicked ()
 	delete _text;
 	_text = new wxTextCtrl (_panel, wxID_ANY, pass, wxDefaultPosition, wxDefaultSize, _show->GetValue() ? 0 : wxTE_PASSWORD);
 	_text->SetSelection (from, to);
-	_text->Bind(wxEVT_TEXT, boost::bind(boost::ref(Changed)));
+	_text->Bind(wxEVT_TEXT, [this](wxCommandEvent const&) { Changed(); });
 	sizer->Prepend (_text, 1, wxRIGHT, DCPOMATIC_SIZER_GAP);
 	sizer->Layout ();
 	_panel->Thaw ();

@@ -25,6 +25,7 @@
 
 
 #include "job.h"
+#include "signal.h"
 #include "signaller.h"
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
@@ -86,9 +87,9 @@ public:
 
 	void cancel_all_jobs();
 
-	boost::signals2::signal<void (std::weak_ptr<Job>)> JobAdded;
-	boost::signals2::signal<void ()> JobsReordered;
-	boost::signals2::signal<void (boost::optional<std::string>, boost::optional<std::string>)> ActiveJobsChanged;
+	UISignal<void (std::weak_ptr<Job>)> JobAdded;
+	UISignal<void ()> JobsReordered;
+	UISignal<void (boost::optional<std::string>, boost::optional<std::string>)> ActiveJobsChanged;
 
 	static JobManager* instance();
 	static void drop();

@@ -31,6 +31,7 @@
 #include "enum_indexed_vector.h"
 #include "export_config.h"
 #include "rough_duration.h"
+#include "signal.h"
 #include "state.h"
 #include "video_encoding.h"
 #include <dcp/name_format.h>
@@ -1250,7 +1251,7 @@ public:
 
 
 	void changed(Property p = OTHER);
-	boost::signals2::signal<void (Property)> Changed;
+	UISignal<void (Property)> Changed;
 	/** Emitted if read() failed on an existing Config file.  There is nothing
 	    a listener can do about it: this is just for information.
 	*/

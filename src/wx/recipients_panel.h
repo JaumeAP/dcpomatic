@@ -22,13 +22,13 @@
 #include "lib/collator.h"
 #include "lib/dkdm_recipient.h"
 #include "lib/dkdm_recipient_list.h"
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/srchctrl.h>
 #include <wx/treectrl.h>
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 #include <list>
 #include <map>
 
@@ -47,7 +47,7 @@ public:
 	/** @return List of selected recipients */
 	std::list<DKDMRecipient> recipients() const;
 
-	boost::signals2::signal<void ()> RecipientsChanged;
+	UISignal<void ()> RecipientsChanged;
 
 private:
 	void add_recipients ();

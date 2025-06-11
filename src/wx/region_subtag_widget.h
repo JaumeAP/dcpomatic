@@ -19,12 +19,12 @@
 */
 
 
+#include "lib/signal.h"
 #include <dcp/language_tag.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 
 
 class wxButton;
@@ -54,7 +54,7 @@ public:
 	void set(boost::optional<dcp::LanguageTag::RegionSubtag> tag);
 	void enable(bool e);
 
-	boost::signals2::signal<void (boost::optional<dcp::LanguageTag::RegionSubtag>)> Changed;
+	UISignal<void (boost::optional<dcp::LanguageTag::RegionSubtag>)> Changed;
 
 private:
 	void edit ();

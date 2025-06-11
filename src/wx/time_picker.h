@@ -19,6 +19,7 @@
 */
 
 
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
@@ -36,7 +37,7 @@ public:
 	virtual int hours () const = 0;
 	virtual int minutes () const = 0;
 
-	boost::signals2::signal<void ()> Changed;
+	UISignal<void ()> Changed;
 };
 
 

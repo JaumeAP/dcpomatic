@@ -25,13 +25,13 @@
 
 #include "wx_util.h"
 #include "lib/dcpomatic_time.h"
+#include "lib/signal.h"
 #include <dcp/raw_convert.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
 #include <fmt/format.h>
-#include <boost/signals2.hpp>
 
 
 class TimecodeBase : public wxPanel
@@ -44,7 +44,7 @@ public:
 	void set_editable (bool);
 	void set_focus ();
 
-	boost::signals2::signal<void ()> Changed;
+	UISignal<void ()> Changed;
 
 	static wxSize size (wxWindow* parent);
 

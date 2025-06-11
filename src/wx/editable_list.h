@@ -201,7 +201,7 @@ public:
 		_sizer->Layout ();
 	}
 
-	boost::signals2::signal<void ()> SelectionChanged;
+	UISignal<void ()> SelectionChanged;
 
 private:
 

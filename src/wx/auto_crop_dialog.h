@@ -25,7 +25,7 @@
 
 #include "table_dialog.h"
 #include "lib/crop.h"
-#include <boost/signals2.hpp>
+#include "lib/signal.h"
 
 
 class SpinCtrl;
@@ -39,7 +39,7 @@ public:
 	Crop get () const;
 	void set (Crop crop);
 
-	boost::signals2::signal<void (Crop)> Changed;
+	UISignal<void (Crop)> Changed;
 
 private:
 	SpinCtrl* _left;

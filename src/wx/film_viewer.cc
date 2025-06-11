@@ -104,7 +104,7 @@ FilmViewer::FilmViewer(wxWindow* p)
 #endif
 
 	_video_view->Sized.connect(boost::bind(&FilmViewer::video_view_sized, this));
-	_video_view->TooManyDropped.connect(boost::bind(boost::ref(TooManyDropped)));
+	_video_view->TooManyDropped.connect([this]() { TooManyDropped(); });
 
 	set_film(shared_ptr<Film>());
 
@@ -866,7 +866,7 @@ void
 FilmViewer::image_changed(shared_ptr<PlayerVideo> pv)
 {
 	_last_image = pv;
-	emit(boost::bind(boost::ref(ImageChanged)));
+	ImageChanged.emit_ui(this);
 }
 
 

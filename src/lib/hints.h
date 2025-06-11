@@ -23,11 +23,11 @@
 #include "dcp_text_track.h"
 #include "dcpomatic_time.h"
 #include "player_text.h"
+#include "signal.h"
 #include "signaller.h"
 #include "text_type.h"
 #include "weak_film.h"
 #include <boost/atomic.hpp>
-#include <boost/signals2.hpp>
 #include <string>
 #include <vector>
 
@@ -44,10 +44,10 @@ public:
 
 	void start();
 
-	boost::signals2::signal<void (std::string)> Hint;
-	boost::signals2::signal<void (std::string)> Progress;
-	boost::signals2::signal<void (void)> Pulse;
-	boost::signals2::signal<void (void)> Finished;
+	UISignal<void (std::string)> Hint;
+	UISignal<void (std::string)> Progress;
+	UISignal<void ()> Pulse;
+	UISignal<void ()> Finished;
 
 	/* For tests only */
 	void join();

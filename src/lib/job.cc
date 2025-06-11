@@ -375,7 +375,7 @@ Job::set_state (State s)
 
 	if (finished) {
 		auto const result = state_to_result(s);
-		emit(boost::bind(boost::ref(Finished), result));
+		Finished.emit_ui(this, result);
 		FinishedImmediate(result);
 	}
 }
@@ -419,7 +419,7 @@ Job::check_for_interruption_or_pause ()
 
 	boost::mutex::scoped_lock lm (_state_mutex);
 	while (_state == PAUSED_BY_USER || _state == PAUSED_BY_PRIORITY) {
-		emit (boost::bind (boost::ref (Progress)));
+		Progress.emit_ui(this);
 		_pause_changed.wait (lm);
 	}
 }
@@ -475,7 +475,7 @@ Job::set_progress_common (optional<float> p)
 		_progress = p;
 	}
 
-	emit (boost::bind (boost::ref (Progress)));
+	Progress.emit_ui(this);
 }
 
 

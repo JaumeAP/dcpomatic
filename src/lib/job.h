@@ -28,6 +28,7 @@
 #define DCPOMATIC_JOB_H
 
 
+#include "signal.h"
 #include "signaller.h"
 #include <boost/atomic.hpp>
 #include <boost/signals2.hpp>
@@ -108,9 +109,9 @@ public:
 
 	void set_rate_limit_progress(bool rate_limit);
 
-	boost::signals2::signal<void()> Progress;
+	UISignal<void()> Progress;
 	/** Emitted from the UI thread when the job is finished */
-	boost::signals2::signal<void (Result)> Finished;
+	UISignal<void (Result)> Finished;
 	/** Emitted from the job thread when the job is finished */
 	boost::signals2::signal<void (Result)> FinishedImmediate;
 

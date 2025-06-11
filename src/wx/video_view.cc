@@ -170,7 +170,7 @@ VideoView::add_dropped ()
 	}
 
 	if (too_many) {
-		emit (boost::bind(boost::ref(TooManyDropped)));
+		TooManyDropped.emit_ui(this);
 	}
 }
 

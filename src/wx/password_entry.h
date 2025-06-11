@@ -19,11 +19,11 @@
 */
 
 
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 
 
 class CheckBox;
@@ -39,7 +39,7 @@ public:
 	std::string get () const;
 	void set (std::string);
 
-	boost::signals2::signal<void ()> Changed;
+	UISignal<void ()> Changed;
 
 private:
 	void show_clicked ();

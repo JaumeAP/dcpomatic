@@ -33,6 +33,7 @@
 #include "lib/constants.h"
 #include "lib/dcp_content.h"
 #include "lib/film.h"
+#include "lib/signal.h"
 #include "lib/text_content.h"
 #include "lib/video_content.h"
 #include <dcp/scope_guard.h>
@@ -121,7 +122,7 @@ public:
 		return _view;
 	}
 
-	boost::signals2::signal<void (int, dcpomatic::DCPTime)> Changed;
+	UISignal<void (int, dcpomatic::DCPTime)> Changed;
 
 private:
 	void timecode_changed() {

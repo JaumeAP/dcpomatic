@@ -19,11 +19,11 @@
 */
 
 
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 
 
 namespace dcp {
@@ -50,7 +50,7 @@ public:
 	    - (int, int): image x range
 	    - (int, int): component value range
 	*/
-	boost::signals2::signal<void (int, int, int, int)> MouseMoved;
+	UISignal<void (int, int, int, int)> MouseMoved;
 
 private:
 	void paint ();

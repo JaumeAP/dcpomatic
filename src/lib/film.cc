@@ -1310,7 +1310,7 @@ Film::signal_change(ChangeType type, FilmProperty p)
 	if (type == ChangeType::DONE) {
 		set_dirty(true);
 
-		emit(boost::bind(boost::ref(Change), type, p));
+		Change.emit_ui(this, type, p);
 
 		if (p == FilmProperty::VIDEO_FRAME_RATE || p == FilmProperty::SEQUENCE) {
 			/* We want to call Playlist::maybe_sequence but this must happen after the
@@ -1577,7 +1577,7 @@ Film::playlist_content_change(ChangeType type, weak_ptr<Content> c, int p, bool 
 	}
 
 	if (type == ChangeType::DONE) {
-		emit(boost::bind(boost::ref(ContentChange), type, c, p, frequent));
+		ContentChange.emit_ui(this, type, c, p, frequent);
 		if (!frequent) {
 			check_settings_consistency();
 		}
@@ -2325,7 +2325,7 @@ Film::set_dirty(bool dirty)
 	auto const changed = dirty != _dirty;
 	_dirty = dirty;
 	if (changed) {
-		emit(boost::bind(boost::ref(DirtyChange), _dirty));
+		DirtyChange.emit_ui(this, _dirty);
 	}
 }
 

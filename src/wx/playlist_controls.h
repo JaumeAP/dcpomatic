@@ -20,6 +20,7 @@
 
 
 #include "controls.h"
+#include "lib/signal.h"
 #include "lib/spl.h"
 
 
@@ -35,7 +36,7 @@ public:
 	    when we have created one from a SPL.  We could call a method
 	    in the player's DOMFrame but we don't have that in a header.
 	*/
-	boost::signals2::signal<void (std::weak_ptr<Film>)> ResetFilm;
+	UISignal<void (std::weak_ptr<Film>)> ResetFilm;
 
 	void play () override;
 	void stop () override;

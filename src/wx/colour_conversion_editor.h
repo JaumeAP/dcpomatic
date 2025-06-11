@@ -23,11 +23,11 @@
 #define DCPOMATIC_COLOUR_CONVERSION_EDITOR_H
 
 
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 
 
 class ColourConversion;
@@ -43,7 +43,7 @@ public:
 	void set (ColourConversion);
 	ColourConversion get () const;
 
-	boost::signals2::signal<void ()> Changed;
+	UISignal<void ()> Changed;
 
 private:
 	void changed ();

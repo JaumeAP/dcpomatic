@@ -21,11 +21,11 @@
 
 #include "lib/audio_analysis.h"
 #include "lib/constants.h"
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 #include <vector>
 
 struct Metrics;
@@ -45,7 +45,7 @@ public:
 
 	wxColour colour (int n) const;
 
-	boost::signals2::signal<void (boost::optional<dcpomatic::DCPTime>, boost::optional<float>)> Cursor;
+	UISignal<void (boost::optional<dcpomatic::DCPTime>, boost::optional<float>)> Cursor;
 
 	static const int max_smoothing;
 

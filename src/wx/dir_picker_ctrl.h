@@ -23,6 +23,7 @@
 #define DCPOMATIC_DIR_PICKER_CTRL
 
 
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
@@ -41,7 +42,7 @@ public:
 	wxString GetPath() const;
 	void SetPath(wxString);
 
-	boost::signals2::signal<void ()> Changed;
+	UISignal<void ()> Changed;
 
 private:
 	void browse_clicked();

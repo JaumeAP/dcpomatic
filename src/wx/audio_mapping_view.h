@@ -26,11 +26,11 @@
 
 #include "lib/audio_mapping.h"
 #include "lib/named_channel.h"
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 
 
 /** @class AudioMappingView
@@ -74,7 +74,7 @@ public:
 
 	void set_input_groups (std::vector<Group> const & groups);
 
-	boost::signals2::signal<void (AudioMapping)> Changed;
+	UISignal<void (AudioMapping)> Changed;
 
 private:
 	void map_values_changed ();

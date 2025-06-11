@@ -24,11 +24,11 @@
  */
 
 
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 
 
 class Film;
@@ -43,7 +43,7 @@ class FilterDialog : public wxDialog
 public:
 	FilterDialog(wxWindow *, std::vector<Filter> const&);
 
-	boost::signals2::signal<void (std::vector<Filter>)> ActiveChanged;
+	UISignal<void (std::vector<Filter>)> ActiveChanged;
 
 private:
 	void active_changed ();

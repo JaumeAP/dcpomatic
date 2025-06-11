@@ -39,6 +39,7 @@
 #include "player_text.h"
 #include "position_image.h"
 #include "shuffler.h"
+#include "signal.h"
 #include <boost/atomic.hpp>
 #include <list>
 
@@ -119,7 +120,7 @@ public:
 	 *  Second parameter is the property.
 	 *  Third parameter is true if these signals are currently likely to be frequent.
 	 */
-	boost::signals2::signal<void (ChangeType, int, bool)> Change;
+	UISignal<void (ChangeType, int, bool)> Change;
 
 	/** Emitted when a video frame is ready.  These emissions happen in the correct order. */
 	boost::signals2::signal<void (std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime)> Video;

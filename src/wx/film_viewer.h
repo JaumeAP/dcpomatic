@@ -25,6 +25,7 @@
 
 
 #include "optimisation.h"
+#include "signal.h"
 #include "video_view.h"
 #include "lib/change_signaller.h"
 #include "lib/config.h"
@@ -156,16 +157,17 @@ public:
 	Frame average_latency() const;
 
 	/** The image we are viewing changed: call last_image() to get the image */
-	boost::signals2::signal<void ()> ImageChanged;
+	UISignal<void ()> ImageChanged;
 	std::shared_ptr<const PlayerVideo> last_image() const;
 
-	boost::signals2::signal<void ()> Started;
-	boost::signals2::signal<void ()> Stopped;
+	UISignal<void ()> Started;
+	UISignal<void ()> Stopped;
 	/** While playing back we reached the end of the film (emitted from GUI thread) */
-	boost::signals2::signal<void ()> Finished;
+	UISignal<void ()> Finished;
 	/** Emitted from the GUI thread when a lot of frames are being dropped */
-	boost::signals2::signal<void()> TooManyDropped;
+	UISignal<void()> TooManyDropped;
 
+	/* XXX: could be UISignal but this needs a return type and that is tricky in C++11 AFAICS */
 	boost::signals2::signal<bool ()> PlaybackPermitted;
 
 private:

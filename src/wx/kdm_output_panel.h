@@ -25,6 +25,7 @@
 
 #include "wx_util.h"
 #include "lib/kdm_with_metadata.h"
+#include "lib/signal.h"
 #include <dcp/types.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -73,7 +74,7 @@ public:
 	void set_annotation_text(std::string text);
 	std::string annotation_text() const;
 
-	boost::signals2::signal<void ()> MethodChanged;
+	UISignal<void ()> MethodChanged;
 
 protected:
 	void create_destination_widgets(wxWindow* parent);

@@ -19,6 +19,7 @@
 */
 
 
+#include "lib/signal.h"
 #include "lib/types.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -36,7 +37,7 @@ public:
 	boost::filesystem::path cpl () const;
 	bool has_selected () const;
 
-	boost::signals2::signal<void ()> Changed;
+	UISignal<void ()> Changed;
 
 private:
 	void update_cpl_choice ();

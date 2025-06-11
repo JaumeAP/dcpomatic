@@ -169,7 +169,7 @@ try
 		}
 
 		if (removed) {
-			emit (boost::bind(boost::ref(ServersListChanged)));
+			ServersListChanged.emit_ui(this);
 		}
 
 		boost::mutex::scoped_lock lm (_search_condition_mutex);
@@ -269,7 +269,7 @@ EncodeServerFinder::handle_accept (boost::system::error_code ec)
 	}
 
 	if (changed) {
-		emit (boost::bind(boost::ref (ServersListChanged)));
+		ServersListChanged.emit_ui(this);
 	}
 
 	start_accept ();

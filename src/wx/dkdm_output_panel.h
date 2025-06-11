@@ -22,6 +22,7 @@
 #include "name_format_editor.h"
 #include "wx_util.h"
 #include "lib/kdm_with_metadata.h"
+#include "lib/signal.h"
 #include <dcp/types.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -56,7 +57,7 @@ public:
 
 	bool method_selected() const;
 
-	boost::signals2::signal<void ()> MethodChanged;
+	UISignal<void ()> MethodChanged;
 
 private:
 	void method_changed();

@@ -20,6 +20,7 @@
 
 
 #include "wx_util.h"
+#include "lib/signal.h"
 #include <dcp/utc_offset.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -49,7 +50,7 @@ public:
 	 */
 	void suggest_utc_offset(dcp::UTCOffset offset);
 
-	boost::signals2::signal<void ()> TimingChanged;
+	UISignal<void ()> TimingChanged;
 
 private:
 	void changed () const;

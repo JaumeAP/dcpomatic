@@ -93,7 +93,7 @@ JobManager::add(shared_ptr<Job> j)
 		_schedule_condition.notify_all();
 	}
 
-	emit(boost::bind(boost::ref(JobAdded), weak_ptr<Job>(j)));
+	JobAdded.emit_ui(this, weak_ptr<Job>(j));
 
 	return j;
 }
@@ -110,7 +110,7 @@ JobManager::add_after(shared_ptr<Job> after, shared_ptr<Job> j)
 		_schedule_condition.notify_all();
 	}
 
-	emit(boost::bind(boost::ref(JobAdded), weak_ptr<Job>(j)));
+	JobAdded.emit_ui(this, weak_ptr<Job>(j));
 
 	return j;
 }
@@ -178,7 +178,7 @@ JobManager::scheduler()
 					i->resume();
 				}
 				auto last = _last_active_job.lock();
-				emit(boost::bind(boost::ref(ActiveJobsChanged), last ? last->json_name() : std::string{}, i->json_name()));
+				ActiveJobsChanged.emit_ui(this, last ? last->json_name() : std::string{}, i->json_name());
 				_last_active_job = i;
 				have_running = true;
 			} else if (!have_running && i->running()) {
@@ -197,7 +197,7 @@ JobManager::job_finished()
 	{
 		boost::mutex::scoped_lock lm(_mutex);
 		auto job = _last_active_job.lock();
-		emit(boost::bind(boost::ref(ActiveJobsChanged), job ? job->json_name() : string{}, optional<string>()));
+		ActiveJobsChanged.emit_ui(this, job ? job->json_name() : string{}, optional<string>());
 		_last_active_job = {};
 	}
 
@@ -257,7 +257,7 @@ JobManager::analyse_audio(
 		_schedule_condition.notify_all();
 	}
 
-	emit(boost::bind(boost::ref(JobAdded), weak_ptr<Job>(job)));
+	JobAdded.emit_ui(this, weak_ptr<Job>(job));
 }
 
 
@@ -292,7 +292,7 @@ JobManager::analyse_subtitles(
 		_schedule_condition.notify_all();
 	}
 
-	emit(boost::bind(boost::ref(JobAdded), weak_ptr<Job>(job)));
+	JobAdded.emit_ui(this, weak_ptr<Job>(job));
 }
 
 
@@ -309,7 +309,7 @@ JobManager::increase_priority (shared_ptr<Job> job)
 	}
 
 	_schedule_condition.notify_all();
-	emit(boost::bind(boost::ref(JobsReordered)));
+	JobsReordered.emit_ui(this);
 }
 
 
@@ -326,7 +326,7 @@ JobManager::decrease_priority(shared_ptr<Job> job)
 	}
 
 	_schedule_condition.notify_all();
-	emit(boost::bind(boost::ref(JobsReordered)));
+	JobsReordered.emit_ui(this);
 }
 
 

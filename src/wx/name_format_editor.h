@@ -24,6 +24,7 @@
 
 
 #include "lib/compose.hpp"
+#include "lib/signal.h"
 #include <dcp/name_format.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -45,7 +46,7 @@ public:
 		return _name;
 	}
 
-	boost::signals2::signal<void ()> Changed;
+	UISignal<void ()> Changed;
 
 private:
 

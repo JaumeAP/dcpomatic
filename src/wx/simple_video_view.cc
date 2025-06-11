@@ -61,7 +61,7 @@ SimpleVideoView::SimpleVideoView (FilmViewer* viewer, wxWindow* parent)
 	_panel->SetBackgroundColour (*wxBLACK);
 
 	_panel->Bind (wxEVT_PAINT, boost::bind (&SimpleVideoView::paint, this));
-	_panel->Bind (wxEVT_SIZE, boost::bind(boost::ref(Sized)));
+	_panel->Bind (wxEVT_SIZE, [this](wxSizeEvent const&) { Sized.emit_ui(this); });
 
 	_timer.Bind (wxEVT_TIMER, boost::bind(&SimpleVideoView::timer, this));
 }
