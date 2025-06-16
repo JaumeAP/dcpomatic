@@ -686,8 +686,15 @@ private:
 		auto c = Config::instance()->decode_reduction();
 		_view_cpl = view->Append(ID_view_cpl, _("CPL"), _cpl_menu);
 		view->AppendSeparator();
+
+#ifdef DCPOMATIC_OSX
+		_view_full_screen = view->AppendCheckItem(ID_view_full_screen, _("Full screen\tCtrl+F"));
+		_view_dual_screen = view->AppendCheckItem(ID_view_dual_screen, _("Dual screen\tCtrl+D"));
+#else
 		_view_full_screen = view->AppendCheckItem(ID_view_full_screen, _("Full screen\tF11"));
 		_view_dual_screen = view->AppendCheckItem(ID_view_dual_screen, _("Dual screen\tShift+F11"));
+#endif
+
 		setup_menu();
 		view->AppendSeparator();
 		view->Append(ID_view_closed_captions, _("Closed captions..."));
