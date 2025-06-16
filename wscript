@@ -30,7 +30,7 @@ try:
 except ImportError:
     # python 3
     from urllib.parse import urlencode
-from waflib import Logs, Context
+from waflib import Logs, Context, TaskGen
 
 APPNAME = 'dcpomatic'
 libdcp_version = '1.9.22'
@@ -51,6 +51,7 @@ else:
     VERSION = this_version[1:].strip()
 
 def options(opt):
+    opt.load('compiler_c')
     opt.load('compiler_cxx')
     opt.load('winres')
 
@@ -83,6 +84,7 @@ def options(opt):
     opt.add_option('--variant', help="build with variant")
 
 def configure(conf):
+    conf.load('compiler_c')
     conf.load('compiler_cxx')
     conf.load('clang_compilation_database', tooldir=['waf-tools'])
     if conf.options.target_windows_64 or conf.options.target_windows_32:

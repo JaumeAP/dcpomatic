@@ -21,8 +21,15 @@ import os
 import subprocess
 import shlex
 import glob
-from waflib import Logs
+from waflib import Logs, TaskGen
 import i18n
+
+
+@TaskGen.extension('.m')
+def m_hook(self, node):
+    """Alias .m files to be compiled the same as .c files, gcc will do the right thing."""
+    return self.create_compiled_task('c', node)
+
 
 sources = """
           about_dialog.cc
