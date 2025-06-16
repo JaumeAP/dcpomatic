@@ -361,7 +361,7 @@ def build(bld):
         obj.source += ' i18n_setup_windows.cc'
     if bld.env.TARGET_OSX:
         obj.framework = ['CoreAudio', 'OpenGL']
-        obj.source += ' i18n_setup_osx.cc'
+        obj.source += ' i18n_setup_osx.cc wx_util_osx.m'
     obj.use = 'libdcpomatic2'
     obj.target = 'dcpomatic2-wx'
 
