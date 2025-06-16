@@ -38,6 +38,9 @@
 #include "wx/wx_ptr.h"
 #include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
+#ifdef DCPOMATIC_OSX
+#include "wx/wx_util_osx.h"
+#endif
 #include "wx/wx_variant.h"
 #include "lib/audio_content.h"
 #include "lib/config.h"
@@ -975,13 +978,37 @@ private:
 		_controls->Show(_mode != Config::PlayerMode::FULL);
 		_info->Show(_mode != Config::PlayerMode::FULL);
 		_overall_panel->SetBackgroundColour(_mode == Config::PlayerMode::FULL ? wxColour(0, 0, 0) : wxNullColour);
-		ShowFullScreen(_mode == Config::PlayerMode::FULL);
+
+#ifdef DCPOMATIC_OSX
+		if (_mode == Config::PlayerMode::FULL) {
+			int width;
+			int height;
+			enter_full_screen_mode(reinterpret_cast<NSView*>(GetHandle()), &width, &height);
+			SetSize(width, height);
+			_overall_panel->SetSize(width, height);
+		} else {
+			exit_full_screen_mode(reinterpret_cast<NSView*>(GetHandle()));
+			Maximize();
+		}
+#else
+		ShowFullScreen (_mode == Config::PlayerMode::FULL);
+#endif
+
 		_viewer.set_pad_black(_mode != Config::PlayerMode::WINDOW);
 
 		if (_mode == Config::PlayerMode::DUAL) {
 			_dual_screen = new wxFrame(this, wxID_ANY, {});
 			_dual_screen->SetBackgroundColour(wxColour(0, 0, 0));
-			_dual_screen->ShowFullScreen(true);
+
+#ifdef DCPOMATIC_OSX
+			int width;
+			int height;
+			enter_full_screen_mode(reinterpret_cast<NSView*>(_dual_screen->GetHandle()), &width, &height);
+			_dual_screen->SetSize(width, height);
+#else
+			_dual_screen->ShowFullScreen (true);
+#endif
+
 			_viewer.panel()->Reparent(_dual_screen);
 			_viewer.panel()->SetFocus();
 			_dual_screen->Show();
