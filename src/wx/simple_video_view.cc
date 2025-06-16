@@ -79,6 +79,9 @@ SimpleVideoView::paint ()
 	auto const pad = pad_colour();
 
 	dcp::Size out_size;
+	int x_position = 0;
+	int y_position = 0;
+
 	if (!_image) {
 		wxBrush b (pad);
 		dc.SetBackground (b);
@@ -86,9 +89,11 @@ SimpleVideoView::paint ()
 	} else {
 		DCPOMATIC_ASSERT (_image->alignment() == Image::Alignment::COMPACT);
 		out_size = _image->size();
+		x_position = max(0, (panel_size.width - out_size.width) / 2);
+		y_position = max(0, (panel_size.height - out_size.height) / 2);
 		wxImage frame (out_size.width, out_size.height, _image->data()[0], true);
 		wxBitmap frame_bitmap (frame);
-		dc.DrawBitmap(frame_bitmap, 0, max(0, (panel_size.height - out_size.height) / 2));
+		dc.DrawBitmap(frame_bitmap, x_position, y_position);
 	}
 
 	if (out_size.width < panel_size.width) {
@@ -96,7 +101,9 @@ SimpleVideoView::paint ()
 		wxBrush b (pad);
 		dc.SetPen (p);
 		dc.SetBrush (b);
-		dc.DrawRectangle(out_size.width, 0, panel_size.width - out_size.width, panel_size.height);
+		auto const gap = (panel_size.width - out_size.width) / 2;
+		dc.DrawRectangle(0, 0, gap, panel_size.height);
+		dc.DrawRectangle(gap + out_size.width, 0, gap + 1, panel_size.height);
 	}
 
 	if (out_size.height < panel_size.height) {
@@ -113,7 +120,12 @@ SimpleVideoView::paint ()
 		wxPen p (outline_content_colour(), 2);
 		dc.SetPen (p);
 		dc.SetBrush (*wxTRANSPARENT_BRUSH);
-		dc.DrawRectangle(_inter_position.x, _inter_position.y + (panel_size.height - out_size.height) / 2, _inter_size.width, _inter_size.height);
+		dc.DrawRectangle(
+			x_position + _inter_position.x,
+			y_position + _inter_position.y + (panel_size.height - out_size.height) / 2,
+			_inter_size.width,
+			_inter_size.height
+			);
 	}
 
 	auto subs = _viewer->outline_subtitles();
@@ -121,7 +133,12 @@ SimpleVideoView::paint ()
 		wxPen p (outline_subtitles_colour(), 2);
 		dc.SetPen (p);
 		dc.SetBrush (*wxTRANSPARENT_BRUSH);
-		dc.DrawRectangle (subs->x * out_size.width, subs->y * out_size.height, subs->width * out_size.width, subs->height * out_size.height);
+		dc.DrawRectangle(
+			x_position + subs->x * out_size.width,
+			y_position + subs->y * out_size.height,
+			subs->width * out_size.width,
+			subs->height * out_size.height
+			);
 	}
 
 	if (_viewer->crop_guess()) {
@@ -130,8 +147,8 @@ SimpleVideoView::paint ()
 		dc.SetBrush (*wxTRANSPARENT_BRUSH);
 		auto const crop_guess = _viewer->crop_guess().get();
 		dc.DrawRectangle (
-			_inter_position.x + _inter_size.width * crop_guess.x,
-			_inter_position.y + _inter_size.height * crop_guess.y,
+			x_position + _inter_position.x + _inter_size.width * crop_guess.x,
+			y_position + _inter_position.y + _inter_size.height * crop_guess.y,
 			_inter_size.width * crop_guess.width,
 			_inter_size.height * crop_guess.height
 			);
