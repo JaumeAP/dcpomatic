@@ -330,9 +330,9 @@ BOOST_AUTO_TEST_CASE(threed_passthrough_test, * boost::unit_test::depends_on("th
 /* #2476 was a writer error when 3D picture padding is needed */
 BOOST_AUTO_TEST_CASE(threed_test_when_padding_needed)
 {
-	auto left = content_factory("test/data/flat_red.png").front();
-	auto right = content_factory("test/data/flat_red.png").front();
-	auto sound = content_factory("test/data/sine_440.wav").front();
+	auto left = content_factory("test/data/flat_red.png")[0];
+	auto right = content_factory("test/data/flat_red.png")[0];
+	auto sound = content_factory("test/data/sine_440.wav")[0];
 	auto film = new_test_film("threed_test_when_padding_needed", { left, right, sound });
 
 	left->video->set_frame_type(VideoFrameType::THREE_D_LEFT);
