@@ -22,6 +22,8 @@
 #include "content_video.h"
 #include "dcpomatic_assert.h"
 #include "dcpomatic_log.h"
+#include "image.h"
+#include "raw_image_proxy.h"
 #include "shuffler.h"
 #include <iostream>
 #include <string>
@@ -91,13 +93,42 @@ Shuffler::video(weak_ptr<Piece> weak_piece, ContentVideo video)
 			break;
 		}
 
+		optional<Eyes> extra;
+
 		if (_store.size() > _max_size) {
 			LOG_WARNING("Shuffler is full after receiving frame at {}; 3D sync may be incorrect.", to_string(video.time));
+			/* Now that we've given up waiting for the correct frames to arrive, we may need to insert some extra
+			 * left/right eyes so that the player doesn't wait forever for lefts/rights that will never come.
+			 * Set extra to the extra eye that we should insert based on what we'll emit now and what's coming next.
+			 */
+			auto const& this_frame = _store.front();
+			auto const& next_frame = *std::next(_store.begin());
+			if (this_frame.second.eyes == next_frame.second.eyes) {
+				extra = this_frame.second.eyes == Eyes::LEFT ? Eyes::RIGHT : Eyes::LEFT;
+			}
+		}
+
+		auto emit_black = [this](Eyes eyes) {
+			LOG_DEBUG_THREE_D("Shuffler emits extra time=%1 eyes=%2 store=%3", to_string(_store.front().second.time), static_cast<int>(eyes), _store.size());
+			auto image = std::make_shared<Image>(AV_PIX_FMT_RGB24, dcp::Size(64, 64), Image::Alignment::COMPACT);
+			image->make_black();
+			auto proxy = std::make_shared<RawImageProxy>(image);
+			ContentVideo black(proxy, _store.front().second.time, eyes, _store.front().second.part);
+			Video(_store.front().first, black);
+		};
+
+		if (extra && *extra == Eyes::LEFT) {
+			emit_black(*extra);
 		}
 
 		LOG_DEBUG_THREE_D("Shuffler emits time={} eyes={} store={}", to_string(_store.front().second.time), static_cast<int>(_store.front().second.eyes), _store.size());
 		Video(_store.front().first, _store.front().second);
 		_last = _store.front().second;
+
+		if (extra && *extra == Eyes::RIGHT) {
+			emit_black(*extra);
+		}
+
 		_store.pop_front();
 	}
 }

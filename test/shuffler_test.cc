@@ -180,6 +180,7 @@ BOOST_AUTO_TEST_CASE(shuffler_test6)
 {
 	Shuffler s;
 	s.Video.connect(boost::bind(&receive, _1, _2));
+	pending_cv.clear();
 
 	push(s, 0, Eyes::LEFT);
 	check(0, Eyes::LEFT, __LINE__);
@@ -196,3 +197,23 @@ BOOST_AUTO_TEST_CASE(shuffler_test6)
 	push(s, 3, Eyes::RIGHT);
 	check(3, Eyes::RIGHT, __LINE__);
 }
+
+
+BOOST_AUTO_TEST_CASE(shuffler_full_test)
+{
+	Shuffler s;
+	s.Video.connect(boost::bind(&receive, _1, _2));
+
+	push(s, 0, Eyes::LEFT);
+	check(0, Eyes::LEFT, __LINE__);
+
+	for (int i = 1; i < 65; ++i) {
+		push(s, i, Eyes::LEFT);
+	}
+	BOOST_CHECK(pending_cv.empty());
+
+	push(s, 64, Eyes::LEFT);
+	check(1, Eyes::LEFT, __LINE__);
+	check(1, Eyes::RIGHT, __LINE__);
+}
+
