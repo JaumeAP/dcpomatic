@@ -1026,6 +1026,7 @@ Player::emit_video_until(DCPTime time)
 		   ) {
 			frame(left.first, next);
 			frame(right.first, next);
+			LOG_DEBUG_PLAYER("Content %1 and %2 selected for DCP %3 (ages %4 %5)", to_string(left.second), to_string(right.second), to_string(next), to_string(left.second - next), to_string(right.second - next));
 		} else if (both.first && (both.second - next) < age_threshold(both)) {
 			frame(both.first, next);
 			LOG_DEBUG_PLAYER("PLY: Content {} selected for DCP {} (age {})", to_string(both.second), to_string(next), to_string(both.second - next));
