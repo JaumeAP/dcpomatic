@@ -77,9 +77,9 @@ CopyToDriveJob::run ()
 		LOG_DISK("%1", dcp.string());
 	}
 
-	string request = String::compose(DISK_WRITER_WRITE "\n%1\n", _drive.device());
+	string request = fmt::format(DISK_WRITER_WRITE "\n{}\n", _drive.device());
 	for (auto dcp: _dcps) {
-		request += String::compose("%1\n", dcp.string());
+		request += fmt::format("{}\n", dcp.string());
 	}
 	request += "\n";
 	if (!_nanomsg.send(request, 2000)) {

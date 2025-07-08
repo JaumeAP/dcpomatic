@@ -38,7 +38,6 @@
 #include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
 #include "wx/wx_variant.h"
-#include "lib/compose.hpp"
 #include "lib/config.h"
 #include "lib/constants.h"
 #include "lib/cross.h"
@@ -90,6 +89,7 @@ LIBDCP_ENABLE_WARNINGS
 #ifdef __WXGTK__
 #include <X11/Xlib.h>
 #endif
+#include <fmt/format.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/bind/bind.hpp>
 #include <iostream>
@@ -1181,7 +1181,7 @@ private:
 		for (size_t i = 0; i < history.size(); ++i) {
 			string s;
 			if (i < 9) {
-				s = String::compose ("&%1 %2", i + 1, history[i].string());
+				s = fmt::format("&{} {}", i + 1, history[i].string());
 			} else {
 				s = history[i].string();
 			}

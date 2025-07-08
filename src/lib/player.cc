@@ -24,7 +24,6 @@
 #include "audio_content.h"
 #include "audio_decoder.h"
 #include "audio_processor.h"
-#include "compose.hpp"
 #include "config.h"
 #include "content_audio.h"
 #include "content_video.h"
@@ -57,6 +56,7 @@
 #include <dcp/reel_picture_asset.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/reel_text_asset.h>
+#include <fmt/format.h>
 #include <algorithm>
 #include <iostream>
 #include <stdint.h>
@@ -801,7 +801,7 @@ Player::pass()
 			/* Let's not worry about less than a frame at 24fps */
 			int64_t const too_much_error = DCPTime::from_frames(1, 24).get();
 			if (error >= too_much_error) {
-				film->log()->log(String::compose("Silence starting before or after last audio by %1", error), LogEntry::TYPE_ERROR);
+				film->log()->log(fmt::format("Silence starting before or after last audio by {}", error), LogEntry::TYPE_ERROR);
 			}
 			DCPOMATIC_ASSERT(error < too_much_error);
 			period.from = *_next_audio_time;
@@ -1469,7 +1469,7 @@ Player::emit_audio(shared_ptr<AudioBuffers> data, DCPTime time)
 
 	/* Log if the assert below is about to fail */
 	if (_next_audio_time && labs(time.get() - _next_audio_time->get()) > 1) {
-		film->log()->log(String::compose("Out-of-sequence emit %1 vs %2", to_string(time), to_string(*_next_audio_time)), LogEntry::TYPE_WARNING);
+		film->log()->log(fmt::format("Out-of-sequence emit {} vs {}", to_string(time), to_string(*_next_audio_time)), LogEntry::TYPE_WARNING);
 	}
 
 	/* This audio must follow on from the previous, allowing for half a sample (at 48kHz) leeway */

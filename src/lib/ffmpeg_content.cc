@@ -380,8 +380,8 @@ FFmpegContent::technical_summary () const
 		s += " - " + audio->technical_summary ();
 	}
 
-	return s + String::compose (
-		"ffmpeg: audio %1 subtitle %2 filters %3", as, ss, filt
+	return s + fmt::format(
+		"ffmpeg: audio {} subtitle {} filters {}", as, ss, filt
 		);
 }
 

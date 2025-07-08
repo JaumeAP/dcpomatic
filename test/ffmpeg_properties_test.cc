@@ -19,11 +19,11 @@
 */
 
 
-#include "lib/compose.hpp"
 #include "lib/content.h"
 #include "lib/content_factory.h"
 #include "lib/user_property.h"
 #include "test.h"
+#include <fmt/format.h>
 #include <boost/test/unit_test.hpp>
 
 
@@ -37,7 +37,7 @@ colour_range_test(string name, boost::filesystem::path file, string ref)
 {
 	auto content = content_factory(file);
 	BOOST_REQUIRE(!content.empty());
-	auto film = new_test_film(String::compose("ffmpeg_properties_test_%1", name), { content.front() });
+	auto film = new_test_film(fmt::format("ffmpeg_properties_test_{}", name), { content.front() });
 
 	auto properties = content.front()->user_properties(film);
 	auto iter = std::find_if(properties.begin(), properties.end(), [](UserProperty const& property) { return property.key == "Colour range"; });

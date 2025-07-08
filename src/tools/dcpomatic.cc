@@ -1488,7 +1488,7 @@ private:
 		for (size_t i = 0; i < history.size(); ++i) {
 			string s;
 			if (i < 9) {
-				s = String::compose ("&%1 %2", i + 1, history[i].string());
+				s = fmt::format("&{} {}", i + 1, history[i].string());
 			} else {
 				s = history[i].string();
 			}

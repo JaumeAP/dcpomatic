@@ -21,7 +21,6 @@
 
 #include "cinema_list.h"
 #include "colour_conversion.h"
-#include "compose.hpp"
 #include "config.h"
 #include "constants.h"
 #include "cross.h"
@@ -276,7 +275,7 @@ Config::backup()
 	auto copy_adding_number = [](path const& path_to_copy) {
 
 		auto add_number = [](path const& path, int number) {
-			return String::compose("%1.%2", path, number);
+			return fmt::format("{}.{}", path.string(), number);
 		};
 
 		int n = 1;

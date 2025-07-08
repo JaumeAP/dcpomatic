@@ -483,7 +483,7 @@ maybe_add_text(
 		if (!text_only && reel_asset->actual_duration() != period_duration) {
 			throw ProgrammingError(
 				__FILE__, __LINE__,
-				String::compose("%1 vs %2", reel_asset->actual_duration(), period_duration)
+				fmt::format("{} vs {}", reel_asset->actual_duration(), period_duration)
 				);
 		}
 		reel->add(reel_asset);
@@ -529,7 +529,7 @@ ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReferencedReelA
 	if (reel_asset->duration() != period_duration) {
 		throw ProgrammingError(
 			__FILE__, __LINE__,
-			String::compose("%1 vs %2", reel_asset->actual_duration(), period_duration)
+			fmt::format("{} vs {}", reel_asset->actual_duration(), period_duration)
 			);
 	}
 	reel->add(reel_asset);
@@ -581,7 +581,7 @@ ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReferencedReelAss
 		if (reel_asset->actual_duration() != period_duration) {
 			throw ProgrammingError(
 				__FILE__, __LINE__,
-				String::compose("%1 vs %2", reel_asset->actual_duration(), period_duration)
+				fmt::format("{} vs {}", reel_asset->actual_duration(), period_duration)
 				);
 		}
 

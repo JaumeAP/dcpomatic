@@ -47,7 +47,7 @@ OpenFileError::OpenFileError (boost::filesystem::path f, int error, Mode mode)
 
 
 FileNotFoundError::FileNotFoundError (boost::filesystem::path f)
-	: runtime_error(String::compose("File %1 not found", f.string()))
+	: runtime_error(fmt::format("File {} not found", f.string()))
 	, _file (f)
 {
 
@@ -118,7 +118,7 @@ KDMAsContentError::KDMAsContentError ()
 
 
 NetworkError::NetworkError (string s, optional<string> d)
-	: runtime_error (String::compose("%1%2", s, d ? String::compose(" (%1)", *d) : ""))
+	: runtime_error(fmt::format("{}{}", s, d ? fmt::format(" ({})", *d) : ""))
 	, _summary (s)
 	, _detail (d)
 {
@@ -127,7 +127,7 @@ NetworkError::NetworkError (string s, optional<string> d)
 
 
 KDMError::KDMError (string s, string d)
-	: runtime_error (String::compose("%1 (%2)", s, d))
+	: runtime_error(fmt::format("{} ({})", s, d))
 	, _summary (s)
 	, _detail (d)
 {
@@ -136,7 +136,7 @@ KDMError::KDMError (string s, string d)
 
 
 GLError::GLError (char const* last, int e)
-	: runtime_error (String::compose("%1 failed %2", last, e))
+	: runtime_error(fmt::format("{} failed {}", last, e))
 {
 
 }
@@ -150,7 +150,7 @@ GLError::GLError (char const* message)
 
 
 CopyError::CopyError(string m, optional<int> ext4, optional<int> platform)
-	: runtime_error(String::compose("%1%2%3", m, ext4 ? String::compose(" (%1)", *ext4) : "", platform ? String::compose(" (%1)", *platform) : ""))
+	: runtime_error(fmt::format("{}{}{}", m, ext4 ? fmt::format(" ({})", *ext4) : "", platform ? fmt::format(" ({})", *platform) : ""))
 	, _message (m)
 	, _ext4_number(ext4)
 	, _platform_number(platform)
@@ -167,7 +167,7 @@ CommunicationFailedError::CommunicationFailedError ()
 
 
 VerifyError::VerifyError (string m, int n)
-	: runtime_error (String::compose("%1 (%2)", m, n))
+	: runtime_error(fmt::format("{} ({})", m, n))
 	, _message (m)
 	, _number (n)
 {

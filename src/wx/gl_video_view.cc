@@ -443,7 +443,7 @@ GLVideoView::setup_shaders()
 				log = string(log_char.data());
 			}
 			glDeleteShader(shader);
-			throw GLError(String::compose("Could not compile shader (%1)", log).c_str(), -1);
+			throw GLError(fmt::format("Could not compile shader (%1)", log).c_str(), -1);
 		}
 		return shader;
 	};
@@ -471,7 +471,7 @@ GLVideoView::setup_shaders()
 			log = string(log_char.data());
 		}
 		glDeleteProgram(program);
-		throw GLError(String::compose("Could not link shader (%1)", log).c_str(), -1);
+		throw GLError(fmt::format("Could not link shader (%1)", log).c_str(), -1);
 	}
 	glDeleteShader(vertex_shader);
 	glDeleteShader(fragment_shader);

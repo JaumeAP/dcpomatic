@@ -105,7 +105,7 @@ Job::start ()
 void
 Job::run_wrapper ()
 {
-	start_of_thread (String::compose("Job-%1", json_name()));
+	start_of_thread(fmt::format("Job-{}", json_name()));
 
 	try {
 

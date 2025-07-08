@@ -19,6 +19,7 @@
 */
 
 
+#include "compose.hpp"
 #include "dcpomatic_assert.h"
 #include "exceptions.h"
 #include "unzipper.h"

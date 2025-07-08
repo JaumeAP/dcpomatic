@@ -44,6 +44,7 @@ LIBDCP_DISABLE_WARNINGS
 #include <wx/splash.h>
 #include <wx/taskbar.h>
 LIBDCP_ENABLE_WARNINGS
+#include <fmt/format.h>
 #include <boost/optional.hpp>
 #include <boost/thread.hpp>
 #include <iostream>
@@ -253,7 +254,7 @@ public:
 #else
 		string const colour = gui_is_dark() ? "white" : "black";
 		wxBitmap bitmap (
-			bitmap_path(String::compose("dcpomatic_small_%1.png", colour)),
+			bitmap_path(fmt::format("dcpomatic_small_{}.png", colour)),
 			wxBITMAP_TYPE_PNG
 			);
 		wxIcon icon;

@@ -19,7 +19,6 @@
 */
 
 
-#include "compose.hpp"
 #include "config.h"
 #include "cross.h"
 #include "dcpomatic_log.h"
@@ -31,6 +30,7 @@
 #include <dcp/raw_convert.h>
 #include <dcp/warnings.h>
 #include <glib.h>
+#include <fmt/format.h>
 #include <boost/algorithm/string.hpp>
 #if BOOST_VERSION >= 106100
 #include <boost/dll/runtime_symbol_info.hpp>
@@ -114,7 +114,7 @@ void
 run_ffprobe(boost::filesystem::path content, boost::filesystem::path out, bool err, string args)
 {
 	string const redirect = err ? "2>" : ">";
-	auto const ffprobe = String::compose("ffprobe %1 \"%2\" %3 \"%4\"", args.empty() ? " " : args, content.string(), redirect, out.string());
+	auto const ffprobe = fmt::format("ffprobe {} \"{}\" {} \"{}\"", args.empty() ? " " : args, content.string(), redirect, out.string());
 	LOG_GENERAL (N_("Probing with %1"), ffprobe);
 	int const r = system (ffprobe.c_str());
 	if (r == -1 || (WIFEXITED(r) && WEXITSTATUS(r) != 0)) {
@@ -336,12 +336,12 @@ show_in_file_manager (boost::filesystem::path dir, boost::filesystem::path)
 {
 	int r = system ("which nautilus");
 	if (WEXITSTATUS(r) == 0) {
-		r = system (String::compose("nautilus \"%1\"", dir.string()).c_str());
+		r = system(fmt::format("nautilus \"{}\"", dir.string()).c_str());
 		return static_cast<bool>(WEXITSTATUS(r));
 	} else {
 		int r = system ("which konqueror");
 		if (WEXITSTATUS(r) == 0) {
-			r = system (String::compose("konqueror \"%1\"", dir.string()).c_str());
+			r = system(fmt::format("konqueror \"{}\"", dir.string()).c_str());
 			return static_cast<bool>(WEXITSTATUS(r));
 		}
 	}

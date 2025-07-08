@@ -29,6 +29,7 @@
 #include <unicode/ustring.h>
 #include <fmt/format.h>
 #include <boost/scoped_array.hpp>
+#include <algorithm>
 #include <cstring>
 #include <vector>
 
@@ -102,8 +103,8 @@ Collator::find(string pattern, string text) const
 		usearch_close(search);
 		return index != -1;
 	} else {
-		transform(pattern.begin(), pattern.end(), pattern.begin(), ::tolower);
-		transform(text.begin(), text.end(), text.begin(), ::tolower);
+		std::transform(pattern.begin(), pattern.end(), pattern.begin(), ::tolower);
+		std::transform(text.begin(), text.end(), text.begin(), ::tolower);
 		return pattern.find(text) != string::npos;
 	}
 }

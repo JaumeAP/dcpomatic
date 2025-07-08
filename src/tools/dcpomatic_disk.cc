@@ -49,6 +49,7 @@
 LIBDCP_DISABLE_WARNINGS
 #include <boost/process.hpp>
 LIBDCP_ENABLE_WARNINGS
+#include <fmt/format.h>
 #ifdef DCPOMATIC_WINDOWS
 #include <boost/process/windows.hpp>
 #endif
@@ -252,7 +253,7 @@ private:
 #ifdef DCPOMATIC_OSX
 	void uninstall()
 	{
-		system(String::compose("osascript \"%1/uninstall_disk.applescript\"", resources_path().string()).c_str());
+		system(fmt::format("osascript \"{}/uninstall_disk.applescript\"", resources_path().string()).c_str());
 	}
 #endif
 

@@ -362,16 +362,16 @@ VideoContent::identifier() const
 string
 VideoContent::technical_summary() const
 {
-	string const size_string = size() ? String::compose("%1x%2", size()->width, size()->height) : _("unknown");
+	string const size_string = size() ? fmt::format("{}x{}", size()->width, size()->height) : _("unknown");
 
-	string s = String::compose(
-		N_("video: length %1 frames, size %2"),
+	string s = fmt::format(
+		N_("video: length {} frames, size {}"),
 		length_after_3d_combine(),
 		size_string
 		);
 
 	if (sample_aspect_ratio()) {
-		s += String::compose(N_(", sample aspect ratio %1"), sample_aspect_ratio().get());
+		s += fmt::format(N_(", sample aspect ratio {}"), sample_aspect_ratio().get());
 	}
 
 	return s;
@@ -526,7 +526,7 @@ VideoContent::add_properties(list<UserProperty>& p) const
 {
 	p.push_back(UserProperty(UserProperty::VIDEO, _("Length"), length(), _("video frames")));
 	if (auto s = size()) {
-		p.push_back(UserProperty(UserProperty::VIDEO, _("Size"), String::compose("%1x%2", s->width, s->height)));
+		p.push_back(UserProperty(UserProperty::VIDEO, _("Size"), fmt::format("{}x{}", s->width, s->height)));
 	}
 }
 

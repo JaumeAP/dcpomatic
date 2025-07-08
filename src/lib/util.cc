@@ -410,7 +410,7 @@ ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list vl)
 	av_log_format_line(ptr, level, fmt, vl, line, sizeof(line), &prefix);
 	string str(line);
 	boost::algorithm::trim(str);
-	dcpomatic_log->log(String::compose("FFmpeg: %1", str), LogEntry::TYPE_GENERAL);
+	dcpomatic_log->log(fmt::format("FFmpeg: {}", str), LogEntry::TYPE_GENERAL);
 }
 
 
@@ -462,7 +462,7 @@ LIBDCP_ENABLE_WARNINGS
 	if (running_tests) {
 		putenv("FONTCONFIG_PATH=fonts");
 	} else {
-		putenv(String::compose("FONTCONFIG_PATH=%1", resources_path().string()).c_str());
+		putenv(fmt::format("FONTCONFIG_PATH={}", resources_path().string()).c_str());
 	}
 #endif
 
@@ -1029,7 +1029,7 @@ start_of_thread(string)
 string
 error_details(boost::system::error_code ec)
 {
-	return String::compose("%1:%2:%3", ec.category().name(), ec.value(), ec.message());
+	return fmt::format("{}:{}:{}", ec.category().name(), ec.value(), ec.message());
 }
 
 

@@ -24,6 +24,7 @@
 #include "nanomsg.h"
 #include <nanomsg/nn.h>
 #include <nanomsg/pair.h>
+#include <fmt/format.h>
 #include <cerrno>
 #include <stdexcept>
 
@@ -44,11 +45,11 @@ Nanomsg::Nanomsg (bool server)
 	}
 	if (server) {
 		if ((_endpoint = nn_bind(_socket, NANOMSG_URL)) < 0) {
-			throw runtime_error(String::compose("Could not bind nanomsg socket (%1)", errno));
+			throw runtime_error(fmt::format("Could not bind nanomsg socket ({})", errno));
 		}
 	} else {
 		if ((_endpoint = nn_connect(_socket, NANOMSG_URL)) < 0) {
-			throw runtime_error(String::compose("Could not connect nanomsg socket (%1)", errno));
+			throw runtime_error(fmt::format("Could not connect nanomsg socket ({})", errno));
 		}
 	}
 }
@@ -73,7 +74,7 @@ Nanomsg::send (string s, int timeout)
 		if (errno == ETIMEDOUT || errno == EAGAIN) {
 			return false;
 		}
-		throw runtime_error(String::compose("Could not send to nanomsg socket (%1)", errno));
+		throw runtime_error(fmt::format("Could not send to nanomsg socket ({})", errno));
 	} else if (r != int(s.length())) {
 		throw runtime_error("Could not send to nanomsg socket (message too big)");
 	}
