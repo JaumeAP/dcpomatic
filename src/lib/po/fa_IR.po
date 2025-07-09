@@ -120,8 +120,8 @@ msgid "{} [movie]"
 msgstr "{} [فیلم]"
 
 #: src/lib/ffmpeg_content.cc:351 src/lib/video_mxf_content.cc:106
-msgid "%1 [video]"
-msgstr "%1 [ویدیو]"
+msgid "{} [video]"
+msgstr "{} [ویدیو]"
 
 #: src/lib/job.cc:181 src/lib/job.cc:196
 msgid ""
