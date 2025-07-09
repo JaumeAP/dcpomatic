@@ -1113,11 +1113,12 @@ msgstr ""
 "و کلیدها را بسازید؟"
 
 #: src/tools/dcpomatic_combiner.cc:164
+#, c-format
 msgid ""
-"The directory %1 already exists and is not empty.  Are you sure you want to "
+"The directory %s already exists and is not empty.  Are you sure you want to "
 "use it?"
 msgstr ""
-"پوشه %1 وجود دارد و خالی نیست. مطمئن هستید که می خواهید از آن استفاده کنید؟"
+"پوشه %s وجود دارد و خالی نیست. مطمئن هستید که می خواهید از آن استفاده کنید؟"
 
 #: src/tools/dcpomatic_disk.cc:292
 msgid "The disk you selected is no longer available.  Please choose another."

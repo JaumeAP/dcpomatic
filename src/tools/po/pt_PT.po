@@ -1086,10 +1086,10 @@ msgstr ""
 
 #: src/tools/dcpomatic_combiner.cc:164
 msgid ""
-"The directory %1 already exists and is not empty.  Are you sure you want to "
+"The directory %s already exists and is not empty.  Are you sure you want to "
 "use it?"
 msgstr ""
-"O directório %1 já existe e não se encontra vazio. Tem a certeza que "
+"O directório %s já existe e não se encontra vazio. Tem a certeza que "
 "pretende utilizá-lo?"
 
 #: src/tools/dcpomatic_disk.cc:292

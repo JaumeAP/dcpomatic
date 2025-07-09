@@ -1101,7 +1101,7 @@ msgstr ""
 #: src/tools/dcpomatic_combiner.cc:164
 #, fuzzy
 msgid ""
-"The directory %1 already exists and is not empty.  Are you sure you want to "
+"The directory %s already exists and is not empty.  Are you sure you want to "
 "use it?"
 msgstr "Befejezetlen művelet vannak, biztosan ki akarsz lépni?"
 

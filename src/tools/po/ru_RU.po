@@ -1111,9 +1111,9 @@ msgstr ""
 
 #: src/tools/dcpomatic_combiner.cc:164
 msgid ""
-"The directory %1 already exists and is not empty.  Are you sure you want to "
+"The directory %s already exists and is not empty.  Are you sure you want to "
 "use it?"
-msgstr "Папка %1 уже существует и не пуста. Вы точно хотите использовать её?"
+msgstr "Папка %s уже существует и не пуста. Вы точно хотите использовать её?"
 
 #: src/tools/dcpomatic_disk.cc:292
 msgid "The disk you selected is no longer available.  Please choose another."

@@ -161,11 +161,8 @@ private:
 		if (is_directory(output) && !is_empty(output)) {
 			if (!confirm_dialog (
 				    this,
-				    std_to_wx (
-					    String::compose(wx_to_std(_("The directory %1 already exists and is not empty.  "
-									"Are you sure you want to use it?")),
-							    output.string())
-					    )
+				    wxString::Format(_("The directory %s already exists and is not empty.  "
+						       "Are you sure you want to use it?"), std_to_wx(output.string()))
 				    )) {
 				return;
 			}

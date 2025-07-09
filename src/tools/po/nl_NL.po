@@ -1123,9 +1123,9 @@ msgstr ""
 
 #: src/tools/dcpomatic_combiner.cc:164
 msgid ""
-"The directory %1 already exists and is not empty.  Are you sure you want to "
+"The directory %s already exists and is not empty.  Are you sure you want to "
 "use it?"
-msgstr "De map %1 bestaat al en is niet leeg.  Wilt u deze toch gebruiken?"
+msgstr "De map %s bestaat al en is niet leeg.  Wilt u deze toch gebruiken?"
 
 #: src/tools/dcpomatic_disk.cc:292
 msgid "The disk you selected is no longer available.  Please choose another."
