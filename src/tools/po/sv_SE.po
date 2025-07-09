@@ -405,8 +405,8 @@ msgid "Could not load film %1"
 msgstr "Kunde inte ladda film %1"
 
 #: src/tools/dcpomatic.cc:1734
-msgid "Could not load film %1 (%2)"
-msgstr "Kunde inte ladda film %1 (%2)"
+msgid "Could not load film %s"
+msgstr "Kunde inte ladda film %s"
 
 #: src/tools/dcpomatic_player.cc:1349
 #, fuzzy, c-format

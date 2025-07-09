@@ -406,8 +406,8 @@ msgid "Could not load film %1"
 msgstr "Nem sikerült a film %1 betöltése"
 
 #: src/tools/dcpomatic.cc:1734
-msgid "Could not load film %1 (%2)"
-msgstr "Nem sikerült a film %1 (%s) betöltése."
+msgid "Could not load film %s"
+msgstr "Nem sikerült a film %s betöltése."
 
 #: src/tools/dcpomatic_player.cc:1349
 #, fuzzy, c-format

@@ -409,8 +409,8 @@ msgid "Could not load film %1"
 msgstr "Impossible de charger le film %1"
 
 #: src/tools/dcpomatic.cc:1734
-msgid "Could not load film %1 (%2)"
-msgstr "Impossible de charger le film %1 (%2)"
+msgid "Could not load film %s"
+msgstr "Impossible de charger le film %s"
 
 #: src/tools/dcpomatic_player.cc:1349
 #, c-format

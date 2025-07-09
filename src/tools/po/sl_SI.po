@@ -406,8 +406,8 @@ msgid "Could not load film %1"
 msgstr "Filma %1 ni bilo mogoče naložiti"
 
 #: src/tools/dcpomatic.cc:1734
-msgid "Could not load film %1 (%2)"
-msgstr "Filma %1 (%2) ni bilo mogoče naložiti"
+msgid "Could not load film %s"
+msgstr "Filma %s ni bilo mogoče naložiti"
 
 #: src/tools/dcpomatic_player.cc:1349
 #, fuzzy, c-format

@@ -411,8 +411,8 @@ msgid "Could not load film %1"
 msgstr "Projekt %1 konnte nicht geladen werden"
 
 #: src/tools/dcpomatic.cc:1734
-msgid "Could not load film %1 (%2)"
-msgstr "Projekt %1 (%2) konnte nicht geladen werden"
+msgid "Could not load film %s"
+msgstr "Projekt %s konnte nicht geladen werden"
 
 #: src/tools/dcpomatic_player.cc:1349
 #, c-format

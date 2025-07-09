@@ -62,7 +62,6 @@
 #include "lib/audio_content.h"
 #include "lib/check_content_job.h"
 #include "lib/cinema.h"
-#include "lib/compose.hpp"
 #include "lib/config.h"
 #include "lib/constants.h"
 #include "lib/content.h"
@@ -1732,7 +1731,7 @@ private:
 				try {
 					_frame->load_film (_film_to_load);
 				} catch (exception& e) {
-					error_dialog (nullptr, std_to_wx(String::compose(wx_to_std(_("Could not load film %1 (%2)")), _film_to_load)), std_to_wx(e.what()));
+					error_dialog(nullptr, wxString::Format(_("Could not load film %s"), std_to_wx(_film_to_load)), std_to_wx(e.what()));
 				}
 			}
 
