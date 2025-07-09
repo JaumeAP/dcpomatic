@@ -721,8 +721,8 @@ msgstr "Não foi possível descodificar o ficheiro JPEG2000 %1 (%2)"
 
 #: src/lib/ffmpeg_image_proxy.cc:164
 #, fuzzy
-msgid "Could not decode image (%1)"
-msgstr "Não foi possível descodificar a imagem (%1)"
+msgid "Could not decode image ({})"
+msgstr "Não foi possível descodificar a imagem ({})"
 
 #: src/lib/unzipper.cc:76
 #, fuzzy

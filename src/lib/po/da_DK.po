@@ -741,8 +741,8 @@ msgid "Could not decode JPEG2000 file %1 (%2)"
 msgstr "Kunne ikke læse JPEG2000 fil %1 (%2)"
 
 #: src/lib/ffmpeg_image_proxy.cc:164
-msgid "Could not decode image (%1)"
-msgstr "Kunne ikke afkode billedet (%1)"
+msgid "Could not decode image ({})"
+msgstr "Kunne ikke afkode billedet ({})"
 
 #: src/lib/unzipper.cc:76
 #, fuzzy

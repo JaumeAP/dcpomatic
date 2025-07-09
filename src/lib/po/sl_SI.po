@@ -765,8 +765,8 @@ msgid "Could not decode JPEG2000 file %1 (%2)"
 msgstr "Datoteke JPEG2000 %1 (%2) ni mogoče dekodirati"
 
 #: src/lib/ffmpeg_image_proxy.cc:164
-msgid "Could not decode image (%1)"
-msgstr "Slike ni mogoče dekodirati (%1)"
+msgid "Could not decode image ({})"
+msgstr "Slike ni mogoče dekodirati ({})"
 
 #: src/lib/unzipper.cc:76
 #, fuzzy

@@ -759,8 +759,8 @@ msgid "Could not decode JPEG2000 file %1 (%2)"
 msgstr "Не удалось декодировать JPEG2000-файл(ы) %1 (%2)"
 
 #: src/lib/ffmpeg_image_proxy.cc:164
-msgid "Could not decode image (%1)"
-msgstr "Не удалось декодировать изображение (%1)"
+msgid "Could not decode image ({})"
+msgstr "Не удалось декодировать изображение ({})"
 
 #: src/lib/unzipper.cc:76
 msgid "Could not find file %1 in ZIP file"

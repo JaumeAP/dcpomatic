@@ -717,8 +717,8 @@ msgstr "Nemôžem dekódovať JPEG2000 súbor %1 (%2)"
 
 #: src/lib/ffmpeg_image_proxy.cc:164
 #, fuzzy
-msgid "Could not decode image (%1)"
-msgstr "Nemôžem dekódovať video súbor (%1)"
+msgid "Could not decode image ({})"
+msgstr "Nemôžem dekódovať video súbor ({})"
 
 #: src/lib/unzipper.cc:76
 #, fuzzy
