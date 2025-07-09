@@ -324,8 +324,8 @@ msgstr ""
 "størrelsesforhold som dit indhold."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Der skete en fejl, mens der blev arbejdet på filen %1."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Der skete en fejl, mens der blev arbejdet på filen {}."
 
 #: src/lib/analyse_audio_job.cc:74
 msgid "Analysing audio"

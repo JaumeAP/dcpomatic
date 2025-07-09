@@ -337,8 +337,8 @@ msgstr ""
 "beeldverhouding als uw content in te stellen."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Er is een fout opgetreden bij de verwerking van bestand %1."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Er is een fout opgetreden bij de verwerking van bestand {}."
 
 #: src/lib/analyse_audio_job.cc:74
 msgid "Analysing audio"

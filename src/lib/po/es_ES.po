@@ -334,8 +334,8 @@ msgstr ""
 "seleccionar el contenedor DCP en el mismo ratio de aspecto que el contenido."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Ha ocurrido un error con el fichero %1."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Ha ocurrido un error con el fichero {}."
 
 #: src/lib/analyse_audio_job.cc:74
 msgid "Analysing audio"

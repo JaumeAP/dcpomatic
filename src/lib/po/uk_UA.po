@@ -311,8 +311,8 @@ msgstr ""
 "(1.85:1) на вкладці \"DCP\"."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Виникла помилка при зверненні до файлу %1."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Виникла помилка при зверненні до файлу {}."
 
 #: src/lib/analyse_audio_job.cc:74
 #, fuzzy

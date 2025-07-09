@@ -336,8 +336,8 @@ msgstr ""
 "razmerje kot vaša vsebina."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Pri obravnavi datoteke %1 je prišlo do napake."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Pri obravnavi datoteke {} je prišlo do napake."
 
 #: src/lib/analyse_audio_job.cc:74
 msgid "Analysing audio"

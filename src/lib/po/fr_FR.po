@@ -335,8 +335,8 @@ msgstr ""
 "de votre DCP au contenu dans l'onglet \"DCP\", si vous voulez l'éviter."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Une erreur s'est produite lors du traitement du fichier %1."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Une erreur s'est produite lors du traitement du fichier {}."
 
 #: src/lib/analyse_audio_job.cc:74
 msgid "Analysing audio"

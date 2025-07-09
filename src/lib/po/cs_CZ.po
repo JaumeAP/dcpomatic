@@ -331,8 +331,8 @@ msgstr ""
 "DCP tak, aby měl stejný poměr jako váš obsah."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Vyskytla se chyba při zpracování souboru %1."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Vyskytla se chyba při zpracování souboru {}."
 
 #: src/lib/analyse_audio_job.cc:74
 msgid "Analysing audio"

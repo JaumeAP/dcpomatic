@@ -314,8 +314,8 @@ msgstr ""
 "preferibile impostare il contenitore DCP su Flat (1.85:1) nel tab \"DCP\"."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Errore durante l'elaborazione del file %1."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Errore durante l'elaborazione del file {}."
 
 #: src/lib/analyse_audio_job.cc:74
 #, fuzzy

@@ -345,8 +345,8 @@ msgstr ""
 "DCP-Reiter den DCI Containertyp auf Flat (1.85:1) einstellen."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Beim Bearbeiten der Datei %1 trat ein Fehler auf."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Beim Bearbeiten der Datei {} trat ein Fehler auf."
 
 #: src/lib/analyse_audio_job.cc:74
 msgid "Analysing audio"

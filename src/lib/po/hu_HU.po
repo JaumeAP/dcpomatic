@@ -325,8 +325,8 @@ msgstr ""
 "tartalom."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Hiba a %1 fájl kezelése közben."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Hiba a {} fájl kezelése közben."
 
 #: src/lib/analyse_audio_job.cc:74
 msgid "Analysing audio"

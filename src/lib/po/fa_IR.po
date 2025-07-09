@@ -336,8 +336,8 @@ msgstr ""
 "خود را مشابه با نسبت ابعاد محتوا تغییر دهید."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "بروز خطا هنگام دسترسی به فایل %1."
+msgid "An error occurred whilst handling the file {}."
+msgstr "بروز خطا هنگام دسترسی به فایل {}."
 
 #: src/lib/analyse_audio_job.cc:74
 msgid "Analysing audio"

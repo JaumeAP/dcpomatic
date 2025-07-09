@@ -275,7 +275,7 @@ msgid ""
 msgstr ""
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
+msgid "An error occurred whilst handling the file {}."
 msgstr ""
 
 #: src/lib/analyse_audio_job.cc:74

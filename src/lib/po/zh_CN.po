@@ -322,8 +322,8 @@ msgstr ""
 "画面在放映时存在左右黑边。建议把DCP容器设置为与素材相同宽高比的模式。"
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "处理文件 %1 时发生错误。"
+msgid "An error occurred whilst handling the file {}."
+msgstr "处理文件 {} 时发生错误。"
 
 #: src/lib/analyse_audio_job.cc:74
 msgid "Analysing audio"

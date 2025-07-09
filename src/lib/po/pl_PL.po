@@ -342,8 +342,8 @@ msgstr ""
 "kontener DCP na Flat (1.85:1) w zakładce \"DCP\"."
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Wystąpił błąd podczas przetwarzania pliku %1."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Wystąpił błąd podczas przetwarzania pliku {}."
 
 #: src/lib/analyse_audio_job.cc:74
 msgid "Analysing audio"

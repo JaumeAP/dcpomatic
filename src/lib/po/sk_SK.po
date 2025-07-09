@@ -297,8 +297,8 @@ msgid ""
 msgstr ""
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Vyskytla sa chyba počas spracovávania súboru %1."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Vyskytla sa chyba počas spracovávania súboru {}."
 
 #: src/lib/analyse_audio_job.cc:74
 #, fuzzy

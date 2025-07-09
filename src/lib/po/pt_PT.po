@@ -297,8 +297,8 @@ msgid ""
 msgstr ""
 
 #: src/lib/job.cc:116
-msgid "An error occurred whilst handling the file %1."
-msgstr "Ocorreu um erro ao manipular o ficheiro %1."
+msgid "An error occurred whilst handling the file {}."
+msgstr "Ocorreu um erro ao manipular o ficheiro {}."
 
 #: src/lib/analyse_audio_job.cc:74
 #, fuzzy
