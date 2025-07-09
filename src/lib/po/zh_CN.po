@@ -110,8 +110,8 @@ msgid "%1 (%2 GB) [%3]"
 msgstr "%1 (%2 GB) [%3]"
 
 #: src/lib/atmos_mxf_content.cc:96
-msgid "%1 [Atmos]"
-msgstr "%1 [全景声]"
+msgid "{} [Atmos]"
+msgstr "{} [全景声]"
 
 #: src/lib/dcp_content.cc:366
 msgid "%1 [DCP]"
