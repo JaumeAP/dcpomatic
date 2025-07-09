@@ -792,8 +792,8 @@ msgid "Could not start transfer"
 msgstr "نمی توان انتقال را شروع کرد"
 
 #: src/lib/curl_uploader.cc:110 src/lib/scp_uploader.cc:138
-msgid "Could not write to remote file (%1)"
-msgstr "نمیتوان در فایل راه دور نوشت(%1)"
+msgid "Could not write to remote file ({})"
+msgstr "نمیتوان در فایل راه دور نوشت({})"
 
 #: src/lib/util.cc:649
 msgid "D-BOX primary"

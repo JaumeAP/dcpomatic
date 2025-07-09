@@ -814,8 +814,8 @@ msgid "Could not start transfer"
 msgstr "Nie udało się rozpocząć transferu"
 
 #: src/lib/curl_uploader.cc:110 src/lib/scp_uploader.cc:138
-msgid "Could not write to remote file (%1)"
-msgstr "Nie udało się zapisać do pliku zdalnego (%1)"
+msgid "Could not write to remote file ({})"
+msgstr "Nie udało się zapisać do pliku zdalnego ({})"
 
 #: src/lib/util.cc:649
 msgid "D-BOX primary"

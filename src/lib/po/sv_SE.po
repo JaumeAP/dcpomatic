@@ -822,8 +822,8 @@ msgid "Could not start transfer"
 msgstr "Kunde inte starta överföring"
 
 #: src/lib/curl_uploader.cc:110 src/lib/scp_uploader.cc:138
-msgid "Could not write to remote file (%1)"
-msgstr "Kunde inte skriva till fjärrfil (%1)"
+msgid "Could not write to remote file ({})"
+msgstr "Kunde inte skriva till fjärrfil ({})"
 
 #: src/lib/util.cc:649
 msgid "D-BOX primary"

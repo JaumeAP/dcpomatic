@@ -818,8 +818,8 @@ msgid "Could not start transfer"
 msgstr "Kan overdracht niet starten"
 
 #: src/lib/curl_uploader.cc:110 src/lib/scp_uploader.cc:138
-msgid "Could not write to remote file (%1)"
-msgstr "Kan extern bestand niet schrijven (%1)"
+msgid "Could not write to remote file ({})"
+msgstr "Kan extern bestand niet schrijven ({})"
 
 #: src/lib/util.cc:649
 msgid "D-BOX primary"

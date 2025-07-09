@@ -107,7 +107,7 @@ CurlUploader::upload_file(boost::filesystem::path from, boost::filesystem::path 
 
 	auto const r = curl_easy_perform(_curl);
 	if (r != CURLE_OK) {
-		throw NetworkError(String::compose(_("Could not write to remote file (%1)"), curl_easy_strerror(r)));
+		throw NetworkError(fmt::format(_("Could not write to remote file ({})"), curl_easy_strerror(r)));
 	}
 
 	_file = nullptr;
