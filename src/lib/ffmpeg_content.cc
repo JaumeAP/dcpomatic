@@ -554,7 +554,7 @@ FFmpegContent::add_properties (shared_ptr<const Film> film, list<UserProperty>& 
 				/// file is limited, so that not all possible values are valid.
 				p.push_back (
 					UserProperty (
-						UserProperty::VIDEO, _("Colour range"), String::compose(_("Limited / video (%1-%2)"), lim_start, lim_end)
+						UserProperty::VIDEO, _("Colour range"), fmt::format(_("Limited / video ({}-{})"), lim_start, lim_end)
 						)
 					);
 				break;

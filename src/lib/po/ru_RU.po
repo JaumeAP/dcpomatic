@@ -1209,8 +1209,8 @@ msgid "Limited"
 msgstr "Ограничен"
 
 #: src/lib/ffmpeg_content.cc:563
-msgid "Limited / video (%1-%2)"
-msgstr "Ограничен / видео (%1-%2)"
+msgid "Limited / video ({}-{})"
+msgstr "Ограничен / видео ({}-{})"
 
 #: src/lib/ffmpeg_content.cc:635
 msgid "Linear"

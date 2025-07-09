@@ -1085,7 +1085,7 @@ msgid "Limited"
 msgstr ""
 
 #: src/lib/ffmpeg_content.cc:563
-msgid "Limited / video (%1-%2)"
+msgid "Limited / video ({}-{})"
 msgstr ""
 
 #: src/lib/ffmpeg_content.cc:635

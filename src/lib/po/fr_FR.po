@@ -1201,8 +1201,8 @@ msgid "Limited"
 msgstr "Limité"
 
 #: src/lib/ffmpeg_content.cc:563
-msgid "Limited / video (%1-%2)"
-msgstr "Limité / vidéo (%1-%2)"
+msgid "Limited / video ({}-{})"
+msgstr "Limité / vidéo ({}-{})"
 
 #: src/lib/ffmpeg_content.cc:635
 msgid "Linear"

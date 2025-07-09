@@ -1189,8 +1189,8 @@ msgid "Limited"
 msgstr "محدود شد"
 
 #: src/lib/ffmpeg_content.cc:563
-msgid "Limited / video (%1-%2)"
-msgstr "محدود شد/ویدیو (%1-%2)"
+msgid "Limited / video ({}-{})"
+msgstr "محدود شد/ویدیو ({}-{})"
 
 #: src/lib/ffmpeg_content.cc:635
 msgid "Linear"

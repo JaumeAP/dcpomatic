@@ -1211,8 +1211,8 @@ msgstr "Ograniczony"
 
 #: src/lib/ffmpeg_content.cc:563
 #, fuzzy
-msgid "Limited / video (%1-%2)"
-msgstr "Ograniczony (%1-%2)"
+msgid "Limited / video ({}-{})"
+msgstr "Ograniczony ({}-{})"
 
 #: src/lib/ffmpeg_content.cc:635
 msgid "Linear"

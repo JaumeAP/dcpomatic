@@ -1206,8 +1206,8 @@ msgid "Limited"
 msgstr "Omejeno"
 
 #: src/lib/ffmpeg_content.cc:563
-msgid "Limited / video (%1-%2)"
-msgstr "Omejeno/video (%1-%2)"
+msgid "Limited / video ({}-{})"
+msgstr "Omejeno/video ({}-{})"
 
 #: src/lib/ffmpeg_content.cc:635
 msgid "Linear"

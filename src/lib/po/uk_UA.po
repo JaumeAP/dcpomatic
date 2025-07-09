@@ -1184,8 +1184,8 @@ msgstr "Обмежено"
 
 #: src/lib/ffmpeg_content.cc:563
 #, fuzzy
-msgid "Limited / video (%1-%2)"
-msgstr "Обмежено (%1-%2)"
+msgid "Limited / video ({}-{})"
+msgstr "Обмежено ({}-{})"
 
 #: src/lib/ffmpeg_content.cc:635
 msgid "Linear"
