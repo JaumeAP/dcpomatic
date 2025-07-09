@@ -112,7 +112,7 @@ FFmpegContent::FFmpegContent(cxml::ConstNodePtr node, boost::optional<boost::fil
 		if (auto filter = Filter::from_id(i->content())) {
 			_filters.push_back(*filter);
 		} else {
-			notes.push_back(String::compose(_("%1 no longer supports the `%2' filter, so it has been turned off."), variant::dcpomatic(), i->content()));
+			notes.push_back(fmt::format(_("{} no longer supports the `{}' filter, so it has been turned off."), variant::dcpomatic(), i->content()));
 		}
 	}
 

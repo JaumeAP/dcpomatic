@@ -133,7 +133,7 @@ msgid ""
 msgstr ""
 
 #: src/lib/ffmpeg_content.cc:121
-msgid "%1 no longer supports the `%2' filter, so it has been turned off."
+msgid "{} no longer supports the `{}' filter, so it has been turned off."
 msgstr ""
 
 #: src/lib/config.cc:441 src/lib/config.cc:1245

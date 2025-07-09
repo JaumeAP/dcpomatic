@@ -164,8 +164,8 @@ msgstr ""
 "dehors du film."
 
 #: src/lib/ffmpeg_content.cc:121
-msgid "%1 no longer supports the `%2' filter, so it has been turned off."
-msgstr "%1 ne gère plus le filtre `%2'.  Il a donc été désactivé."
+msgid "{} no longer supports the `{}' filter, so it has been turned off."
+msgstr "{} ne gère plus le filtre `{}'.  Il a donc été désactivé."
 
 #: src/lib/config.cc:441 src/lib/config.cc:1245
 msgid "%1 notification"

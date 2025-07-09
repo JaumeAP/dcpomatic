@@ -161,8 +161,8 @@ msgid ""
 msgstr "%1必须删除一些自定义卷轴边界，因为它不再位于影片中。"
 
 #: src/lib/ffmpeg_content.cc:121
-msgid "%1 no longer supports the `%2' filter, so it has been turned off."
-msgstr "%1 不再支持 %2 滤镜，因此它必须被关闭。"
+msgid "{} no longer supports the `{}' filter, so it has been turned off."
+msgstr "{} 不再支持 {} 滤镜，因此它必须被关闭。"
 
 #: src/lib/config.cc:441 src/lib/config.cc:1245
 msgid "%1 notification"

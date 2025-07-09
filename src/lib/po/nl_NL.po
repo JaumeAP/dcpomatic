@@ -165,7 +165,7 @@ msgstr ""
 "niet meer binnen de film vallen."
 
 #: src/lib/ffmpeg_content.cc:121
-msgid "%1 no longer supports the `%2' filter, so it has been turned off."
+msgid "{} no longer supports the `{}' filter, so it has been turned off."
 msgstr ""
 "%1 ondersteunt het filter `%2' niet langer, daarom is het uitgeschakeld."
 

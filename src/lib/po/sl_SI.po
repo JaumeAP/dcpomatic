@@ -164,8 +164,8 @@ msgstr ""
 
 #: src/lib/ffmpeg_content.cc:121
 #, fuzzy
-msgid "%1 no longer supports the `%2' filter, so it has been turned off."
-msgstr "DCP-o-matic ne podpira več filtra »%1«, zato je bil izklopljen."
+msgid "{} no longer supports the `{}' filter, so it has been turned off."
+msgstr "DCP-o-matic ne podpira več filtra »{}«, zato je bil izklopljen."
 
 #: src/lib/config.cc:441 src/lib/config.cc:1245
 #, fuzzy
