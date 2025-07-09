@@ -764,8 +764,8 @@ msgid "Could not open %1"
 msgstr "باز نشد %1"
 
 #: src/lib/curl_uploader.cc:102 src/lib/scp_uploader.cc:122
-msgid "Could not open %1 to send"
-msgstr "برای ارسال باز نشد %1"
+msgid "Could not open {} to send"
+msgstr "برای ارسال باز نشد {}"
 
 #: src/lib/internet.cc:167 src/lib/internet.cc:172
 msgid "Could not open downloaded ZIP file"

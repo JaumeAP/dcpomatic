@@ -24,7 +24,6 @@
 #include "exceptions.h"
 #include "config.h"
 #include "cross.h"
-#include "compose.hpp"
 #include "dcpomatic_assert.h"
 #include <iostream>
 
@@ -99,7 +98,7 @@ CurlUploader::upload_file(boost::filesystem::path from, boost::filesystem::path 
 
 	dcp::File file(from, "rb");
 	if (!file) {
-		throw NetworkError(String::compose(_("Could not open %1 to send"), from));
+		throw NetworkError(fmt::format(_("Could not open {} to send"), from.string()));
 	}
 	_file = file.get();
 	_transferred = &transferred;

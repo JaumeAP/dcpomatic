@@ -794,8 +794,8 @@ msgid "Could not open %1"
 msgstr "Kunde inte öppna %1"
 
 #: src/lib/curl_uploader.cc:102 src/lib/scp_uploader.cc:122
-msgid "Could not open %1 to send"
-msgstr "Kunde inte öppna %1 för att skicka"
+msgid "Could not open {} to send"
+msgstr "Kunde inte öppna {} för att skicka"
 
 #: src/lib/internet.cc:167 src/lib/internet.cc:172
 msgid "Could not open downloaded ZIP file"
