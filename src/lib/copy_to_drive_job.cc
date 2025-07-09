@@ -19,7 +19,6 @@
 */
 
 
-#include "compose.hpp"
 #include "copy_to_drive_job.h"
 #include "dcpomatic_log.h"
 #include "disk_writer_messages.h"
@@ -56,10 +55,10 @@ string
 CopyToDriveJob::name () const
 {
 	if (_dcps.size() == 1) {
-		return String::compose(_("Copying %1\nto %2"), _dcps[0].filename().string(), _drive.description());
+		return fmt::format(_("Copying {}\nto {}"), _dcps[0].filename().string(), _drive.description());
 	}
 
-	return String::compose(_("Copying DCPs to %1"), _drive.description());
+	return fmt::format(_("Copying DCPs to {}"), _drive.description());
 }
 
 
