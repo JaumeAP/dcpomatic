@@ -938,8 +938,8 @@ msgid "Email KDMs"
 msgstr "Отправка ключей KDM"
 
 #: src/lib/send_kdm_email_job.cc:97
-msgid "Email KDMs for %1"
-msgstr "Отправка ключей KDM для %1"
+msgid "Email KDMs for {}"
+msgstr "Отправка ключей KDM для {}"
 
 #: src/lib/send_notification_email_job.cc:53
 msgid "Email notification"

@@ -970,8 +970,8 @@ msgid "Email KDMs"
 msgstr "Email KDMs"
 
 #: src/lib/send_kdm_email_job.cc:97
-msgid "Email KDMs for %1"
-msgstr "Versende KDM Email(s) für %1"
+msgid "Email KDMs for {}"
+msgstr "Versende KDM Email(s) für {}"
 
 #: src/lib/send_notification_email_job.cc:53
 msgid "Email notification"

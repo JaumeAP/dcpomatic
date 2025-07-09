@@ -889,8 +889,8 @@ msgid "Email KDMs"
 msgstr "邮件发送 KDM"
 
 #: src/lib/send_kdm_email_job.cc:97
-msgid "Email KDMs for %1"
-msgstr "通过电子邮件发送 %1 的 KDM"
+msgid "Email KDMs for {}"
+msgstr "通过电子邮件发送 {} 的 KDM"
 
 #: src/lib/send_notification_email_job.cc:53
 msgid "Email notification"

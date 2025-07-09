@@ -824,7 +824,7 @@ msgid "Email KDMs"
 msgstr ""
 
 #: src/lib/send_kdm_email_job.cc:97
-msgid "Email KDMs for %1"
+msgid "Email KDMs for {}"
 msgstr ""
 
 #: src/lib/send_notification_email_job.cc:53

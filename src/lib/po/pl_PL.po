@@ -938,8 +938,8 @@ msgstr "Wyślij KDMy"
 
 #: src/lib/send_kdm_email_job.cc:97
 #, fuzzy
-msgid "Email KDMs for %1"
-msgstr "Wyślij KDMy do %2"
+msgid "Email KDMs for {}"
+msgstr "Wyślij KDMy do {}"
 
 #: src/lib/send_notification_email_job.cc:53
 msgid "Email notification"

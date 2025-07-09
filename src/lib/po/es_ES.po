@@ -928,8 +928,8 @@ msgid "Email KDMs"
 msgstr "Enviar las KDM"
 
 #: src/lib/send_kdm_email_job.cc:97
-msgid "Email KDMs for %1"
-msgstr "Enviar por email las KDM para %2"
+msgid "Email KDMs for {}"
+msgstr "Enviar por email las KDM para {}"
 
 #: src/lib/send_notification_email_job.cc:53
 msgid "Email notification"
