@@ -112,8 +112,8 @@ msgid "%1 [DCP]"
 msgstr "%1 [دی سی پی]"
 
 #: src/lib/ffmpeg_content.cc:353
-msgid "%1 [audio]"
-msgstr "%1 [صدا]"
+msgid "{} [audio]"
+msgstr "{} [صدا]"
 
 #: src/lib/ffmpeg_content.cc:349
 msgid "{} [movie]"

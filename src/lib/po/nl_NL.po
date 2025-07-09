@@ -112,8 +112,8 @@ msgid "%1 [DCP]"
 msgstr "%1 [DCP]"
 
 #: src/lib/ffmpeg_content.cc:353
-msgid "%1 [audio]"
-msgstr "%1 [audio]"
+msgid "{} [audio]"
+msgstr "{} [audio]"
 
 #: src/lib/ffmpeg_content.cc:349
 msgid "{} [movie]"

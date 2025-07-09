@@ -344,7 +344,7 @@ FFmpegContent::summary () const
 	} else if (video) {
 		return fmt::format(_("{} [video]"), path_summary());
 	} else if (audio) {
-		return String::compose (_("%1 [audio]"), path_summary());
+		return fmt::format(_("{} [audio]"), path_summary());
 	}
 
 	return path_summary ();
