@@ -20,7 +20,6 @@
 */
 
 #include "audio_content.h"
-#include "compose.hpp"
 #include "config.h"
 #include "constants.h"
 #include "exceptions.h"
@@ -561,7 +560,7 @@ FFmpegContent::add_properties (shared_ptr<const Film> film, list<UserProperty>& 
 			case AVCOL_RANGE_JPEG:
 				/// TRANSLATORS: this means that the range of pixel values used in this
 				/// file is full, so that all possible pixel values are valid.
-				p.push_back(UserProperty(UserProperty::VIDEO, _("Colour range"), String::compose(_("Full (0-%1)"), total - 1)));
+				p.push_back(UserProperty(UserProperty::VIDEO, _("Colour range"), fmt::format(_("Full (0-{})"), total - 1)));
 				break;
 			default:
 				DCPOMATIC_ASSERT (false);

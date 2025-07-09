@@ -1005,8 +1005,8 @@ msgid "Full"
 msgstr "Full(全幅/1.90)"
 
 #: src/lib/ffmpeg_content.cc:570
-msgid "Full (0-%1)"
-msgstr "全幅 (0-%1)"
+msgid "Full (0-{})"
+msgstr "全幅 (0-{})"
 
 #: src/lib/ratio.cc:54
 msgid "Full frame"

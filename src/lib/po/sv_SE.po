@@ -1067,8 +1067,8 @@ msgid "Full"
 msgstr "Komplett"
 
 #: src/lib/ffmpeg_content.cc:570
-msgid "Full (0-%1)"
-msgstr "Komplett (0-%1)"
+msgid "Full (0-{})"
+msgstr "Komplett (0-{})"
 
 #: src/lib/ratio.cc:54
 msgid "Full frame"

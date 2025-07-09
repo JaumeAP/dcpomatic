@@ -1034,7 +1034,7 @@ msgid "Full"
 msgstr "Teljes"
 
 #: src/lib/ffmpeg_content.cc:570
-msgid "Full (0-%1)"
+msgid "Full (0-{})"
 msgstr ""
 
 #: src/lib/ratio.cc:54
