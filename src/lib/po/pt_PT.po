@@ -1791,8 +1791,8 @@ msgid "Unknown error"
 msgstr "Erro desconhecido"
 
 #: src/lib/ffmpeg_decoder.cc:378
-msgid "Unrecognised audio sample format (%1)"
-msgstr "Formato de amostragem áudio desconhecido (%1)"
+msgid "Unrecognised audio sample format ({})"
+msgstr "Formato de amostragem áudio desconhecido ({})"
 
 #: src/lib/filter.cc:102
 msgid "Unsharp mask and Gaussian blur"

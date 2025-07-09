@@ -1833,8 +1833,8 @@ msgid "Unknown error"
 msgstr "Neznáma chyba"
 
 #: src/lib/ffmpeg_decoder.cc:378
-msgid "Unrecognised audio sample format (%1)"
-msgstr "Nerozpoznaná vzorkovací frekvence audia (%1)"
+msgid "Unrecognised audio sample format ({})"
+msgstr "Nerozpoznaná vzorkovací frekvence audia ({})"
 
 #: src/lib/filter.cc:102
 msgid "Unsharp mask and Gaussian blur"

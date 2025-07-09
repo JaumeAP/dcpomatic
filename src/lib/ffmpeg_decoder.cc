@@ -27,7 +27,6 @@
 #include "audio_buffers.h"
 #include "audio_content.h"
 #include "audio_decoder.h"
-#include "compose.hpp"
 #include "dcpomatic_log.h"
 #include "exceptions.h"
 #include "ffmpeg_audio_stream.h"
@@ -375,7 +374,7 @@ deinterleave_audio(AVFrame* frame)
 	break;
 
 	default:
-		throw DecodeError (String::compose(_("Unrecognised audio sample format (%1)"), static_cast<int>(format)));
+		throw DecodeError(fmt::format(_("Unrecognised audio sample format ({})"), static_cast<int>(format)));
 	}
 
 	return audio;

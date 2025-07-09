@@ -1876,8 +1876,8 @@ msgid "Unknown error"
 msgstr "Onbekende fout"
 
 #: src/lib/ffmpeg_decoder.cc:378
-msgid "Unrecognised audio sample format (%1)"
-msgstr "Niet-herkend audio sample-formaat (%1)"
+msgid "Unrecognised audio sample format ({})"
+msgstr "Niet-herkend audio sample-formaat ({})"
 
 #: src/lib/filter.cc:102
 msgid "Unsharp mask and Gaussian blur"

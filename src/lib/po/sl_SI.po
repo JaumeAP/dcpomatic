@@ -1858,8 +1858,8 @@ msgid "Unknown error"
 msgstr "Neznana napaka"
 
 #: src/lib/ffmpeg_decoder.cc:378
-msgid "Unrecognised audio sample format (%1)"
-msgstr "Neprepoznana oblika vzorca zvoka (%1)"
+msgid "Unrecognised audio sample format ({})"
+msgstr "Neprepoznana oblika vzorca zvoka ({})"
 
 #: src/lib/filter.cc:102
 msgid "Unsharp mask and Gaussian blur"

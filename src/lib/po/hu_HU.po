@@ -1773,7 +1773,7 @@ msgid "Unknown error"
 msgstr "Ismeretlen hiba"
 
 #: src/lib/ffmpeg_decoder.cc:378
-msgid "Unrecognised audio sample format (%1)"
+msgid "Unrecognised audio sample format ({})"
 msgstr ""
 
 #: src/lib/filter.cc:102

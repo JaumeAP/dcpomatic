@@ -1825,8 +1825,8 @@ msgid "Unknown error"
 msgstr "خطای ناشناخته"
 
 #: src/lib/ffmpeg_decoder.cc:378
-msgid "Unrecognised audio sample format (%1)"
-msgstr "فرمت نمونه صدای غیرقابل تشخیص(%1)"
+msgid "Unrecognised audio sample format ({})"
+msgstr "فرمت نمونه صدای غیرقابل تشخیص({})"
 
 #: src/lib/filter.cc:102
 msgid "Unsharp mask and Gaussian blur"
