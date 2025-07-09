@@ -340,7 +340,7 @@ string
 FFmpegContent::summary () const
 {
 	if (video && audio) {
-		return String::compose (_("%1 [movie]"), path_summary());
+		return fmt::format(_("{} [movie]"), path_summary());
 	} else if (video) {
 		return String::compose (_("%1 [video]"), path_summary());
 	} else if (audio) {

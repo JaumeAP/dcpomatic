@@ -115,8 +115,8 @@ msgid "%1 [audio]"
 msgstr "%1 [audio]"
 
 #: src/lib/ffmpeg_content.cc:349
-msgid "%1 [movie]"
-msgstr "%1 [movie]"
+msgid "{} [movie]"
+msgstr "{} [movie]"
 
 #: src/lib/ffmpeg_content.cc:351 src/lib/video_mxf_content.cc:106
 msgid "%1 [video]"
