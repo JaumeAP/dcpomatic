@@ -30,7 +30,7 @@
 #include "lib/content_factory.h"
 #include "lib/cross.h"
 #include "lib/film.h"
-#include "lib/frame_info.h"
+#include "lib/j2k_frame_info.h"
 #include "lib/reel_writer.h"
 #include "lib/video_content.h"
 #include "test.h"

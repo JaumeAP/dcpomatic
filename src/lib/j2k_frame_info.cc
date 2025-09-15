@@ -19,7 +19,7 @@
 */
 
 
-#include "frame_info.h"
+#include "j2k_frame_info.h"
 #include <string>
 
 

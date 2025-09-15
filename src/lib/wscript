@@ -104,7 +104,6 @@ sources = """
           fcpxml.cc
           fcpxml_content.cc
           fcpxml_decoder.cc
-          frame_info.cc
           file_group.cc
           file_log.cc
           filter_graph.cc
@@ -151,6 +150,7 @@ sources = """
           job_manager.cc
           j2k_encoder.cc
           j2k_encoder_thread.cc
+          j2k_frame_info.cc
           j2k_sync_encoder_thread.cc
           json_server.cc
           kdm_cli.cc
