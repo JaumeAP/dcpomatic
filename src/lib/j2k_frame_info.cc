@@ -41,9 +41,22 @@ J2KFrameInfo::J2KFrameInfo(dcp::J2KFrameInfo const& info)
 }
 
 
+J2KFrameInfo::J2KFrameInfo(dcp::File& info_file)
+{
+	read(info_file);
+}
+
+
 J2KFrameInfo::J2KFrameInfo(dcp::File& info_file, Frame frame, Eyes eyes)
 {
 	info_file.seek(position(frame, eyes), SEEK_SET);
+	read(info_file);
+}
+
+
+void
+J2KFrameInfo::read(dcp::File& info_file)
+{
 	info_file.checked_read(&offset, sizeof(offset));
 	info_file.checked_read(&size, sizeof(size));
 

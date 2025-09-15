@@ -29,6 +29,7 @@ class J2KFrameInfo : public dcp::J2KFrameInfo
 public:
 	J2KFrameInfo(dcp::J2KFrameInfo const& info);
 	J2KFrameInfo(uint64_t offset_, uint64_t size_, std::string hash_);
+	J2KFrameInfo(dcp::File& info_file);
 	/** Seek to the required position in info_file and read the info for
 	 *  the given frame and eyes.
 	 */
@@ -45,6 +46,7 @@ public:
 
 private:
 	long position(Frame frame, Eyes eyes) const;
+	void read(dcp::File& info_file);
 
 	static constexpr auto _size_on_disk = 32 + sizeof(dcp::J2KFrameInfo::offset) + sizeof(dcp::J2KFrameInfo::size);
 };
