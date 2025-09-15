@@ -38,12 +38,6 @@ Digester::Digester()
 }
 
 
-Digester::~Digester()
-{
-	get();
-}
-
-
 void
 Digester::add(void const * data, size_t size)
 {
