@@ -39,7 +39,6 @@
 
 class AudioBuffers;
 class Film;
-class InfoFileHandle;
 class Job;
 struct write_frame_info_test;
 
