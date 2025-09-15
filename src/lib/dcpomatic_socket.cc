@@ -278,8 +278,7 @@ Socket::check_read_digest ()
 	DCPOMATIC_ASSERT (_read_digester);
 	int const size = _read_digester->size ();
 
-	uint8_t ref[size];
-	_read_digester->get (ref);
+	auto const ref = _read_digester->get_vector();
 
 	/* Make sure _read_digester is gone before we call read() so that the digest
 	 * isn't itself digested.
@@ -289,7 +288,7 @@ Socket::check_read_digest ()
 	uint8_t actual[size];
 	read (actual, size);
 
-	return memcmp(ref, actual, size) == 0;
+	return memcmp(ref.data(), actual, size) == 0;
 }
 
 
@@ -297,17 +296,15 @@ void
 Socket::finish_write_digest ()
 {
 	DCPOMATIC_ASSERT (_write_digester);
-	int const size = _write_digester->size();
 
-	uint8_t buffer[size];
-	_write_digester->get (buffer);
+	auto const buffer = _write_digester->get_vector();
 
 	/* Make sure _write_digester is gone before we call write() so that the digest
 	 * isn't itself digested.
 	 */
 	_write_digester.reset ();
 
-	write (buffer, size);
+	write(buffer.data(), buffer.size());
 }
 
 

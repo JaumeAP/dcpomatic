@@ -45,8 +45,6 @@ public:
 	std::string get() const;
 	std::vector<unsigned char> get_vector() const;
 
-	void get(uint8_t* buffer) const;
-
 	int size() const;
 
 private:

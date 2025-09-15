@@ -79,14 +79,6 @@ Digester::get() const
 }
 
 
-void
-Digester::get(uint8_t* buffer) const
-{
-	auto const digest = get_vector();
-	memcpy(buffer, digest.data(), digest.size());
-}
-
-
 int
 Digester::size() const
 {
