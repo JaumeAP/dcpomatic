@@ -19,17 +19,18 @@
 */
 
 
-#include "digester.h"
 #include "dcpomatic_assert.h"
+#include "digester.h"
 #include <nettle/md5.h>
-#include <iomanip>
 #include <cstdio>
+#include <iomanip>
 
 
-using std::string;
 using std::hex;
 using std::setfill;
 using std::setw;
+using std::string;
+using std::vector;
 
 
 Digester::Digester()
@@ -52,29 +53,37 @@ Digester::add(string const & s)
 }
 
 
+vector<unsigned char>
+Digester::get_vector() const
+{
+	if (_digest.empty()) {
+		_digest.resize(MD5_DIGEST_SIZE);
+		md5_digest(&_context, MD5_DIGEST_SIZE, _digest.data());
+	}
+
+	return _digest;
+}
+
+
 string
 Digester::get() const
 {
-	if (!_digest) {
-		unsigned char digest[MD5_DIGEST_SIZE];
-		md5_digest(&_context, MD5_DIGEST_SIZE, digest);
+	auto const digest = get_vector();
 
-		char hex[MD5_DIGEST_SIZE * 2 + 1];
-		for (int i = 0; i < MD5_DIGEST_SIZE; ++i) {
-			snprintf(hex + i * 2, 3, "%02x", digest[i]);
-		}
-
-		_digest = hex;
+	char hex[MD5_DIGEST_SIZE * 2 + 1];
+	for (int i = 0; i < MD5_DIGEST_SIZE; ++i) {
+		snprintf(hex + i * 2, 3, "%02x", digest[i]);
 	}
 
-	return _digest.get();
+	return hex;
 }
 
 
 void
 Digester::get(uint8_t* buffer) const
 {
-	md5_digest(&_context, MD5_DIGEST_SIZE, buffer);
+	auto const digest = get_vector();
+	memcpy(buffer, digest.data(), digest.size());
 }
 
 
