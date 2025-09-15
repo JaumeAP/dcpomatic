@@ -1218,6 +1218,10 @@ private:
 		table->Add(_only_servers_encode, 1, wxEXPAND | wxLEFT, DCPOMATIC_SIZER_GAP);
 		table->AddSpacer(0);
 
+		_check_disk_writes = new CheckBox(_panel, _("Check disk writes"));
+		table->Add(_check_disk_writes, 1, wxEXPAND | wxLEFT, DCPOMATIC_SIZER_GAP);
+		table->AddSpacer(0);
+
 		_layout_for_short_screen = new CheckBox(_panel, _("Layout for short screen"));
 		table->Add(_layout_for_short_screen, 1, wxEXPAND | wxLEFT, DCPOMATIC_SIZER_GAP);
 		table->AddSpacer(0);
@@ -1314,6 +1318,7 @@ private:
 		_video_display_mode->Bind(wxEVT_CHOICE, boost::bind(&AdvancedPage::video_display_mode_changed, this));
 		_show_experimental_audio_processors->bind(&AdvancedPage::show_experimental_audio_processors_changed, this);
 		_only_servers_encode->bind(&AdvancedPage::only_servers_encode_changed, this);
+		_check_disk_writes->bind(&AdvancedPage::check_disk_writes_changed, this);
 		_layout_for_short_screen->bind(&AdvancedPage::layout_for_short_screen_changed, this);
 		_frames_in_memory_multiplier->Bind(wxEVT_SPINCTRL, boost::bind(&AdvancedPage::frames_in_memory_multiplier_changed, this));
 		_dcp_metadata_filename_format->Changed.connect(boost::bind(&AdvancedPage::dcp_metadata_filename_format_changed, this));
@@ -1347,6 +1352,7 @@ private:
 		}
 		checked_set(_show_experimental_audio_processors, config->show_experimental_audio_processors());
 		checked_set(_only_servers_encode, config->only_servers_encode());
+		checked_set(_check_disk_writes, config->check_disk_writes());
 		checked_set(_layout_for_short_screen, config->layout_for_short_screen());
 		checked_set(_log_general, config->log_types() & LogEntry::TYPE_GENERAL);
 		checked_set(_log_warning, config->log_types() & LogEntry::TYPE_WARNING);
@@ -1396,6 +1402,11 @@ private:
 	void dcp_metadata_filename_format_changed()
 	{
 		Config::instance()->set_dcp_metadata_filename_format(_dcp_metadata_filename_format->get());
+	}
+
+	void check_disk_writes_changed()
+	{
+		Config::instance()->set_check_disk_writes(_check_disk_writes->GetValue());
 	}
 
 	void dcp_asset_filename_format_changed()
@@ -1450,6 +1461,7 @@ private:
 	wxSpinCtrl* _frames_in_memory_multiplier = nullptr;
 	CheckBox* _show_experimental_audio_processors = nullptr;
 	CheckBox* _only_servers_encode = nullptr;
+	CheckBox* _check_disk_writes = nullptr;
 	CheckBox* _layout_for_short_screen = nullptr;
 	NameFormatEditor* _dcp_metadata_filename_format = nullptr;
 	NameFormatEditor* _dcp_asset_filename_format = nullptr;

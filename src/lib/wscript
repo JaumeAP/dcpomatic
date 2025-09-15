@@ -133,6 +133,7 @@ sources = """
           hints.cc
           http_server.cc
           id.cc
+          info_file_checker.cc
           internet.cc
           image.cc
           image_content.cc
