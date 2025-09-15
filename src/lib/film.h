@@ -458,6 +458,7 @@ public:
 
 	/** Current version number of the state file */
 	static int const current_state_version;
+	static int const current_frame_info_version;
 
 private:
 	friend struct ::atmos_encrypted_passthrough_test;

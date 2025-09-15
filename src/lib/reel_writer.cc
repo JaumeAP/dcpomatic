@@ -994,8 +994,7 @@ ReelWriter::existing_picture_frame_ok(dcp::File& asset_file, Frame frame)
 	} else {
 		Digester digester;
 		digester.add(data.data(), data.size());
-		LOG_GENERAL("Hash {} vs {}", digester.get(), info.hash);
-		if (digester.get() != info.hash) {
+		if (digester.get_vector() != info.hash) {
 			LOG_GENERAL("Existing frame {} failed hash check", frame);
 			ok = false;
 		}

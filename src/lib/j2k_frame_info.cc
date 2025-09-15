@@ -25,9 +25,10 @@
 
 using std::shared_ptr;
 using std::string;
+using std::vector;
 
 
-J2KFrameInfo::J2KFrameInfo(uint64_t offset_, uint64_t size_, string hash_)
+J2KFrameInfo::J2KFrameInfo(uint64_t offset_, uint64_t size_, vector<uint8_t> hash_)
 	: dcp::J2KFrameInfo(offset_, size_, hash_)
 {
 
@@ -60,10 +61,8 @@ J2KFrameInfo::read(dcp::File& info_file)
 	info_file.checked_read(&offset, sizeof(offset));
 	info_file.checked_read(&size, sizeof(size));
 
-	char hash_buffer[33];
-	info_file.checked_read(hash_buffer, 32);
-	hash_buffer[32] = '\0';
-	hash = hash_buffer;
+	hash.resize(16);
+	info_file.checked_read(hash.data(), 16);
 }
 
 
@@ -92,6 +91,6 @@ J2KFrameInfo::write(dcp::File& info_file, Frame frame, Eyes eyes) const
 	info_file.seek(position(frame, eyes), SEEK_SET);
 	info_file.checked_write(&offset, sizeof(offset));
 	info_file.checked_write(&size, sizeof(size));
-	info_file.checked_write(hash.c_str(), hash.size());
+	info_file.checked_write(hash.data(), hash.size());
 }
 

@@ -149,6 +149,13 @@ static constexpr char assets_file[] = "assets.xml";
 int const Film::current_state_version = 39;
 
 
+/* 1 -> 2
+ * Hash stored as raw bytes rather than with ASCII encoding
+ * * (16 bytes instead of 32)
+ */
+int const Film::current_frame_info_version = 2;
+
+
 /** Construct a Film object in a given directory.
  *
  *  Some initial values are taken from the Config object, and usually then overwritten
@@ -288,6 +295,7 @@ Film::info_file(DCPTimePeriod period) const
 {
 	boost::filesystem::path p;
 	p /= "info";
+	p /= fmt::to_string(current_frame_info_version);
 	p /= video_identifier() + "_" + fmt::to_string(period.from.get()) + "_" + fmt::to_string(period.to.get());
 	return file(p);
 }
