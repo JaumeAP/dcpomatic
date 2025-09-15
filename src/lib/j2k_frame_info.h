@@ -19,6 +19,10 @@
 */
 
 
+#ifndef DCPOMATIC_J2K_FRAME_INFO_H
+#define DCPOMATIC_J2K_FRAME_INFO_H
+
+
 #include "film.h"
 #include <dcp/frame_info.h>
 #include <memory>
@@ -51,3 +55,5 @@ private:
 	static constexpr auto _size_on_disk = 16 + sizeof(dcp::J2KFrameInfo::offset) + sizeof(dcp::J2KFrameInfo::size);
 };
 
+
+#endif
