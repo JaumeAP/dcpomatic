@@ -66,8 +66,6 @@ public:
 
 	bool same(std::shared_ptr<const DCPVideo> other) const;
 
-	static std::shared_ptr<dcp::OpenJPEGImage> convert_to_xyz(std::shared_ptr<const PlayerVideo> frame);
-
 	void convert_to_xyz(uint16_t* dst) const;
 	dcp::Size get_size() const;
 

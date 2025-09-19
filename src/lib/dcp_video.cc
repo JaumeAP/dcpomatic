@@ -99,30 +99,6 @@ DCPVideo::DCPVideo(shared_ptr<const PlayerVideo> frame, shared_ptr<const cxml::N
 	_resolution = Resolution(node->optional_number_child<int>("Resolution").get_value_or(static_cast<int>(Resolution::TWO_K)));
 }
 
-shared_ptr<dcp::OpenJPEGImage>
-DCPVideo::convert_to_xyz(shared_ptr<const PlayerVideo> frame)
-{
-	shared_ptr<dcp::OpenJPEGImage> xyz;
-
-	auto conversion = [](AVPixelFormat fmt) {
-		return fmt == AV_PIX_FMT_XYZ12LE ? AV_PIX_FMT_XYZ12LE : AV_PIX_FMT_RGB48LE;
-	};
-
-	auto image = frame->image(conversion, VideoRange::FULL, false);
-
-	if (frame->colour_conversion()) {
-		xyz = dcp::rgb_to_xyz(
-			image->data()[0],
-			image->size(),
-			image->stride()[0],
-			frame->colour_conversion().get()
-			);
-	} else {
-		xyz = make_shared<dcp::OpenJPEGImage>(image->data()[0], image->size(), image->stride()[0]);
-	}
-
-	return xyz;
-}
 
 dcp::Size
 DCPVideo::get_size() const
@@ -161,7 +137,7 @@ DCPVideo::encode_locally() const
 	int const minimum_size = 16384;
 	LOG_DEBUG_ENCODE("Using minimum frame size {}", minimum_size);
 
-	auto xyz = convert_to_xyz(_frame);
+	auto xyz = ::convert_to_xyz(_frame);
 	int noise_amount = 2;
 	int pixel_skip = 16;
 	while (true) {
@@ -186,7 +162,7 @@ DCPVideo::encode_locally() const
 		 * convert_to_xyz() again because compress_j2k() corrupts its xyz parameter.
 		 */
 
-		xyz = convert_to_xyz(_frame);
+		xyz = ::convert_to_xyz(_frame);
 		auto size = xyz->size();
 		auto pixels = size.width * size.height;
 		dcpomatic::RNG rng(42);

@@ -27,10 +27,15 @@
 #include <dcp/gamma_transfer_function.h>
 #include <dcp/identity_transfer_function.h>
 #include <dcp/modified_gamma_transfer_function.h>
+#include <dcp/openjpeg_image.h>
 #include <dcp/raw_convert.h>
+#include <dcp/rgb_xyz.h>
 #include <dcp/s_gamut3_transfer_function.h>
 #include <dcp/warnings.h>
 #include <libcxml/cxml.h>
+extern "C" {
+#include <libavutil/pixdesc.h>
+}
 LIBDCP_DISABLE_WARNINGS
 #include <libxml++/libxml++.h>
 LIBDCP_ENABLE_WARNINGS
@@ -304,4 +309,30 @@ PresetColourConversion::from_id(string s)
 	}
 
 	DCPOMATIC_ASSERT(false);
+}
+
+
+shared_ptr<dcp::OpenJPEGImage>
+convert_to_xyz(shared_ptr<const PlayerVideo> frame)
+{
+	shared_ptr<dcp::OpenJPEGImage> xyz;
+
+	auto conversion = [](AVPixelFormat fmt) {
+		return fmt == AV_PIX_FMT_XYZ12LE ? AV_PIX_FMT_XYZ12LE : AV_PIX_FMT_RGB48LE;
+	};
+
+	auto image = frame->image(conversion, VideoRange::FULL, false);
+
+	if (frame->colour_conversion()) {
+		xyz = dcp::rgb_to_xyz(
+			image->data()[0],
+			image->size(),
+			image->stride()[0],
+			frame->colour_conversion().get()
+			);
+	} else {
+		xyz = make_shared<dcp::OpenJPEGImage>(image->data()[0], image->size(), image->stride()[0]);
+	}
+
+	return xyz;
 }
