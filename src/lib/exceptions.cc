@@ -190,3 +190,20 @@ SQLError::get_filename(SQLiteDatabase& db)
 
 	return {};
 }
+
+
+#ifdef DCPOMATIC_HAVE_NVJPEG2K
+CUDAError::CUDAError(string function, cudaError error)
+	: runtime_error(fmt::format("CUDA error on {} ({})", function, static_cast<int>(error)))
+{
+
+}
+
+
+CUDAError::CUDAError(string function, int error)
+	: runtime_error(fmt::format("CUDA error on {} ({})", function, error))
+{
+
+}
+#endif
+

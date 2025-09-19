@@ -81,6 +81,7 @@ def options(opt):
     opt.add_option('--disable-more-warnings', action='store_true', default=False, help='disable some warnings raised by Xcode 15 with the 2.16 branch')
     opt.add_option('--c++17', action='store_true', default=False, help='build with C++17 and libxml++-4.0')
     opt.add_option('--variant', help="build with variant")
+    opt.add_option('--cuda-path',         help='path to directory containing include/cuda_runtime_api.h etc.', default='/usr/local/cuda')
 
 def configure(conf):
     conf.load('compiler_cxx')
@@ -192,6 +193,9 @@ def configure(conf):
             conf.env.append_value('LINKFLAGS', '-fuse-ld=lld')
         except conf.errors.ConfigurationError:
             pass
+
+    conf.env.append_value('INCLUDES', os.path.join(conf.options.cuda_path, 'include'))
+    conf.env.append_value('LIBPATH', os.path.join(conf.options.cuda_path, 'targets', 'x86_64-linux', 'lib'))
 
     #
     # Windows/Linux/macOS specific
@@ -679,6 +683,9 @@ def configure(conf):
                    uselib='SQLITE3',
                    define_name="DCPOMATIC_HAVE_SQLITE3_PREPARE_V3",
                    mandatory=False)
+
+    if conf.check(header_name="nvjpeg2k.h", mandatory=False, define_name="DCPOMATIC_HAVE_NVJPEG2K"):
+        conf.env.LIB_CUDA = ['cudart', 'nvjpeg2k']
 
 
     # Other stuff

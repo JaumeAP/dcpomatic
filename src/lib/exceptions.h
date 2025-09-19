@@ -31,6 +31,9 @@
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
+#ifdef DCPOMATIC_HAVE_NVJPEG2K
+#include <cuda_runtime_api.h>
+#endif
 #include <fmt/format.h>
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
@@ -546,5 +549,14 @@ public:
 	{}
 };
 
+
+#ifdef DCPOMATIC_HAVE_NVJPEG2K
+class CUDAError : public std::runtime_error
+{
+public:
+	CUDAError(std::string function, cudaError_t error);
+	CUDAError(std::string function, int);
+};
+#endif
 
 #endif

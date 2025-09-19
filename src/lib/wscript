@@ -255,7 +255,7 @@ def build(bld):
                  BOOST_FILESYSTEM BOOST_THREAD BOOST_DATETIME BOOST_SIGNALS2 BOOST_REGEX
                  SAMPLERATE POSTPROC TIFF SSH DCP CXML GLIB LZMA XML++
                  CURL ZIP BZ2 FONTCONFIG PANGOMM CAIROMM XMLSEC SUB ICU NETTLE PNG JPEG LEQM_NRT
-                 LIBZ SQLITE3
+                 LIBZ SQLITE3 CUDA
                  """
 
     if bld.env.TARGET_OSX:
@@ -268,6 +268,9 @@ def build(bld):
         obj.uselib += ' LWEXT4 NANOMSG'
         if bld.env.TARGET_LINUX:
             obj.uselib += ' POLKIT'
+
+    if bld.env.HAVE_NVJPEG2K_H:
+        obj.source += ' cuda_j2k_encoder_thread.cc'
 
     if bld.env.ENABLE_GROK:
         obj.source += ' grok_j2k_encoder_thread.cc grok/util.cc'
