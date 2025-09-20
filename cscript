@@ -809,7 +809,7 @@ def make_appimage(target, nice_name, internal_name, version, extra_binaries=None
     target.command(f'cp -r {target.directory}/share/libdcp/xsd {appdir}/usr/share/libdcp/')
     target.command(f'cp -r {target.directory}/share/libdcp/tags {appdir}/usr/share/libdcp/')
     target.command(f'cp {target.directory}/share/libdcp/ratings {appdir}/usr/share/libdcp/')
-    lib = 'usr/lib/x86_64-linux-gnu'
+    lib = 'usr/lib64'
     target.command(f'mkdir -p build/{nice_filename}.AppDir/{lib}/gdk-pixbuf-2.0/2.10.0')
     target.command(f'cp -a /{lib}/gdk-pixbuf-2.0 build/{nice_filename}.AppDir/usr/lib/x86_64-linux-gnu/')
     target.command('sudo apt update')
