@@ -58,8 +58,16 @@ public:
 	dcp::ArrayData encode_locally() const;
 	dcp::ArrayData encode_remotely(EncodeServerDescription, int timeout = 30) const;
 
+	std::shared_ptr<const PlayerVideo> frame() const {
+		return _frame;
+	}
+
 	int index() const {
 		return _index;
+	}
+
+	Resolution resolution() const {
+		return _resolution;
 	}
 
 	Eyes eyes() const;
