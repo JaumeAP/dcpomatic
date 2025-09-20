@@ -811,13 +811,13 @@ def make_appimage(target, nice_name, internal_name, version, extra_binaries=None
     target.command(f'cp {target.directory}/share/libdcp/ratings {appdir}/usr/share/libdcp/')
     lib = 'usr/lib64'
     target.command(f'mkdir -p build/{nice_filename}.AppDir/{lib}/gdk-pixbuf-2.0/2.10.0')
-    target.command(f'cp -a /{lib}/gdk-pixbuf-2.0 build/{nice_filename}.AppDir/usr/lib/x86_64-linux-gnu/')
+    target.command(f'cp -a /{lib}/gdk-pixbuf-2.0 build/{nice_filename}.AppDir/{lib}')
     target.command('sudo apt update')
     for package in ['libc6', 'libglib2.0-0', 'gnome-settings-daemon-schemas', 'librsvg2-common', 'libgdk-pixbuf2.0-0', 'libpango-1.0-0', 'libpangoft2-1.0-0', 'libpangocairo-1.0-0', 'libthai0']:
         target.command(f'apt download {package}')
         target.command(f'dpkg-deb -x {package}*.deb {appdir}')
     target.command(f'glib-compile-schemas {appdir}/usr/share/glib-2.0/schemas')
-    target.command(f'sed -i -e "s|/usr/lib/x86_64-linux-gnu/gdk-pixbuf-.*/.*/loaders/||g" {appdir}/usr/lib/x86_64-linux-gnu/gdk-pixbuf-*/*/loaders.cache')
+    target.command(f'sed -i -e "s|/{usr}/gdk-pixbuf-.*/.*/loaders/||g" {appdir}/{lib}/gdk-pixbuf-*/*/loaders.cache')
     # Stop anything loading from outside the AppImage
     target.command(f'sed -i -e "s|/usr|/xxx|g" {appdir}/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2')
 
@@ -829,9 +829,9 @@ def make_appimage(target, nice_name, internal_name, version, extra_binaries=None
         print('#!/bin/bash', file=f)
         print('export PATH=$APPDIR/usr/bin:$PATH', file=f)
         print('export XDG_DATA_DIRS="$APPDIR/usr/share/:/usr/share/:$XDG_DATA_DIRS"', file=f)
-        print('export GDK_PIXBUF_MODULEDIR=$(readlink -f "$APPDIR"/usr/lib/x86_64-linux-gnu/gdk-pixbuf-*/*/loaders/ )', file=f)
-        print('export GDK_PIXBUF_MODULE_FILE=$(readlink -f "$APPDIR"/usr/lib/x86_64-linux-gnu/gdk-pixbuf-*/*/loaders.cache )', file=f)
-        print('export LD_LIBRARY_PATH=$GDK_PIXBUF_MODULEDIR:$APPDIR/usr/lib:$APPDIR/usr/lib/x86_64-linux-gnu', file=f)
+        print('export GDK_PIXBUF_MODULEDIR=$(readlink -f "$APPDIR"/{lib}/gdk-pixbuf-*/*/loaders/ )', file=f)
+        print('export GDK_PIXBUF_MODULE_FILE=$(readlink -f "$APPDIR"{lib}/gdk-pixbuf-*/*/loaders.cache )', file=f)
+        print('export LD_LIBRARY_PATH=$GDK_PIXBUF_MODULEDIR:$APPDIR/usr/lib:$APPDIR/{lib}', file=f)
         print(f'"$APPDIR"/usr/bin/{internal_name} $@', file=f)
     target.command(f'chmod a+rx {appdir}/AppRun')
     with open(f'{appdir}/{internal_name}.desktop', 'w') as f:
