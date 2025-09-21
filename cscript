@@ -545,6 +545,8 @@ def configure_options(target, options, for_package=False):
         opt += ' --static-dcpomatic --static-wxwidgets --static-dcp --static-sub --static-cxml'
         if target.distro != 'arch':
             opt += ' --static-ffmpeg'
+        if target.distro == 'ubuntu' and target.version == '14.04':
+            opt += ' --static-boost'
         if target.distro == 'centos':
             if target.version == '6.5':
                 opt += ' --static-boost --static-xmlpp'
