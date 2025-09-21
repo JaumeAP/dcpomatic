@@ -345,9 +345,11 @@ ReelWriter::repeat_write(Frame frame, Eyes eyes)
 {
 	if (!_j2k_picture_asset_writer) {
 		/* We're not writing any data */
+		std::cout << "don't do it.\n";
 		return;
 	}
 
+	std::cout << "do it.\n";
 	auto fin = J2KFrameInfo(_j2k_picture_asset_writer->write(_last_written[eyes]->data(), _last_written[eyes]->size()));
 	fin.write(_info_file, frame, eyes);
 }
@@ -580,7 +582,7 @@ ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReferencedReelAss
 		if (reel_asset->actual_duration() != period_duration) {
 			throw ProgrammingError(
 				__FILE__, __LINE__,
-				fmt::format("{} vs {}", reel_asset->actual_duration(), period_duration)
+				fmt::format("sound asset {} vs reel {}", reel_asset->actual_duration(), period_duration)
 				);
 		}
 

@@ -322,9 +322,11 @@ J2KEncoder::encode (shared_ptr<PlayerVideo> pv, DCPTime time)
 		frame_done ();
 	} else if (_last_player_video[pv->eyes()] && _writer.can_repeat(position) && pv->same(_last_player_video[pv->eyes()])) {
 		LOG_DEBUG_ENCODE("Frame @ {} REPEAT", time.to_string());
+		std::cout << "Frame @ " << time.to_string() << " " << time.frames_round(72) << " REPEAT\n";
 		_writer.repeat(position, pv->eyes());
 	} else {
 		LOG_DEBUG_ENCODE("Frame @ {} ENCODE", time.to_string());
+		std::cout << "Frame @ " << time.to_string() << " " << time.frames_round(72) << " ENCODE\n";
 		/* Queue this new frame for encoding */
 		LOG_TIMING ("add-frame-to-queue queue={}", _queue.size ());
 		auto dcpv = DCPVideo(

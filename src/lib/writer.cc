@@ -448,6 +448,7 @@ try
 				break;
 			case QueueItem::Type::REPEAT:
 				LOG_DEBUG_ENCODE(N_("Writer REPEAT-writes {}"), qi.frame);
+				std::cout << "Writer REPEAT-writes " << qi.frame << "\n";
 				reel.repeat_write(qi.frame, qi.eyes);
 				++_repeat_written;
 				break;

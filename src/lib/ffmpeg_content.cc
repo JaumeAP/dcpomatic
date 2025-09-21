@@ -412,6 +412,7 @@ FFmpegContent::full_length (shared_ptr<const Film> film) const
 {
 	FrameRateChange const frc (film, shared_from_this());
 	if (video) {
+		// std::cout << "video is " << video->length_after_3d_combine() << " frames, factor=" << frc.factor() << " out " << film->video_frame_rate() << "\n";
 		return DCPTime::from_frames (llrint (video->length_after_3d_combine() * frc.factor()), film->video_frame_rate());
 	}
 

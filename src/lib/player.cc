@@ -889,7 +889,13 @@ Player::pass()
 	if (done) {
 		if (_next_video_time) {
 			LOG_DEBUG_PLAYER("Done: emit video until end of film at {}", film->length().to_string());
+			std::cout << "Emit until end of film at " << film->length().to_string() << " " << film->length().frames_round(72) << "\n";
 			emit_video_until(film->length());
+		}
+
+		std::cout << "done: nat " << _next_audio_time.get_value_or({}).to_string() << " film " << film->length().to_string() << "\n";
+		if (_next_audio_time && film->length() > *_next_audio_time) {
+			fill_audio(DCPTimePeriod(*_next_audio_time, film->length()));
 		}
 
 		if (_shuffler) {
@@ -965,7 +971,8 @@ void
 Player::emit_video_until(DCPTime time)
 {
 	LOG_DEBUG_PLAYER("emit_video_until {}; next video time is {}", time.to_string(), _next_video_time.get_value_or({}).to_string());
-	auto frame = [this](shared_ptr<PlayerVideo> pv, DCPTime time) {
+	static int shite = 0;
+	auto frame = [this, &shite](shared_ptr<PlayerVideo> pv, DCPTime time) {
 		/* We need a delay to give a little wiggle room to ensure that relevant subtitles arrive at the
 		   player before the video that requires them.
 		*/
@@ -982,6 +989,7 @@ Player::emit_video_until(DCPTime time)
 		auto to_do = _delay.front();
 		_delay.pop_front();
 		emit_video(to_do.first, to_do.second);
+		std::cout << "EV " << to_do.second.to_string() << " " << ++shite << "\n";
 	};
 
 	auto film = _film.lock();
@@ -994,6 +1002,8 @@ Player::emit_video_until(DCPTime time)
 			return one_video_frame() * 2;
 		}
 	};
+
+	std::cout << "EVU " << _next_video_time.get_value_or({}).to_string() << " " << time.to_string() << "\n";
 
 	while (_next_video_time.get_value_or({}) < time) {
 		auto left = _last_video[Eyes::LEFT];
@@ -1458,6 +1468,7 @@ Player::emit_video(shared_ptr<PlayerVideo> pv, DCPTime time)
 		pv->set_text(texts.get());
 	}
 
+	// std::cout << "emit_video " << time.to_string() << "\n";
 	Video(pv, time);
 }
 
@@ -1477,6 +1488,9 @@ Player::emit_audio(shared_ptr<AudioBuffers> data, DCPTime time)
 	/* This audio must follow on from the previous, allowing for half a sample (at 48kHz) leeway */
 	DCPOMATIC_ASSERT(diff < 2);
 	Audio(data, time, film->audio_frame_rate());
+	static int64_t x = 0;
+	x += data->frames();
+	std::cout << "sent " << x << " audio frames.\n";
 	_next_audio_time = time + DCPTime::from_frames(data->frames(), film->audio_frame_rate());
 }
 

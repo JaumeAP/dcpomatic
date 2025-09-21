@@ -1985,6 +1985,7 @@ Film::reels_for_type(ReelType type) const
 
 	switch (type) {
 	case ReelType::SINGLE:
+		std::cout << "reels end " << len.to_string() << "\n";
 		periods.emplace_back(DCPTime(), len);
 		break;
 	case ReelType::BY_VIDEO_CONTENT:
