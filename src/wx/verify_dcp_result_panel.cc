@@ -24,11 +24,12 @@
 #include "verify_dcp_result_panel.h"
 #include "wx_util.h"
 #include "lib/verify_dcp_job.h"
+#include <dcp/formatted_verify_report.h>
 #include <dcp/html_formatter.h>
+#include <dcp/json_verify_report.h>
 #include <dcp/text_formatter.h>
 #include <dcp/pdf_formatter.h>
 #include <dcp/verify.h>
-#include <dcp/verify_report.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/notebook.h>
@@ -82,6 +83,8 @@ VerifyDCPResultPanel::VerifyDCPResultPanel(wxWindow* parent)
 	save_sizer->Add(_save_html_report, 0, wxALL, DCPOMATIC_SIZER_GAP);
 	_save_pdf_report = new Button(this, _("Save report as PDF..."));
 	save_sizer->Add(_save_pdf_report, 0, wxALL, DCPOMATIC_SIZER_GAP);
+	_save_json_report = new Button(this, _("Save report as JSON..."));
+	save_sizer->Add(_save_json_report, 0, wxALL, DCPOMATIC_SIZER_GAP);
 	sizer->Add(save_sizer);
 
 	SetSizer(sizer);
@@ -91,10 +94,12 @@ VerifyDCPResultPanel::VerifyDCPResultPanel(wxWindow* parent)
 	_save_text_report->bind(&VerifyDCPResultPanel::save_text_report, this);
 	_save_html_report->bind(&VerifyDCPResultPanel::save_html_report, this);
 	_save_pdf_report->bind(&VerifyDCPResultPanel::save_pdf_report, this);
+	_save_json_report->bind(&VerifyDCPResultPanel::save_json_report, this);
 
 	_save_text_report->Enable(false);
 	_save_html_report->Enable(false);
 	_save_pdf_report->Enable(false);
+	_save_json_report->Enable(false);
 }
 
 
@@ -151,6 +156,7 @@ VerifyDCPResultPanel::add(vector<shared_ptr<const VerifyDCPJob>> jobs)
 	_save_text_report->Enable(true);
 	_save_html_report->Enable(true);
 	_save_pdf_report->Enable(true);
+	_save_json_report->Enable(true);
 
 	for (auto type: _types) {
 		_pages[type]->ExpandAll();
@@ -721,7 +727,24 @@ void save(wxWindow* parent, wxString filter, vector<shared_ptr<const VerifyDCPJo
 	for (auto job: jobs) {
 		results.push_back(job->result());
 	}
-	dcp::verify_report(results, formatter);
+	dcp::make_formatted_verify_report(results, formatter);
+}
+
+
+static
+void
+save_json(wxWindow* parent, wxString filter, vector<shared_ptr<const VerifyDCPJob>> jobs)
+{
+	FileDialog dialog(parent, _("Verification report"), filter, wxFD_SAVE | wxFD_OVERWRITE_PROMPT, "SaveVerificationReport");
+	if (!dialog.show()) {
+		return;
+	}
+
+	auto results = std::vector<dcp::VerificationResult>();
+	for (auto job: jobs) {
+		results.push_back(job->result());
+	}
+	dcp::make_json_verify_report(results, dialog.path());
 }
 
 
@@ -743,4 +766,11 @@ void
 VerifyDCPResultPanel::save_pdf_report()
 {
 	save<dcp::PDFFormatter>(this, char_to_wx("PDF files (*.pdf)|*.pdf"), _jobs);
+}
+
+
+void
+VerifyDCPResultPanel::save_json_report()
+{
+	save_json(this, char_to_wx("JSON files (*.json)|*.json"), _jobs);
 }

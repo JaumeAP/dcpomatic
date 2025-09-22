@@ -259,7 +259,7 @@ private:
 		if (_write_log->get()) {
 			for (size_t i = 0; i < _dcp_paths.size(); ++i) {
 				dcp::TextFormatter formatter(_dcp_paths[i] / "REPORT.txt");
-				dcp::verify_report({ jobs[i]->result() }, formatter);
+				dcp::make_formatted_verify_report({ jobs[i]->result() }, formatter);
 			}
 		}
 
