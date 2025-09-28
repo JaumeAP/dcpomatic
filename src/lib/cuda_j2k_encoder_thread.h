@@ -48,6 +48,8 @@ public:
 	~CUDAJ2KEncoderThread();
 
 	std::shared_ptr<dcp::ArrayData> encode(DCPVideo const& frame) override;
+	/* XXX */
+	void log_thread_start() const override {}
 
 private:
 	void allocate_pixel_data_d(dcp::Size size);

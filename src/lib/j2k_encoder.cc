@@ -36,6 +36,9 @@
 #include "grok/context.h"
 #include "grok_j2k_encoder_thread.h"
 #endif
+#ifdef DCPOMATIC_HAVE_NVJPEG2K
+#include "cuda_j2k_encoder_thread.h"
+#endif
 #include "remote_j2k_encoder_thread.h"
 #include "j2k_encoder.h"
 #include "log.h"
