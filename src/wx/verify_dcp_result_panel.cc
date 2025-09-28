@@ -25,8 +25,8 @@
 #include "wx_util.h"
 #include "lib/verify_dcp_job.h"
 #include <dcp/html_formatter.h>
-#include <dcp/text_formatter.h>
 #include <dcp/pdf_formatter.h>
+#include <dcp/text_formatter.h>
 #include <dcp/verify.h>
 #include <dcp/verify_report.h>
 #include <dcp/warnings.h>
