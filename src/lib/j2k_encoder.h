@@ -98,8 +98,27 @@ private:
 
 	void frame_done ();
 	void servers_list_changed ();
-	void remake_threads(int cpu, int gpu, std::list<EncodeServerDescription> servers);
+	void remake_threads(int cpu, int grok, int nvjpeg2k, std::list<EncodeServerDescription> servers);
 	void terminate_threads ();
+	void remove_threads(int wanted, int current, std::function<bool (std::shared_ptr<J2KEncoderThread>)> predicate);
+
+	template <class T, typename... Args>
+	void setup_threads(int target, Args&&... args)
+	{
+		auto const is_target_thread = [](std::shared_ptr<J2KEncoderThread> thread) {
+			return static_cast<bool>(std::dynamic_pointer_cast<T>(thread));
+		};
+
+		auto const current_target_threads = std::count_if(_threads.begin(), _threads.end(), is_target_thread);
+
+		for (auto i = current_target_threads; i < target; ++i) {
+			auto thread = std::make_shared<T>(*this, std::forward<Args>(args)...);
+			thread->start();
+			_threads.push_back(thread);
+		}
+
+		remove_threads(target, current_target_threads, is_target_thread);
+	}
 
 	boost::mutex _threads_mutex;
 	std::vector<std::shared_ptr<J2KEncoderThread>> _threads;

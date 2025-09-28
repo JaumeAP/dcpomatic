@@ -133,13 +133,13 @@ void
 J2KEncoder::servers_list_changed()
 {
 	auto config = Config::instance();
-	auto const grok_enable = config->gpu_type() == Config::GPUType::GROK;
 
-	auto const cpu = (grok_enable || config->only_servers_encode()) ? 0 : config->master_encoding_threads();
-	auto const gpu = grok_enable ? config->master_encoding_threads() : 0;
+	auto const cpu = (config->gpu_type() != Config::GPUType::NONE || config->only_servers_encode()) ? 0 : config->master_encoding_threads();
+	auto const grok = config->gpu_type() == Config::GPUType::GROK ? config->master_encoding_threads() : 0;
+	auto const nvjpeg2k = config->gpu_type() == Config::GPUType::NVJPEG2K ? config->master_encoding_threads() : 0;
 
-	LOG_GENERAL("Thread counts from: grok={}, only_servers={}, master={}", grok_enable ? "yes" : "no", config->only_servers_encode() ? "yes" : "no", config->master_encoding_threads());
-	remake_threads(cpu, gpu, EncodeServerFinder::instance()->servers());
+	LOG_GENERAL("Thread counts from: gpu={}, only_servers={}, master={}", static_cast<int>(config->gpu_type()), config->only_servers_encode() ? "yes" : "no", config->master_encoding_threads());
+	remake_threads(cpu, grok, nvjpeg2k, EncodeServerFinder::instance()->servers());
 }
 
 
@@ -358,10 +358,23 @@ J2KEncoder::terminate_threads ()
 
 
 void
-J2KEncoder::remake_threads(int cpu, int gpu, list<EncodeServerDescription> servers)
+J2KEncoder::remove_threads(int wanted, int current, std::function<bool (shared_ptr<J2KEncoderThread>)> predicate)
 {
-	LOG_GENERAL("Making threads: CPU={}, GPU={}, Remote={}", cpu, gpu, servers.size());
-	if ((cpu + gpu + servers.size()) == 0) {
+	for (auto i = wanted; i < current; ++i) {
+		auto iter = std::find_if(_threads.begin(), _threads.end(), predicate);
+		if (iter != _threads.end()) {
+			(*iter)->stop();
+			_threads.erase(iter);
+		}
+	}
+}
+
+
+void
+J2KEncoder::remake_threads(int cpu, int grok, int nvjpeg2k, list<EncodeServerDescription> servers)
+{
+	LOG_GENERAL("Making threads: CPU={}, Grok={}, nvjpeg2k={}, Remote={}", cpu, grok, nvjpeg2k, servers.size());
+	if ((cpu + grok + nvjpeg2k + servers.size()) == 0) {
 		/* Make at least one thread, even if all else fails.  Maybe we are configured
 		 * for "only servers encode" but no servers have been registered yet.
 		 */
@@ -373,49 +386,14 @@ J2KEncoder::remake_threads(int cpu, int gpu, list<EncodeServerDescription> serve
 		return;
 	}
 
-	auto remove_threads = [this](int wanted, int current, std::function<bool (shared_ptr<J2KEncoderThread>)> predicate) {
-		for (auto i = wanted; i < current; ++i) {
-			auto iter = std::find_if(_threads.begin(), _threads.end(), predicate);
-			if (iter != _threads.end()) {
-				(*iter)->stop();
-				_threads.erase(iter);
-			}
-		}
-	};
-
-
-	/* CPU */
-
-	auto const is_cpu_thread = [](shared_ptr<J2KEncoderThread> thread) {
-		return static_cast<bool>(dynamic_pointer_cast<CPUJ2KEncoderThread>(thread));
-	};
-
-	auto const current_cpu_threads = std::count_if(_threads.begin(), _threads.end(), is_cpu_thread);
-
-	for (auto i = current_cpu_threads; i < cpu; ++i) {
-		auto thread = make_shared<CPUJ2KEncoderThread>(*this);
-		thread->start();
-		_threads.push_back(thread);
-	}
-
-	remove_threads(cpu, current_cpu_threads, is_cpu_thread);
+	setup_threads<CPUJ2KEncoderThread>(cpu);
 
 #ifdef DCPOMATIC_GROK
-	/* GPU */
+	setup_threads<GrokJ2KEncoderThread>(grok, _context);
+#endif
 
-	auto const is_grok_thread = [](shared_ptr<J2KEncoderThread> thread) {
-		return static_cast<bool>(dynamic_pointer_cast<GrokJ2KEncoderThread>(thread));
-	};
-
-	auto const current_gpu_threads = std::count_if(_threads.begin(), _threads.end(), is_grok_thread);
-
-	for (auto i = current_gpu_threads; i < gpu; ++i) {
-		auto thread = make_shared<GrokJ2KEncoderThread>(*this, _context);
-		thread->start();
-		_threads.push_back(thread);
-	}
-
-	remove_threads(gpu, current_gpu_threads, is_grok_thread);
+#ifdef DCPOMATIC_HAVE_NVJPEG2K
+	setup_threads<CUDAJ2KEncoderThread>(nvjpeg2k);
 #endif
 
 	/* Remote */

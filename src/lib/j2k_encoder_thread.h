@@ -46,6 +46,7 @@ protected:
 	J2KEncoder& _encoder;
 
 private:
+	void remove_threads(int wanted, int current, std::function<bool (std::shared_ptr<J2KEncoderThread>)> predicate);
 	boost::thread _thread;
 };
 

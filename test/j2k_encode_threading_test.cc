@@ -50,10 +50,10 @@ BOOST_AUTO_TEST_CASE(local_threads_created_and_destroyed)
 	Writer writer(film, {}, "foo");
 	J2KEncoder encoder(film, writer);
 
-	encoder.remake_threads(32, 0, {});
+	encoder.remake_threads(32, 0, 0, {});
 	BOOST_CHECK_EQUAL(encoder._threads.size(), 32U);
 
-	encoder.remake_threads(9, 0, {});
+	encoder.remake_threads(9, 0, 0, {});
 	BOOST_CHECK_EQUAL(encoder._threads.size(), 9U);
 
 	encoder.end();
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(remote_threads_created_and_destroyed)
 		{ "sheila", 14, SERVER_LINK_VERSION },
 	};
 
-	encoder.remake_threads(0, 0, servers);
+	encoder.remake_threads(0, 0, 0, servers);
 	BOOST_CHECK_EQUAL(encoder._threads.size(), 7U + 2U + 14U);
 
 	servers = {
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(remote_threads_created_and_destroyed)
 		{ "sheila", 14, SERVER_LINK_VERSION },
 	};
 
-	encoder.remake_threads(0, 0, servers);
+	encoder.remake_threads(0, 0, 0, servers);
 	BOOST_CHECK_EQUAL(encoder._threads.size(), 7U + 5U + 14U);
 
 	servers = {
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(remote_threads_created_and_destroyed)
 		{ "sheila", 11, SERVER_LINK_VERSION },
 	};
 
-	encoder.remake_threads(0, 0, servers);
+	encoder.remake_threads(0, 0, 0, servers);
 	BOOST_CHECK_EQUAL(encoder._threads.size(), 11U);
 }
 
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(frames_not_lost_when_threads_disappear)
 	auto encoder = dynamic_cast<J2KEncoder*>(dynamic_pointer_cast<DCPFilmEncoder>(job->_encoder)->_encoder.get());
 
 	while (JobManager::instance()->work_to_do()) {
-		encoder->remake_threads((rand() % 7) + 1, 0, {});
+		encoder->remake_threads((rand() % 7) + 1, 0, 0, {});
 		dcpomatic_sleep_seconds(1);
 	}
 
