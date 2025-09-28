@@ -240,6 +240,7 @@ Config::set_defaults()
 #ifdef DCPOMATIC_GROK
 	_grok = {};
 #endif
+	_gpu_type = GPUType::NONE;
 
 	_main_divider_sash_position = {};
 	_main_content_divider_sash_position = {};
@@ -679,8 +680,24 @@ try
 #ifdef DCPOMATIC_GROK
 	if (auto grok = f.optional_node_child("Grok")) {
 		_grok = Grok(grok);
+		/* We used to use an <Enable> tag in the <Grok> tag, but now we look at
+		 * the _gpu_type.
+		 */
+		if (grok->optional_bool_child("Enable").get_value_or(false)) {
+			_gpu_type = GPUType::GROK;
+		}
 	}
 #endif
+
+	if (auto gpu_type = f.optional_string_child("GPUType")) {
+		if (*gpu_type == "grok") {
+			_gpu_type = GPUType::GROK;
+		} else if (*gpu_type == "nvjpeg2k") {
+			_gpu_type = GPUType::NVJPEG2K;
+		} else {
+			_gpu_type = GPUType::NONE;
+		}
+	}
 
 	_export.read(f.optional_node_child("Export"));
 }
@@ -1168,6 +1185,18 @@ Config::write_config() const
 #ifdef DCPOMATIC_GROK
 	_grok.as_xml(cxml::add_child(root, "Grok"));
 #endif
+	/* [XML] GPUType none for no GPU accleration, grok to use Grok, nvjpeg2k to use the NVIDIA nvjpeg2k library */
+	switch (_gpu_type) {
+	case GPUType::NONE:
+		cxml::add_text_child(root, "GPUType", "none");
+		break;
+	case GPUType::GROK:
+		cxml::add_text_child(root, "GPUType", "grok");
+		break;
+	case GPUType::NVJPEG2K:
+		cxml::add_text_child(root, "GPUType", "nvjpeg2k");
+		break;
+	}
 
 	_export.write(cxml::add_child(root, "Export"));
 
@@ -1764,8 +1793,7 @@ Config::Grok::Grok()
 
 
 Config::Grok::Grok(cxml::ConstNodePtr node)
-	: enable(node->bool_child("Enable"))
-	, binary_location(node->string_child("BinaryLocation"))
+	: binary_location(node->string_child("BinaryLocation"))
 	, selected(node->number_child<int>("Selected"))
 	, licence_server(node->string_child("LicenceServer"))
 	, licence(node->string_child("Licence"))
@@ -1780,7 +1808,6 @@ void
 Config::Grok::as_xml(xmlpp::Element* node) const
 {
 	node->add_child("BinaryLocation")->add_child_text(binary_location.string());
-	node->add_child("Enable")->add_child_text((enable ? "1" : "0"));
 	node->add_child("Selected")->add_child_text(fmt::to_string(selected));
 	node->add_child("LicenceServer")->add_child_text(licence_server);
 	node->add_child("Licence")->add_child_text(licence);

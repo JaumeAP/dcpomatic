@@ -97,9 +97,9 @@ J2KEncoder::J2KEncoder(shared_ptr<const Film> film, Writer& writer)
 #endif
 {
 #ifdef DCPOMATIC_GROK
-	auto grok = Config::instance()->grok();
-	_dcpomatic_context = new grk_plugin::DcpomaticContext(film, writer, _history, grok.binary_location);
-	if (grok.enable) {
+	auto config = Config::instance();
+	_dcpomatic_context = new grk_plugin::DcpomaticContext(film, writer, _history, config->grok().binary_location);
+	if (config->gpu_type() == Config::GPUType::GROK) {
 		_context = new grk_plugin::GrokContext(_dcpomatic_context);
 	}
 #endif
@@ -133,11 +133,7 @@ void
 J2KEncoder::servers_list_changed()
 {
 	auto config = Config::instance();
-#ifdef DCPOMATIC_GROK
-	auto const grok_enable = config->grok().enable;
-#else
-	auto const grok_enable = false;
-#endif
+	auto const grok_enable = config->gpu_type() == Config::GPUType::GROK;
 
 	auto const cpu = (grok_enable || config->only_servers_encode()) ? 0 : config->master_encoding_threads();
 	auto const gpu = grok_enable ? config->master_encoding_threads() : 0;
@@ -161,7 +157,7 @@ void
 J2KEncoder::pause()
 {
 #ifdef DCPOMATIC_GROK
-	if (!Config::instance()->grok().enable) {
+	if (Config::instance()->gpu_type() != Config::GPUType::GROK) {
 		return;
 	}
 	return;
@@ -182,7 +178,7 @@ J2KEncoder::pause()
 void J2KEncoder::resume()
 {
 #ifdef DCPOMATIC_GROK
-	if (!Config::instance()->grok().enable) {
+	if (Config::instance()->gpu_type() != Config::GPUType::GROK) {
 		return;
 	}
 
@@ -225,7 +221,7 @@ J2KEncoder::end()
 	*/
 	for (auto & i: _queue) {
 #ifdef DCPOMATIC_GROK
-		if (Config::instance()->grok().enable) {
+		if (Config::instance()->gpu_type() == Config::GPUType::GROK) {
 			if (!_context->scheduleCompress(i)){
 				LOG_GENERAL (N_("[{}] J2KEncoder thread pushes frame {} back onto queue after failure"), thread_id(), i.index());
 				// handle error

@@ -665,7 +665,6 @@ public:
 
 		void as_xml(xmlpp::Element* node) const;
 
-		bool enable = false;
 		boost::filesystem::path binary_location;
 		int selected = 0;
 		std::string licence_server;
@@ -676,6 +675,16 @@ public:
 		return _grok;
 	}
 #endif
+
+	enum class GPUType {
+		NONE,
+		GROK,
+		NVJPEG2K
+	};
+
+	GPUType gpu_type() const {
+		return _gpu_type;
+	}
 
 	int isdcf_name_part_length() const {
 		return _isdcf_name_part_length;
@@ -1253,6 +1262,10 @@ public:
 	void set_grok(Grok const& grok);
 #endif
 
+	void set_gpu_type(GPUType type) {
+		maybe_set(_gpu_type, type);
+	}
+
 	void set_isdcf_name_part_length(int length) {
 		maybe_set(_isdcf_name_part_length, length, ISDCF_NAME_PART_LENGTH);
 	}
@@ -1526,6 +1539,7 @@ private:
 #ifdef DCPOMATIC_GROK
 	Grok _grok;
 #endif
+	GPUType _gpu_type;
 
 	ExportConfig _export;
 

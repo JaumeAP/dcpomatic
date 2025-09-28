@@ -1337,7 +1337,7 @@ private:
 	{
 		auto config = Config::instance();
 
-		switch(config->video_view_type()) {
+		switch (config->video_view_type()) {
 		case Config::VIDEO_VIEW_SIMPLE:
 			checked_set(_video_display_mode, 0);
 			break;
@@ -1469,6 +1469,99 @@ private:
 };
 
 
+#if defined(DCPOMATIC_GROK) || defined(DCPOMATIC_HAVE_NVJPEG2K)
+class GPUPage : public preferences::Page
+{
+public:
+	GPUPage(wxSize panel_size, int border)
+		: Page(panel_size, border)
+	{}
+
+	wxString GetName() const override
+	{
+		return _("GPU");
+	}
+
+	void setup() override
+	{
+		auto table = new wxFlexGridSizer(2, DCPOMATIC_SIZER_X_GAP, DCPOMATIC_SIZER_Y_GAP);
+		table->AddGrowableCol(1, 1);
+		_panel->GetSizer()->Add(table, 0, wxALL | wxEXPAND, _border);
+
+		add_label_to_sizer(table, _panel, _("GPU acceleration"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
+
+		_gpu_type = new Choice(_panel);
+		_gpu_type->add_entry(_("None"), "none");
+#if defined(DCPOMATIC_GROK)
+		_gpu_type->add_entry(_("Grok"), "grok");
+#endif
+#if defined(DCPOMATIC_HAVE_NVJPEG2K)
+		_gpu_type->add_entry(_("NVIDIA"), "nvjpeg2k");
+#endif
+		table->Add(_gpu_type);
+
+#if defined(DCPOMATIC_GROK)
+		_grok_panel = new GrokConfigPanel(_panel);
+		_panel->GetSizer()->Add(_grok_panel, 1, wxALL | wxEXPAND, _border);
+#endif
+
+		_gpu_type->bind(&GPUPage::gpu_type_changed, this);
+	}
+
+	void config_changed() override
+	{
+		auto config = Config::instance();
+
+		switch (config->gpu_type()) {
+		case Config::GPUType::NONE:
+			_gpu_type->set_by_data("none");
+#if defined(DCPOMATIC_GROK)
+			_grok_panel->Hide();
+#endif
+			break;
+		case Config::GPUType::GROK:
+			_gpu_type->set_by_data("grok");
+#if defined(DCPOMATIC_GROK)
+			_grok_panel->Show();
+			_panel->GetSizer()->Layout();
+#endif
+			break;
+		case Config::GPUType::NVJPEG2K:
+			_gpu_type->set_by_data("nvjpeg2k");
+#if defined(DCPOMATIC_GROK)
+			_grok_panel->Hide();
+#endif
+			break;
+		}
+
+#if defined(DCPOMATIC_GROK)
+		_grok_panel->config_changed();
+#endif
+	}
+
+
+private:
+	void gpu_type_changed()
+	{
+		if (auto choice = _gpu_type->get_data()) {
+			if (*choice == "none") {
+				Config::instance()->set_gpu_type(Config::GPUType::NONE);
+			} else if (*choice == "grok") {
+				Config::instance()->set_gpu_type(Config::GPUType::GROK);
+			} else if (*choice == "nvjpeg2k") {
+				Config::instance()->set_gpu_type(Config::GPUType::NVJPEG2K);
+			}
+		}
+	}
+
+	Choice* _gpu_type;
+#if defined(DCPOMATIC_GROK)
+	GrokConfigPanel* _grok_panel;
+#endif
+};
+#endif
+
+
 wxPreferencesEditor*
 create_full_config_dialog()
 {
@@ -1490,7 +1583,7 @@ create_full_config_dialog()
 	e->AddPage(new preferences::SoundPage(ps, border, preferences::SoundPage::Purpose::MAIN));
 	e->AddPage(new DefaultsPage(ps, border));
 	e->AddPage(new EncodingServersPage(ps, border));
-#ifdef DCPOMATIC_GROK
+#if defined(DCPOMATIC_GROK) || defined(DCPOMATIC_HAVE_NVJPEG2K)
 	e->AddPage(new GPUPage(ps, border));
 #endif
 	e->AddPage(new preferences::KeysPage(ps, border));

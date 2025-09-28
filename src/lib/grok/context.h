@@ -99,11 +99,6 @@ public:
 	explicit GrokContext(DcpomaticContext* dcpomatic_context)
 		: _dcpomatic_context(dcpomatic_context)
 	{
-		auto grok = Config::instance()->grok();
-		if (!grok.enable) {
-			return;
-		}
-
 		boost::filesystem::path folder(_dcpomatic_context->location);
 		boost::filesystem::path binary_path = folder / "grk_compress";
 		if (!boost::filesystem::exists(binary_path)) {

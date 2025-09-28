@@ -19,11 +19,14 @@
 */
 
 
-#pragma once
+#ifndef DCPOMATIC_GROK_GPU_CONFIG_PANEL
+#define DCPOMATIC_GROK_GPU_CONFIG_PANEL
 
 
 #include "lib/grok/util.h"
+#include <boost/bind/bind.hpp>
 #include <wx/filepicker.h>
+#include <wx/wx.h>
 
 
 class GpuList : public wxPanel
@@ -72,89 +75,49 @@ private:
 };
 
 
-class GPUPage : public dcpomatic::preferences::Page
+class GrokConfigPanel : public wxPanel
 {
 public:
-	GPUPage(wxSize panel_size, int border)
-		: Page(panel_size, border)
-	{}
-
-	wxString GetName() const override
+	GrokConfigPanel(wxWindow* parent)
+		: wxPanel(parent, wxID_ANY)
 	{
-		return _("GPU");
-	}
+		auto sizer = new wxBoxSizer(wxVERTICAL);
+		SetSizer(sizer);
 
-#ifdef DCPOMATIC_OSX
-	/* XXX: this icon does not exist */
-	wxBitmap GetLargeIcon() const override
-	{
-		return wxBitmap(icon_path("gpu"), wxBITMAP_TYPE_PNG);
-	}
-#endif
-
-private:
-	void setup() override
-	{
-		_enable_gpu = new CheckBox(_panel, _("Enable GPU acceleration"));
-		_panel->GetSizer()->Add(_enable_gpu, 0, wxALL | wxEXPAND, _border);
-
-		wxFlexGridSizer* table = new wxFlexGridSizer(2, DCPOMATIC_SIZER_X_GAP, DCPOMATIC_SIZER_Y_GAP);
+		auto table = new wxFlexGridSizer(2, DCPOMATIC_SIZER_X_GAP, DCPOMATIC_SIZER_Y_GAP);
 		table->AddGrowableCol(1, 1);
-		_panel->GetSizer()->Add(table, 1, wxALL | wxEXPAND, _border);
+		sizer->Add(table, 1, wxEXPAND);
 
-		add_label_to_sizer(table, _panel, _("Acceleration binary folder"), true, 0, wxLEFT | wxLEFT | wxALIGN_CENTRE_VERTICAL);
-		_binary_location = new wxDirPickerCtrl(_panel, wxDD_DIR_MUST_EXIST);
+		add_label_to_sizer(table, this, _("Acceleration binary folder"), true, 0, wxLEFT | wxLEFT | wxALIGN_CENTRE_VERTICAL);
+		_binary_location = new wxDirPickerCtrl(this, wxDD_DIR_MUST_EXIST);
 		table->Add(_binary_location, 1, wxEXPAND);
 
-		add_label_to_sizer(table, _panel, _("GPU selection"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-		_gpu_list_control = new GpuList(_panel);
+		add_label_to_sizer(table, this, _("GPU selection"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
+		_gpu_list_control = new GpuList(this);
 		table->Add(_gpu_list_control, 1, wxEXPAND);
 
-		add_label_to_sizer(table, _panel, _("License server"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-		_server = new wxTextCtrl(_panel, wxID_ANY);
+		add_label_to_sizer(table, this, _("License server"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
+		_server = new wxTextCtrl(this, wxID_ANY);
 		table->Add(_server, 1, wxEXPAND | wxALL);
 
-		add_label_to_sizer(table, _panel, _("License"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
-		_licence = new PasswordEntry(_panel);
+		add_label_to_sizer(table, this, _("License"), true, 0, wxLEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL);
+		_licence = new PasswordEntry(this);
 		table->Add(_licence->get_panel(), 1, wxEXPAND | wxALL);
 
-		_enable_gpu->bind(&GPUPage::enable_gpu_changed, this);
-		_binary_location->Bind(wxEVT_DIRPICKER_CHANGED, boost::bind (&GPUPage::binary_location_changed, this));
-		_server->Bind(wxEVT_TEXT, boost::bind(&GPUPage::server_changed, this));
-		_licence->Changed.connect(boost::bind(&GPUPage::licence_changed, this));
-
-		setup_sensitivity();
+		_binary_location->Bind(wxEVT_DIRPICKER_CHANGED, boost::bind(&GrokConfigPanel::binary_location_changed, this));
+		_server->Bind(wxEVT_TEXT, boost::bind(&GrokConfigPanel::server_changed, this));
+		_licence->Changed.connect(boost::bind(&GrokConfigPanel::licence_changed, this));
 	}
 
-	void setup_sensitivity()
+	void config_changed()
 	{
 		auto grok = Config::instance()->grok();
 
-		_binary_location->Enable(grok.enable);
-		_gpu_list_control->Enable(grok.enable);
-		_server->Enable(grok.enable);
-		_licence->get_panel()->Enable(grok.enable);
-	}
-
-	void config_changed() override
-	{
-		auto grok = Config::instance()->grok();
-
-		checked_set(_enable_gpu, grok.enable);
 		_binary_location->SetPath(std_to_wx(grok.binary_location.string()));
 		_gpu_list_control->update();
 		_gpu_list_control->set_selection(grok.selected);
 		checked_set(_server, grok.licence_server);
 		checked_set(_licence, grok.licence);
-	}
-
-	void enable_gpu_changed()
-	{
-		auto grok = Config::instance()->grok();
-		grok.enable = _enable_gpu->GetValue();
-		Config::instance()->set_grok(grok);
-
-		setup_sensitivity();
 	}
 
 	void binary_location_changed()
@@ -192,3 +155,7 @@ private:
 	wxTextCtrl* _server = nullptr;
 	PasswordEntry* _licence = nullptr;
 };
+
+
+#endif
+

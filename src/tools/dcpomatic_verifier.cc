@@ -41,6 +41,7 @@
 #include "lib/verify_dcp_job.h"
 #include "lib/util.h"
 #include "lib/variant.h"
+#include <dcp/html_formatter.h>
 #include <dcp/search.h>
 #include <dcp/text_formatter.h>
 #include <dcp/verify_report.h>

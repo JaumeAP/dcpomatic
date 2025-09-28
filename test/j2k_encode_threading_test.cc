@@ -126,9 +126,7 @@ BOOST_AUTO_TEST_CASE(transcode_stops_when_gpu_enabled_with_no_gpu)
 
 	grk_plugin::setMessengerLogger(new grk_plugin::GrokLogger("[GROK] "));
 
-	Config::Grok grok;
-	grok.enable = true;
-	Config::instance()->set_grok(grok);
+	Config::instance()->set_gpu_type(Config::GPUType::GROK);
 
 	auto content = content_factory(TestPaths::private_data() / "clapperboard.mp4");
 	auto film = new_test_film("transcode_stops_when_gpu_enabled_with_no_gpu", content);

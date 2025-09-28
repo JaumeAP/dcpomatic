@@ -422,17 +422,15 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 
 #ifdef DCPOMATIC_GROK
 	config_params.push_back(
-		{"grok-enable", "1 to enable the Grok encoder, 0 to disable it",
+		{"gpu-type", "\"grok\" to enable the Grok encoder, \"none\" to disable it",
 		[](Config* config, string value) -> optional<string> {
-			auto grok = config->grok();
-			if (value == "1") {
-				grok.enable = true;
-			} else if (value == "0") {
-				grok.enable = false;
+			if (value == "grok") {
+				config->set_gpu_type(Config::GPUType::GROK);
+			} else if (value == "none") {
+				config->set_gpu_type(Config::GPUType::NONE);
 			} else {
-				return fmt::format("Invalid value {} for grok-enable (use 1 to enable, 0 to disable)", value);
+				return fmt::format("Invalid value {} for gpu-type (use \"grok\" to enable the Grok encoder, \"none\" to disable it)", value);
 			}
-			config->set_grok(grok);
 			return {};
 		}});
 	config_params.push_back(
