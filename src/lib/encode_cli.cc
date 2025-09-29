@@ -65,20 +65,30 @@ using std::vector;
 using boost::optional;
 
 
+class Command
+{
+public:
+	std::string name;
+	std::string parameters;
+	std::string help;
+
+	int name_and_parameters_length() const {
+		return name.length() + 1 + parameters.length();
+	}
+};
+
+
 static void
-help(function <void (string)> out)
+help(vector<Command> const& commands, function <void (string)> out)
 {
 	out(fmt::format("Syntax: {} [OPTION] [COMMAND] [<PARAMETER>]\n", program_name));
 
 	out("\nCommands:\n\n");
-	out("  make-dcp <FILM>              make DCP from the given film; default if no other command is specified\n");
-	out(variant::insert_dcpomatic("  list-servers                 display a list of encoding servers that {} can use (until Ctrl-C)\n"));
-	out("  dump <FILM>                  show a summary of the film's settings\n");
-#ifdef DCPOMATIC_GROK
-	out("  config-params                list the parameters that can be set with `config`\n");
-	out("  config <PARAMETER> <VALUE>   set a DCP-o-matic configuration value\n");
-	out("  list-gpus                    list available GPUs\n");
-#endif
+	auto const longest = std::max_element(commands.begin(), commands.end(), [](Command const& a, Command const& b) { return a.name_and_parameters_length() < b.name_and_parameters_length(); });
+	auto const pad = longest->name_and_parameters_length() + 1;
+	for (auto const& cmd: commands) {
+		out(fmt::format("  {:<{}} {}\n", cmd.name + " " + cmd.parameters, pad, cmd.help));
+	}
 
 	out("\nOptions:\n\n");
 	out(variant::insert_dcpomatic("  -v, --version                     show {} version\n"));
@@ -290,6 +300,16 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 	bool hints = false;
 	string command = "make-dcp";
 
+	vector<Command> commands;
+	commands.push_back({"make-dcp", "<FILM>", "make DCP from the given film; default if no other command is specified"});
+	commands.push_back({"list-servers", "", variant::insert_dcpomatic("display a list of encoding servers that {} can use (until Ctrl-C)")});
+	commands.push_back({"dump", "<FILM>", "show a summary of the film's settings"});
+#ifdef DCPOMATIC_GROK
+	commands.push_back({"config-params", "", "list the parameters that can be set with `config`"});
+	commands.push_back({"config", "<PARAMETER> <VALUE>", "set a DCP-o-matic configuration value"});
+	commands.push_back({"list-gpus", "", "list available GPUs"});
+#endif
+
 	/* This makes it possible to call getopt several times in the same executable, for tests */
 	optind = 0;
 
@@ -328,7 +348,7 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 			out(fmt::format("dcpomatic version {} {}\n", dcpomatic_version, dcpomatic_git_commit));
 			return {};
 		case 'h':
-			help(out);
+			help(commands, out);
 			return {};
 		case 'f':
 			out(fmt::format("{}\n", dcpomatic_cxx_flags));
@@ -379,37 +399,75 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 		}
 	}
 
-	vector<string> commands = {
-		"make-dcp",
-		"list-servers",
-#ifdef DCPOMATIC_GROK
-		"dump",
-		"config-params",
-		"config",
-		"list-gpus"
-#else
-		"dump"
-#endif
-	};
-
 	if (optind < argc - 1) {
 		/* Command with a film specified afterwards */
 		command = argv[optind++];
 	} else if (optind < argc) {
 		/* Look for a valid command, hoping that it's not the name of a film */
-		if (std::find(commands.begin(), commands.end(), argv[optind]) != commands.end()) {
+		if (std::find_if(commands.begin(), commands.end(), [&](Command const& cmd) { return cmd.name == argv[optind]; }) != commands.end()) {
 			command = argv[optind++];
 		}
 	}
 
 
+	class ConfigParam
+	{
+	public:
+		std::string name;
+		std::string help;
+		std::function<optional<string> (Config*, string)> set;
+	};
+
+	vector<ConfigParam> config_params;
+
 #ifdef DCPOMATIC_GROK
-	if (command == "config-params") {
+	config_params.push_back(
+		{"grok-enable", "1 to enable the Grok encoder, 0 to disable it",
+		[](Config* config, string value) -> optional<string> {
+			auto grok = config->grok();
+			if (value == "1") {
+				grok.enable = true;
+			} else if (value == "0") {
+				grok.enable = false;
+			} else {
+				return fmt::format("Invalid value {} for grok-enable (use 1 to enable, 0 to disable)", value);
+			}
+			config->set_grok(grok);
+			return {};
+		}});
+	config_params.push_back(
+		{"grok-licence", "licence string for using the Grok JPEG2000 encoder",
+		[](Config* config, string value) -> optional<string> {
+			auto grok = config->grok();
+			grok.licence = value;
+			config->set_grok(grok);
+			return {};
+		}});
+	config_params.push_back(
+		{"grok-binary-location", "directory containing Grok binaries",
+		[](Config* config, string value) -> optional<string> {
+			auto grok = config->grok();
+			grok.binary_location = value;
+			config->set_grok(grok);
+			return {};
+		}});
+	config_params.push_back(
+		{"grok-gpu-index", "index of GPU to use (from 0, see list-gpus)",
+		[](Config* config, string value) -> optional<string> {
+			auto grok = config->grok();
+			grok.selected = dcp::raw_convert<int>(value);
+			config->set_grok(grok);
+			return {};
+		}});
+#endif
+
+	if (command == "config-params" && !config_params.empty()) {
 		out("Configurable parameters:\n\n");
-		out("  grok-licence           licence string for using the Grok JPEG2000 encoder\n");
-		out("  grok-enable            1 to enable the Grok encoder, 0 to disable it\n");
-		out("  grok-binary-location   directory containing Grok binaries\n");
-		out("  grok-gpu-index         index of GPU to use (from 0, see list-gpus)\n");
+		auto const longest = std::max_element(config_params.begin(), config_params.end(), [](ConfigParam const& a, ConfigParam const& b) { return a.name.length() < b.name.length(); });
+		auto const pad = longest->name.length();
+		for (auto const& param: config_params) {
+			out(fmt::format("  {:<{}} {}\n", param.name, pad, param.help));
+		}
 		return {};
 	}
 
@@ -417,38 +475,34 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 		if (optind < argc - 1) {
 			string const parameter = argv[optind++];
 			string const value = argv[optind++];
-			auto grok = Config::instance()->grok();
-			if (parameter == "grok-licence") {
-				grok.licence = value;
-			} else if (parameter == "grok-enable") {
-				if (value == "1") {
-					grok.enable = true;
-				} else if (value == "0") {
-					grok.enable = false;
-				} else {
-					return fmt::format("Invalid value {} for grok-enable (use 1 to enable, 0 to disable)", value);
+			bool done = false;
+			for (auto const& param: config_params) {
+				if (param.name == parameter) {
+					auto const error = param.set(Config::instance(), value);
+					if (error) {
+						return error;
+					}
+					done = true;
 				}
-			} else if (parameter == "grok-binary-location") {
-				grok.binary_location = value;
-			} else if (parameter == "grok-gpu-index") {
-				grok.selected = dcp::raw_convert<int>(value);
-			} else {
+			}
+			if (!done) {
 				return fmt::format("Unrecognised configuration parameter `{}'", parameter);
 			}
-			Config::instance()->set_grok(grok);
 			Config::instance()->write();
 		} else {
 			return fmt::format("Missing configuration parameter: use {} config <parameter> <value>", program_name);
 		}
 		return {};
+
+#if defined(DCPOMATIC_GROK)
 	} else if (command == "list-gpus") {
 		int N = 0;
 		for (auto gpu: get_gpu_names()) {
 			out(fmt::format("{}: {}\n", N++, gpu));
 		}
 		return {};
-	}
 #endif
+	}
 
 	if (config) {
 		State::override_path = *config;
@@ -475,7 +529,7 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 	}
 
 	if (optind >= argc) {
-		help(out);
+		help(commands, out);
 		return {};
 	}
 
