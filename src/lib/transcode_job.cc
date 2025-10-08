@@ -143,6 +143,7 @@ TranscodeJob::run ()
 		_encoder.reset ();
 
 	} catch (...) {
+		std::cout << "some tx shit threw\n";
 		_encoder.reset ();
 		throw;
 	}

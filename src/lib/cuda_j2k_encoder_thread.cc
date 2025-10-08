@@ -46,8 +46,12 @@ CUDAJ2KEncoderThread::CUDAJ2KEncoderThread(J2KEncoder& encoder)
 shared_ptr<dcp::ArrayData>
 CUDAJ2KEncoderThread::encode(DCPVideo const& frame)
 {
+	std::cout << "CUDA: encode " << frame.index() << "\n";
+
 	auto xyz = convert_to_xyz(frame.frame());
 	auto const size = xyz->size();
+
+	std::cout << "freeowwwwm\n";
 
 	/* {x,y,z}lp is 4-byte int representation */
 	int* xlp = xyz->data(0);
@@ -69,13 +73,19 @@ CUDAJ2KEncoderThread::encode(DCPVideo const& frame)
 	int16_t* zp = _xyz_z.data();
 	pixel_data_h[2] = reinterpret_cast<uint8_t*>(zp);
 
+	std::cout << "felcher\n";
+
 	for (int j = 0; j < size.width * size.height; ++j) {
 		*xp++ = static_cast<int16_t>(*xlp++);
 		*yp++ = static_cast<int16_t>(*ylp++);
 		*zp++ = static_cast<int16_t>(*zlp++);
 	}
 
+	std::cout << "big bag o bollox";
+
 	allocate_pixel_data_d(size);
+
+	std::cout << "copying to device.\n";
 
 	/* Copy to device */
 	size_t pitch_in_bytes_h[3];
@@ -95,6 +105,8 @@ CUDAJ2KEncoderThread::encode(DCPVideo const& frame)
 			throw CUDAError("cudaMemcpy2D", status);
 		}
 	}
+
+	std::cout << "copied to device.\n";
 
 	nvjpeg2kImage_t device_image;
 	device_image.num_components = 3;
@@ -143,6 +155,8 @@ CUDAJ2KEncoderThread::encode(DCPVideo const& frame)
 		throw CUDAError("nvjpeg2kEncodeParamsSetQuality", status);
 	}
 
+	std::cout << "calling nvjpeg2kEncode\n";
+
 	status = nvjpeg2kEncode(_encoder_handle, _encode_state, _encode_params, &device_image, _stream);
 	if (status != NVJPEG2K_STATUS_SUCCESS) {
 		throw CUDAError("nvjpeg2kEncode", status);
@@ -179,6 +193,7 @@ CUDAJ2KEncoderThread::allocate_pixel_data_d(dcp::Size size)
 			);
 
 		if (status != cudaSuccess) {
+			std::cout << "bad news brown: " << status << "\n";
 			throw CUDAError("cudaMallocPitch", status);
 		}
 	}

@@ -304,9 +304,12 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 	commands.push_back({"make-dcp", "<FILM>", "make DCP from the given film; default if no other command is specified"});
 	commands.push_back({"list-servers", "", variant::insert_dcpomatic("display a list of encoding servers that {} can use (until Ctrl-C)")});
 	commands.push_back({"dump", "<FILM>", "show a summary of the film's settings"});
-#ifdef DCPOMATIC_GROK
+#if defined(DCPOMATIC_GROK) || defined(DCPOMATIC_HAVE_NVJPEG2K)
 	commands.push_back({"config-params", "", "list the parameters that can be set with `config`"});
 	commands.push_back({"config", "<PARAMETER> <VALUE>", "set a DCP-o-matic configuration value"});
+#endif
+
+#if defined(DCPOMATIC_GROK)
 	commands.push_back({"list-gpus", "", "list available GPUs"});
 #endif
 
@@ -420,7 +423,40 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 
 	vector<ConfigParam> config_params;
 
-#ifdef DCPOMATIC_GROK
+#if defined(DCPOMATIC_GROK) && defined(DCPOMATIC_HAVE_NVJPEG2K)
+
+	config_params.push_back(
+		{"gpu-type", "\"grok\" to enable the Grok encoder, \"nvjpeg2k\" to enable the NVIDIA encoder, \"none\" to use the CPU only",
+		[](Config* config, string value) -> optional<string> {
+			if (value == "grok") {
+				config->set_gpu_type(Config::GPUType::GROK);
+			} else if (value == "nvjpeg2k") {
+				config->set_gpu_type(Config::GPUType::NVJPEG2K);
+			} else if (value == "none") {
+				config->set_gpu_type(Config::GPUType::NONE);
+			} else {
+				return fmt::format("Invalid value {} for gpu-type (use \"grok\" to enable the Grok encoder, \"nvjpeg2k\" to enable the NVIDIA encoder, \"none\" to use the CPU only)", value);
+			}
+			return {};
+		}});
+
+#elif defined(DCPOMATIC_HAVE_NVJPEG2K)
+
+	config_params.push_back(
+		{"gpu-type", "\"nvjpeg2k\" to enable the NVIDIA encoder, \"none\" to use the CPU only",
+		[](Config* config, string value) -> optional<string> {
+			if (value == "nvjpeg2k") {
+				config->set_gpu_type(Config::GPUType::NVJPEG2K);
+			} else if (value == "none") {
+				config->set_gpu_type(Config::GPUType::NONE);
+			} else {
+				return fmt::format("Invalid value {} for gpu-type (use \"nvjpeg2k\" to enable the NVIDIA encoder, \"none\" to use the CPU only)", value);
+			}
+			return {};
+		}});
+
+#elif defined(DCPOMATIC_GROK)
+
 	config_params.push_back(
 		{"gpu-type", "\"grok\" to enable the Grok encoder, \"none\" to disable it",
 		[](Config* config, string value) -> optional<string> {

@@ -276,6 +276,7 @@ Job::run_wrapper()
 		set_state(FINISHED_ERROR);
 
 	} catch (std::exception& e) {
+		std::cout << "FUCK MY HAT " << e.what() << "\n";
 
 		set_error(
 			e.what(),

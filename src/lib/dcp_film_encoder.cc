@@ -123,13 +123,17 @@ DCPFilmEncoder::go()
 		_writer.write(_player.get_subtitle_fonts());
 	}
 
-	int passes = 0;
-	while (!_player.pass()) {
-		if ((++passes % 8) == 0) {
-			auto job = _job.lock();
-			DCPOMATIC_ASSERT(job);
-			job->set_progress(_player.progress());
+	try {
+		int passes = 0;
+		while (!_player.pass()) {
+			if ((++passes % 8) == 0) {
+				auto job = _job.lock();
+				DCPOMATIC_ASSERT(job);
+				job->set_progress(_player.progress());
+			}
 		}
+	} catch (...) {
+		std::cout << "BOLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOX\n";
 	}
 
 	for (auto i: get_referenced_reel_assets(_film, _film->playlist())) {
