@@ -27,7 +27,6 @@
 #include <dcp/j2k_transcode.h>
 #include <dcp/mono_j2k_picture_frame.h>
 #include <dcp/openjpeg_image.h>
-#include <dcp/rgb_xyz.h>
 #include <dcp/stereo_j2k_picture_frame.h>
 #include <dcp/warnings.h>
 #include <libcxml/cxml.h>
