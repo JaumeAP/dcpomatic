@@ -55,7 +55,7 @@ vector<PresetColourConversion> PresetColourConversion::_presets;
 
 
 ColourConversion::ColourConversion()
-	: dcp::ColourConversion(dcp::ColourConversion::srgb_to_xyz())
+	: dcp::ColourConversion(dcp::ColourConversion::srgb_to_dcp())
 {
 
 }
@@ -285,13 +285,13 @@ operator==(PresetColourConversion const & a, PresetColourConversion const & b)
 void
 PresetColourConversion::setup_colour_conversion_presets()
 {
-	_presets.push_back(PresetColourConversion(_("sRGB"), "srgb", dcp::ColourConversion::srgb_to_xyz()));
-	_presets.push_back(PresetColourConversion(_("Rec. 601"), "rec601", dcp::ColourConversion::rec601_to_xyz()));
-	_presets.push_back(PresetColourConversion(_("Rec. 709"), "rec709", dcp::ColourConversion::rec709_to_xyz()));
-	_presets.push_back(PresetColourConversion(_("P3"), "p3", dcp::ColourConversion::p3_to_xyz()));
-	_presets.push_back(PresetColourConversion(_("Rec. 1886"), "rec1886", dcp::ColourConversion::rec1886_to_xyz()));
-	_presets.push_back(PresetColourConversion(_("Rec. 2020"), "rec2020", dcp::ColourConversion::rec2020_to_xyz()));
-	_presets.push_back(PresetColourConversion(_("S-Gamut3/S-Log3"), "sgamut3", dcp::ColourConversion::s_gamut3_to_xyz()));
+	_presets.push_back(PresetColourConversion(_("sRGB"), "srgb", dcp::ColourConversion::srgb_to_dcp()));
+	_presets.push_back(PresetColourConversion(_("Rec. 601"), "rec601", dcp::ColourConversion::rec601_to_dcp()));
+	_presets.push_back(PresetColourConversion(_("Rec. 709"), "rec709", dcp::ColourConversion::rec709_to_dcp()));
+	_presets.push_back(PresetColourConversion(_("P3"), "p3", dcp::ColourConversion::p3_to_dcp()));
+	_presets.push_back(PresetColourConversion(_("Rec. 1886"), "rec1886", dcp::ColourConversion::rec1886_to_dcp()));
+	_presets.push_back(PresetColourConversion(_("Rec. 2020"), "rec2020", dcp::ColourConversion::rec2020_to_dcp()));
+	_presets.push_back(PresetColourConversion(_("S-Gamut3/S-Log3"), "sgamut3", dcp::ColourConversion::s_gamut3_to_dcp()));
 }
 
 PresetColourConversion

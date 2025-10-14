@@ -33,7 +33,6 @@
 #include "memory_util.h"
 #include "rect.h"
 #include "timer.h"
-#include <dcp/rgb_xyz.h>
 #include <dcp/transfer_function.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -783,7 +782,7 @@ void
 alpha_blend_onto_xyz12le(TargetParams const& target, OtherRGBParams const& other, int red, int blue, std::function<float (OtherType*)> get, int value_divisor)
 {
 	auto const alpha_divisor = other.alpha_divisor();
-	auto conv = dcp::ColourConversion::srgb_to_xyz();
+	auto conv = dcp::ColourConversion::srgb_to_dcp();
 	double fast_matrix[9];
 	dcp::combined_rgb_to_xyz(conv, fast_matrix);
 	auto lut_in = conv.in()->double_lut(0, 1, 8, false);

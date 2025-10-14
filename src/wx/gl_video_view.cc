@@ -502,7 +502,7 @@ GLVideoView::setup_shaders()
 	};
 
 	{
-		auto conversion = dcp::ColourConversion::rec709_to_xyz();
+		auto conversion = dcp::ColourConversion::rec709_to_dcp();
 		boost::numeric::ublas::matrix<double> matrix = conversion.xyz_to_rgb();
 		GLfloat gl_matrix[16];
 		ublas_to_gl(matrix, gl_matrix);
@@ -512,8 +512,8 @@ GLVideoView::setup_shaders()
 	}
 
 	{
-		auto xyz_rec709 = dcp::ColourConversion::rec709_to_xyz().xyz_to_rgb();
-		auto rec2020_xyz = dcp::ColourConversion::rec2020_to_xyz().rgb_to_xyz();
+		auto xyz_rec709 = dcp::ColourConversion::rec709_to_dcp().xyz_to_rgb();
+		auto rec2020_xyz = dcp::ColourConversion::rec2020_to_dcp().rgb_to_xyz();
 		auto product = boost::numeric::ublas::prod(xyz_rec709, rec2020_xyz);
 
 		GLfloat gl_matrix[16];
@@ -792,7 +792,7 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 		check_error("glBufferSubData (subtitle)");
 	}
 
-	_rec2020 = pv->colour_conversion() && pv->colour_conversion()->about_equal(dcp::ColourConversion::rec2020_to_xyz(), 1e-6);
+	_rec2020 = pv->colour_conversion() && pv->colour_conversion()->about_equal(dcp::ColourConversion::rec2020_to_dcp(), 1e-6);
 
 	/* opt: where should these go? */
 	for (auto i = 0; i < 3; ++i) {

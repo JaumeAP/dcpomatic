@@ -253,7 +253,7 @@ SimpleVideoView::update ()
 
 	auto const pv = player_video();
 	_image = pv.first->image(force(AV_PIX_FMT_RGB24), VideoRange::FULL, Image::Alignment::COMPACT, true);
-	if (pv.first->colour_conversion() && pv.first->colour_conversion()->about_equal(dcp::ColourConversion::rec2020_to_xyz(), 1e-6)) {
+	if (pv.first->colour_conversion() && pv.first->colour_conversion()->about_equal(dcp::ColourConversion::rec2020_to_dcp(), 1e-6)) {
 		_image = Image::ensure_alignment(_rec2020_filter_graph.get(_image->size(), _image->pixel_format())->process(_image).front(), Image::Alignment::COMPACT);
 	}
 
