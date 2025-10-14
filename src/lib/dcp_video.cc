@@ -43,8 +43,8 @@
 #include "rng.h"
 #include "util.h"
 #include <libcxml/cxml.h>
+#include <dcp/colour_conversion.h>
 #include <dcp/openjpeg_image.h>
-#include <dcp/rgb_xyz.h>
 #include <dcp/j2k_transcode.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
