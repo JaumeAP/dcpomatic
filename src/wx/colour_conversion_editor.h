@@ -83,6 +83,7 @@ private:
 	wxTextCtrl* _adjusted_white_x;
 	wxTextCtrl* _adjusted_white_y;
 	CheckBox* _output_j2k;
+	CheckBox* _output_mpeg2;
 	wxStaticText* _rgb_to_xyz[3][3];
 	wxStaticText* _bradford[3][3];
 };

@@ -22,6 +22,7 @@
 #include "mpeg2_encoder.h"
 #include "writer.h"
 #include <dcp/ffmpeg_image.h>
+#include <dcp/transfer_function.h>
 extern "C" {
 #include <libavutil/pixfmt.h>
 }
@@ -43,7 +44,24 @@ MPEG2Encoder::encode(shared_ptr<PlayerVideo> pv, dcpomatic::DCPTime time)
 {
 	VideoEncoder::encode(pv, time);
 
-	auto image = pv->image(force(AV_PIX_FMT_YUV420P), VideoRange::VIDEO, false);
+	shared_ptr<Image> image;
+
+	if (auto conversion = pv->colour_conversion()) {
+		if (!conversion->in()->about_equal(conversion->out_mpeg2(), 0.05)) {
+			image = pv->image([](AVPixelFormat) { return AV_PIX_FMT_RGB24; }, VideoRange::VIDEO, Image::Alignment::PADDED, false);
+			dcp::convert_rgb_gamma(image->data()[0], image->size(), image->stride()[0], *conversion);
+			image = image->convert_pixel_format(conversion->yuv_to_rgb(), AV_PIX_FMT_YUV420P, Image::Alignment::COMPACT, false);
+		}
+	}
+
+	if (!image) {
+		image = pv->image(
+			[](AVPixelFormat) { return AV_PIX_FMT_YUV420P; },
+			VideoRange::VIDEO,
+			Image::Alignment::COMPACT,
+			false
+			);
+	}
 
 	dcp::FFmpegImage ffmpeg_image(time.get() * _film->video_frame_rate() / dcpomatic::DCPTime::HZ);
 

@@ -138,6 +138,12 @@ ColourConversion::ColourConversion(cxml::NodePtr node, int version)
 	} else {
 		_out_j2k = make_shared<dcp::IdentityTransferFunction>();
 	}
+
+	if (auto mpeg2_gamma = node->optional_number_child<double>("OutputMPEG2Gamma")) {
+		_out_mpeg2 = make_shared<dcp::GammaTransferFunction>(*mpeg2_gamma);
+	} else {
+		_out_mpeg2 = make_shared<dcp::IdentityTransferFunction>();
+	}
 }
 
 boost::optional<ColourConversion>
@@ -185,6 +191,10 @@ ColourConversion::as_xml(xmlpp::Element* element) const
 
 	if (auto gf = dynamic_pointer_cast<const dcp::GammaTransferFunction>(_out_j2k)) {
 		cxml::add_text_child(element, "OutputGamma", fmt::to_string(gf->gamma()));
+	}
+
+	if (auto gf = dynamic_pointer_cast<const dcp::GammaTransferFunction>(_out_mpeg2)) {
+		cxml::add_text_child(element, "OutputMPEG2Gamma", fmt::to_string(gf->gamma()));
 	}
 }
 
@@ -237,6 +247,10 @@ ColourConversion::identifier() const
 	digester.add(static_cast<int>(_yuv_to_rgb));
 
 	if (auto gf = dynamic_pointer_cast<const dcp::GammaTransferFunction>(_out_j2k)) {
+		digester.add(gf->gamma());
+	}
+
+	if (auto gf = dynamic_pointer_cast<const dcp::GammaTransferFunction>(_out_mpeg2)) {
 		digester.add(gf->gamma());
 	}
 

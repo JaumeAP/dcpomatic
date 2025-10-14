@@ -74,6 +74,7 @@ BOOST_AUTO_TEST_CASE (colour_conversion_test2)
 		"  <WhiteX>0.3127</WhiteX>\n"
 		"  <WhiteY>0.329</WhiteY>\n"
 		"  <OutputGamma>2.6</OutputGamma>\n"
+		"  <OutputMPEG2Gamma>2.4</OutputMPEG2Gamma>\n"
 		"</Test>\n"
 		);
 }
@@ -103,6 +104,7 @@ BOOST_AUTO_TEST_CASE (colour_conversion_test3)
 		"  <WhiteX>0.3127</WhiteX>\n"
 		"  <WhiteY>0.329</WhiteY>\n"
 		"  <OutputGamma>2.6</OutputGamma>\n"
+		"  <OutputMPEG2Gamma>2.4</OutputMPEG2Gamma>\n"
 		"</Test>\n"
 		);
 }

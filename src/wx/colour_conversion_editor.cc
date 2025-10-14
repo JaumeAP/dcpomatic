@@ -216,6 +216,10 @@ ColourConversionEditor::ColourConversionEditor (wxWindow* parent, bool yuv)
 	table->Add(_output_j2k, wxGBPosition(r, 0), wxGBSpan(1, 2));
 	++r;
 
+	_output_mpeg2 = new CheckBox(this, _("Inverse 2.4 gamma correction on output to MPEG2"));
+	table->Add(_output_mpeg2, wxGBPosition(r, 0), wxGBSpan(1, 2));
+	++r;
+
 	_input_gamma->SetRange (0.1, 4.0);
 	_input_gamma->SetDigits (2);
 	_input_gamma->SetIncrement (0.1);
@@ -242,6 +246,7 @@ ColourConversionEditor::ColourConversionEditor (wxWindow* parent, bool yuv)
 	_adjusted_white_y->Bind (wxEVT_TEXT, bind (&ColourConversionEditor::adjusted_white_changed, this));
 	_yuv_to_rgb->Bind (wxEVT_CHOICE, bind (&ColourConversionEditor::changed, this));
 	_output_j2k->bind(&ColourConversionEditor::changed, this);
+	_output_mpeg2->bind(&ColourConversionEditor::changed, this);
 }
 
 
@@ -313,6 +318,7 @@ ColourConversionEditor::set (ColourConversion conversion)
 	}
 
 	_output_j2k->SetValue(static_cast<bool>(dynamic_pointer_cast<const dcp::GammaTransferFunction>(conversion.out_j2k())));
+	_output_mpeg2->SetValue(static_cast<bool>(dynamic_pointer_cast<const dcp::GammaTransferFunction>(conversion.out_mpeg2())));
 
 	update_rgb_to_xyz ();
 	update_bradford ();
@@ -378,6 +384,12 @@ ColourConversionEditor::get () const
 		conversion.set_out_j2k(make_shared<dcp::GammaTransferFunction>(2.6));
 	} else {
 		conversion.set_out_j2k(make_shared<dcp::IdentityTransferFunction>());
+	}
+
+	if (_output_mpeg2->GetValue()) {
+		conversion.set_out_mpeg2(make_shared<dcp::GammaTransferFunction>(2.4));
+	} else {
+		conversion.set_out_mpeg2(make_shared<dcp::IdentityTransferFunction>());
 	}
 
 	return conversion;
