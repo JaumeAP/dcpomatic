@@ -108,7 +108,7 @@ DCPVideo::convert_to_xyz(shared_ptr<const PlayerVideo> frame)
 		return fmt == AV_PIX_FMT_XYZ12LE ? AV_PIX_FMT_XYZ12LE : AV_PIX_FMT_RGB48LE;
 	};
 
-	auto image = frame->image(conversion, VideoRange::FULL, false);
+	auto image = frame->image(conversion, VideoRange::FULL, Image::Alignment::COMPACT, false);
 
 	if (frame->colour_conversion()) {
 		xyz = dcp::rgb_to_xyz(
@@ -127,7 +127,7 @@ DCPVideo::convert_to_xyz(shared_ptr<const PlayerVideo> frame)
 dcp::Size
 DCPVideo::get_size() const
 {
-	auto image = _frame->image(force(AV_PIX_FMT_RGB48LE), VideoRange::FULL, false);
+	auto image = _frame->image(force(AV_PIX_FMT_RGB48LE), VideoRange::FULL, Image::Alignment::COMPACT, false);
 	return image->size();
 }
 
@@ -137,7 +137,7 @@ DCPVideo::convert_to_xyz(uint16_t* dst) const
 {
 	DCPOMATIC_ASSERT(_frame->colour_conversion());
 
-	auto image = _frame->image(force(AV_PIX_FMT_RGB48LE), VideoRange::FULL, false);
+	auto image = _frame->image(force(AV_PIX_FMT_RGB48LE), VideoRange::FULL, Image::Alignment::COMPACT, false);
 	dcp::rgb_to_xyz(
 		image->data()[0],
 		dst,

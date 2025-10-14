@@ -622,7 +622,7 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 		video = pv->raw_image();
 		break;
 	case Optimisation::NONE:
-		video = pv->image(force(AV_PIX_FMT_RGB24), VideoRange::FULL, true);
+		video = pv->image(force(AV_PIX_FMT_RGB24), VideoRange::FULL, Image::Alignment::COMPACT, true);
 		break;
 	}
 
