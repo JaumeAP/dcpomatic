@@ -133,10 +133,10 @@ ColourConversion::ColourConversion(cxml::NodePtr node, int version)
 		}
 	}
 
-	if (auto gamma = node->optional_number_child<double>("OutputGamma")) {
-		_out = make_shared<dcp::GammaTransferFunction>(node->number_child<double>("OutputGamma"));
+	if (auto j2k_gamma = node->optional_number_child<double>("OutputGamma")) {
+		_out_j2k = make_shared<dcp::GammaTransferFunction>(*j2k_gamma);
 	} else {
-		_out = make_shared<dcp::IdentityTransferFunction>();
+		_out_j2k = make_shared<dcp::IdentityTransferFunction>();
 	}
 }
 
@@ -183,7 +183,7 @@ ColourConversion::as_xml(xmlpp::Element* element) const
 		cxml::add_text_child(element, "AdjustedWhiteY", fmt::to_string(_adjusted_white.get().y));
 	}
 
-	if (auto gf = dynamic_pointer_cast<const dcp::GammaTransferFunction>(_out)) {
+	if (auto gf = dynamic_pointer_cast<const dcp::GammaTransferFunction>(_out_j2k)) {
 		cxml::add_text_child(element, "OutputGamma", fmt::to_string(gf->gamma()));
 	}
 }
@@ -236,7 +236,7 @@ ColourConversion::identifier() const
 
 	digester.add(static_cast<int>(_yuv_to_rgb));
 
-	if (auto gf = dynamic_pointer_cast<const dcp::GammaTransferFunction>(_out)) {
+	if (auto gf = dynamic_pointer_cast<const dcp::GammaTransferFunction>(_out_j2k)) {
 		digester.add(gf->gamma());
 	}
 

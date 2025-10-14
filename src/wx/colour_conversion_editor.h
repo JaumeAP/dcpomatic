@@ -82,7 +82,7 @@ private:
 	CheckBox* _adjust_white;
 	wxTextCtrl* _adjusted_white_x;
 	wxTextCtrl* _adjusted_white_y;
-	CheckBox* _output;
+	CheckBox* _output_j2k;
 	wxStaticText* _rgb_to_xyz[3][3];
 	wxStaticText* _bradford[3][3];
 };

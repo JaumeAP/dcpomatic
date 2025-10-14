@@ -786,7 +786,7 @@ alpha_blend_onto_xyz12le(TargetParams const& target, OtherRGBParams const& other
 	double fast_matrix[9];
 	dcp::combined_rgb_to_xyz(conv, fast_matrix);
 	auto lut_in = conv.in()->double_lut(0, 1, 8, false);
-	auto lut_out = conv.out()->int_lut(0, 1, 16, true, 65535);
+	auto lut_out = conv.out_j2k()->int_lut(0, 1, 16, true, 65535);
 	for (int ty = target.start_y, oy = other.start_y; ty < target.size.height && oy < other.size.height; ++ty, ++oy) {
 		auto tp = reinterpret_cast<uint16_t*>(target.data[0] + ty * target.stride[0] + target.start_x * target.bpp);
 		auto op = reinterpret_cast<OtherType*>(other.data[0] + oy * other.stride[0]);

@@ -212,8 +212,9 @@ ColourConversionEditor::ColourConversionEditor (wxWindow* parent, bool yuv)
 
 	subhead (table, this, _("Output gamma correction"), r);
 
-	_output = new CheckBox (this, _("Inverse 2.6 gamma correction on output"));
-	table->Add (_output, wxGBPosition (r, 0), wxGBSpan (1, 2));
+	_output_j2k = new CheckBox(this, _("Inverse 2.6 gamma correction on output to JPEG2000"));
+	table->Add(_output_j2k, wxGBPosition(r, 0), wxGBSpan(1, 2));
+	++r;
 
 	_input_gamma->SetRange (0.1, 4.0);
 	_input_gamma->SetDigits (2);
@@ -240,7 +241,7 @@ ColourConversionEditor::ColourConversionEditor (wxWindow* parent, bool yuv)
 	_adjusted_white_x->Bind (wxEVT_TEXT, bind (&ColourConversionEditor::adjusted_white_changed, this));
 	_adjusted_white_y->Bind (wxEVT_TEXT, bind (&ColourConversionEditor::adjusted_white_changed, this));
 	_yuv_to_rgb->Bind (wxEVT_CHOICE, bind (&ColourConversionEditor::changed, this));
-	_output->bind(&ColourConversionEditor::changed, this);
+	_output_j2k->bind(&ColourConversionEditor::changed, this);
 }
 
 
@@ -311,7 +312,7 @@ ColourConversionEditor::set (ColourConversion conversion)
 		_adjust_white->SetValue (false);
 	}
 
-	_output->SetValue (static_cast<bool>(dynamic_pointer_cast<const dcp::GammaTransferFunction>(conversion.out())));
+	_output_j2k->SetValue(static_cast<bool>(dynamic_pointer_cast<const dcp::GammaTransferFunction>(conversion.out_j2k())));
 
 	update_rgb_to_xyz ();
 	update_bradford ();
@@ -373,10 +374,10 @@ ColourConversionEditor::get () const
 		conversion.unset_adjusted_white ();
 	}
 
-	if (_output->GetValue ()) {
-		conversion.set_out (make_shared<dcp::GammaTransferFunction>(2.6));
+	if (_output_j2k->GetValue()) {
+		conversion.set_out_j2k(make_shared<dcp::GammaTransferFunction>(2.6));
 	} else {
-		conversion.set_out (make_shared<dcp::IdentityTransferFunction>());
+		conversion.set_out_j2k(make_shared<dcp::IdentityTransferFunction>());
 	}
 
 	return conversion;
