@@ -36,6 +36,7 @@ static char const* _dcpomatic_batch_converter_app = "DCP-o-matic 2 Batch Convert
 static char const* _dcpomatic_playlist_editor = "DCP-o-matic Playlist Editor";
 static char const* _dcpomatic_combiner = "DCP-o-matic Combiner";
 static char const* _dcpomatic_batch_converter = "DCP-o-matic Batch Converter";
+static char const* _dcpomatic_processor = "DCP-o-matic Processor";
 
 static char const* _report_problem_email = "carl@dcpomatic.com";
 
@@ -104,6 +105,12 @@ std::string
 variant::dcpomatic_verifier()
 {
 	return _dcpomatic_verifier;
+}
+
+std::string
+variant::dcpomatic_processor()
+{
+	return _dcpomatic_processor;
 }
 
 std::string

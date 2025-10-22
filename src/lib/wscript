@@ -104,6 +104,7 @@ sources = """
           fcpxml.cc
           fcpxml_content.cc
           fcpxml_decoder.cc
+          fix_audio_levels_job.cc
           frame_info.cc
           file_group.cc
           file_log.cc

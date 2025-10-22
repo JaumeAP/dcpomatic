@@ -34,6 +34,7 @@ def description(tool, variant):
         'dcpomatic_playlist': 'DCP-o-matic Playlist Editor',
         'dcpomatic_combiner': 'DCP-o-matic Combiner',
         'dcpomatic_verifier': 'DCP-o-matic Verifier',
+        'dcpomatic_processor': 'DCP-o-matic Processor',
     }
     return descriptions[tool] if tool in descriptions else tool
 
@@ -143,7 +144,8 @@ def build(bld):
                      'dcpomatic_playlist',
                      'dcpomatic_combiner',
                      'dcpomatic_editor',
-                     'dcpomatic_verifier']
+                     'dcpomatic_verifier',
+                     'dcpomatic_processor']
         if bld.env.ENABLE_DISK:
             gui_tools.append('dcpomatic_disk')
 
@@ -181,6 +183,7 @@ def pot(bld):
          dcpomatic_playlist.cc
          dcpomatic_server.cc
          dcpomatic_verifier.cc
+         dcpomatic_processor.cc
          """
     i18n.pot(os.path.join('src', 'tools'), cc, 'dcpomatic')
 

@@ -86,6 +86,12 @@ variant::wx::dcpomatic_verifier()
 }
 
 wxString
+variant::wx::dcpomatic_processor()
+{
+	return std_to_wx(variant::dcpomatic_processor());
+}
+
+wxString
 variant::wx::insert_dcpomatic(wxString const& s)
 {
 	return wxString::Format(s, dcpomatic());
@@ -137,6 +143,12 @@ wxString
 variant::wx::insert_dcpomatic_verifier(wxString const& s)
 {
 	return wxString::Format(s, dcpomatic_verifier());
+}
+
+wxString
+variant::wx::insert_dcpomatic_processor(wxString const& s)
+{
+	return wxString::Format(s, dcpomatic_processor());
 }
 
 wxString

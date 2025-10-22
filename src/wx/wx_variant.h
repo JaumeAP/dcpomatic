@@ -39,6 +39,7 @@ wxString dcpomatic_kdm_creator();
 wxString dcpomatic_player();
 wxString dcpomatic_playlist_editor();
 wxString dcpomatic_verifier();
+wxString dcpomatic_processor();
 
 wxString insert_dcpomatic(wxString const& s);
 wxString insert_dcpomatic_batch_converter(wxString const& s);
@@ -49,6 +50,7 @@ wxString insert_dcpomatic_kdm_creator(wxString const& s);
 wxString insert_dcpomatic_player(wxString const& s);
 wxString insert_dcpomatic_playlist_editor(wxString const& s);
 wxString insert_dcpomatic_verifier(wxString const& s);
+wxString insert_dcpomatic_processor(wxString const& s);
 
 wxString report_problem_email();
 

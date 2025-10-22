@@ -35,6 +35,7 @@ std::string dcpomatic_kdm_creator();
 std::string dcpomatic_player();
 std::string dcpomatic_playlist_editor();
 std::string dcpomatic_verifier();
+std::string dcpomatic_processor();
 
 std::string insert_dcpomatic(std::string const& s);
 std::string insert_dcpomatic_encode_server(std::string const& s);
