@@ -21,7 +21,10 @@
 
 #include "preferences_page.h"
 #include "lib/config.h"
+#include <dcp/warnings.h>
+LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
+LIBDCP_ENABLE_WARNINGS
 
 
 using boost::bind;
