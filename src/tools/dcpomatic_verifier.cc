@@ -86,18 +86,6 @@ public:
 	{
 		/* Not used */
 	}
-
-private:
-	void search(vector<boost::filesystem::path>& dcp, boost::filesystem::path path) const
-	{
-		if (dcp::filesystem::exists(path / "ASSETMAP") || dcp::filesystem::exists(path / "ASSETMAP.xml")) {
-			dcp.push_back(path);
-		} else if (boost::filesystem::is_directory(path)) {
-			for (auto i: boost::filesystem::directory_iterator(path)) {
-				search(dcp, i.path());
-			}
-		}
-	};
 };
 
 
