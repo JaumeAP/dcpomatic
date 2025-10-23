@@ -74,10 +74,7 @@ using dcp::ArrayData;
 using namespace dcpomatic;
 
 
-/** @param weak_job Job to report progress to, or 0.
- *  @param text_only true to enable only the text (subtitle/ccap) parts of the writer.
- */
-Writer::Writer(weak_ptr<const Film> weak_film, weak_ptr<Job> weak_job, boost::filesystem::path output_dir, bool text_only)
+Writer::Writer(weak_ptr<const Film> weak_film, weak_ptr<Job> weak_job, boost::filesystem::path output_dir, bool text_only, bool dcp_only)
 	: WeakConstFilm(weak_film)
 	, _job(weak_job)
 	, _output_dir(output_dir)
@@ -85,13 +82,14 @@ Writer::Writer(weak_ptr<const Film> weak_film, weak_ptr<Job> weak_job, boost::fi
 	, _maximum_frames_in_memory(8)
 	, _maximum_queue_size(8)
 	, _text_only(text_only)
+	, _dcp_only(dcp_only)
 {
 	auto job = _job.lock();
 
 	int reel_index = 0;
 	auto const reels = film()->reels();
 	for (auto p: reels) {
-		_reels.emplace_back(weak_film, p, job, reel_index++, reels.size(), text_only, _output_dir);
+		_reels.emplace_back(weak_film, p, job, reel_index++, reels.size(), text_only, dcp_only, _output_dir);
 	}
 
 	_last_written.resize(reels.size());
@@ -713,7 +711,9 @@ Writer::finish()
 		N_("Wrote {} FULL, {} FAKE, {} REPEAT, {} pushed to disk"), _full_written, _fake_written, _repeat_written, _pushed_to_disk
 		);
 
-	dcpomatic::write_cover_sheet(film(), _output_dir, film()->file("COVER_SHEET.txt"));
+	if (!_dcp_only) {
+		dcpomatic::write_cover_sheet(film(), _output_dir, film()->file("COVER_SHEET.txt"));
+	}
 }
 
 

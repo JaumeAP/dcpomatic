@@ -91,11 +91,11 @@ bool operator==(QueueItem const & a, QueueItem const & b);
 
 
 /** @class Writer
- *  @brief Class to manage writing JPEG2000 and audio data to assets on disk.
+ *  @brief Class to manage writing a DCP to disk.
  *
  *  This class creates sound and picture assets, then takes Data
  *  or AudioBuffers objects (containing image or sound data respectively)
- *  and writes them to the assets.
+ *  and writes them to the assets.  It also writes the DCP's XML metadata.
  *
  *  write() for Data (picture) can be called out of order, and the Writer
  *  will sort it out.  write() for AudioBuffers must be called in order.
@@ -104,7 +104,11 @@ bool operator==(QueueItem const & a, QueueItem const & b);
 class Writer : public ExceptionStore, public WeakConstFilm
 {
 public:
-	Writer(std::weak_ptr<const Film>, std::weak_ptr<Job>, boost::filesystem::path output_dir, bool text_only = false);
+	/** @param weak_job Job to report progress to, or 0.
+	 *  @param text_only true to enable only the text (subtitle/ccap) parts of the writer.
+	 *  @param dcp_only true to write only the DCP, and no extra files (cover sheet, assets.xml etc.)
+	 */
+	Writer(std::weak_ptr<const Film>, std::weak_ptr<Job>, boost::filesystem::path output_dir, bool text_only = false, bool dcp_only = false);
 	~Writer();
 
 	Writer(Writer const &) = delete;
@@ -207,6 +211,7 @@ private:
 	int _pushed_to_disk = 0;
 
 	bool _text_only;
+	bool _dcp_only;
 
 	boost::mutex _digest_progresses_mutex;
 	std::map<int, std::pair<int64_t, int64_t>> _digest_progresses;

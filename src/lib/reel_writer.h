@@ -71,6 +71,7 @@ public:
 		int reel_index,
 		int reel_count,
 		bool text_only,
+		bool dcp_only,
 		boost::filesystem::path output_dir
 		);
 
@@ -135,6 +136,7 @@ private:
 	boost::optional<std::string> _content_summary;
 	std::weak_ptr<Job> _job;
 	bool _text_only;
+	bool _dcp_only;
 
 	dcp::ArrayData _default_font;
 

@@ -103,7 +103,7 @@ mxf_metadata()
  *  subtitle / closed caption files.
  */
 ReelWriter::ReelWriter(
-	weak_ptr<const Film> weak_film, DCPTimePeriod period, shared_ptr<Job> job, int reel_index, int reel_count, bool text_only, boost::filesystem::path output_dir
+	weak_ptr<const Film> weak_film, DCPTimePeriod period, shared_ptr<Job> job, int reel_index, int reel_count, bool text_only, bool dcp_only, boost::filesystem::path output_dir
 	)
 	: WeakConstFilm(weak_film)
 	, _output_dir(std::move(output_dir))
@@ -113,10 +113,11 @@ ReelWriter::ReelWriter(
 	, _content_summary(film()->content_summary(period))
 	, _job(job)
 	, _text_only(text_only)
+	, _dcp_only(dcp_only)
 	, _info_file(film()->info_file(period), dcp::filesystem::exists(film()->info_file(period)) ? "r+b" : "wb")
 	, _font_metrics(film()->frame_size().height)
 {
-	if (!_info_file) {
+	if (!_info_file && !_dcp_only) {
 		auto const info_file_path = film()->info_file(period);
 		throw OpenFileError(info_file_path, _info_file.open_error(), dcp::filesystem::exists(info_file_path) ? OpenFileError::READ_WRITE : OpenFileError::WRITE);
 	}
@@ -174,7 +175,9 @@ ReelWriter::ReelWriter(
 			dcp::filesystem::rename(*existing_asset_filename, new_asset_filename);
 		}
 		remembered_assets.push_back(RememberedAsset(new_asset_filename.filename(), period, film()->video_identifier()));
-		film()->write_remembered_assets(remembered_assets);
+		if (!_dcp_only) {
+			film()->write_remembered_assets(remembered_assets);
+		}
 		picture_asset->set_file(new_asset_filename);
 
 		dcp::Behaviour const behaviour = _first_nonexistent_frame > 0 ? dcp::Behaviour::OVERWRITE_EXISTING : dcp::Behaviour::MAKE_NEW;
@@ -193,7 +196,9 @@ ReelWriter::ReelWriter(
 			dcp::filesystem::copy(*existing_asset_filename, new_asset_filename);
 			remembered_assets.push_back(RememberedAsset(new_asset_filename, period, film()->video_identifier()));
 		}
-		film()->write_remembered_assets(remembered_assets);
+		if (!_dcp_only) {
+			film()->write_remembered_assets(remembered_assets);
+		}
 
 		if (film()->video_encoding() == VideoEncoding::JPEG2000) {
 			if (film()->three_d()) {
@@ -299,8 +304,10 @@ ReelWriter::write(shared_ptr<const Data> encoded, Frame frame, Eyes eyes)
 		return;
 	}
 
-	auto fin = J2KFrameInfo(_j2k_picture_asset_writer->write(encoded->data(), encoded->size()));
-	fin.write(_info_file, frame, eyes);
+	if (!_dcp_only) {
+		auto fin = J2KFrameInfo(_j2k_picture_asset_writer->write(encoded->data(), encoded->size()));
+		fin.write(_info_file, frame, eyes);
+	}
 	_last_written[eyes] = encoded;
 }
 
@@ -348,8 +355,10 @@ ReelWriter::repeat_write(Frame frame, Eyes eyes)
 		return;
 	}
 
-	auto fin = J2KFrameInfo(_j2k_picture_asset_writer->write(_last_written[eyes]->data(), _last_written[eyes]->size()));
-	fin.write(_info_file, frame, eyes);
+	if (!_dcp_only) {
+		auto fin = J2KFrameInfo(_j2k_picture_asset_writer->write(_last_written[eyes]->data(), _last_written[eyes]->size()));
+		fin.write(_info_file, frame, eyes);
+	}
 }
 
 

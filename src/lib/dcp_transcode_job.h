@@ -25,8 +25,10 @@
 class DCPTranscodeJob : public TranscodeJob
 {
 public:
-	DCPTranscodeJob (std::shared_ptr<const Film> film, ChangedBehaviour changed);
+	DCPTranscodeJob(std::shared_ptr<const Film> film, ChangedBehaviour changed, bool dcp_only = false);
 
 private:
-	void post_transcode () override;
+	void post_transcode() override;
+
+	bool _dcp_only;
 };

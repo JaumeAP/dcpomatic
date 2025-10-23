@@ -64,9 +64,9 @@ using namespace dcpomatic;
  *  @param film Film that we are encoding.
  *  @param job Job that this encoder is being used in.
  */
-DCPFilmEncoder::DCPFilmEncoder(shared_ptr<const Film> film, weak_ptr<Job> job)
+DCPFilmEncoder::DCPFilmEncoder(shared_ptr<const Film> film, weak_ptr<Job> job, bool dcp_only)
 	: FilmEncoder(film, job)
-	, _writer(film, job, film->dir(film->dcp_name()))
+	, _writer(film, job, film->dir(film->dcp_name()), false, dcp_only)
 	, _finishing (false)
 	, _non_burnt_subtitles (false)
 {

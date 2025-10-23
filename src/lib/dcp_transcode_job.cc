@@ -36,8 +36,9 @@ using std::shared_ptr;
 using std::vector;
 
 
-DCPTranscodeJob::DCPTranscodeJob (shared_ptr<const Film> film, ChangedBehaviour changed)
+DCPTranscodeJob::DCPTranscodeJob (shared_ptr<const Film> film, ChangedBehaviour changed, bool dcp_only)
 	: TranscodeJob (film, changed)
+	, _dcp_only(dcp_only)
 {
 
 }
@@ -74,6 +75,8 @@ DCPTranscodeJob::post_transcode ()
 		cpl->add (decrypt_kdm_with_helpful_error(kdm));
 	}
 
-	write_dcp_digest_file (_film->file(cpl->annotation_text().get_value_or(cpl->id()) + ".dcpdig"), cpl, _film->key().hex());
+	if (!_dcp_only) {
+		write_dcp_digest_file(_film->file(cpl->annotation_text().get_value_or(cpl->id()) + ".dcpdig"), cpl, _film->key().hex());
+	}
 }
 

@@ -42,7 +42,7 @@ struct frames_not_lost_when_threads_disappear;
 class DCPFilmEncoder : public FilmEncoder
 {
 public:
-	DCPFilmEncoder(std::shared_ptr<const Film> film, std::weak_ptr<Job> job);
+	DCPFilmEncoder(std::shared_ptr<const Film> film, std::weak_ptr<Job> job, bool dcp_only = false);
 	~DCPFilmEncoder();
 
 	void go () override;
