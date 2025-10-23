@@ -26,6 +26,7 @@
 #include "dcpomatic_log.h"
 #include "encode_server_finder.h"
 #include "ffmpeg_film_encoder.h"
+#include "file_log.h"
 #include "film.h"
 #include "filter.h"
 #ifdef DCPOMATIC_GROK
@@ -518,7 +519,7 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 		return {};
 	}
 
-	dcpomatic_log = film->log();
+	dcpomatic_log = make_shared<FileLog>(film->file("log"));
 
 	for (auto i: film->content()) {
 		auto paths = i->paths();

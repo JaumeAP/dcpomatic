@@ -109,13 +109,6 @@ public:
 
 	void send_dcp_to_tms();
 
-	/** @return Logger.
-	 *  It is safe to call this from any thread.
-	 */
-	std::shared_ptr<Log> log() const {
-		return _log;
-	}
-
 	boost::filesystem::path file(boost::filesystem::path f) const;
 	boost::filesystem::path dir(boost::filesystem::path d, bool create = true) const;
 
@@ -486,8 +479,6 @@ private:
 	void check_reel_boundaries_for_atmos();
 	std::vector<dcpomatic::DCPTimePeriod> reels_for_type(ReelType type) const;
 
-	/** Log to write to */
-	std::shared_ptr<Log> _log;
 	std::shared_ptr<Playlist> _playlist;
 
 	/** Complete path to directory containing the film metadata;

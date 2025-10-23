@@ -802,7 +802,7 @@ Player::pass()
 			/* Let's not worry about less than a frame at 24fps */
 			int64_t const too_much_error = DCPTime::from_frames(1, 24).get();
 			if (error >= too_much_error) {
-				film->log()->log(fmt::format("Silence starting before or after last audio by {}", error), LogEntry::TYPE_ERROR);
+				dcpomatic_log->log(fmt::format("Silence starting before or after last audio by {}", error), LogEntry::TYPE_ERROR);
 			}
 			DCPOMATIC_ASSERT(error < too_much_error);
 			period.from = *_next_audio_time;
@@ -1470,7 +1470,7 @@ Player::emit_audio(shared_ptr<AudioBuffers> data, DCPTime time)
 
 	/* Log if the assert below is about to fail */
 	if (_next_audio_time && labs(time.get() - _next_audio_time->get()) > 1) {
-		film->log()->log(fmt::format("Out-of-sequence emit {} vs {}", to_string(time), to_string(*_next_audio_time)), LogEntry::TYPE_WARNING);
+		dcpomatic_log->log(fmt::format("Out-of-sequence emit {} vs {}", to_string(time), to_string(*_next_audio_time)), LogEntry::TYPE_WARNING);
 	}
 
 	/* This audio must follow on from the previous, allowing for half a sample (at 48kHz) leeway */

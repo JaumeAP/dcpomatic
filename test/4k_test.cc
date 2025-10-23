@@ -46,7 +46,6 @@ BOOST_AUTO_TEST_CASE (fourk_test)
 {
 	auto c = make_shared<FFmpegContent>("test/data/test.mp4");
 	auto film = new_test_film("4k_test", { c });
-	LogSwitcher ls (film->log());
 	film->set_resolution (Resolution::FOUR_K);
 	film->set_dcp_content_type(DCPContentType::from_isdcf_name("FTR"));
 

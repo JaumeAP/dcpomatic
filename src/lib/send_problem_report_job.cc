@@ -20,6 +20,7 @@
 
 
 #include "cross.h"
+#include "dcpomatic_log.h"
 #include "email.h"
 #include "environment_info.h"
 #include "film.h"
@@ -98,7 +99,7 @@ SendProblemReportJob::run ()
 	if (_film) {
 		body += "log head and tail:\n";
 		body += "---<8----\n";
-		body += _film->log()->head_and_tail (4096);
+		body += dcpomatic_log->head_and_tail(4096);
 		body += "---<8----\n\n";
 
 		add_file (body, "ffprobe.log");

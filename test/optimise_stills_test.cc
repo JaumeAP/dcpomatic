@@ -76,7 +76,6 @@ BOOST_AUTO_TEST_CASE (optimise_stills_test1)
 {
 	auto content = content_factory("test/data/flat_red.png")[0];
 	auto film = new_test_film("optimise_stills_test1", { content });
-	LogSwitcher ls (film->log());
 	make_and_verify_dcp (film);
 
 	check ("optimise_stills_test1", 1, 10 * 24 - 1);
@@ -88,7 +87,6 @@ BOOST_AUTO_TEST_CASE (optimise_stills_test2)
 {
 	auto content = content_factory("test/data/flat_red.png")[0];
 	auto film = new_test_film("optimise_stills_test2", { content });
-	LogSwitcher ls (film->log());
 	content->video->set_frame_type (VideoFrameType::THREE_D_LEFT_RIGHT);
 	film->set_three_d (true);
 	make_and_verify_dcp (film);

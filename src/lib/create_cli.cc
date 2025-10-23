@@ -27,6 +27,7 @@
 #include "dcp_content.h"
 #include "dcp_content_type.h"
 #include "dcpomatic_log.h"
+#include "file_log.h"
 #include "film.h"
 #include "image_content.h"
 #include "guess_crop.h"
@@ -447,7 +448,7 @@ shared_ptr<Film>
 CreateCLI::make_film(function<void (string)> error) const
 {
 	auto film = std::make_shared<Film>(output_dir);
-	dcpomatic_log = film->log();
+	dcpomatic_log = make_shared<FileLog>(film->file("log"));
 	dcpomatic_log->set_types(Config::instance()->log_types());
 	if (_template_name) {
 		film->use_template(_template_name.get());

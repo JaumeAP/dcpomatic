@@ -77,6 +77,7 @@
 #include "lib/encode_server_finder.h"
 #include "lib/exceptions.h"
 #include "lib/ffmpeg_film_encoder.h"
+#include "lib/file_log.h"
 #include "lib/film.h"
 #include "lib/font_config.h"
 #ifdef DCPOMATIC_GROK
@@ -87,6 +88,7 @@
 #include "lib/kdm_with_metadata.h"
 #include "lib/log.h"
 #include "lib/make_dcp.h"
+#include "lib/null_log.h"
 #include "lib/release_notes.h"
 #include "lib/screen.h"
 #include "lib/send_kdm_email_job.h"
@@ -520,14 +522,17 @@ public:
 		_controls->set_film (_film);
 		_video_waveform_dialog.reset();
 		set_menu_sensitivity ();
-		if (_film && _film->directory()) {
-			Config::instance()->add_to_history (_film->directory().get());
-		}
 		if (_film) {
+			if (_film->directory()) {
+				Config::instance()->add_to_history(_film->directory().get());
+				dcpomatic_log = make_shared<FileLog>(_film->file("log"));
+			} else {
+				dcpomatic_log = make_shared<NullLog>();
+			}
+
 			_film->Change.connect (boost::bind (&DOMFrame::film_change, this, _1));
 			_film->Message.connect (boost::bind(&DOMFrame::film_message, this, _1));
 			_film->DirtyChange.connect (boost::bind(&DOMFrame::set_title, this));
-			dcpomatic_log = _film->log ();
 		}
 		set_title ();
 	}

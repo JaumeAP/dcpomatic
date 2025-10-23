@@ -43,14 +43,12 @@
 #include "exceptions.h"
 #include "ffmpeg_content.h"
 #include "ffmpeg_subtitle_stream.h"
-#include "file_log.h"
 #include "film.h"
 #include "film_util.h"
 #include "font.h"
 #include "job.h"
 #include "job_manager.h"
 #include "kdm_with_metadata.h"
-#include "null_log.h"
 #include "playlist.h"
 #include "ratio.h"
 #include "screen.h"
@@ -219,12 +217,6 @@ Film::Film(optional<boost::filesystem::path> dir)
 
 	if (dir) {
 		_directory = dcp::filesystem::weakly_canonical(*dir);
-	}
-
-	if (_directory) {
-		_log = make_shared<FileLog>(file("log"));
-	} else {
-		_log = make_shared<NullLog>();
 	}
 
 	_playlist->set_sequence(_sequence);
