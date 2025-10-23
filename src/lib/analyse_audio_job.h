@@ -64,6 +64,9 @@ public:
 		return _path;
 	}
 
+	/** @return Audio analysis (only valid after run() has completed) */
+	AudioAnalysis analysis() const;
+
 private:
 	AudioAnalyser _analyser;
 

@@ -118,3 +118,11 @@ AnalyseAudioJob::run()
 	set_progress(1);
 	set_state(FINISHED_OK);
 }
+
+
+AudioAnalysis
+AnalyseAudioJob::analysis() const
+{
+	return _analyser.get();
+}
+
