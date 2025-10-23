@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE (audio_analysis_test)
 	auto c = make_shared<FFmpegContent>(TestPaths::private_data() / "betty_L.wav");
 	auto film = new_test_film("audio_analysis_test", { c });
 
-	auto job = make_shared<AnalyseAudioJob>(film, film->playlist(), false);
+	auto job = make_shared<AnalyseAudioJob>(film, film->playlist(), false, film->audio_analysis_path(film->playlist()));
 	JobManager::instance()->add (job);
 	BOOST_REQUIRE (!wait_for_jobs());
 }
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE (audio_analysis_negative_delay_test)
 	auto film = new_test_film("audio_analysis_negative_delay_test", { c });
 	c->audio->set_delay (-250);
 
-	auto job = make_shared<AnalyseAudioJob>(film, film->playlist(), false);
+	auto job = make_shared<AnalyseAudioJob>(film, film->playlist(), false, film->audio_analysis_path(film->playlist()));
 	JobManager::instance()->add (job);
 	BOOST_REQUIRE (!wait_for_jobs());
 }
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE (audio_analysis_test2)
 	auto c = make_shared<FFmpegContent>(TestPaths::private_data() / "3d_thx_broadway_2010_lossless.m2ts");
 	auto film = new_test_film("audio_analysis_test2", { c });
 
-	auto job = make_shared<AnalyseAudioJob>(film, film->playlist(), false);
+	auto job = make_shared<AnalyseAudioJob>(film, film->playlist(), false, film->audio_analysis_path(film->playlist()));
 	JobManager::instance()->add (job);
 	BOOST_REQUIRE (!wait_for_jobs());
 }
@@ -265,11 +265,11 @@ BOOST_AUTO_TEST_CASE(analyse_audio_uses_processor_when_analysing_whole_film)
 	auto sound = content_factory(TestPaths::private_data() / "betty_stereo.wav")[0];
 	auto film = new_test_film("analyse_audio_uses_processor_when_analysing_whole_film", { sound });
 
-	auto job = make_shared<AnalyseAudioJob>(film, film->playlist(), true);
+	auto job = make_shared<AnalyseAudioJob>(film, film->playlist(), true, film->audio_analysis_path(film->playlist()));
 	JobManager::instance()->add(job);
 	BOOST_REQUIRE(!wait_for_jobs());
 
-	AudioAnalysis analysis(job->path());
+	AudioAnalysis analysis(film->audio_analysis_path(film->playlist()));
 
 	BOOST_REQUIRE(analysis.channels() > 2);
 	bool centre_non_zero = false;

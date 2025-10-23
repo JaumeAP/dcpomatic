@@ -251,7 +251,7 @@ JobManager::analyse_audio(
 	{
 		boost::mutex::scoped_lock lm(_mutex);
 
-		job = make_shared<AnalyseAudioJob>(film, playlist, from_zero);
+		job = make_shared<AnalyseAudioJob>(film, playlist, from_zero, film->audio_analysis_path(playlist));
 		connection = job->Finished.connect(ready);
 		_jobs.push_back(job);
 		_schedule_condition.notify_all();

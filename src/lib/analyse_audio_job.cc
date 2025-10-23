@@ -41,6 +41,7 @@ using std::shared_ptr;
 using std::string;
 using std::vector;
 using namespace dcpomatic;
+using boost::optional;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
@@ -50,11 +51,11 @@ using namespace boost::placeholders;
  *  to analyse just the single piece of content in the playlist (i.e. start from Playlist::start() and do not
  *  use processors).
  */
-AnalyseAudioJob::AnalyseAudioJob(shared_ptr<const Film> film, shared_ptr<const Playlist> playlist, bool whole_film)
+AnalyseAudioJob::AnalyseAudioJob(shared_ptr<const Film> film, shared_ptr<const Playlist> playlist, bool whole_film, optional<boost::filesystem::path> path)
 	: Job(film)
 	, _analyser(film, playlist, whole_film, boost::bind(&Job::set_progress, this, _1, false))
 	, _playlist(playlist)
-	, _path(film->audio_analysis_path(playlist))
+	, _path(path)
 	, _whole_film(whole_film)
 {
 	LOG_DEBUG_AUDIO_ANALYSIS_NC("AnalyseAudioJob::AnalyseAudioJob");
@@ -111,8 +112,9 @@ AnalyseAudioJob::run()
 	LOG_DEBUG_AUDIO_ANALYSIS_NC("Loop complete");
 
 	_analyser.finish();
-	auto analysis = _analyser.get();
-	analysis.write(_path);
+	if (_path) {
+		analysis().write(*_path);
+	}
 
 	LOG_DEBUG_AUDIO_ANALYSIS_NC("Job finished");
 	set_progress(1);

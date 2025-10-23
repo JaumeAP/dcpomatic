@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE (audio_processor_test)
 	film->set_audio_processor (AudioProcessor::from_id ("mid-side-decoder"));
 
 	/* Analyse the audio and check it doesn't crash */
-	auto job = make_shared<AnalyseAudioJob> (film, film->playlist(), false);
+	auto job = make_shared<AnalyseAudioJob>(film, film->playlist(), false, film->audio_analysis_path(film->playlist()));
 	JobManager::instance()->add (job);
 	BOOST_REQUIRE (!wait_for_jobs());
 
