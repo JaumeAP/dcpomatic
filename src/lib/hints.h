@@ -46,9 +46,9 @@ public:
 	void start();
 
 	Signal<void (std::string)> Hint;
-	boost::signals2::signal<void (std::string)> Progress;
-	boost::signals2::signal<void (void)> Pulse;
-	boost::signals2::signal<void (void)> Finished;
+	Signal<void (std::string)> Progress;
+	Signal<void (void)> Pulse;
+	Signal<void (void)> Finished;
 
 	/* For tests only */
 	void join();

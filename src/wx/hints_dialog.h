@@ -58,7 +58,7 @@ private:
 	boost::signals2::scoped_connection _film_change_connection;
 	boost::signals2::scoped_connection _film_content_change_connection;
 	ScopedConnection _hints_hint_connection;
-	boost::signals2::scoped_connection _hints_progress_connection;
-	boost::signals2::scoped_connection _hints_pulse_connection;
-	boost::signals2::scoped_connection _hints_finished_connection;
+	ScopedConnection _hints_progress_connection;
+	ScopedConnection _hints_pulse_connection;
+	ScopedConnection _hints_finished_connection;
 };
