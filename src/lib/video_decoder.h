@@ -31,8 +31,9 @@
 #include "content_video.h"
 #include "decoder.h"
 #include "decoder_part.h"
+#include "signal.h"
 #include "video_content.h"
-#include <boost/signals2.hpp>
+#include <boost/scoped_ptr.hpp>
 
 
 class VideoContent;
@@ -62,7 +63,7 @@ public:
 	void seek () override;
 	void emit(std::shared_ptr<const Film> film, std::shared_ptr<const ImageProxy>, dcpomatic::ContentTime time);
 
-	boost::signals2::signal<void (ContentVideo)> Data;
+	Signal<void (ContentVideo)> Data;
 
 private:
 	std::shared_ptr<const Content> _content;

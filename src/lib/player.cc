@@ -319,9 +319,9 @@ Player::setup_pieces()
 		if (decoder->video) {
 			if (have_threed) {
 				/* We need a Shuffler to cope with 3D L/R video data arriving out of sequence */
-				decoder->video->Data.connect(bind(&Shuffler::video, _shuffler.get(), weak_ptr<Piece>(piece), _1));
+				decoder->video->Data.connect_same_thread(bind(&Shuffler::video, _shuffler.get(), weak_ptr<Piece>(piece), _1));
 			} else {
-				decoder->video->Data.connect(bind(&Player::video, this, weak_ptr<Piece>(piece), _1));
+				decoder->video->Data.connect_same_thread(bind(&Player::video, this, weak_ptr<Piece>(piece), _1));
 			}
 		}
 

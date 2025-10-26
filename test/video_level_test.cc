@@ -257,7 +257,7 @@ pixel_range (shared_ptr<const Film> film, shared_ptr<const Content> content)
 {
 	auto decoder = decoder_factory(film, content, false, false, shared_ptr<Decoder>());
 	optional<ContentVideo> content_video;
-	decoder->video->Data.connect ([&content_video](ContentVideo cv) {
+	decoder->video->Data.connect_same_thread([&content_video](ContentVideo cv) {
 		content_video = cv;
 	});
 	while (!content_video) {
