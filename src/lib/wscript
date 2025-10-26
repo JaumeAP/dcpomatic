@@ -192,6 +192,7 @@ sources = """
           send_notification_email_job.cc
           send_problem_report_job.cc
           server.cc
+          signal.cc
           shuffler.cc
           state.cc
           spl.cc
