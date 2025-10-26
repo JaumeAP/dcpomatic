@@ -20,6 +20,7 @@
 
 
 #include "lib/change_signaller.h"
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
@@ -56,7 +57,7 @@ private:
 
 	boost::signals2::scoped_connection _film_change_connection;
 	boost::signals2::scoped_connection _film_content_change_connection;
-	boost::signals2::scoped_connection _hints_hint_connection;
+	ScopedConnection _hints_hint_connection;
 	boost::signals2::scoped_connection _hints_progress_connection;
 	boost::signals2::scoped_connection _hints_pulse_connection;
 	boost::signals2::scoped_connection _hints_finished_connection;

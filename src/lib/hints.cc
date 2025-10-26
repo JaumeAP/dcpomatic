@@ -551,7 +551,7 @@ catch (...)
 void
 Hints::hint(string h)
 {
-	emit(boost::bind(boost::ref(Hint), h));
+	Hint.emit(h);
 }
 
 

@@ -23,6 +23,7 @@
 #include "dcp_text_track.h"
 #include "dcpomatic_time.h"
 #include "player_text.h"
+#include "signal.h"
 #include "signaller.h"
 #include "text_type.h"
 #include "weak_film.h"
@@ -44,7 +45,7 @@ public:
 
 	void start();
 
-	boost::signals2::signal<void (std::string)> Hint;
+	Signal<void (std::string)> Hint;
 	boost::signals2::signal<void (std::string)> Progress;
 	boost::signals2::signal<void (void)> Pulse;
 	boost::signals2::signal<void (void)> Finished;
