@@ -55,6 +55,7 @@
 #include "wx/templates_dialog.h"
 #include "wx/update_dialog.h"
 #include "wx/video_waveform_dialog.h"
+#include "wx/wx_signal.h"
 #include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
 #include "wx/wx_variant.h"
@@ -1725,6 +1726,7 @@ private:
 			_frame->Show ();
 
 			signal_manager = new wxSignalManager (this);
+			dcpomatic::signal::manager = new wxSignalManager2(this);
 			Bind (wxEVT_IDLE, boost::bind (&App::idle, this, _1));
 
 			if (!_film_to_load.empty() && dcp::filesystem::is_directory(_film_to_load)) {
@@ -1867,6 +1869,7 @@ private:
 	void idle (wxIdleEvent& ev)
 	{
 		signal_manager->ui_idle ();
+		dcpomatic::signal::manager->process_pending();
 		ev.Skip ();
 	}
 

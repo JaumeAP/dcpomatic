@@ -410,11 +410,11 @@ Hints::scan_content(shared_ptr<const Film> film)
 	}
 
 	if (check_loudness_done && have_text) {
-		emit(boost::bind(boost::ref(Progress), _("Examining subtitles and closed captions")));
+		Progress(_("Examining subtitles and closed captions"));
 	} else if (!check_loudness_done && !have_text) {
-		emit(boost::bind(boost::ref(Progress), _("Examining audio")));
+		Progress(_("Examining audio"));
 	} else {
-		emit(boost::bind(boost::ref(Progress), _("Examining audio, subtitles and closed captions")));
+		Progress(_("Examining audio, subtitles and closed captions"));
 	}
 
 	auto player = make_shared<Player>(film, Image::Alignment::COMPACT, false);
@@ -441,7 +441,7 @@ Hints::scan_content(shared_ptr<const Film> film)
 			if (_stop) {
 				return;
 			}
-			emit(boost::bind(boost::ref(Pulse)));
+			Pulse();
 			last_pulse = now;
 		}
 	}
@@ -535,7 +535,7 @@ try
 	}
 	dcp::filesystem::remove_all(dcp_dir);
 
-	emit(boost::bind(boost::ref(Finished)));
+	Finished();
 }
 catch (boost::thread_interrupted)
 {
@@ -544,14 +544,14 @@ catch (boost::thread_interrupted)
 catch (...)
 {
 	store_current();
-	emit(boost::bind(boost::ref(Finished)));
+	Finished();
 }
 
 
 void
 Hints::hint(string h)
 {
-	emit(boost::bind(boost::ref(Hint), h));
+	Hint(h);
 }
 
 

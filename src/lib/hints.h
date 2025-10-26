@@ -23,11 +23,10 @@
 #include "dcp_text_track.h"
 #include "dcpomatic_time.h"
 #include "player_text.h"
-#include "signaller.h"
+#include "signal.h"
 #include "text_type.h"
 #include "weak_film.h"
 #include <boost/atomic.hpp>
-#include <boost/signals2.hpp>
 #include <string>
 #include <vector>
 
@@ -36,7 +35,7 @@ class Film;
 class Writer;
 
 
-class Hints : public Signaller, public ExceptionStore, public WeakConstFilm
+class Hints : public ExceptionStore, public WeakConstFilm
 {
 public:
 	explicit Hints(std::weak_ptr<const Film> film);
@@ -44,10 +43,10 @@ public:
 
 	void start();
 
-	boost::signals2::signal<void (std::string)> Hint;
-	boost::signals2::signal<void (std::string)> Progress;
-	boost::signals2::signal<void (void)> Pulse;
-	boost::signals2::signal<void (void)> Finished;
+	Signal<void (std::string)> Hint;
+	Signal<void (std::string)> Progress;
+	Signal<void (void)> Pulse;
+	Signal<void (void)> Finished;
 
 	/* For tests only */
 	void join();

@@ -536,19 +536,19 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 		bool finished = false;
 
 		Hints hint_finder(film);
-		hint_finder.Progress.connect([prefix, &out, &flush](string progress) {
+		hint_finder.Progress.connect_ui_thread(nullptr, [prefix, &out, &flush](string progress) {
 			out(fmt::format("{}{}: {}\n", UP_ONE_LINE_AND_ERASE, prefix, progress));
 			flush();
 		});
-		hint_finder.Pulse.connect([prefix, &pulse_phase, &out, &flush]() {
+		hint_finder.Pulse.connect_ui_thread(nullptr, [prefix, &pulse_phase, &out, &flush]() {
 			out(fmt::format("{}{}: {}\n", UP_ONE_LINE_AND_ERASE, prefix, pulse_phase ? "X" : "x"));
 			flush();
 			pulse_phase = !pulse_phase;
 		});
-		hint_finder.Hint.connect([&hints](string hint) {
+		hint_finder.Hint.connect_ui_thread(nullptr, [&hints](string hint) {
 			hints.push_back(hint);
 		});
-		hint_finder.Finished.connect([&finished]() {
+		hint_finder.Finished.connect_ui_thread(nullptr, [&finished]() {
 			finished = true;
 		});
 

@@ -28,6 +28,7 @@
 #include "lib/film.h"
 #include "lib/font.h"
 #include "lib/hints.h"
+#include "lib/signal.h"
 #include "lib/text_content.h"
 #include "test.h"
 #include <boost/test/unit_test.hpp>
@@ -59,10 +60,10 @@ get_hints (shared_ptr<Film> film)
 	Hints hints (film);
 	/* None of our tests need the audio analysis, and it is quite time-consuming */
 	hints.disable_audio_analysis ();
-	hints.Hint.connect (collect_hint);
+	hints.Hint.connect_ui_thread(nullptr, collect_hint);
 	hints.start ();
 	hints.join ();
-	while (signal_manager->ui_idle()) {}
+	dcpomatic::signal::manager->wake();
 	hints.rethrow();
 	return current_hints;
 }

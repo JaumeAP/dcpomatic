@@ -20,6 +20,7 @@
 
 
 #include "lib/change_signaller.h"
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
@@ -31,7 +32,7 @@ class wxRichTextCtrl;
 class Film;
 class Hints;
 
-class HintsDialog : public wxDialog
+class HintsDialog : public wxDialog, public Trackable
 {
 public:
 	HintsDialog(wxWindow* parent, std::weak_ptr<Film>, bool ok);
@@ -56,8 +57,8 @@ private:
 
 	boost::signals2::scoped_connection _film_change_connection;
 	boost::signals2::scoped_connection _film_content_change_connection;
-	boost::signals2::scoped_connection _hints_hint_connection;
-	boost::signals2::scoped_connection _hints_progress_connection;
-	boost::signals2::scoped_connection _hints_pulse_connection;
-	boost::signals2::scoped_connection _hints_finished_connection;
+	ScopedConnection _hints_hint_connection;
+	ScopedConnection _hints_progress_connection;
+	ScopedConnection _hints_pulse_connection;
+	ScopedConnection _hints_finished_connection;
 };
