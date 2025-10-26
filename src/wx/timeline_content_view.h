@@ -25,11 +25,11 @@
 
 #include "content_timeline_view.h"
 #include "lib/change_signaller.h"
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/signals2.hpp>
 
 class Content;
 
@@ -37,7 +37,7 @@ class Content;
 /** @class TimelineContentView
  *  @brief Parent class for views of pieces of content.
  */
-class TimelineContentView : public ContentTimelineView
+class TimelineContentView : public ContentTimelineView, public Trackable
 {
 public:
 	TimelineContentView(ContentTimeline& tl, std::shared_ptr<Content> c);
@@ -68,7 +68,7 @@ private:
 	boost::optional<int> _track;
 	bool _selected = false;
 
-	boost::signals2::scoped_connection _content_connection;
+	ScopedConnection _content_connection;
 };
 
 

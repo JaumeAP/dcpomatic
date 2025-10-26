@@ -210,7 +210,7 @@ SubtitleAppearanceDialog::SubtitleAppearanceDialog (wxWindow* parent, shared_ptr
 	_force_fade_in->bind(&SubtitleAppearanceDialog::setup_sensitivity, this);
 	_force_fade_out->bind(&SubtitleAppearanceDialog::setup_sensitivity, this);
 	_effect->Bind (wxEVT_CHOICE, bind (&SubtitleAppearanceDialog::setup_sensitivity, this));
-	_content_connection = _content->Change.connect (bind (&SubtitleAppearanceDialog::content_change, this, _1));
+	_content_connection = _content->Change.connect_ui_thread(this, bind(&SubtitleAppearanceDialog::content_change, this, _1));
 
 	setup_sensitivity ();
 }

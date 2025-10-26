@@ -31,12 +31,12 @@
 #include "change_signaller.h"
 #include "dcpomatic_time.h"
 #include "path_behaviour.h"
+#include "signal.h"
 #include "signaller.h"
 #include "user_property.h"
 #include "text_type.h"
 #include <libcxml/cxml.h>
 #include <boost/filesystem.hpp>
-#include <boost/signals2.hpp>
 #include <boost/thread/mutex.hpp>
 
 
@@ -218,8 +218,7 @@ public:
 
 	bool has_mapped_audio() const;
 
-	/* ChangeType::PENDING and ChangeType::CANCELLED may be emitted from any thread; ChangeType::DONE always from GUI thread */
-	boost::signals2::signal<void (ChangeType, int, bool)> Change;
+	Signal<void (ChangeType, int, bool)> Change;
 
 	std::shared_ptr<VideoContent> video;
 	std::shared_ptr<AudioContent> audio;

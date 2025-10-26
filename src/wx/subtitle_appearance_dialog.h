@@ -22,6 +22,7 @@
 #include "timecode.h"
 #include "lib/change_signaller.h"
 #include "lib/rgba.h"
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
@@ -41,7 +42,7 @@ class wxRadioButton;
 class wxWidget;
 
 
-class SubtitleAppearanceDialog : public wxDialog
+class SubtitleAppearanceDialog : public wxDialog, public Trackable
 {
 public:
 	SubtitleAppearanceDialog (wxWindow* parent, std::shared_ptr<const Film> film, std::shared_ptr<Content> content, std::shared_ptr<TextContent> caption);
@@ -80,7 +81,7 @@ private:
 	std::shared_ptr<TextContent> _text;
 	std::shared_ptr<FFmpegSubtitleStream> _stream;
 
-	boost::signals2::scoped_connection _content_connection;
+	ScopedConnection _content_connection;
 	boost::signals2::scoped_connection _job_manager_connection;
 
 	std::weak_ptr<Job> _job;

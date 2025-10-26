@@ -88,6 +88,7 @@ Playlist::~Playlist()
 }
 
 
+/** Could be called from any thread */
 void
 Playlist::content_change(weak_ptr<const Film> weak_film, ChangeType type, int property, bool frequent)
 {
@@ -140,6 +141,8 @@ Playlist::content_change(weak_ptr<const Film> weak_film, ChangeType type, int pr
 void
 Playlist::maybe_sequence(shared_ptr<const Film> film)
 {
+	boost::mutex::scoped_lock lm(_mutex);
+
 	if (!_sequence || _sequencing) {
 		return;
 	}
@@ -516,7 +519,7 @@ Playlist::reconnect(shared_ptr<const Film> film)
 	disconnect();
 
 	for (auto i: _content) {
-		_content_connections.push_back(i->Change.connect(boost::bind(&Playlist::content_change, this, film, _1, _2, _3)));
+		_content_connections.push_back(i->Change.connect_same_thread(boost::bind(&Playlist::content_change, this, film, _1, _2, _3)));
 	}
 }
 

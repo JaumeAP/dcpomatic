@@ -30,6 +30,7 @@
 
 #include "wx_util.h"
 #include "lib/content.h"
+#include "lib/signal.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/gbsizer.h>
@@ -49,7 +50,7 @@ LIBDCP_ENABLE_WARNINGS
  *  @param V Data type of state as used by the view.
  */
 template <class S, class T, typename U, typename V>
-class ContentWidget
+class ContentWidget : public Trackable
 {
 public:
 	/** @param parent Parent window.
@@ -104,7 +105,7 @@ public:
 	/** Set the content that this control is working on (i.e. the selected content) */
 	void set_content (List content)
 	{
-		for (typename std::list<boost::signals2::connection>::iterator i = _connections.begin(); i != _connections.end(); ++i) {
+		for (typename std::list<Connection>::iterator i = _connections.begin(); i != _connections.end(); ++i) {
 			i->disconnect ();
 		}
 
@@ -118,9 +119,9 @@ public:
 
 		for (typename List::iterator i = _content.begin(); i != _content.end(); ++i) {
 #if BOOST_VERSION >= 106100
-			_connections.push_back((*i)->Change.connect(boost::bind(&ContentWidget::model_changed, this, boost::placeholders::_1, boost::placeholders::_2)));
+			_connections.push_back((*i)->Change.connect_ui_thread(this, boost::bind(&ContentWidget::model_changed, this, boost::placeholders::_1, boost::placeholders::_2)));
 #else
-			_connections.push_back((*i)->Change.connect(boost::bind(&ContentWidget::model_changed, this, _1, _2)));
+			_connections.push_back((*i)->Change.connect_ui_thread(this, boost::bind(&ContentWidget::model_changed, this, _1, _2)));
 #endif
 		}
 	}
@@ -229,7 +230,7 @@ private:
 	std::function<void ()> _view_changed;
 	std::function<U (V)> _view_to_model;
 	std::function<V (U)> _model_to_view;
-	std::list<boost::signals2::connection> _connections;
+	std::list<Connection> _connections;
 	bool _ignore_model_changes;
 };
 
