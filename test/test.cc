@@ -39,6 +39,7 @@
 #include "lib/log_entry.h"
 #include "lib/make_dcp.h"
 #include "lib/ratio.h"
+#include "lib/signal.h"
 #include "lib/signal_manager.h"
 #include "lib/util.h"
 #include "test.h"
@@ -151,6 +152,16 @@ public:
 	}
 };
 
+class TestSignalManager2 : public SignalManager2
+{
+public:
+	/* No wakes in tests: we call ui_idle ourselves */
+	void wake() override
+	{
+
+	}
+};
+
 struct TestConfig
 {
 	TestConfig ()
@@ -167,6 +178,7 @@ struct TestConfig
 		EncodeServerFinder::drop();
 
 		signal_manager = new TestSignalManager ();
+		dcpomatic::signal::manager = new TestSignalManager2();
 
 		dcpomatic_log.reset (new FileLog("build/test/log"));
 

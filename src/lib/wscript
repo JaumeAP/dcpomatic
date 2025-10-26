@@ -193,6 +193,7 @@ sources = """
           send_problem_report_job.cc
           server.cc
           shuffler.cc
+          signal.cc
           spl.cc
           spl_entry.cc
           sqlite_database.cc
