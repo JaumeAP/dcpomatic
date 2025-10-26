@@ -23,6 +23,7 @@
 #define DCPOMATIC_SIGNAL_H
 
 
+#include "cross.h"
 #include <boost/thread.hpp>
 #include <iostream>
 
@@ -132,6 +133,8 @@ private:
 	{
 		int id;
 		boost::thread::id thread;
+		/* XXX */
+		std::string thread_name;
 		std::function<Parameters> function;
 	};
 
@@ -141,7 +144,7 @@ public:
 		boost::mutex::scoped_lock lm(_mutex);
 		auto const id = _id++;
 		auto const thread_id = boost::this_thread::get_id();
-		_callbacks.push_back(Callback{id, thread_id, callback});
+		_callbacks.push_back(Callback{id, thread_id, thread_name(), callback});
 		return Connection(*this, id);
 	}
 
@@ -155,17 +158,27 @@ public:
 	}
 
 	template <typename... Args>
+	void operator()(Args...args)
+	{
+		emit(args...);
+	}
+
+	template <typename... Args>
 	void emit(Args... args)
 	{
                 boost::mutex::scoped_lock lm(_mutex);
                 auto thread_id = boost::this_thread::get_id();
+		std::cout << "emit with " << _callbacks.size() << "\n";
                 for (auto const& callback: _callbacks) {
                         if (thread_id == callback.thread) {
+				std::cout << "simple emit.\n";
                                 callback.function(args...);
                         } else {
+				std::cout << "x-thread emit from " << thread_name() << " to " << callback.thread_name << "\n";
                                 boost::mutex::scoped_lock lm2(pending::mutex);
 				pending::callbacks[callback.thread].push_back(boost::bind(callback.function, args...));
 				if (thread_waker) {
+					std::cout << "x-thread emit wakes shit.\n";
 					thread_waker->wake();
 				}
                         }

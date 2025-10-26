@@ -19,6 +19,7 @@
 */
 
 
+#include "cross.h"
 #include "frame_interval_checker.h"
 #include "image.h"
 #include "j2k_image_proxy.h"
@@ -81,6 +82,7 @@ VideoDecoder::emit(shared_ptr<const Film> film, shared_ptr<const ImageProxy> ima
 
 	switch (vft) {
 	case VideoFrameType::TWO_D:
+		std::cout << "Data emit from " << thread_name() << "\n";
 		Data(ContentVideo(image, time, Eyes::BOTH, Part::WHOLE));
 		break;
 	case VideoFrameType::THREE_D:

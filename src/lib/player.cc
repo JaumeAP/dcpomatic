@@ -27,6 +27,7 @@
 #include "config.h"
 #include "content_audio.h"
 #include "content_video.h"
+#include "cross.h"
 #include "dcp_content.h"
 #include "dcp_decoder.h"
 #include "dcpomatic_log.h"
@@ -1031,6 +1032,8 @@ Player::emit_video_until(DCPTime time)
 void
 Player::video(weak_ptr<Piece> weak_piece, ContentVideo video)
 {
+	std::cout << "Player receive video in " << thread_name() << "\n";
+
 	if (_suspended) {
 		return;
 	}

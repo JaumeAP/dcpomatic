@@ -32,6 +32,7 @@
 #include <boost/filesystem.hpp>
 /* windows.h defines this but we want to use it */
 #undef ERROR
+#include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/optional.hpp>
 
@@ -60,6 +61,7 @@ extern boost::filesystem::path libdcp_resources_path();
 extern void start_batch_converter();
 extern void start_player();
 extern uint64_t thread_id();
+extern std::string thread_name();
 extern int avio_open_boost(AVIOContext** s, boost::filesystem::path file, int flags);
 extern boost::filesystem::path home_directory();
 extern bool running_32_on_64();

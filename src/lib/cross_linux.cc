@@ -348,3 +348,12 @@ show_in_file_manager (boost::filesystem::path dir, boost::filesystem::path)
 	return true;
 }
 
+
+string
+thread_name()
+{
+	char buffer[16];
+	pthread_getname_np(pthread_self(), buffer, sizeof(buffer));
+	return buffer;
+}
+
