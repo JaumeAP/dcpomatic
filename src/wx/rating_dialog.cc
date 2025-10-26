@@ -64,8 +64,8 @@ RatingDialog::RatingDialog (wxWindow* parent)
 
 	_notebook->Bind(wxEVT_NOTEBOOK_PAGE_CHANGED, boost::bind(&RatingDialog::page_changed, this));
 
-	_standard_page->Changed.connect(boost::bind(&RatingDialog::setup_sensitivity, this, _1));
-	_custom_page->Changed.connect(boost::bind(&RatingDialog::setup_sensitivity, this, _1));
+	_standard_page->Changed.connect_same_thread(boost::bind(&RatingDialog::setup_sensitivity, this, _1));
+	_custom_page->Changed.connect_same_thread(boost::bind(&RatingDialog::setup_sensitivity, this, _1));
 }
 
 
