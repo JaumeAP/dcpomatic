@@ -30,7 +30,6 @@
 #include "signal.h"
 #include "types.h"
 #include <libcxml/cxml.h>
-#include <boost/signals2.hpp>
 #include <boost/thread.hpp>
 #include <list>
 
@@ -83,12 +82,12 @@ public:
 	void repeat(std::shared_ptr<const Film> film, ContentList, int);
 
 	/** Emitted when content has been added to or removed from the playlist; implies OrderChange */
-	mutable boost::signals2::signal<void (ChangeType)> Change;
-	mutable boost::signals2::signal<void ()> OrderChange;
+	mutable Signal<void (ChangeType)> Change;
+	mutable Signal<void ()> OrderChange;
 	/** Emitted when the length might have changed; may sometimes be emitted when it has not */
-	mutable boost::signals2::signal<void ()> LengthChange;
+	mutable Signal<void ()> LengthChange;
 
-	mutable boost::signals2::signal<void (ChangeType, int, bool)> ContentChange;
+	mutable Signal<void (ChangeType, int, bool)> ContentChange;
 
 private:
 	void content_change(std::weak_ptr<const Film>, ChangeType, int, bool);

@@ -212,10 +212,10 @@ Film::Film(optional<boost::filesystem::path> dir)
 		_video_bit_rate[encoding] = Config::instance()->default_video_bit_rate(encoding);
 	}
 
-	_playlist_change_connection = _playlist->Change.connect(bind(&Film::playlist_change, this, _1));
-	_playlist_order_changed_connection = _playlist->OrderChange.connect(bind(&Film::playlist_order_changed, this));
-	_playlist_content_change_connection = _playlist->ContentChange.connect(bind(&Film::playlist_content_change, this, _1, _2, _3));
-	_playlist_length_change_connection = _playlist->LengthChange.connect(bind(&Film::playlist_length_change, this));
+	_playlist_change_connection = _playlist->Change.connect_same_thread(bind(&Film::playlist_change, this, _1));
+	_playlist_order_changed_connection = _playlist->OrderChange.connect_same_thread(bind(&Film::playlist_order_changed, this));
+	_playlist_content_change_connection = _playlist->ContentChange.connect_same_thread(bind(&Film::playlist_content_change, this, _1, _2, _3));
+	_playlist_length_change_connection = _playlist->LengthChange.connect_same_thread(bind(&Film::playlist_length_change, this));
 
 	if (dir) {
 		_directory = dcp::filesystem::weakly_canonical(*dir);
@@ -430,7 +430,7 @@ Film::metadata(bool with_content_paths) const
 		cxml::add_text_child(root, "CustomReelBoundary", fmt::to_string(boundary.get()));
 	}
 	cxml::add_text_child(root, "ReencodeJ2K", _reencode_j2k ? "1" : "0");
-	cxml::add_text_child(root, "UserExplicitVideoFrameRate", _user_explicit_video_frame_rate ? "1" : "0");
+	cxml::add_text_child(root, "UserExplicitVideoFrameRate", user_explicit_video_frame_rate() ? "1" : "0");
 	for (auto const& marker: _markers) {
 		auto m = cxml::add_child(root, "Marker");
 		m->set_attribute("type", dcp::marker_to_string(marker.first));
@@ -1220,14 +1220,21 @@ Film::set_video_bit_rate(VideoEncoding encoding, int64_t bit_rate)
 void
 Film::set_video_frame_rate(int f, bool user_explicit)
 {
-	if (_video_frame_rate == f) {
-		return;
+	{
+		boost::mutex::scoped_lock lm(_mutex);
+		if (_video_frame_rate == f) {
+			return;
+		}
 	}
 
 	FilmChangeSignaller ch(this, FilmProperty::VIDEO_FRAME_RATE);
-	_video_frame_rate = f;
-	if (user_explicit) {
-		_user_explicit_video_frame_rate = true;
+
+	{
+		boost::mutex::scoped_lock lm(_mutex);
+		_video_frame_rate = f;
+		if (user_explicit) {
+			_user_explicit_video_frame_rate = true;
+		}
 	}
 }
 
@@ -1314,12 +1321,16 @@ Film::set_reencode_j2k(bool r)
 	_reencode_j2k = r;
 }
 
+
+/** Can be called from any thread */
 void
 Film::signal_change(ChangeType type, int p)
 {
 	signal_change(type, static_cast<FilmProperty>(p));
 }
 
+
+/** Can be called from any thread */
 void
 Film::signal_change(ChangeType type, FilmProperty p)
 {
@@ -1327,7 +1338,7 @@ Film::signal_change(ChangeType type, FilmProperty p)
 		set_dirty(true);
 
 		if (p == FilmProperty::CONTENT) {
-			if (!_user_explicit_video_frame_rate) {
+			if (!user_explicit_video_frame_rate()) {
 				set_video_frame_rate(best_video_frame_rate());
 			}
 		}
@@ -1784,7 +1795,7 @@ Film::check_settings_consistency()
 void
 Film::playlist_order_changed()
 {
-	/* XXX: missing PENDING */
+	signal_change(ChangeType::PENDING, FilmProperty::CONTENT_ORDER);
 	signal_change(ChangeType::DONE, FilmProperty::CONTENT_ORDER);
 }
 
@@ -2374,12 +2385,17 @@ Film::set_sign_language_video_language(optional<dcp::LanguageTag> lang)
 
 
 void
-Film::set_dirty(bool dirty)
+Film::set_dirty(bool dirty_)
 {
-	auto const changed = dirty != _dirty;
-	_dirty = dirty;
+	bool changed = false;
+	{
+		boost::mutex::scoped_lock lm(_mutex);
+		changed = dirty_ != _dirty;
+		_dirty = dirty_;
+	}
+
 	if (changed) {
-		emit(boost::bind(boost::ref(DirtyChange), _dirty));
+		emit(boost::bind(boost::ref(DirtyChange), dirty()));
 	}
 }
 

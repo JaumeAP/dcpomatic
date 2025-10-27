@@ -143,7 +143,7 @@ Player::connect()
 	/* The butler must hear about this first, so since we are proxying this through to the butler we must
 	   be first.
 	*/
-	_playlist_change_connection = playlist()->Change.connect(bind(&Player::playlist_change, this, _1), boost::signals2::at_front);
+	_playlist_change_connection = playlist()->Change.connect_same_thread(bind(&Player::playlist_change, this, _1), boost::signals2::at_front);
 	_playlist_content_change_connection = playlist()->ContentChange.connect(bind(&Player::playlist_content_change, this, _1, _2, _3));
 }
 

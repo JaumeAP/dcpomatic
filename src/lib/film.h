@@ -39,6 +39,7 @@
 #include "ratio.h"
 #include "remembered_asset.h"
 #include "resolution.h"
+#include "signal.h"
 #include "signaller.h"
 #include "territory_type.h"
 #include "transcode_job.h"
@@ -133,6 +134,7 @@ public:
 
 	/** @return true if our state has changed since we last saved it */
 	bool dirty() const {
+		boost::mutex::scoped_lock lm(_mutex);
 		return _dirty;
 	}
 
@@ -486,9 +488,16 @@ private:
 	void check_reel_boundaries_for_atmos();
 	std::vector<dcpomatic::DCPTimePeriod> reels_for_type(ReelType type) const;
 
+	bool user_explicit_video_frame_rate() const {
+		boost::mutex::scoped_lock lm(_mutex);
+		return _user_explicit_video_frame_rate;
+	}
+
 	/** Log to write to */
 	std::shared_ptr<Log> _log;
 	std::shared_ptr<Playlist> _playlist;
+
+	mutable boost::mutex _mutex;
 
 	/** Complete path to directory containing the film metadata;
 	 *  must not be relative.
@@ -570,10 +579,10 @@ private:
 
 	std::map<std::string, std::string> _ui_state;
 
-	boost::signals2::scoped_connection _playlist_change_connection;
-	boost::signals2::scoped_connection _playlist_order_changed_connection;
-	boost::signals2::scoped_connection _playlist_content_change_connection;
-	boost::signals2::scoped_connection _playlist_length_change_connection;
+	ScopedConnection _playlist_change_connection;
+	ScopedConnection _playlist_order_changed_connection;
+	ScopedConnection _playlist_content_change_connection;
+	ScopedConnection _playlist_length_change_connection;
 	std::list<boost::signals2::connection> _job_connections;
 	std::list<boost::signals2::connection> _audio_analysis_connections;
 
