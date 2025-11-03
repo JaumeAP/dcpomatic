@@ -188,13 +188,13 @@ Content::examine(shared_ptr<const Film>, shared_ptr<Job> job, bool)
 
 
 void
-Content::signal_change(ChangeType c, int p)
+Content::signal_change(ChangeType c, int p, int id)
 {
 	try {
 		if (c == ChangeType::PENDING || c == ChangeType::CANCELLED) {
-			Change(c, p, _change_signals_frequent);
+			Change(c, p, _change_signals_frequent, id);
 		} else {
-			emit(boost::bind(boost::ref(Change), c, p, _change_signals_frequent));
+			emit(boost::bind(boost::ref(Change), c, p, _change_signals_frequent, id));
 		}
 	} catch (std::bad_weak_ptr &) {
 		/* This must be during construction; never mind */

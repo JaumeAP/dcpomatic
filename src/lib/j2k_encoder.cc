@@ -317,7 +317,7 @@ J2KEncoder::encode (shared_ptr<PlayerVideo> pv, DCPTime time)
 		_writer.fake_write(position, pv->eyes ());
 		frame_done ();
 	} else if (pv->has_j2k() && !_film->reencode_j2k()) {
-		LOG_DEBUG_ENCODE("Frame @ {} J2K", to_string(time));
+		LOG_DEBUG_ENCODE("{} Frame @ {} J2K", static_cast<void*>(this), to_string(time));
 		/* This frame already has J2K data, so just write it */
 		_writer.write(pv->j2k(), position, pv->eyes ());
 		frame_done ();

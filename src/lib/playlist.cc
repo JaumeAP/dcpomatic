@@ -89,7 +89,7 @@ Playlist::~Playlist()
 
 
 void
-Playlist::content_change(weak_ptr<const Film> weak_film, ChangeType type, int property, bool frequent)
+Playlist::content_change(weak_ptr<const Film> weak_film, ChangeType type, int property, bool frequent, int id)
 {
 	auto film = weak_film.lock();
 	DCPOMATIC_ASSERT(film);
@@ -133,7 +133,7 @@ Playlist::content_change(weak_ptr<const Film> weak_film, ChangeType type, int pr
 		}
 	}
 
-	ContentChange(type, property, frequent);
+	ContentChange(type, property, frequent, id);
 }
 
 
@@ -293,7 +293,9 @@ Playlist::as_xml(xmlpp::Element* element, bool with_content_paths, PathBehaviour
 void
 Playlist::add(shared_ptr<const Film> film, shared_ptr<Content> c)
 {
-	Change(ChangeType::PENDING);
+	auto const id = ChangeID::next();
+
+	Change(ChangeType::PENDING, id);
 
 	{
 		boost::mutex::scoped_lock lm(_mutex);
@@ -302,7 +304,7 @@ Playlist::add(shared_ptr<const Film> film, shared_ptr<Content> c)
 		reconnect(film);
 	}
 
-	Change(ChangeType::DONE);
+	Change(ChangeType::DONE, id);
 
 	LengthChange();
 }
@@ -311,7 +313,9 @@ Playlist::add(shared_ptr<const Film> film, shared_ptr<Content> c)
 void
 Playlist::add_at_end(shared_ptr<const Film> film, vector<shared_ptr<Content>> const& content)
 {
-	Change(ChangeType::PENDING);
+	auto const id = ChangeID::next();
+
+	Change(ChangeType::PENDING, id);
 
 	for (auto c: content) {
 		/* Add {video,subtitle} content after any existing {video,subtitle} content */
@@ -327,7 +331,7 @@ Playlist::add_at_end(shared_ptr<const Film> film, vector<shared_ptr<Content>> co
 		reconnect(film);
 	}
 
-	Change(ChangeType::DONE);
+	Change(ChangeType::DONE, id);
 
 	LengthChange();
 }
@@ -336,7 +340,9 @@ Playlist::add_at_end(shared_ptr<const Film> film, vector<shared_ptr<Content>> co
 void
 Playlist::remove(shared_ptr<Content> c)
 {
-	Change(ChangeType::PENDING);
+	auto const id = ChangeID::next();
+
+	Change(ChangeType::PENDING, id);
 
 	bool cancelled = false;
 
@@ -356,9 +362,9 @@ Playlist::remove(shared_ptr<Content> c)
 	}
 
 	if (cancelled) {
-		Change(ChangeType::CANCELLED);
+		Change(ChangeType::CANCELLED, id);
 	} else {
-		Change(ChangeType::DONE);
+		Change(ChangeType::DONE, id);
 	}
 
 	/* This won't change order, so it does not need a sort */
@@ -370,7 +376,9 @@ Playlist::remove(shared_ptr<Content> c)
 void
 Playlist::remove(ContentList c)
 {
-	Change(ChangeType::PENDING);
+	auto const id = ChangeID::next();
+
+	Change(ChangeType::PENDING, id);
 
 	{
 		boost::mutex::scoped_lock lm(_mutex);
@@ -387,7 +395,7 @@ Playlist::remove(ContentList c)
 		}
 	}
 
-	Change(ChangeType::DONE);
+	Change(ChangeType::DONE, id);
 
 	/* This won't change order, so it does not need a sort */
 
@@ -516,7 +524,7 @@ Playlist::reconnect(shared_ptr<const Film> film)
 	disconnect();
 
 	for (auto i: _content) {
-		_content_connections.push_back(i->Change.connect(boost::bind(&Playlist::content_change, this, film, _1, _2, _3)));
+		_content_connections.push_back(i->Change.connect(boost::bind(&Playlist::content_change, this, film, _1, _2, _3, _4)));
 	}
 }
 
@@ -603,7 +611,9 @@ Playlist::repeat(shared_ptr<const Film> film, ContentList c, int n)
 		range.second = max(range.second, i->end(film));
 	}
 
-	Change(ChangeType::PENDING);
+	auto const id = ChangeID::next();
+
+	Change(ChangeType::PENDING, id);
 
 	{
 		boost::mutex::scoped_lock lm(_mutex);
@@ -622,7 +632,7 @@ Playlist::repeat(shared_ptr<const Film> film, ContentList c, int n)
 		reconnect(film);
 	}
 
-	Change(ChangeType::DONE);
+	Change(ChangeType::DONE, id);
 
 	LengthChange();
 }

@@ -22,3 +22,13 @@
 #include "change_signaller.h"
 
 
+boost::atomic<int> ChangeID::_next;
+
+
+int
+ChangeID::next()
+{
+	return _next.add(1, boost::memory_order::relaxed);
+}
+
+

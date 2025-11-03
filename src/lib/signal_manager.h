@@ -65,7 +65,7 @@ public:
 	}
 
 	/** This should wake the UI and make it call ui_idle() */
-	virtual void wake_ui () {
+	virtual void wake () {
 		/* This is only a sensible implementation when there is no GUI */
 		ui_idle ();
 	}

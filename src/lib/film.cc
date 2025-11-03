@@ -210,9 +210,9 @@ Film::Film(optional<boost::filesystem::path> dir)
 		_video_bit_rate[encoding] = Config::instance()->default_video_bit_rate(encoding);
 	}
 
-	_playlist_change_connection = _playlist->Change.connect(bind(&Film::playlist_change, this, _1));
+	_playlist_change_connection = _playlist->Change.connect(bind(&Film::playlist_change, this, _1, _2));
 	_playlist_order_changed_connection = _playlist->OrderChange.connect(bind(&Film::playlist_order_changed, this));
-	_playlist_content_change_connection = _playlist->ContentChange.connect(bind(&Film::playlist_content_change, this, _1, _2, _3));
+	_playlist_content_change_connection = _playlist->ContentChange.connect(bind(&Film::playlist_content_change, this, _1, _2, _3, _4));
 	_playlist_length_change_connection = _playlist->LengthChange.connect(bind(&Film::playlist_length_change, this));
 
 	if (dir) {
@@ -1307,13 +1307,13 @@ Film::set_reencode_j2k(bool r)
 }
 
 void
-Film::signal_change(ChangeType type, int p)
+Film::signal_change(ChangeType type, int p, int id)
 {
-	signal_change(type, static_cast<FilmProperty>(p));
+	signal_change(type, static_cast<FilmProperty>(p), id);
 }
 
 void
-Film::signal_change(ChangeType type, FilmProperty p)
+Film::signal_change(ChangeType type, FilmProperty p, int id)
 {
 	if (type == ChangeType::DONE) {
 		set_dirty(true);
@@ -1324,7 +1324,7 @@ Film::signal_change(ChangeType type, FilmProperty p)
 			}
 		}
 
-		emit(boost::bind(boost::ref(Change), type, p));
+		emit(boost::bind(boost::ref(Change), type, p, id));
 
 		if (p == FilmProperty::VIDEO_FRAME_RATE || p == FilmProperty::SEQUENCE) {
 			/* We want to call Playlist::maybe_sequence but this must happen after the
@@ -1333,7 +1333,7 @@ Film::signal_change(ChangeType type, FilmProperty p)
 			emit(boost::bind(&Playlist::maybe_sequence, _playlist.get(), shared_from_this()));
 		}
 	} else {
-		Change(type, p);
+		Change(type, p, id);
 	}
 }
 
@@ -1597,24 +1597,24 @@ Film::active_frame_rate_change(DCPTime t) const
 }
 
 void
-Film::playlist_content_change(ChangeType type, int p, bool frequent)
+Film::playlist_content_change(ChangeType type, int p, bool frequent, int id)
 {
 	switch (p) {
 	case ContentProperty::VIDEO_FRAME_RATE:
-		signal_change(type, FilmProperty::CONTENT);
+		signal_change(type, FilmProperty::CONTENT, id);
 		break;
 	case AudioContentProperty::STREAMS:
-		signal_change(type, FilmProperty::NAME);
+		signal_change(type, FilmProperty::NAME, id);
 		break;
 	}
 
 	if (type == ChangeType::DONE) {
-		emit(boost::bind(boost::ref(ContentChange), type, p, frequent));
+		emit(boost::bind(boost::ref(ContentChange), type, p, frequent, id));
 		if (!frequent) {
 			check_settings_consistency();
 		}
 	} else {
-		ContentChange(type, p, frequent);
+		ContentChange(type, p, frequent, id);
 	}
 
 	set_dirty(true);
@@ -1627,10 +1627,10 @@ Film::playlist_length_change()
 }
 
 void
-Film::playlist_change(ChangeType type)
+Film::playlist_change(ChangeType type, int id)
 {
-	signal_change(type, FilmProperty::CONTENT);
-	signal_change(type, FilmProperty::NAME);
+	signal_change(type, FilmProperty::CONTENT, id);
+	signal_change(type, FilmProperty::NAME, id);
 
 	if (type == ChangeType::DONE) {
 		check_settings_consistency();
@@ -1776,8 +1776,9 @@ Film::check_settings_consistency()
 void
 Film::playlist_order_changed()
 {
-	/* XXX: missing PENDING */
-	signal_change(ChangeType::DONE, FilmProperty::CONTENT_ORDER);
+	auto const id = ChangeID::next();
+	signal_change(ChangeType::PENDING, FilmProperty::CONTENT_ORDER, id);
+	signal_change(ChangeType::DONE, FilmProperty::CONTENT_ORDER, id);
 }
 
 

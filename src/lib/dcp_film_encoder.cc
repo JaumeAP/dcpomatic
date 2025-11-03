@@ -84,6 +84,7 @@ DCPFilmEncoder::DCPFilmEncoder(shared_ptr<const Film> film, weak_ptr<Job> job, b
 	/* Now that we have a Writer we can clear out the assets directory */
 	clean_up_asset_directory(film->assets_path());
 
+	std::cout << "Connect " << this << " to " << &_player << "\n";
 	_player_video_connection = _player.Video.connect(bind(&DCPFilmEncoder::video, this, _1, _2));
 	_player_audio_connection = _player.Audio.connect(bind(&DCPFilmEncoder::audio, this, _1, _2));
 	_player_text_connection = _player.Text.connect(bind(&DCPFilmEncoder::text, this, _1, _2, _3, _4));
@@ -158,6 +159,7 @@ DCPFilmEncoder::resume()
 void
 DCPFilmEncoder::video(shared_ptr<PlayerVideo> data, DCPTime time)
 {
+	std::cout << "DCPFilmEncoder encodes @ " << to_string(time) << "\n";
 	_encoder->encode(data, time);
 }
 

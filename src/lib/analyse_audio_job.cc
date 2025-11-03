@@ -87,6 +87,7 @@ AnalyseAudioJob::run()
 {
 	LOG_DEBUG_AUDIO_ANALYSIS_NC("AnalyseAudioJob::run");
 
+	std::cout << "-------make the player-------\n";
 	auto player = make_shared<Player>(_film, _playlist, false);
 	player->set_ignore_video();
 	player->set_ignore_text();
@@ -97,6 +98,8 @@ AnalyseAudioJob::run()
 		player->set_disable_audio_processor();
 	}
 
+	std::cout << "[A]\n";
+
 	bool has_any_audio = false;
 	for (auto c: _playlist->content()) {
 		if (c->audio) {
@@ -104,10 +107,14 @@ AnalyseAudioJob::run()
 		}
 	}
 
+	std::cout << "[B]\n";
+
 	if (has_any_audio) {
 		player->seek(_analyser.start(), true);
 		while (!player->pass()) {}
 	}
+
+	std::cout << "[C]\n";
 
 	LOG_DEBUG_AUDIO_ANALYSIS_NC("Loop complete");
 

@@ -113,13 +113,13 @@ public:
 	boost::optional<dcpomatic::DCPTime> content_time_to_dcp(std::shared_ptr<const Content> content, dcpomatic::ContentTime t) const;
 	boost::optional<dcpomatic::ContentTime> dcp_to_content_time(std::shared_ptr<const Content> content, dcpomatic::DCPTime t) const;
 
-	void signal_change(ChangeType type, int property);
+	void signal_change(ChangeType type, int property, int id);
 
 	/** First parameter is PENDING, DONE or CANCELLED.
 	 *  Second parameter is the property.
 	 *  Third parameter is true if these signals are currently likely to be frequent.
 	 */
-	boost::signals2::signal<void (ChangeType, int, bool)> Change;
+	boost::signals2::signal<void (ChangeType, int, bool, int)> Change;
 
 	/** Emitted when a video frame is ready.  These emissions happen in the correct order. */
 	boost::signals2::signal<void (std::shared_ptr<PlayerVideo>, dcpomatic::DCPTime)> Video;
@@ -148,9 +148,9 @@ private:
 	void construct();
 	void connect();
 	void setup_pieces();
-	void film_change(ChangeType, FilmProperty);
-	void playlist_change(ChangeType);
-	void playlist_content_change(ChangeType, int, bool);
+	void film_change(ChangeType, FilmProperty, int id);
+	void playlist_change(ChangeType, int id);
+	void playlist_content_change(ChangeType, int, bool, int id);
 	Frame dcp_to_content_video(std::shared_ptr<const Piece> piece, dcpomatic::DCPTime t) const;
 	dcpomatic::DCPTime content_video_to_dcp(std::shared_ptr<const Piece> piece, Frame f) const;
 	Frame dcp_to_resampled_audio(std::shared_ptr<const Piece> piece, dcpomatic::DCPTime t) const;
@@ -193,8 +193,9 @@ private:
 	/** Playlist, or 0 if we are using the one from the _film */
 	std::shared_ptr<const Playlist> _playlist;
 
-	/** > 0 if we are suspended (i.e. pass() and seek() do nothing) */
-	boost::atomic<int> _suspended;
+	mutable boost::mutex _suspended_mutex;
+	/** Contains something if we are suspended (i.e. pass() and seek() do nothing) */
+	std::set<int> _suspended;
 	std::vector<std::shared_ptr<Piece>> _pieces;
 
 	/** Size of the image we are rendering to; this may be the DCP frame size, or

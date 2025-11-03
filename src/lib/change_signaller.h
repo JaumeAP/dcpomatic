@@ -27,6 +27,16 @@
 #include <vector>
 
 
+class ChangeID
+{
+public:
+	static int next();
+
+private:
+	static boost::atomic<int> _next;
+};
+
+
 enum class ChangeType
 {
 	PENDING,
@@ -39,15 +49,17 @@ template <class T, class P>
 class ChangeSignal
 {
 public:
-	ChangeSignal(T* thing_, P property_, ChangeType type_)
+	ChangeSignal(T* thing_, P property_, ChangeType type_, int id_)
 		: thing(thing_)
 		, property(property_)
 		, type(type_)
+		, id(id_)
 	{}
 
 	T* thing;
 	P property;
 	ChangeType type;
+	int id;
 };
 
 
@@ -80,7 +92,7 @@ public:
 				_pending.push_back(signal);
 			}
 		} else {
-			signal.thing->signal_change(signal.type, signal.property);
+			signal.thing->signal_change(signal.type, signal.property, signal.id);
 		}
 	}
 
@@ -99,7 +111,7 @@ public:
 		lm.unlock();
 
 		for (auto signal: pending) {
-			signal.thing->signal_change(signal.type, signal.property);
+			signal.thing->signal_change(signal.type, signal.property, signal.id);
 		}
 	}
 
@@ -129,13 +141,14 @@ public:
 		: _thing(t)
 		, _property(p)
 		, _done(true)
+		, _id(ChangeID::next())
 	{
-		ChangeSignalDespatcher<T, P>::instance()->signal_change({_thing, _property, ChangeType::PENDING});
+		ChangeSignalDespatcher<T, P>::instance()->signal_change({_thing, _property, ChangeType::PENDING, _id});
 	}
 
 	~ChangeSignaller ()
 	{
-		ChangeSignalDespatcher<T, P>::instance()->signal_change({_thing, _property, _done ? ChangeType::DONE : ChangeType::CANCELLED});
+		ChangeSignalDespatcher<T, P>::instance()->signal_change({_thing, _property, _done ? ChangeType::DONE : ChangeType::CANCELLED, _id});
 	}
 
 	void abort ()
@@ -147,6 +160,7 @@ private:
 	T* _thing;
 	P _property;
 	bool _done;
+	int _id;
 };
 
 

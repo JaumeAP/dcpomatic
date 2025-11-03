@@ -82,15 +82,15 @@ public:
 	void repeat(std::shared_ptr<const Film> film, ContentList, int);
 
 	/** Emitted when content has been added to or removed from the playlist; implies OrderChange */
-	mutable boost::signals2::signal<void (ChangeType)> Change;
+	mutable boost::signals2::signal<void (ChangeType, int)> Change;
 	mutable boost::signals2::signal<void ()> OrderChange;
 	/** Emitted when the length might have changed; may sometimes be emitted when it has not */
 	mutable boost::signals2::signal<void ()> LengthChange;
 
-	mutable boost::signals2::signal<void (ChangeType, int, bool)> ContentChange;
+	mutable boost::signals2::signal<void (ChangeType, int, bool, int)> ContentChange;
 
 private:
-	void content_change(std::weak_ptr<const Film>, ChangeType, int, bool);
+	void content_change(std::weak_ptr<const Film>, ChangeType, int, bool, int id);
 	void disconnect();
 	void reconnect(std::shared_ptr<const Film> film);
 

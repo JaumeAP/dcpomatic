@@ -24,9 +24,12 @@
 #include "wx/check_box.h"
 #include "wx/editable_list.h"
 #include "wx/i18n_setup.h"
+#include "wx/wx_signal_manager.h"
 #include "wx/wx_util.h"
 #include "wx/wx_variant.h"
 #include "lib/cross.h"
+#include "lib/dcpomatic_log.h"
+#include "lib/file_log.h"
 #include "lib/fix_audio_levels_job.h"
 #include "lib/job_manager.h"
 #include "lib/util.h"
@@ -42,9 +45,11 @@ LIBDCP_ENABLE_WARNINGS
 #endif
 
 
+using std::dynamic_pointer_cast;
 using std::exception;
 using std::make_shared;
 using std::shared_ptr;
+using std::string;
 using std::vector;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
@@ -74,6 +79,53 @@ public:
 	{
 		/* Not used */
 	}
+};
+
+
+
+class ProgressPanel : public wxPanel
+{
+public:
+	ProgressPanel(wxWindow* parent)
+	: wxPanel(parent, wxID_ANY)
+	{
+		auto overall_sizer = new wxBoxSizer(wxVERTICAL);
+
+		_job_name = new wxStaticText(this, wxID_ANY, {});
+		overall_sizer->Add(_job_name, 0, wxEXPAND | wxTOP | wxLEFT | wxRIGHT, DCPOMATIC_SIZER_GAP);
+
+		_progress = new wxGauge(this, wxID_ANY, 100);
+		overall_sizer->Add(_progress, 0, wxEXPAND | wxALL, DCPOMATIC_SIZER_GAP);
+
+		SetSizerAndFit(overall_sizer);
+	}
+
+	void update(std::shared_ptr<const FixAudioLevelsJob> job)
+	{
+		auto const progress = job->progress();
+		if (progress) {
+			_progress->SetValue(*progress * 100);
+		} else {
+			_progress->Pulse();
+		}
+		string const sub = job->sub_name();
+		size_t colon = sub.find(":");
+		if (colon != string::npos) {
+			_job_name->SetLabel(std_to_wx(sub.substr(0, colon)));
+		} else {
+			_job_name->SetLabel(std_to_wx(sub));
+		}
+	}
+
+	void clear()
+	{
+		_job_name->SetLabel(wxT(""));
+		_progress->SetValue(0);
+	}
+
+private:
+	wxStaticText* _job_name;
+	wxGauge* _progress;
 };
 
 
@@ -125,6 +177,9 @@ public:
 		options_sizer->Add(_fix_audio_levels, 0, wxBOTTOM, DCPOMATIC_SIZER_GAP);
 		overall_sizer->Add(options_sizer, 0, wxLEFT, DCPOMATIC_DIALOG_BORDER);
 
+		_progress_panel = new ProgressPanel(_overall_panel);
+		overall_sizer->Add(_progress_panel, 0, wxEXPAND | wxALL, DCPOMATIC_DIALOG_BORDER);
+
 		auto actions_sizer = new wxBoxSizer(wxHORIZONTAL);
 		_cancel = new Button(_overall_panel, _("Cancel"));
 		actions_sizer->Add(_cancel, 0, wxRIGHT, DCPOMATIC_SIZER_GAP);
@@ -138,6 +193,9 @@ public:
 		_process->bind(&DOMFrame::process_clicked, this);
 
 		setup_sensitivity();
+
+		dcpomatic_log = make_shared<FileLog>("/home/carl/shite.log");
+		dcpomatic_log->set_types(dcpomatic_log->types() | LogEntry::TYPE_DEBUG_ENCODE);
 	}
 
 private:
@@ -198,14 +256,25 @@ private:
 		while (job_manager->work_to_do() && !_cancel_pending) {
 			wxEventLoopBase::GetActive()->YieldFor(wxEVT_CATEGORY_UI | wxEVT_CATEGORY_USER_INPUT);
 			dcpomatic_sleep_milliseconds(250);
+			while (signal_manager->ui_idle()) {}
+			auto last = job_manager->last_active_job();
+			if (auto locked = last.lock()) {
+				if (auto job = dynamic_pointer_cast<FixAudioLevelsJob>(locked)) {
+					_progress_panel->update(job);
+				}
+			}
 		}
 
 		if (_cancel_pending) {
 			_cancel_pending = false;
 			JobManager::instance()->cancel_all_jobs();
+			_progress_panel->clear();
 			setup_sensitivity();
 			return;
 		}
+
+		_progress_panel->clear();
+		setup_sensitivity();
 
 #if 0
 		dcp::VerificationOptions options;
@@ -274,6 +343,7 @@ private:
 	CheckBox* _fix_audio_levels;
 	Button* _cancel;
 	Button* _process;
+	ProgressPanel* _progress_panel;
 	bool _cancel_pending = false;
 };
 
@@ -329,6 +399,8 @@ private:
 			   time it is needed.
 			*/
 			Config::drop();
+
+			signal_manager = new wxSignalManager(this);
 
 			_frame = new DOMFrame(variant::wx::dcpomatic_processor());
 			SetTopWindow(_frame);

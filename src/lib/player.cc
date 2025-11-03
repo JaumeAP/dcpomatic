@@ -85,7 +85,6 @@ using namespace dcpomatic;
 
 Player::Player(shared_ptr<const Film> film, Image::Alignment subtitle_alignment, bool tolerant)
 	: _film(film)
-	, _suspended(0)
 	, _ignore_video(false)
 	, _ignore_audio(false)
 	, _ignore_text(false)
@@ -103,7 +102,6 @@ Player::Player(shared_ptr<const Film> film, Image::Alignment subtitle_alignment,
 Player::Player(shared_ptr<const Film> film, shared_ptr<const Playlist> playlist_, bool tolerant)
 	: _film(film)
 	, _playlist(playlist_)
-	, _suspended(0)
 	, _ignore_video(false)
 	, _ignore_audio(false)
 	, _ignore_text(false)
@@ -126,7 +124,9 @@ Player::construct()
 	connect();
 	set_video_container_size(film->frame_size());
 
-	film_change(ChangeType::DONE, FilmProperty::AUDIO_PROCESSOR);
+	auto const id = ChangeID::next();
+	film_change(ChangeType::PENDING, FilmProperty::AUDIO_PROCESSOR, id);
+	film_change(ChangeType::DONE, FilmProperty::AUDIO_PROCESSOR, id);
 
 	setup_pieces();
 	seek(DCPTime(), true);
@@ -139,19 +139,19 @@ Player::connect()
 	auto film = _film.lock();
 	DCPOMATIC_ASSERT(film);
 
-	_film_changed_connection = film->Change.connect(bind(&Player::film_change, this, _1, _2));
+	_film_changed_connection = film->Change.connect(bind(&Player::film_change, this, _1, _2, _3));
 	/* The butler must hear about this first, so since we are proxying this through to the butler we must
 	   be first.
 	*/
-	_playlist_change_connection = playlist()->Change.connect(bind(&Player::playlist_change, this, _1), boost::signals2::at_front);
-	_playlist_content_change_connection = playlist()->ContentChange.connect(bind(&Player::playlist_content_change, this, _1, _2, _3));
+	_playlist_change_connection = playlist()->Change.connect(bind(&Player::playlist_change, this, _1, _2), boost::signals2::at_front);
+	_playlist_content_change_connection = playlist()->ContentChange.connect(bind(&Player::playlist_content_change, this, _1, _2, _3, _4));
 }
 
 
 Player::Player(Player&& other)
 	: _film(other._film)
 	, _playlist(std::move(other._playlist))
-	, _suspended(other._suspended.load())
+	, _suspended(other._suspended)
 	, _pieces(std::move(other._pieces))
 	, _video_container_size(other._video_container_size.load())
 	, _black_image(std::move(other._black_image))
@@ -191,7 +191,7 @@ Player::operator=(Player&& other)
 
 	_film = std::move(other._film);
 	_playlist = std::move(other._playlist);
-	_suspended = other._suspended.load();
+	_suspended = other._suspended;
 	_pieces = std::move(other._pieces);
 	_video_container_size = other._video_container_size.load();
 	_black_image = std::move(other._black_image);
@@ -241,6 +241,8 @@ have_audio(shared_ptr<const Content> content)
 void
 Player::setup_pieces()
 {
+	std::cout << "--setup_pieces--\n";
+
 	boost::mutex::scoped_lock lm(_mutex);
 
 	auto old_pieces = _pieces;
@@ -400,7 +402,7 @@ Player::setup_pieces()
 
 
 void
-Player::playlist_content_change(ChangeType type, int property, bool frequent)
+Player::playlist_content_change(ChangeType type, int property, bool frequent, int id)
 {
 	auto film = _film.lock();
 	if (!film) {
@@ -420,17 +422,21 @@ Player::playlist_content_change(ChangeType type, int property, bool frequent)
 			   until that has happened and we've rebuilt our pieces.  Stop pass()
 			   and seek() from working until then.
 			*/
-			++_suspended;
+			boost::mutex::scoped_lock lm(_suspended_mutex);
+			_suspended.insert(id);
 		} else if (type == ChangeType::DONE) {
 			/* A change in our content has gone through.  Re-build our pieces. */
+			std::cout << "setup_pieces because playlist_content_change " << property << "\n";
 			setup_pieces();
-			--_suspended;
+			boost::mutex::scoped_lock lm(_suspended_mutex);
+			_suspended.erase(id);
 		} else if (type == ChangeType::CANCELLED) {
-			--_suspended;
+			boost::mutex::scoped_lock lm(_suspended_mutex);
+			_suspended.erase(id);
 		}
 	}
 
-	Change(type, property, frequent);
+	Change(type, property, frequent, id);
 }
 
 
@@ -455,17 +461,18 @@ Player::set_video_container_size(dcp::Size s)
 
 
 void
-Player::playlist_change(ChangeType type)
+Player::playlist_change(ChangeType type, int id)
 {
 	if (type == ChangeType::DONE) {
+		std::cout << "setup_pieces because of playlist_change\n";
 		setup_pieces();
 	}
-	Change(type, PlayerProperty::PLAYLIST, false);
+	Change(type, PlayerProperty::PLAYLIST, false, id);
 }
 
 
 void
-Player::film_change(ChangeType type, FilmProperty p)
+Player::film_change(ChangeType type, FilmProperty p, int id)
 {
 	/* Here we should notice Film properties that affect our output, and
 	   alert listeners that our output now would be different to how it was
@@ -478,15 +485,16 @@ Player::film_change(ChangeType type, FilmProperty p)
 	}
 
 	if (p == FilmProperty::CONTAINER) {
-		Change(type, PlayerProperty::FILM_CONTAINER, false);
+		Change(type, PlayerProperty::FILM_CONTAINER, false, id);
 	} else if (p == FilmProperty::VIDEO_FRAME_RATE) {
 		/* Pieces contain a FrameRateChange which contains the DCP frame rate,
 		   so we need new pieces here.
 		*/
 		if (type == ChangeType::DONE) {
+			std::cout << "Setup pieces because FilmProperty::VIDEO_FRAME_RATE\n";
 			setup_pieces();
 		}
-		Change(type, PlayerProperty::FILM_VIDEO_FRAME_RATE, false);
+		Change(type, PlayerProperty::FILM_VIDEO_FRAME_RATE, false, id);
 	} else if (p == FilmProperty::AUDIO_PROCESSOR) {
 		if (type == ChangeType::DONE && film->audio_processor()) {
 			boost::mutex::scoped_lock lm(_mutex);
@@ -681,6 +689,8 @@ Player::earliest_piece_and_time() const
 	shared_ptr<Piece> earliest_content;
 	optional<DCPTime> earliest_time;
 
+	std::cout << "EP&T: " << _pieces.size() << "\n";
+
 	for (auto const& piece: _pieces) {
 		if (piece->done) {
 			continue;
@@ -709,10 +719,13 @@ Player::pass()
 {
 	boost::mutex::scoped_lock lm(_mutex);
 
-	if (_suspended) {
-		/* We can't pass in this state */
-		LOG_DEBUG_PLAYER_NC("Player is suspended");
-		return false;
+	{
+		boost::mutex::scoped_lock lm2(_suspended_mutex);
+		if (!_suspended.empty()) {
+			/* We can't pass in this state */
+			LOG_DEBUG_PLAYER_NC("Player is suspended");
+			return false;
+		}
 	}
 
 	auto film = _film.lock();
@@ -756,6 +769,7 @@ Player::pass()
 	case CONTENT:
 	{
 		LOG_DEBUG_PLAYER("Calling pass() on {}", earliest_content->content->path(0).string());
+		std::cout << "Calling pass() on " << earliest_content << "\n";
 		earliest_content->done = earliest_content->decoder->pass();
 		auto dcp = dynamic_pointer_cast<DCPContent>(earliest_content->content);
 		if (dcp && !_play_referenced) {
@@ -1031,8 +1045,11 @@ Player::emit_video_until(DCPTime time)
 void
 Player::video(weak_ptr<Piece> weak_piece, ContentVideo video)
 {
-	if (_suspended) {
-		return;
+	{
+		boost::mutex::scoped_lock lm(_suspended_mutex);
+		if (!_suspended.empty()) {
+			return;
+		}
 	}
 
 	auto piece = weak_piece.lock();
@@ -1137,8 +1154,11 @@ Player::use_video(shared_ptr<PlayerVideo> pv, DCPTime time, DCPTime end)
 void
 Player::audio(weak_ptr<Piece> weak_piece, AudioStreamPtr stream, ContentAudio content_audio)
 {
-	if (_suspended) {
-		return;
+	{
+		boost::mutex::scoped_lock lm(_suspended_mutex);
+		if (!_suspended.empty()) {
+			return;
+		}
 	}
 
 	DCPOMATIC_ASSERT(content_audio.audio->frames() > 0);
@@ -1233,8 +1253,11 @@ Player::audio(weak_ptr<Piece> weak_piece, AudioStreamPtr stream, ContentAudio co
 boost::optional<DCPTime>
 Player::should_store(weak_ptr<Piece> weak_piece, weak_ptr<const TextContent> weak_content, ContentTime subtitle_from) const
 {
-	if (_suspended) {
-		return {};
+	{
+		boost::mutex::scoped_lock lm(_suspended_mutex);
+		if (!_suspended.empty()) {
+			return {};
+		}
 	}
 
 	auto piece = weak_piece.lock();
@@ -1343,8 +1366,11 @@ Player::plain_text_start(weak_ptr<Piece> weak_piece, weak_ptr<const TextContent>
 void
 Player::text_stop(weak_ptr<Piece> weak_piece, weak_ptr<const TextContent> weak_content, ContentTime to)
 {
-	if (_suspended) {
-		return;
+	{
+		boost::mutex::scoped_lock lm(_suspended_mutex);
+		if (!_suspended.empty()) {
+			return;
+		}
 	}
 
 	auto content = weak_content.lock();
@@ -1384,9 +1410,11 @@ Player::seek(DCPTime time, bool accurate)
 	boost::mutex::scoped_lock lm(_mutex);
 	LOG_DEBUG_PLAYER("Seek to {} ({}accurate)", to_string(time), accurate ? "" : "in");
 
-	if (_suspended) {
-		/* We can't seek in this state */
-		return;
+	{
+		boost::mutex::scoped_lock lm(_suspended_mutex);
+		if (!_suspended.empty()) {
+			return;
+		}
 	}
 
 	auto film = _film.lock();
@@ -1595,8 +1623,11 @@ Player::playlist() const
 void
 Player::atmos(weak_ptr<Piece> weak_piece, ContentAtmos data)
 {
-	if (_suspended) {
-		return;
+	{
+		boost::mutex::scoped_lock lm(_suspended_mutex);
+		if (!_suspended.empty()) {
+			return;
+		}
 	}
 
 	auto film = _film.lock();
@@ -1626,9 +1657,9 @@ Player::atmos(weak_ptr<Piece> weak_piece, ContentAtmos data)
 
 
 void
-Player::signal_change(ChangeType type, int property)
+Player::signal_change(ChangeType type, int property, int id)
 {
-	Change(type, property, false);
+	Change(type, property, false, id);
 }
 
 

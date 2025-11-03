@@ -219,7 +219,7 @@ public:
 	bool has_mapped_audio() const;
 
 	/* ChangeType::PENDING and ChangeType::CANCELLED may be emitted from any thread; ChangeType::DONE always from GUI thread */
-	boost::signals2::signal<void (ChangeType, int, bool)> Change;
+	boost::signals2::signal<void (ChangeType, int, bool, int)> Change;
 
 	std::shared_ptr<VideoContent> video;
 	std::shared_ptr<AudioContent> audio;
@@ -251,7 +251,7 @@ private:
 	friend struct subtitle_font_id_change_test2;
 	template<class, class> friend class ChangeSignalDespatcher;
 
-	void signal_change(ChangeType, int);
+	void signal_change(ChangeType, int, int id);
 
 	/** Paths of our data files */
 	std::vector<boost::filesystem::path> _paths;

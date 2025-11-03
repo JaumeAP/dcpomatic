@@ -434,10 +434,10 @@ public:
 	boost::filesystem::path info_file(dcpomatic::DCPTimePeriod p) const;
 
 	/** Emitted when some property has of the Film is about to change or has changed */
-	mutable boost::signals2::signal<void (ChangeType, FilmProperty)> Change;
+	mutable boost::signals2::signal<void (ChangeType, FilmProperty, int id)> Change;
 
 	/** Emitted when some property of our content has changed */
-	mutable boost::signals2::signal<void (ChangeType, int, bool)> ContentChange;
+	mutable boost::signals2::signal<void (ChangeType, int, bool, int id)> ContentChange;
 
 	/** Emitted when the film's length might have changed; this is not like a normal
 	    property as its value is derived from the playlist, so it has its own signal.
@@ -464,11 +464,11 @@ private:
 	friend struct ::recover_test_2d_encrypted;
 	template <class, class> friend class ChangeSignalDespatcher;
 
-	void signal_change(ChangeType, FilmProperty);
-	void signal_change(ChangeType, int);
-	void playlist_change(ChangeType);
+	void signal_change(ChangeType, FilmProperty, int id);
+	void signal_change(ChangeType, int, int id);
+	void playlist_change(ChangeType, int id);
 	void playlist_order_changed();
-	void playlist_content_change(ChangeType type, int, bool frequent);
+	void playlist_content_change(ChangeType type, int, bool frequent, int id);
 	void playlist_length_change();
 	void maybe_add_content(std::weak_ptr<Job>, std::vector<std::weak_ptr<Content>> const& weak_content, bool disable_audio_analysis);
 	void audio_analysis_finished();

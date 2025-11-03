@@ -324,7 +324,9 @@ VideoContent::take_from_examiner(shared_ptr<const Film> film, shared_ptr<VideoEx
 	LOG_GENERAL("Video length obtained from header as {} frames", _length);
 
 	if (d->video_frame_rate()) {
+		std::cout << "-> set_video_frame_rate\n";
 		_parent->set_video_frame_rate(film, d->video_frame_rate().get());
+		std::cout << "<- set_video_frame_rate\n";
 	}
 }
 
