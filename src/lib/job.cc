@@ -105,6 +105,7 @@ void
 Job::run_wrapper()
 {
 	start_of_thread(fmt::format("Job-{}", json_name()));
+	LOG_GENERAL("Job {} start", json_name());
 
 	try {
 
@@ -308,6 +309,8 @@ Job::run_wrapper()
 		set_progress(1);
 		set_state(FINISHED_ERROR);
 	}
+
+	LOG_GENERAL("Job {} finished", json_name());
 }
 
 

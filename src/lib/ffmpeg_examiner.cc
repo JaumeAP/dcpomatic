@@ -63,6 +63,8 @@ static const int PULLDOWN_CHECK_FRAMES = 16;
 FFmpegExaminer::FFmpegExaminer(shared_ptr<const FFmpegContent> c, shared_ptr<Job> job)
 	: FFmpeg(c)
 {
+	LOG_GENERAL_NC("Starting FFmpegExaminer constructor");
+
 	_need_length = _format_context->duration == AV_NOPTS_VALUE;
 	/* Find audio and subtitle streams */
 
@@ -116,6 +118,7 @@ FFmpegExaminer::FFmpegExaminer(shared_ptr<const FFmpegContent> c, shared_ptr<Job
 	string temporal_reference;
 	bool carry_on_video = has_video();
 	std::vector<bool> carry_on_audio(_audio_streams.size(), true);
+	LOG_GENERAL_NC("Looking for interesting things");
 	while (true) {
 		auto packet = av_packet_alloc();
 		DCPOMATIC_ASSERT(packet);
@@ -171,6 +174,7 @@ FFmpegExaminer::FFmpegExaminer(shared_ptr<const FFmpegContent> c, shared_ptr<Job
 			}
 		}
 	}
+	LOG_GENERAL_NC("Looking for interesting things finished");
 
 	if (_video_stream) {
 		auto context = _codec_context[_video_stream.get()];
@@ -212,6 +216,7 @@ FFmpegExaminer::FFmpegExaminer(shared_ptr<const FFmpegContent> c, shared_ptr<Job
 	}
 
 	check_for_duplicate_ids();
+	LOG_GENERAL_NC("Ending FFmpegExaminer constructor");
 }
 
 void

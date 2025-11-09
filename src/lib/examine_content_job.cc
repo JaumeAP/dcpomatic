@@ -20,16 +20,15 @@
 
 
 #include "content.h"
+#include "dcpomatic_log.h"
 #include "examine_content_job.h"
 #include "film.h"
 #include "log.h"
 #include <boost/filesystem.hpp>
-#include <iostream>
 
 #include "i18n.h"
 
 
-using std::cout;
 using std::shared_ptr;
 using std::string;
 using std::vector;
@@ -69,7 +68,9 @@ ExamineContentJob::run()
 {
 	int n = 0;
 	for (auto c: _content) {
+		LOG_GENERAL("Examine {}", c->path(0).string());
 		c->examine(_film, shared_from_this(), _tolerant);
+		LOG_GENERAL("Examine {} finished", c->path(0).string());
 		set_progress(float(n) / _content.size());
 		++n;
 	}
