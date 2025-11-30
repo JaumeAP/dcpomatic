@@ -205,6 +205,27 @@ GeneralPage::add_update_controls(wxGridBagSizer* table, int& r)
 	_check_for_test_updates->bind(&GeneralPage::check_for_test_updates_changed, this);
 }
 
+
+#ifdef DCPOMATIC_SENTRY
+void
+GeneralPage::add_crash_reporting_controls(wxGridBagSizer* table, int& r)
+{
+	_enable_crash_reporting = new CheckBox(_panel, _("Automatically upload crash reports"));
+	table->Add(_enable_crash_reporting, wxGBPosition(r, 0), wxGBSpan(1, 2));
+	++r;
+
+	_enable_crash_reporting->bind(&GeneralPage::enable_crash_reporting_changed, this);
+}
+
+
+void
+GeneralPage::enable_crash_reporting_changed()
+{
+	Config::instance()->set_enable_crash_reporting(_enable_crash_reporting->get());
+}
+#endif
+
+
 void
 GeneralPage::config_changed()
 {

@@ -76,6 +76,9 @@
 #include "lib/email.h"
 #include "lib/encode_server_finder.h"
 #include "lib/exceptions.h"
+#ifdef DCPOMATIC_SENTRY
+#include "lib/dcpomatic_sentry.h"
+#endif
 #include "lib/ffmpeg_film_encoder.h"
 #include "lib/film.h"
 #include "lib/font_config.h"
@@ -1214,6 +1217,10 @@ private:
 
 		ev.Skip ();
 		JobManager::drop ();
+
+#ifdef DCPOMATIC_SENTRY
+		closedown_sentry();
+#endif
 	}
 
 	void active_jobs_changed()
@@ -1502,6 +1509,14 @@ private:
 		if (what == Config::GROK) {
 			setup_grok_library_path();
 		}
+#elif DCPOMATIC_SENTRY
+		if (what == Config::ENABLE_CRASH_REPORTING) {
+			if (Config::instance()->enable_crash_reporting()) {
+				maybe_setup_sentry();
+			} else {
+				closedown_sentry();
+			}
+		}
 #else
 		LIBDCP_UNUSED(what);
 #endif
@@ -1702,6 +1717,10 @@ private:
 			   incorrect certificate chain validity errors.
 			*/
 			Config::Bad.connect (boost::bind(&App::config_bad, this, _1));
+
+#ifdef DCPOMATIC_SENTRY
+			maybe_setup_sentry();
+#endif
 
 			signal_manager = new wxSignalManager (this);
 

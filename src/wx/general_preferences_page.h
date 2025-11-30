@@ -48,6 +48,9 @@ protected:
 	void add_language_controls(wxGridBagSizer* table, int& r);
 	void add_config_file_controls(wxGridBagSizer* table, int& r);
 	void add_update_controls(wxGridBagSizer* table, int& r);
+#ifdef DCPOMATIC_SENTRY
+	void add_crash_reporting_controls(wxGridBagSizer* table, int& r);
+#endif
 	void config_changed() override;
 
 private:
@@ -59,6 +62,9 @@ private:
 	void export_cinemas_file();
 	void check_for_updates_changed();
 	void check_for_test_updates_changed();
+#ifdef DCPOMATIC_SENTRY
+	void enable_crash_reporting_changed();
+#endif
 
 	CheckBox* _set_language = nullptr;
 	wxChoice* _language = nullptr;
@@ -66,6 +72,9 @@ private:
 	FilePickerCtrl* _cinemas_file = nullptr;
 	CheckBox* _check_for_updates = nullptr;
 	CheckBox* _check_for_test_updates = nullptr;
+#ifdef DCPOMATIC_SENTRY
+	CheckBox* _enable_crash_reporting = nullptr;
+#endif
 };
 
 

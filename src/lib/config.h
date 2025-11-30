@@ -122,6 +122,7 @@ public:
 		GROK,
 #endif
 		CINEMAS_FILE,
+		ENABLE_CRASH_REPORTING,
 		OTHER
 	};
 
@@ -687,6 +688,10 @@ public:
 
 	bool layout_for_short_screen() {
 		return _layout_for_short_screen;
+	}
+
+	bool enable_crash_reporting() {
+		return _enable_crash_reporting;
 	}
 
 	/* SET (mostly) */
@@ -1265,6 +1270,10 @@ public:
 		maybe_set(_layout_for_short_screen, layout);
 	}
 
+	void set_enable_crash_reporting(bool error) {
+		maybe_set(_enable_crash_reporting, error, ENABLE_CRASH_REPORTING);
+	}
+
 
 	void changed(Property p = OTHER);
 	boost::signals2::signal<void (Property)> Changed;
@@ -1512,6 +1521,7 @@ private:
 	int _player_http_server_port;
 	bool _relative_paths;
 	bool _layout_for_short_screen;
+	bool _enable_crash_reporting;
 
 #ifdef DCPOMATIC_GROK
 	Grok _grok;

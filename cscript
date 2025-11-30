@@ -583,6 +583,10 @@ def configure_options(target, options, for_package=False):
     ):
         opt += ' --enable-grok'
 
+
+    if target.platform == 'windows':
+        opt += ' --enable-sentry'
+
     if build_with_cpp17(target):
         opt += ' --c++17'
 

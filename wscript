@@ -81,6 +81,7 @@ def options(opt):
     opt.add_option('--disable-more-warnings', action='store_true', default=False, help='disable some warnings raised by Xcode 15 with the 2.16 branch')
     opt.add_option('--c++17', action='store_true', default=False, help='build with C++17 and libxml++-4.0')
     opt.add_option('--variant', help="build with variant")
+    opt.add_option('--enable-sentry',     action='store_true', default=False, help='build with Sentry to report errors')
 
 def configure(conf):
     conf.load('compiler_cxx')
@@ -113,6 +114,7 @@ def configure(conf):
     conf.env.STATIC_DCPOMATIC = conf.options.static_dcpomatic
     conf.env.ENABLE_DISK = conf.options.enable_disk
     conf.env.ENABLE_GROK = conf.options.enable_grok
+    conf.env.ENABLE_SENTRY = conf.options.enable_sentry
     if conf.options.destdir == '':
         conf.env.INSTALL_PREFIX = conf.options.prefix
     else:
@@ -185,6 +187,9 @@ def configure(conf):
 
     if conf.options.enable_grok:
         conf.env.append_value('CXXFLAGS', '-DDCPOMATIC_GROK')
+
+    if conf.options.enable_sentry:
+        conf.env.append_value('CXXFLAGS', '-DDCPOMATIC_SENTRY')
 
     if conf.options.use_lld:
         try:
@@ -703,6 +708,8 @@ def configure(conf):
 
     conf.find_program('msgfmt', var='MSGFMT')
     conf.check(header_name='valgrind/memcheck.h', mandatory=False)
+    if conf.env.ENABLE_SENTRY:
+        conf.check(header_name='sentry.h', uselib_store='SENTRY', lib=['sentry'], mandatory=True)
 
     datadir = conf.env.DATADIR
     if not datadir:

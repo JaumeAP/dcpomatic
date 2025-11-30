@@ -144,6 +144,9 @@ private:
 		++r;
 
 		add_update_controls(table, r);
+#ifdef DCPOMATIC_SENTRY
+		add_crash_reporting_controls(table, r);
+#endif
 
 		_default_add_file_location->add_entry(_("Same place as last time"));
 		_default_add_file_location->add_entry(_("Same place as project"));
