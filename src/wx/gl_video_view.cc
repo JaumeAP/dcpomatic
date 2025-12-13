@@ -631,10 +631,10 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 	 */
 	video = Image::ensure_alignment(video, Image::Alignment::COMPACT);
 
-	/** If _optimisation is J2K we render a XYZ image, doing the colourspace
-	 *  conversion, cropping, scaling and video range conversion in the GL shader.
-	 *  Similarly for MPEG2 we do YUV -> RGB and scaling in the shader.
-	 *  Otherwise we render a RGB image without any shader-side processing.
+	/* If _optimisation is J2K we render a XYZ image, doing the colourspace
+	 * conversion, cropping, scaling and video range conversion in the GL shader.
+	 * Similarly for MPEG2 we do YUV -> RGB and scaling in the shader.
+	 * Otherwise we render a RGB image without any shader-side processing.
 	 */
 
 	if (_optimisation == Optimisation::MPEG2) {

@@ -147,8 +147,8 @@ J2KImageProxy::prepare (Image::Alignment alignment, optional<dcp::Size> target_s
 		int const shift = 16 - decompressed->precision (0);
 
 		/* Copy data in whatever format (sRGB or XYZ) into our Image; I'm assuming
-		   the data is 12-bit either way.
-		   */
+		 * the data is 12-bit either way.
+		 */
 
 		int const width = decompressed->size().width;
 
