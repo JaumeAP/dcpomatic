@@ -796,6 +796,9 @@ ContentTimeline::maybe_snap(DCPTime a, DCPTime b, optional<DCPTime>& nearest_dis
 void
 ContentTimeline::set_position_from_event(wxMouseEvent& ev, bool force_emit)
 {
+	int* crash = 0;
+	*crash = 42;
+
 	if (!_pixels_per_second) {
 		return;
 	}
