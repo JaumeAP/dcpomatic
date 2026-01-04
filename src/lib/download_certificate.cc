@@ -52,7 +52,7 @@ download_gdc_certificate(string const& serial)
 	try {
 		return { dcp::Certificate(get_from_url(url, true, false).as_string()), url };
 	} catch (dcp::MiscError& e) {
-		throw CertificateDownloadError(fmt::format(_("Could not read certificate file ({})"), e.what()));
+		throw CertificateReadError(e.what());
 	}
 }
 
@@ -73,7 +73,7 @@ download_barco_certificate(string const& serial)
 	try {
 		return { dcp::Certificate(get_from_url(url, true, false).as_string()), url };
 	} catch (dcp::MiscError& e) {
-		throw CertificateDownloadError(fmt::format(_("Could not read certificate file ({})"), e.what()));
+		throw CertificateReadError(e.what());
 	}
 }
 
@@ -238,8 +238,8 @@ download_dolby_certificate(string const& serial, std::function<void ()> yield)
 		try {
 			auto data = get_from_zip_url(location.url, location.file, true, true);
 			return { dcp::Certificate(get_from_zip_url(location.url, location.file, true, true).as_string()), location.url };
-		} catch (dcp:MiscError& e) {
-			throw CertificateDownloadError(fmt::format(_("Could not read certificate file ({})"), e.what()));
+		} catch (dcp::MiscError& e) {
+			throw CertificateReadError(e.what());
 		}
 	}
 
@@ -247,7 +247,7 @@ download_dolby_certificate(string const& serial, std::function<void ()> yield)
 	for (auto e: errors) {
 		s += e + "\n";
 	}
-	throw CertificateDownloadError(s);
+	throw CertificateReadError(s);
 }
 
 
@@ -285,6 +285,36 @@ download_christie_certificate(string serial)
 
 
 pair<dcp::Certificate, string>
+download_qube_certificate(Manufacturer manufacturer, string const& serial)
+{
+	static string const base = "ftp://certificates.qubecinema.com/";
+	auto files = ls_url(fmt::format("{}SMPTE-{}/", base, _type));
+	if (files.empty()) {
+		throw DownloadError(_("Could not read certificates from Qube server."));
+	}
+
+	optional<string> name;
+	for (auto i: files) {
+		if (boost::algorithm::starts_with(i, fmt::format("{}-{}-", _type, serial))) {
+			name = i;
+			break;
+		}
+	}
+
+	if (!name) {
+		throw DownloadError(fmt::format(_("Could not find serial number {}"), serial));
+	}
+
+	try {
+		auto const url = fmt::format("{}SMPTE-{}/{}", base, _type, *name);
+		return { dcp::Certificate(get_from_url(url, true, false).as_string()), url };
+	} catch (dcp::MiscError& e) {
+		throw CertificateReadError(e.what());
+	}
+}
+
+
+pair<dcp::Certificate, string>
 download_certificate(Manufacturer manufacturer, string const& serial, std::function<void ()> yield)
 {
 	switch (manufacturer) {
@@ -296,6 +326,8 @@ download_certificate(Manufacturer manufacturer, string const& serial, std::funct
 		return download_dolby_certificate(serial, yield);
 	case Manufacturer::CHRISTIE:
 		return download_christie_certificate(serial);
+	case Manufacturer::QUBE:
+		return download_qube_certificate(serial);
 	}
 
 	return {};

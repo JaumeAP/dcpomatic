@@ -48,8 +48,6 @@ public:
 	virtual bool ready_to_download () const;
 
 	void download ();
-	void load_certificate(dcp::Data const& data, std::string url);
-	void load_certificate_from_chain(dcp::Data const& data, std::string url);
 	boost::optional<dcp::Certificate> certificate () const;
 	boost::optional<std::string> url () const;
 

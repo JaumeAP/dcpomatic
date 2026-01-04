@@ -56,35 +56,10 @@ DownloadCertificatePanel::DownloadCertificatePanel (DownloadCertificateDialog* d
 }
 
 
-void
-DownloadCertificatePanel::load_certificate(dcp::Data const& data, string url)
-{
-	try {
-		_certificate = dcp::Certificate(data.as_string());
-		_url = url;
-	} catch (dcp::MiscError& e) {
-		throw CertificateDownloadError(fmt::format(wx_to_std(_("Could not read certificate file ({})")), e.what()));
-	}
-}
-
-
-void
-DownloadCertificatePanel::load_certificate_from_chain(dcp::Data const& data, string url)
-{
-	try {
-		_certificate = dcp::CertificateChain(data.as_string()).leaf();
-		_url = url;
-	} catch (dcp::MiscError& e) {
-		throw CertificateDownloadError(fmt::format(wx_to_std(_("Could not read certificate file ({})")), e.what()));
-	}
-}
-
-
 optional<dcp::Certificate>
 DownloadCertificatePanel::certificate () const
 {
 	return _certificate;
-
 }
 
 

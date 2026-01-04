@@ -23,6 +23,7 @@
 #include "qube_certificate_panel.h"
 #include "wx_util.h"
 #include "lib/config.h"
+#include "lib/download_certificate.h"
 #include "lib/internet.h"
 #include <boost/algorithm/string.hpp>
 
@@ -36,9 +37,6 @@ using namespace boost::placeholders;
 #endif
 
 
-static string const base = "ftp://certificates.qubecinema.com/";
-
-
 QubeCertificatePanel::QubeCertificatePanel (DownloadCertificateDialog* dialog, string type)
 	: DownloadCertificatePanel (dialog)
 	, _type (type)
@@ -50,33 +48,11 @@ QubeCertificatePanel::QubeCertificatePanel (DownloadCertificateDialog* dialog, s
 void
 QubeCertificatePanel::do_download ()
 {
-	auto files = ls_url(fmt::format("{}SMPTE-{}/", base, _type));
-	if (files.empty()) {
-		error_dialog (this, _("Could not read certificates from Qube server."));
-		return;
-	}
-
 	auto serial = wx_to_std(_serial->GetValue());
 	trim(serial);
 
-	optional<string> name;
-	for (auto i: files) {
-		if (boost::algorithm::starts_with(i, fmt::format("{}-{}-", _type, serial))) {
-			name = i;
-			break;
-		}
-	}
-
-	if (!name) {
-		_dialog->message()->SetLabel({});
-		error_dialog (this, wxString::Format(_("Could not find serial number %s"), std_to_wx(serial).data()));
-		return;
-	}
-
 	try {
-		auto const url = fmt::format("{}SMPTE-{}/{}", base, _type, *name);
-		auto const data = get_from_url(url, true, false);
-		load_certificate(data, url);
+		std::tie(_certificate, _url) = download_certificate(Manufacturer::GDC, serial, []() { wxYield(); });
 		_dialog->message()->SetLabel(_("Certificate downloaded"));
 		_dialog->setup_sensitivity ();
 	} catch (std::exception& e) {

@@ -28,6 +28,7 @@ enum class Manufacturer
 	BARCO,
 	DOLBY,
 	CHRISTIE,
+	QUBE,
 };
 
 
