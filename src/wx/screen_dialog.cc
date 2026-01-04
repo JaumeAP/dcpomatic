@@ -155,9 +155,11 @@ ScreenDialog::ScreenDialog(
 
 	_get_recipient_from_file = new Button(this, _("Get from file..."));
 	_download_recipient = new Button(this, _("Download..."));
+	_redownload_recipient = new Button(this, _("Re-download..."));
 	auto s = new wxBoxSizer(wxHORIZONTAL);
 	s->Add(_get_recipient_from_file, 0, wxLEFT | wxRIGHT | wxEXPAND, DCPOMATIC_SIZER_X_GAP);
 	s->Add(_download_recipient, 0, wxLEFT | wxRIGHT | wxEXPAND, DCPOMATIC_SIZER_X_GAP);
+	s->Add(_redownload_recipient, 0, wxLEFT | wxRIGHT | wxEXPAND, DCPOMATIC_SIZER_X_GAP);
 	_sizer->Add(s, wxGBPosition(r, 0), wxGBSpan(1, 2));
 	++r;
 
@@ -228,6 +230,7 @@ ScreenDialog::ScreenDialog(
 	_name->Bind(wxEVT_TEXT, boost::bind(&ScreenDialog::setup_sensitivity, this));
 	_get_recipient_from_file->Bind(wxEVT_BUTTON, boost::bind(&ScreenDialog::get_recipient_from_file, this));
 	_download_recipient->Bind(wxEVT_BUTTON, boost::bind(&ScreenDialog::download_recipient, this));
+	_redownload_recipient->Bind(wxEVT_BUTTON, boost::bind(&ScreenDialog::redownload_recipient, this));
 
 	overall_sizer->Add(_sizer, 1, wxEXPAND | wxALL, DCPOMATIC_DIALOG_BORDER);
 
@@ -318,12 +321,32 @@ ScreenDialog::download_recipient()
 
 
 void
+ScreenDialog::redownload_recipient()
+{
+	auto url = wx_to_std(_recipient_file->GetLabel());
+	optional<string> username;
+	optional<string> password;
+	if (url.find("barco.com") != string::npos) {
+		username = Config::instance()->barco_username();
+		password = Config::instance()->barco_password();
+	} else if (url.find("christiedigital.com") != string::npos) {
+		username = Config::instance()->christie_username();
+		password = Config::instance()->christie_password();
+	} else if (url.find("gdc-tech.com") != string::npos) {
+		username = Config::instance()->gdc_username();
+		password = Config::instance()->gdc_password();
+	}
+}
+
+
+void
 ScreenDialog::setup_sensitivity()
 {
-	auto ok = dynamic_cast<wxButton*>(FindWindowById(wxID_OK, this));
-	if (ok) {
+	if (auto ok = dynamic_cast<wxButton*>(FindWindowById(wxID_OK, this))) {
 		ok->Enable(static_cast<bool>(_recipient) && !_name->GetValue().IsEmpty());
 	}
+
+	_redownload_recipient->Enable(_recipient_file->GetLabel().Find(char_to_wx("://")) != wxNOT_FOUND);
 }
 
 

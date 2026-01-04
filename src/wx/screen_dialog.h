@@ -58,6 +58,7 @@ private:
 	void get_recipient_from_file();
 	void load_recipient(boost::filesystem::path);
 	void download_recipient();
+	void redownload_recipient();
 	void setup_sensitivity();
 	void set_recipient(boost::optional<dcp::Certificate>);
 	void set_recipient_file(std::string file);
@@ -79,6 +80,7 @@ private:
 	wxStaticText* _not_valid_after;
 	wxButton* _get_recipient_from_file;
 	wxButton* _download_recipient;
+	wxButton* _redownload_recipient;
 	EditableList<TrustedDevice>* _trusted_device_list;
 
 	boost::optional<dcp::Certificate> _recipient;
