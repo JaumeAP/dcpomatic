@@ -18,11 +18,14 @@
 
 */
 
+
 #include "christie_certificate_panel.h"
 #include "download_certificate_dialog.h"
 #include "wx_util.h"
+#include "lib/download_certificate.h"
 #include "lib/internet.h"
 #include "lib/config.h"
+
 
 using std::string;
 using boost::optional;
@@ -30,6 +33,7 @@ using boost::bind;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
 #endif
+
 
 ChristieCertificatePanel::ChristieCertificatePanel (DownloadCertificateDialog* dialog)
 	: CredentialsDownloadCertificatePanel (
@@ -46,6 +50,7 @@ ChristieCertificatePanel::ChristieCertificatePanel (DownloadCertificateDialog* d
 
 }
 
+
 void
 ChristieCertificatePanel::do_download ()
 {
@@ -55,38 +60,17 @@ ChristieCertificatePanel::do_download ()
 		Config::instance()->christie_password().get()
 		);
 
-	string serial = wx_to_std (_serial->GetValue());
-	serial.insert (0, 12 - serial.length(), '0');
-
-
-	optional<string> all_errors;
-	bool ok = true;
-
+	string serial = wx_to_std(_serial->GetValue());
 	try {
-		string const url = fmt::format("{}F-IMB/F-IMB_{}_sha256.pem", prefix, serial);
-		auto data = get_from_url(url, true, false);
-		load_certificate_from_chain(data, url);
+		std::tie(_certificate, _url) = download_certificate(Manufacturer::CHRISTIE, serial, []() { wxYield(); });
+		_dialog->message()->SetLabel(_("Certificate downloaded"));
+		_dialog->setup_sensitivity();
 	} catch (std::exception& e) {
-		all_errors = e.what();
-
-		try {
-			auto const url = fmt::format("{}IMB-S2/IMB-S2_{}_sha256.pem", prefix, serial);
-			auto data = get_from_url(url, true, false);
-			load_certificate_from_chain(data, url);
-		} catch (std::exception& e) {
-			*all_errors += "\n" + string(e.what());
-			ok = false;
-		}
-	}
-
-	if (ok) {
-		_dialog->message()->SetLabel (_("Certificate downloaded"));
-		_dialog->setup_sensitivity ();
-	} else {
 		_dialog->message()->SetLabel({});
-		error_dialog (this, std_to_wx(*all_errors));
+		error_dialog(this, std_to_wx(e.what()));
 	}
 }
+
 
 wxString
 ChristieCertificatePanel::name () const

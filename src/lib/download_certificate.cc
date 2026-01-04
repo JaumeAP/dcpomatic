@@ -251,6 +251,39 @@ download_dolby_certificate(string const& serial, std::function<void ()> yield)
 }
 
 
+static
+pair<dcp::Certificate, string>
+download_christie_certificate(string serial)
+{
+	string const prefix = fmt::format(
+		"ftp://{}:{}@certificates.christiedigital.com/Certificates/",
+		Config::instance()->christie_username().get(),
+		Config::instance()->christie_password().get()
+		);
+
+	serial.insert(0, 12 - serial.length(), '0');
+
+	optional<string> all_errors;
+
+	try {
+		string const url = fmt::format("{}F-IMB/F-IMB_{}_sha256.pem", prefix, serial);
+		return { dcp::CertificateChain(get_from_url(url, true, false).as_string()).leaf(), url };
+	} catch (std::exception& e) {
+		all_errors = e.what();
+
+		try {
+			auto const url = fmt::format("{}IMB-S2/IMB-S2_{}_sha256.pem", prefix, serial);
+			return { dcp::CertificateChain(get_from_url(url, true, false).as_string()).leaf(), url };
+		} catch (std::exception& e) {
+			*all_errors += "\n" + string(e.what());
+		}
+	}
+
+	/* Could be a mix of download and certificate parsing problems, but hopefully this is good enough */
+	throw CertificateReadError(*all_errors);
+}
+
+
 pair<dcp::Certificate, string>
 download_certificate(Manufacturer manufacturer, string const& serial, std::function<void ()> yield)
 {
@@ -261,6 +294,8 @@ download_certificate(Manufacturer manufacturer, string const& serial, std::funct
 		return download_barco_certificate(serial);
 	case Manufacturer::DOLBY:
 		return download_dolby_certificate(serial, yield);
+	case Manufacturer::CHRISTIE:
+		return download_christie_certificate(serial);
 	}
 
 	return {};

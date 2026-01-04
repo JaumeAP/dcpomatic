@@ -27,6 +27,7 @@ enum class Manufacturer
 	GDC,
 	BARCO,
 	DOLBY,
+	CHRISTIE,
 };
 
 
