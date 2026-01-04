@@ -53,12 +53,35 @@ download_gdc_certificate(string const& serial)
 }
 
 
+static
+pair<dcp::Certificate, string>
+download_barco_certificate(string const& serial)
+{
+	string const url = fmt::format(
+		"sftp://{}:{}@certificates.barco.com/{}xxx/{}/Barco-ICMP.{}_cert.pem",
+		Config::instance()->barco_username().get(),
+		Config::instance()->barco_password().get(),
+		serial.substr(0, 7),
+		serial,
+		serial
+		);
+
+	try {
+		return { dcp::Certificate(get_from_url(url, true, false).as_string()), url };
+	} catch (dcp::MiscError& e) {
+		throw CertificateDownloadError(fmt::format(_("Could not read certificate file ({})"), e.what()));
+	}
+}
+
+
 pair<dcp::Certificate, string>
 download_certificate(Manufacturer manufacturer, string const& serial)
 {
 	switch (manufacturer) {
 	case Manufacturer::GDC:
 		return download_gdc_certificate(serial);
+	case Manufacturer::BARCO:
+		return download_barco_certificate(serial);
 	}
 
 	return {};

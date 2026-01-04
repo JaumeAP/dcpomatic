@@ -25,6 +25,7 @@
 enum class Manufacturer
 {
 	GDC,
+	BARCO,
 };
 
 
