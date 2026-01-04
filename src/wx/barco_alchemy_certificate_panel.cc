@@ -63,7 +63,7 @@ BarcoAlchemyCertificatePanel::do_download()
 	string serial = wx_to_std(_serial->GetValue());
 	trim(serial);
 	try {
-		std::tie(_certificate, _url) = download_certificate(Manufacturer::BARCO, serial);
+		std::tie(_certificate, _url) = download_certificate(Manufacturer::BARCO, serial, []() { wxYield(); });
 		_dialog->message()->SetLabel(_("Certificate downloaded"));
 		_dialog->setup_sensitivity();
 	} catch (std::exception& e) {

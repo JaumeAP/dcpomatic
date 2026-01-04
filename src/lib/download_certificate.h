@@ -26,8 +26,9 @@ enum class Manufacturer
 {
 	GDC,
 	BARCO,
+	DOLBY,
 };
 
 
-std::pair<dcp::Certificate, std::string> download_certificate(Manufacturer manufacturer, std::string const& serial);
+std::pair<dcp::Certificate, std::string> download_certificate(Manufacturer manufacturer, std::string const& serial, std::function<void ()> yield);
 
