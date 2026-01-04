@@ -31,6 +31,10 @@ LIBDCP_ENABLE_WARNINGS
 #include <boost/optional.hpp>
 
 
+namespace dcp {
+	class Data;
+}
+
 class DownloadCertificateDialog;
 
 
@@ -44,8 +48,8 @@ public:
 	virtual bool ready_to_download () const;
 
 	void download ();
-	boost::optional<std::string> load_certificate (boost::filesystem::path, std::string url);
-	boost::optional<std::string> load_certificate_from_chain (boost::filesystem::path, std::string url);
+	void load_certificate(dcp::Data const& data, std::string url);
+	void load_certificate_from_chain(dcp::Data const& data, std::string url);
 	boost::optional<dcp::Certificate> certificate () const;
 	boost::optional<std::string> url () const;
 

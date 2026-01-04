@@ -63,14 +63,14 @@ GDCCertificatePanel::do_download ()
 		);
 	trim(url);
 
-	auto error = get_from_url (url, true, false, boost::bind(&DownloadCertificatePanel::load_certificate, this, _1, _2));
-
-	if (error) {
-		_dialog->message()->SetLabel({});
-		error_dialog (this, std_to_wx(*error));
-	} else {
-		_dialog->message()->SetLabel (_("Certificate downloaded"));
+	try {
+		auto data = get_from_url(url, true, false);
+		load_certificate(data, url);
+		_dialog->message()->SetLabel(_("Certificate downloaded"));
 		_dialog->setup_sensitivity ();
+	} catch (std::exception& e) {
+		_dialog->message()->SetLabel({});
+		error_dialog(this, std_to_wx(e.what()));
 	}
 }
 

@@ -210,13 +210,15 @@ DolbyDoremiCertificatePanel::do_download()
 	auto location = locations.begin();
 	while (!ok && location != locations.end()) {
 		wxYield();
-		auto error = get_from_zip_url(location->url, location->file, true, true, boost::bind(&DownloadCertificatePanel::load_certificate, this, _1, _2));
-		++location;
-		if (error) {
-			errors.push_back(error.get());
-		} else {
+		try {
+			auto data = get_from_zip_url(location->url, location->file, true, true);
+			load_certificate(data, location->url);
 			ok = true;
+		} catch (std::exception& e) {
+			errors.push_back(e.what());
 		}
+
+		++location;
 	}
 
 	if (ok) {

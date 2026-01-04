@@ -85,23 +85,26 @@ ls_url(string url)
 
 
 static size_t
-get_from_url_data(void* buffer, size_t size, size_t nmemb, void* stream)
+get_from_url_data(void* buffer, size_t size, size_t nmemb, void* data_void)
 {
-	auto f = reinterpret_cast<FILE*>(stream);
-	return fwrite(buffer, size, nmemb, f);
+	auto data = reinterpret_cast<dcp::ArrayData*>(data_void);
+	int const old_size = data->size();
+	data->set_size(old_size + size * nmemb);
+	memcpy(data->data() + old_size, buffer, size * nmemb);
+	return size;
 }
 
 
-static
-optional<string>
-get_from_url(string url, bool pasv, bool skip_pasv_ip, ScopedTemporary& temp)
+dcp::ArrayData
+get_from_url(string url, bool pasv, bool skip_pasv_ip)
 {
+	dcp::ArrayData data;
+
 	auto curl = curl_easy_init();
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-	auto& f = temp.open("wb");
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, get_from_url_data);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f.get());
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
 	curl_easy_setopt(curl, CURLOPT_FTP_USE_EPSV, 0);
 	curl_easy_setopt(curl, CURLOPT_FTP_USE_EPRT, 0);
 	if (skip_pasv_ip) {
@@ -118,40 +121,28 @@ get_from_url(string url, bool pasv, bool skip_pasv_ip, ScopedTemporary& temp)
 
 	auto const cr = curl_easy_perform(curl);
 
-	f.close();
 	curl_easy_cleanup(curl);
 	if (cr != CURLE_OK) {
-		return fmt::format(_("Download failed ({} error {})"), url, (int) cr);
+		throw DownloadError(fmt::format(_("Download failed ({} error {})"), url, (int) cr));
 	}
 
-	return {};
-}
-
-
-optional<string>
-get_from_url(string url, bool pasv, bool skip_pasv_ip, function<optional<string> (boost::filesystem::path, string)> load)
-{
-	ScopedTemporary temp;
-	auto e = get_from_url(url, pasv, skip_pasv_ip, temp);
-	if (e) {
-		return e;
-	}
-	return load(temp.path(), url);
+	return data;
 }
 
 
 /** @param url URL of ZIP file.
  *  @param file Filename within ZIP file.
- *  @param load Function passed a (temporary) filesystem path of the unpacked file.
+ *  @return File's data.
+ *
+ *  DownloadError is thrown in case of error.
  */
-optional<string>
-get_from_zip_url(string url, string file, bool pasv, bool skip_pasv_ip, function<optional<string> (boost::filesystem::path, string)> load)
+dcp::ArrayData
+get_from_zip_url(string url, string file, bool pasv, bool skip_pasv_ip)
 {
-	/* Download the ZIP file to temp_zip */
+	/* Download the ZIP file and write it to temp_zip */
+	auto const zip_data = get_from_url(url, pasv, skip_pasv_ip);
 	ScopedTemporary temp_zip;
-	if (auto e = get_from_url(url, pasv, skip_pasv_ip, temp_zip)) {
-		return e;
-	}
+	zip_data.write(temp_zip.path());
 
 	/* Open the ZIP file and read `file' out of it */
 
@@ -163,19 +154,19 @@ get_from_zip_url(string url, string file, bool pasv, bool skip_pasv_ip, function
 
 	auto& zip_file = temp_zip.open("rb");
 	if (!zip_file) {
-		return string(_("Could not open downloaded ZIP file"));
+		throw DownloadError(_("Could not open downloaded ZIP file"));
 	}
 
 	auto zip_source = zip_source_filep_create(zip_file.take(), 0, -1, 0);
 	if (!zip_source) {
-		return string(_("Could not open downloaded ZIP file"));
+		throw DownloadError(_("Could not open downloaded ZIP file"));
 	}
 
 	zip_error_t error;
 	zip_error_init(&error);
 	auto zip = zip_open_from_source(zip_source, ZIP_RDONLY, &error);
 	if (!zip) {
-		return fmt::format(_("Could not open downloaded ZIP file ({}:{}: {})"), error.zip_err, error.sys_err, error.str ? error.str : "");
+		throw DownloadError(fmt::format(_("Could not open downloaded ZIP file ({}:{}: {})"), error.zip_err, error.sys_err, error.str ? error.str : ""));
 	}
 
 #else
@@ -184,22 +175,22 @@ get_from_zip_url(string url, string file, bool pasv, bool skip_pasv_ip, function
 
 	struct zip_file* file_in_zip = zip_fopen(zip, file.c_str(), 0);
 	if (!file_in_zip) {
-		return string(_("Unexpected ZIP file contents"));
+		throw DownloadError(_("Unexpected ZIP file contents"));
 	}
 
-	ScopedTemporary temp_cert;
-	auto& f = temp_cert.open("wb");
-	char buffer[4096];
+	int constexpr block_size = 4096;
+	int offset = 0;
+	dcp::ArrayData data(block_size);
 	while (true) {
-		int const N = zip_fread(file_in_zip, buffer, sizeof(buffer));
-		f.checked_write(buffer, N);
-		if (N < int(sizeof(buffer))) {
+		int const N = zip_fread(file_in_zip, data.data() + offset, block_size);
+		if (N < block_size) {
+			data.set_size(offset + N);
 			break;
 		}
+		offset += block_size;
 	}
 	zip_fclose(file_in_zip);
 	zip_close(zip);
-	f.close();
 
-	return load(temp_cert.path(), url);
+	return data;
 }

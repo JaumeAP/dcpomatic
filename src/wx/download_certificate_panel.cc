@@ -56,29 +56,27 @@ DownloadCertificatePanel::DownloadCertificatePanel (DownloadCertificateDialog* d
 }
 
 
-optional<string>
-DownloadCertificatePanel::load_certificate (boost::filesystem::path file, string url)
+void
+DownloadCertificatePanel::load_certificate(dcp::Data const& data, string url)
 {
 	try {
-		_certificate = dcp::Certificate (dcp::file_to_string(file));
+		_certificate = dcp::Certificate(data.as_string());
 		_url = url;
 	} catch (dcp::MiscError& e) {
-		return fmt::format(wx_to_std(_("Could not read certificate file ({})")), e.what());
+		throw CertificateDownloadError(fmt::format(wx_to_std(_("Could not read certificate file ({})")), e.what()));
 	}
-	return {};
 }
 
 
-optional<string>
-DownloadCertificatePanel::load_certificate_from_chain (boost::filesystem::path file, string url)
+void
+DownloadCertificatePanel::load_certificate_from_chain(dcp::Data const& data, string url)
 {
 	try {
-		_certificate = dcp::CertificateChain(dcp::file_to_string(file)).leaf();
+		_certificate = dcp::CertificateChain(data.as_string()).leaf();
 		_url = url;
 	} catch (dcp::MiscError& e) {
-		return fmt::format(wx_to_std(_("Could not read certificate file ({})")), e.what());
+		throw CertificateDownloadError(fmt::format(wx_to_std(_("Could not read certificate file ({})")), e.what()));
 	}
-	return {};
 }
 
 

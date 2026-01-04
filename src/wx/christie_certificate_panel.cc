@@ -58,20 +58,23 @@ ChristieCertificatePanel::do_download ()
 	string serial = wx_to_std (_serial->GetValue());
 	serial.insert (0, 12 - serial.length(), '0');
 
-	string const url = fmt::format("{}F-IMB/F-IMB_{}_sha256.pem", prefix, serial);
 
 	optional<string> all_errors;
 	bool ok = true;
 
-	auto error = get_from_url (url, true, false, boost::bind(&DownloadCertificatePanel::load_certificate_from_chain, this, _1, _2));
-	if (error) {
-		all_errors = *error;
+	try {
+		string const url = fmt::format("{}F-IMB/F-IMB_{}_sha256.pem", prefix, serial);
+		auto data = get_from_url(url, true, false);
+		load_certificate_from_chain(data, url);
+	} catch (std::exception& e) {
+		all_errors = e.what();
 
-		auto const url = fmt::format("{}IMB-S2/IMB-S2_{}_sha256.pem", prefix, serial);
-
-		error = get_from_url (url, true, false, boost::bind(&DownloadCertificatePanel::load_certificate_from_chain, this, _1, _2));
-		if (error) {
-			*all_errors += "\n" + *error;
+		try {
+			auto const url = fmt::format("{}IMB-S2/IMB-S2_{}_sha256.pem", prefix, serial);
+			auto data = get_from_url(url, true, false);
+			load_certificate_from_chain(data, url);
+		} catch (std::exception& e) {
+			*all_errors += "\n" + string(e.what());
 			ok = false;
 		}
 	}
