@@ -547,4 +547,20 @@ public:
 };
 
 
+class DownloadError : public std::runtime_error
+{
+public:
+	explicit DownloadError(std::string s)
+		: std::runtime_error(s)
+	{}
+};
+
+
+class CertificateReadError : public std::runtime_error
+{
+public:
+	explicit CertificateReadError(std::string const& detail);
+};
+
+
 #endif

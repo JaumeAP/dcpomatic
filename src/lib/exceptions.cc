@@ -190,3 +190,11 @@ SQLError::get_filename(SQLiteDatabase& db)
 
 	return {};
 }
+
+
+CertificateReadError::CertificateReadError(string const& detail)
+	: std::runtime_error(fmt::format(_("Could not read certificate file ({})", detail)))
+{
+
+}
+
