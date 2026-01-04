@@ -59,7 +59,6 @@ protected:
 	wxTextCtrl* _serial;
 	wxSizer* _overall_sizer;
 
-private:
 	boost::optional<dcp::Certificate> _certificate;
 	boost::optional<std::string> _url;
 };

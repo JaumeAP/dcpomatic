@@ -23,6 +23,7 @@
 #include "gdc_certificate_panel.h"
 #include "wx_util.h"
 #include "lib/config.h"
+#include "lib/download_certificate.h"
 #include "lib/internet.h"
 #include <boost/algorithm/string.hpp>
 
@@ -53,19 +54,10 @@ GDCCertificatePanel::GDCCertificatePanel (DownloadCertificateDialog* dialog)
 void
 GDCCertificatePanel::do_download ()
 {
-	string serial = wx_to_std (_serial->GetValue());
+	string serial = wx_to_std(_serial->GetValue());
 	trim(serial);
-	string url = fmt::format(
-		"ftp://{}:{}@ftp.gdc-tech.com/SHA256/{}.crt.pem",
-		Config::instance()->gdc_username().get(),
-		Config::instance()->gdc_password().get(),
-		serial
-		);
-	trim(url);
-
 	try {
-		auto data = get_from_url(url, true, false);
-		load_certificate(data, url);
+		std::tie(_certificate, _url) = download_certificate(Manufacturer::GDC, serial);
 		_dialog->message()->SetLabel(_("Certificate downloaded"));
 		_dialog->setup_sensitivity ();
 	} catch (std::exception& e) {
@@ -73,6 +65,7 @@ GDCCertificatePanel::do_download ()
 		error_dialog(this, std_to_wx(e.what()));
 	}
 }
+
 
 wxString
 GDCCertificatePanel::name () const
