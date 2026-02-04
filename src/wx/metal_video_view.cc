@@ -54,7 +54,7 @@ MetalVideoView::MetalVideoView(FilmViewer* viewer, wxWindow* parent)
 	: VideoView(viewer, false)
 	, _canvas(new wxWindow(parent, wxID_ANY))
 {
-	_device = MTLCreateSystemDefaultDevice();
+	_device = NS::TransferPtr(MTLCreateSystemDefaultDevice());
 	_view = MTK::View::alloc()->init(CGRect{{0, 0}, {512, 512}}, _device);
 	_view->setColorPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB);
 	_view->setClearColor(MTL::ClearColor::Make(1.0, 0.0, 0.0, 1.0));
@@ -62,6 +62,7 @@ MetalVideoView::MetalVideoView(FilmViewer* viewer, wxWindow* parent)
 	_view->setDelegate(_delegate);
 
 	set_layer(_canvas->GetHandle(), _view->currentDrawable()->layer());
+	std::cout << "Create MetalVideoView\n";
 }
 
 
@@ -74,27 +75,27 @@ MetalVideoView::~MetalVideoView()
 void
 MetalVideoView::update()
 {
-
+	std::cout << "MetalVideoView::update()\n";
 }
 
 
 void
 MetalVideoView::start()
 {
-
+	std::cout << "MetalVideoView::start()\n";
 }
 
 
 void
 MetalVideoView::stop()
 {
-
+	std::cout << "MetalVideoView::stop()\n";
 }
 
 
 VideoView::NextFrameResult
 MetalVideoView::display_next_frame(bool non_blocking)
 {
-
+	std::cout << "MetalVideoView::display_next_frame()\n";
 }
 

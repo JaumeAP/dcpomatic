@@ -52,7 +52,7 @@ public:
 
 private:
 	wxWindow* _canvas;
-	MTL::Device* _device;
+	NS::SharedPtr<MTL::Device> _device;
 	MTK::View* _view;
 	ViewDelegate* _delegate;
 };
