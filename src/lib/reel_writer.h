@@ -122,6 +122,8 @@ private:
 		) const;
 	void create_reel_markers(std::shared_ptr<dcp::Reel> reel) const;
 	float convert_vertical_position(StringText const& subtitle, dcp::SubtitleStandard to) const;
+	void copy_file(boost::filesystem::path from, boost::filesystem::path to);
+
 
 	std::shared_ptr<dcp::ReelTextAsset> maybe_add_text(
 		std::shared_ptr<dcp::TextAsset> asset,
