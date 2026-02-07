@@ -758,10 +758,10 @@ Player::pass()
 		earliest_content->done = earliest_content->decoder->pass();
 		auto dcp = dynamic_pointer_cast<DCPContent>(earliest_content->content);
 		if (dcp && !_play_reusable) {
-			if (dcp->reference_video()) {
+			if (dcp->can_reuse_video(film)) {
 				_next_video_time = dcp->end(film);
 			}
-			if (dcp->reference_audio()) {
+			if (dcp->can_reuse_audio(film)) {
 				/* We are skipping some referenced DCP audio content, so we need to update _next_audio_time
 				   to `hide' the fact that no audio was emitted during the referenced DCP (though
 				   we need to behave as though it was).

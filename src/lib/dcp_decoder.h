@@ -116,4 +116,8 @@ private:
 	std::string _lazy_digest;
 
 	FontIDAllocator _font_id_allocator;
+
+	bool _can_reuse_video;
+	bool _can_reuse_audio;
+	EnumIndexedVector<bool, TextType> _can_reuse_text;
 };

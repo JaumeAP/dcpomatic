@@ -158,6 +158,7 @@ def build(bld):
                  remake_video_test.cc
                  remake_with_subtitle_test.cc
                  render_subtitles_test.cc
+                 reuse_test.cc
                  scaling_test.cc
                  scoped_temporary_test.cc
                  silence_padding_test.cc

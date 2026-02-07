@@ -411,7 +411,7 @@ ReelWriter::finish(boost::filesystem::path output_dcp)
 
 template <class Asset>
 shared_ptr<Asset>
-maybe_reuse_asset(char const* log_name, list<ReusableReelAsset> const& refs, DCPTimePeriod period)
+maybe_reuse_asset(char const* log_name, list<ReusableReelAsset> const& refs, DCPTimePeriod period, boost::filesystem::path output_dir)
 {
 	shared_ptr<Asset> reusable;
 
@@ -423,6 +423,13 @@ maybe_reuse_asset(char const* log_name, list<ReusableReelAsset> const& refs, DCP
 		}
 		if (asset && ref.period == period) {
 			reusable = asset;
+			if (ref.use == ReusableReelAsset::Use::COPY) {
+				auto mxf = reusable->asset_ref().asset();
+				DCPOMATIC_ASSERT(mxf->file());
+				auto const destination = output_dir / mxf->file()->filename();
+				copy_file(*mxf->file(), destination);
+				mxf->set_file(destination);
+			}
 			/* If we have a hash for this asset in the CPL, assume that it is correct */
 			if (reusable->hash()) {
 				reusable->asset_ref()->set_hash(reusable->hash().get());
@@ -484,7 +491,7 @@ ReelWriter::maybe_add_text(
 
 	} else {
 		/* We don't have a subtitle asset of our own; hopefully we have one to reuse */
-		reel_asset = maybe_reuse_asset<dcp::ReelTextAsset>("subtitle", refs, _period);
+		reel_asset = maybe_reuse_asset<dcp::ReelTextAsset>("subtitle", refs, _period, _output_dir);
 	}
 
 	if (reel_asset) {
@@ -519,7 +526,7 @@ ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReusableReelAss
 		reel_asset = make_shared<dcp::ReelMonoPictureAsset>(_mpeg2_picture_asset, 0);
 	} else {
 		/* We don't have a picture asset of our own; hopefully we have one to reuse */
-		reel_asset = maybe_reuse_asset<dcp::ReelPictureAsset>("picture", refs, _period);
+		reel_asset = maybe_reuse_asset<dcp::ReelPictureAsset>("picture", refs, _period, _output_dir);
 	}
 
 	Frame const period_duration = _period.duration().frames_round(film()->video_frame_rate());
@@ -552,7 +559,7 @@ ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReusableReelAsset
 		reel_asset = make_shared<dcp::ReelSoundAsset>(_sound_asset, 0);
 	} else {
 		/* We don't have a sound asset of our own; hopefully we have one to reuse */
-		reel_asset = maybe_reuse_asset<dcp::ReelSoundAsset>("sound", refs, _period);
+		reel_asset = maybe_reuse_asset<dcp::ReelSoundAsset>("sound", refs, _period, _output_dir);
 	}
 
 	auto const period_duration = _period.duration().frames_round(film()->video_frame_rate());
