@@ -869,7 +869,7 @@ Writer::write(ReusableReelAsset asset)
 		if (is_open(text_asset->type())) {
 			_have_subtitles = true;
 		} else {
-			/* This feels quite fragile. We have a referenced reel and want to know if it's
+			/* This feels quite fragile. We have a reused reel and want to know if it's
 			 * part of a given closed-caption track so that we can fill if it has any
 			 * missing reels.  I guess for that purpose almost any DCPTextTrack values are
 			 * fine so long as they are consistent.
@@ -930,7 +930,7 @@ Writer::set_digest_progress(Job* job, int id, int64_t done, int64_t size)
 }
 
 
-/** Calculate hashes for any referenced MXF assets which do not already have one */
+/** Calculate hashes for any reused MXF assets which do not already have one */
 void
 Writer::calculate_referenced_digests(std::function<void (int64_t, int64_t)> set_progress)
 try
