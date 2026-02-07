@@ -24,7 +24,7 @@
 #include "dcpomatic_assert.h"
 #include "film.h"
 #include "playlist.h"
-#include "referenced_reel_asset.h"
+#include "reusable_reel_asset.h"
 #include <dcp/reel.h>
 #include <dcp/reel_asset.h>
 #include <dcp/reel_picture_asset.h>

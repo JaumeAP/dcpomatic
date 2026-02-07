@@ -25,8 +25,8 @@
 #include "enum_indexed_vector.h"
 #include "font_id_map.h"
 #include "player_text.h"
-#include "referenced_reel_asset.h"
 #include "render_text.h"
+#include "reusable_reel_asset.h"
 #include "text_type.h"
 #include "weak_film.h"
 #include <dcp/atmos_asset_writer.h>

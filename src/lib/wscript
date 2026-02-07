@@ -178,7 +178,7 @@ sources = """
           ratio.cc
           raw_image_proxy.cc
           reel_writer.cc
-          referenced_reel_asset.cc
+          reusable_reel_asset.cc
           release_notes.cc
           remembered_asset.cc
           render_text.cc

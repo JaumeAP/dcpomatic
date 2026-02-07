@@ -35,7 +35,7 @@
 #include "mpeg2_encoder.h"
 #include "player.h"
 #include "player_video.h"
-#include "referenced_reel_asset.h"
+#include "reusable_reel_asset.h"
 #include "text_content.h"
 #include "video_decoder.h"
 #include "writer.h"

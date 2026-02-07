@@ -36,7 +36,7 @@
 #include "lib/player.h"
 #include "lib/ratio.h"
 #include "lib/text_content.h"
-#include "lib/referenced_reel_asset.h"
+#include "lib/reusable_reel_asset.h"
 #include "lib/video_content.h"
 #include "test.h"
 #include <dcp/cpl.h>
