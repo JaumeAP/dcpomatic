@@ -134,7 +134,7 @@ DCPFilmEncoder::go()
 		}
 	}
 
-	for (auto i: get_referenced_reel_assets(_film, _film->playlist())) {
+	for (auto i: get_reusable_reel_assets(_film, _film->playlist())) {
 		_writer->write(i);
 	}
 

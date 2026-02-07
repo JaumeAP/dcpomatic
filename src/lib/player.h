@@ -53,7 +53,7 @@ class Content;
 class Film;
 class PlayerVideo;
 class Playlist;
-class ReferencedReelAsset;
+class ReusableReelAsset;
 
 
 class PlayerProperty

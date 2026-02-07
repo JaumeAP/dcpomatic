@@ -31,10 +31,10 @@ class Film;
 class Playlist;
 
 
-class ReferencedReelAsset
+class ReusableReelAsset
 {
 public:
-	ReferencedReelAsset (std::shared_ptr<dcp::ReelAsset> asset_, dcpomatic::DCPTimePeriod period_)
+	ReusableReelAsset (std::shared_ptr<dcp::ReelAsset> asset_, dcpomatic::DCPTimePeriod period_)
 		: asset (asset_)
 		, period (period_)
 	{}
@@ -46,7 +46,7 @@ public:
 };
 
 
-std::list<ReferencedReelAsset> get_referenced_reel_assets(std::shared_ptr<const Film> film, std::shared_ptr<const Playlist> playlist);
+std::list<ReusableReelAsset> get_reusable_reel_assets(std::shared_ptr<const Film> film, std::shared_ptr<const Playlist> playlist);
 
 
 #endif

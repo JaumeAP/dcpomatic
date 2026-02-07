@@ -861,7 +861,7 @@ Writer::set_encoder_threads(int threads)
 
 
 void
-Writer::write(ReferencedReelAsset asset)
+Writer::write(ReusableReelAsset asset)
 {
 	_reel_assets.push_back(asset);
 

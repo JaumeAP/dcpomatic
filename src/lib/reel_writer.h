@@ -85,7 +85,7 @@ public:
 
 	void finish(boost::filesystem::path output_dcp);
 	std::shared_ptr<dcp::Reel> create_reel(
-		std::list<ReferencedReelAsset> const & refs,
+		std::list<ReusableReelAsset> const & refs,
 		boost::filesystem::path output_dcp,
 		bool ensure_subtitles,
 		std::set<DCPTextTrack> ensure_closed_captions
@@ -110,11 +110,11 @@ private:
 	bool existing_picture_frame_ok(dcp::File& asset_file, Frame frame);
 	std::shared_ptr<dcp::TextAsset> empty_text_asset(TextType type, boost::optional<DCPTextTrack> track, bool with_dummy) const;
 
-	std::shared_ptr<dcp::ReelPictureAsset> create_reel_picture(std::shared_ptr<dcp::Reel> reel, std::list<ReferencedReelAsset> const & refs) const;
-	void create_reel_sound(std::shared_ptr<dcp::Reel> reel, std::list<ReferencedReelAsset> const & refs) const;
+	std::shared_ptr<dcp::ReelPictureAsset> create_reel_picture(std::shared_ptr<dcp::Reel> reel, std::list<ReusableReelAsset> const & refs) const;
+	void create_reel_sound(std::shared_ptr<dcp::Reel> reel, std::list<ReusableReelAsset> const & refs) const;
 	void create_reel_text(
 		std::shared_ptr<dcp::Reel> reel,
-		std::list<ReferencedReelAsset> const & refs,
+		std::list<ReusableReelAsset> const& refs,
 		int64_t duration,
 		boost::filesystem::path output_dcp,
 		bool ensure_subtitles,

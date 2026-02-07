@@ -491,7 +491,7 @@ ReelWriter::maybe_add_text(
 
 
 shared_ptr<dcp::ReelPictureAsset>
-ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReferencedReelAsset> const & refs) const
+ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReusableReelAsset> const & refs) const
 {
 	shared_ptr<dcp::ReelPictureAsset> reel_asset;
 
@@ -541,7 +541,7 @@ ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReferencedReelA
 
 
 void
-ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReferencedReelAsset> const & refs) const
+ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReusableReelAsset> const & refs) const
 {
 	shared_ptr<dcp::ReelSoundAsset> reel_asset;
 
@@ -587,7 +587,7 @@ ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReferencedReelAss
 void
 ReelWriter::create_reel_text(
 	shared_ptr<dcp::Reel> reel,
-	list<ReferencedReelAsset> const & refs,
+	list<ReusableReelAsset> const & refs,
 	int64_t duration,
 	boost::filesystem::path output_dcp,
 	bool ensure_subtitles,
@@ -666,7 +666,7 @@ ReelWriter::create_reel_markers(shared_ptr<dcp::Reel> reel) const
  */
 shared_ptr<dcp::Reel>
 ReelWriter::create_reel(
-	list<ReferencedReelAsset> const & refs,
+	list<ReusableReelAsset> const & refs,
 	boost::filesystem::path output_dcp,
 	bool ensure_subtitles,
 	set<DCPTextTrack> ensure_closed_captions

@@ -43,14 +43,14 @@ using namespace dcpomatic;
 
 
 static void
-maybe_add_asset (list<ReferencedReelAsset>& a, shared_ptr<dcp::ReelAsset> r, Frame reel_trim_start, Frame reel_trim_end, DCPTime from, int const ffr)
+maybe_add_asset(list<ReusableReelAsset>& a, shared_ptr<dcp::ReelAsset> r, Frame reel_trim_start, Frame reel_trim_end, DCPTime from, int const ffr)
 {
 	DCPOMATIC_ASSERT (r);
 	r->set_entry_point (r->entry_point().get_value_or(0) + reel_trim_start);
 	r->set_duration (r->actual_duration() - reel_trim_start - reel_trim_end);
 	if (r->actual_duration() > 0) {
 		a.push_back (
-			ReferencedReelAsset(r, DCPTimePeriod(from, from + DCPTime::from_frames(r->actual_duration(), ffr)))
+			ReusableReelAsset(r, DCPTimePeriod(from, from + DCPTime::from_frames(r->actual_duration(), ffr)))
 			);
 	}
 }
@@ -58,10 +58,10 @@ maybe_add_asset (list<ReferencedReelAsset>& a, shared_ptr<dcp::ReelAsset> r, Fra
 
 
 /** @return Details of all the DCP assets in a playlist that are marked to refer to */
-list<ReferencedReelAsset>
-get_referenced_reel_assets(shared_ptr<const Film> film, shared_ptr<const Playlist> playlist)
+list<ReusableReelAsset>
+get_reusable_reel_assets(shared_ptr<const Film> film, shared_ptr<const Playlist> playlist)
 {
-	list<ReferencedReelAsset> reel_assets;
+	list<ReusableReelAsset> reel_assets;
 
 	for (auto content: playlist->content()) {
 		auto dcp = dynamic_pointer_cast<DCPContent>(content);

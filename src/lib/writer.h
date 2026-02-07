@@ -53,7 +53,7 @@ class AudioBuffers;
 class Film;
 class Job;
 class ReelWriter;
-class ReferencedReelAsset;
+class ReusableReelAsset;
 struct writer_disambiguate_font_ids1;
 struct writer_disambiguate_font_ids2;
 struct writer_disambiguate_font_ids3;
@@ -121,7 +121,7 @@ public:
 	void write(std::shared_ptr<const AudioBuffers>, dcpomatic::DCPTime time);
 	void write(PlayerText text, TextType type, boost::optional<DCPTextTrack>, dcpomatic::DCPTimePeriod period);
 	void write(std::vector<std::shared_ptr<dcpomatic::Font>> fonts);
-	void write(ReferencedReelAsset asset);
+	void write(ReusableReelAsset asset);
 	void write(std::shared_ptr<const dcp::AtmosFrame> atmos, dcpomatic::DCPTime time, AtmosMetadata metadata);
 	void write(std::shared_ptr<dcp::MonoMPEG2PictureFrame> image, Frame frame);
 	void finish();
@@ -211,7 +211,7 @@ private:
 	boost::mutex _digest_progresses_mutex;
 	std::map<int, std::pair<int64_t, int64_t>> _digest_progresses;
 
-	std::list<ReferencedReelAsset> _reel_assets;
+	std::list<ReusableReelAsset> _reel_assets;
 
 	FontIdMap _fonts;
 	/** If we are given many fonts, but we're making an Interop DCP, we'll choose a single
