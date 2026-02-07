@@ -417,8 +417,7 @@ ReelWriter::finish(boost::filesystem::path output_dcp)
 /** Try to make a ReelAsset for a subtitles or closed captions in a given period in the DCP.
  *  A TextAsset can be provided, or we will use one from @ref refs if not.
  */
-template <class Interop, class SMPTE, class Result>
-shared_ptr<Result>
+shared_ptr<dcp::ReelTextAsset>
 maybe_add_text(
 	shared_ptr<dcp::TextAsset> asset,
 	dcp::TextType type,
@@ -427,7 +426,7 @@ maybe_add_text(
 	int reel_index,
 	int reel_count,
 	optional<string> content_summary,
-	list<ReferencedReelAsset> const & refs,
+	list<ReusableReelAsset> const & refs,
 	shared_ptr<const Film> film,
 	DCPTimePeriod period,
 	boost::filesystem::path output_dcp,
@@ -436,14 +435,14 @@ maybe_add_text(
 {
 	Frame const period_duration = period.duration().frames_round(film->video_frame_rate());
 
-	shared_ptr<Result> reel_asset;
+	shared_ptr<dcp::ReelTextAsset> reel_asset;
 
 	if (asset) {
 		if (auto interop = dynamic_pointer_cast<dcp::InteropTextAsset>(asset)) {
 			auto directory = output_dcp / interop->id();
 			dcp::filesystem::create_directories(directory);
 			interop->write(directory / subtitle_asset_filename(asset, reel_index, reel_count, content_summary, ".xml"));
-			reel_asset = make_shared<Interop>(
+			reel_asset = make_shared<dcp::ReelInteropTextAsset>(
 				type,
 				interop,
 				dcp::Fraction(film->video_frame_rate(), 1),
@@ -460,7 +459,7 @@ maybe_add_text(
 			smpte->write(
 				output_dcp / subtitle_asset_filename(asset, reel_index, reel_count, content_summary, ".mxf")
 				);
-			reel_asset = make_shared<SMPTE>(
+			reel_asset = make_shared<dcp::ReelSMPTETextAsset>(
 				type,
 				smpte,
 				dcp::Fraction(film->video_frame_rate(), 1),
@@ -472,7 +471,7 @@ maybe_add_text(
 	} else {
 		/* We don't have a subtitle asset of our own; hopefully we have one to reference */
 		for (auto j: refs) {
-			auto k = dynamic_pointer_cast<Result>(j.asset);
+			auto k = dynamic_pointer_cast<dcp::ReelTextAsset>(j.asset);
 			if (k && j.period == period) {
 				reel_asset = k;
 				/* If we have a hash for this asset in the CPL, assume that it is correct */
@@ -601,13 +600,13 @@ ReelWriter::create_reel_text(
 	set<DCPTextTrack> ensure_closed_captions
 	) const
 {
-	auto subtitle = maybe_add_text<dcp::ReelInteropTextAsset, dcp::ReelSMPTETextAsset, dcp::ReelTextAsset>(
+	auto subtitle = maybe_add_text(
 		_subtitle_asset, dcp::TextType::OPEN_SUBTITLE, duration, reel, _reel_index, _reel_count, _content_summary, refs, film(), _period, output_dcp, _text_only
 		);
 
 	if (!subtitle && ensure_subtitles) {
 		/* We had no subtitle asset, but we've been asked to make sure there is one */
-		subtitle = maybe_add_text<dcp::ReelInteropTextAsset, dcp::ReelSMPTETextAsset, dcp::ReelTextAsset>(
+		subtitle = maybe_add_text(
 			empty_text_asset(TextType::OPEN_SUBTITLE, optional<DCPTextTrack>(), true),
 			dcp::TextType::OPEN_SUBTITLE,
 			duration,
@@ -631,7 +630,7 @@ ReelWriter::create_reel_text(
 	}
 
 	for (auto const& i: _closed_caption_assets) {
-		auto a = maybe_add_text<dcp::ReelInteropTextAsset, dcp::ReelSMPTETextAsset, dcp::ReelTextAsset>(
+		auto a = maybe_add_text(
 			i.second, dcp::TextType::CLOSED_CAPTION, duration, reel, _reel_index, _reel_count, _content_summary, refs, film(), _period, output_dcp, _text_only
 			);
 		DCPOMATIC_ASSERT(a);
@@ -645,7 +644,7 @@ ReelWriter::create_reel_text(
 
 	/* Make empty tracks for anything we've been asked to ensure but that we haven't added */
 	for (auto i: ensure_closed_captions) {
-		auto a = maybe_add_text<dcp::ReelInteropTextAsset, dcp::ReelSMPTETextAsset, dcp::ReelTextAsset>(
+		auto a = maybe_add_text(
 			empty_text_asset(TextType::CLOSED_CAPTION, i, true),
 			dcp::TextType::CLOSED_CAPTION,
 			duration,
