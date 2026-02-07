@@ -53,6 +53,7 @@ namespace dcp {
 	class Reel;
 	class ReelAsset;
 	class ReelPictureAsset;
+	class ReelTextAsset;
 	class SoundAsset;
 	class SoundAssetWriter;
 	class StereoJ2KPictureAsset;
@@ -121,6 +122,15 @@ private:
 		) const;
 	void create_reel_markers(std::shared_ptr<dcp::Reel> reel) const;
 	float convert_vertical_position(StringText const& subtitle, dcp::SubtitleStandard to) const;
+
+	std::shared_ptr<dcp::ReelTextAsset> maybe_add_text(
+		std::shared_ptr<dcp::TextAsset> asset,
+		dcp::TextType type,
+		int64_t picture_duration,
+		std::shared_ptr<dcp::Reel> reel,
+		std::list<ReusableReelAsset> const & refs,
+		boost::filesystem::path output_dcp
+	) const;
 
 	boost::filesystem::path _output_dir;
 	dcpomatic::DCPTimePeriod _period;

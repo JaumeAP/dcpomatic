@@ -418,22 +418,16 @@ ReelWriter::finish(boost::filesystem::path output_dcp)
  *  A TextAsset can be provided, or we will use one from @ref refs if not.
  */
 shared_ptr<dcp::ReelTextAsset>
-maybe_add_text(
+ReelWriter::maybe_add_text(
 	shared_ptr<dcp::TextAsset> asset,
 	dcp::TextType type,
 	int64_t picture_duration,
 	shared_ptr<dcp::Reel> reel,
-	int reel_index,
-	int reel_count,
-	optional<string> content_summary,
 	list<ReusableReelAsset> const & refs,
-	shared_ptr<const Film> film,
-	DCPTimePeriod period,
-	boost::filesystem::path output_dcp,
-	bool text_only
-	)
+	boost::filesystem::path output_dcp
+	) const
 {
-	Frame const period_duration = period.duration().frames_round(film->video_frame_rate());
+	Frame const period_duration = _period.duration().frames_round(film()->video_frame_rate());
 
 	shared_ptr<dcp::ReelTextAsset> reel_asset;
 
@@ -441,11 +435,11 @@ maybe_add_text(
 		if (auto interop = dynamic_pointer_cast<dcp::InteropTextAsset>(asset)) {
 			auto directory = output_dcp / interop->id();
 			dcp::filesystem::create_directories(directory);
-			interop->write(directory / subtitle_asset_filename(asset, reel_index, reel_count, content_summary, ".xml"));
+			interop->write(directory / subtitle_asset_filename(asset, _reel_index, _reel_count, _content_summary, ".xml"));
 			reel_asset = make_shared<dcp::ReelInteropTextAsset>(
 				type,
 				interop,
-				dcp::Fraction(film->video_frame_rate(), 1),
+				dcp::Fraction(film()->video_frame_rate(), 1),
 				picture_duration,
 				0
 				);
@@ -457,12 +451,12 @@ maybe_add_text(
 			*/
 			smpte->set_intrinsic_duration(picture_duration);
 			smpte->write(
-				output_dcp / subtitle_asset_filename(asset, reel_index, reel_count, content_summary, ".mxf")
+				output_dcp / subtitle_asset_filename(asset, _reel_index, _reel_count, _content_summary, ".mxf")
 				);
 			reel_asset = make_shared<dcp::ReelSMPTETextAsset>(
 				type,
 				smpte,
-				dcp::Fraction(film->video_frame_rate(), 1),
+				dcp::Fraction(film()->video_frame_rate(), 1),
 				picture_duration,
 				0
 				);
@@ -472,7 +466,7 @@ maybe_add_text(
 		/* We don't have a subtitle asset of our own; hopefully we have one to reference */
 		for (auto j: refs) {
 			auto k = dynamic_pointer_cast<dcp::ReelTextAsset>(j.asset);
-			if (k && j.period == period) {
+			if (k && j.period == _period) {
 				reel_asset = k;
 				/* If we have a hash for this asset in the CPL, assume that it is correct */
 				if (k->hash()) {
@@ -483,7 +477,7 @@ maybe_add_text(
 	}
 
 	if (reel_asset) {
-		if (!text_only && reel_asset->actual_duration() != period_duration) {
+		if (!_text_only && reel_asset->actual_duration() != period_duration) {
 			throw ProgrammingError(
 				__FILE__, __LINE__,
 				fmt::format("{} vs {}", reel_asset->actual_duration(), period_duration)
@@ -600,26 +594,14 @@ ReelWriter::create_reel_text(
 	set<DCPTextTrack> ensure_closed_captions
 	) const
 {
-	auto subtitle = maybe_add_text(
-		_subtitle_asset, dcp::TextType::OPEN_SUBTITLE, duration, reel, _reel_index, _reel_count, _content_summary, refs, film(), _period, output_dcp, _text_only
-		);
+	auto subtitle = maybe_add_text(_subtitle_asset, dcp::TextType::OPEN_SUBTITLE, duration, reel, refs, output_dcp);
 
 	if (!subtitle && ensure_subtitles) {
 		/* We had no subtitle asset, but we've been asked to make sure there is one */
 		subtitle = maybe_add_text(
 			empty_text_asset(TextType::OPEN_SUBTITLE, optional<DCPTextTrack>(), true),
-			dcp::TextType::OPEN_SUBTITLE,
-			duration,
-			reel,
-			_reel_index,
-			_reel_count,
-			_content_summary,
-			refs,
-			film(),
-			_period,
-			output_dcp,
-			_text_only
-			);
+			dcp::TextType::OPEN_SUBTITLE, duration, reel, refs, output_dcp
+		);
 	}
 
 	if (subtitle) {
@@ -630,9 +612,7 @@ ReelWriter::create_reel_text(
 	}
 
 	for (auto const& i: _closed_caption_assets) {
-		auto a = maybe_add_text(
-			i.second, dcp::TextType::CLOSED_CAPTION, duration, reel, _reel_index, _reel_count, _content_summary, refs, film(), _period, output_dcp, _text_only
-			);
+		auto a = maybe_add_text(i.second, dcp::TextType::CLOSED_CAPTION, duration, reel, refs, output_dcp);
 		DCPOMATIC_ASSERT(a);
 		a->set_annotation_text(i.first.name);
 		if (i.first.language) {
@@ -646,18 +626,8 @@ ReelWriter::create_reel_text(
 	for (auto i: ensure_closed_captions) {
 		auto a = maybe_add_text(
 			empty_text_asset(TextType::CLOSED_CAPTION, i, true),
-			dcp::TextType::CLOSED_CAPTION,
-			duration,
-			reel,
-			_reel_index,
-			_reel_count,
-			_content_summary,
-			refs,
-			film(),
-			_period,
-			output_dcp,
-			_text_only
-			);
+			dcp::TextType::CLOSED_CAPTION, duration, reel, refs, output_dcp
+		);
 		DCPOMATIC_ASSERT(a);
 		a->set_annotation_text(i.name);
 		if (i.language) {
