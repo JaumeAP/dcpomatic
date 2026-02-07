@@ -72,19 +72,18 @@ BOOST_AUTO_TEST_CASE(vf_test1)
 	/* Multi-reel DCP can't be referenced if we are using a single reel for the project */
 	film->set_reel_type(ReelType::SINGLE);
 	film->set_audio_channels(16);
-	string why_not;
-	BOOST_CHECK(!dcp->can_reuse_video(film, why_not));
-	BOOST_CHECK(!dcp->can_reuse_audio(film, why_not));
-	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::OPEN_SUBTITLE, why_not));
-	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::CLOSED_CAPTION, why_not));
+	BOOST_CHECK(!dcp->can_reuse_video(film));
+	BOOST_CHECK(!dcp->can_reuse_audio(film));
+	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::OPEN_SUBTITLE));
+	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::CLOSED_CAPTION));
 
 	/* Multi-reel DCP can be referenced if we are using by-video-content */
 	film->set_reel_type(ReelType::BY_VIDEO_CONTENT);
-	BOOST_CHECK(dcp->can_reuse_video(film, why_not));
-	BOOST_CHECK(dcp->can_reuse_audio(film, why_not));
+	BOOST_CHECK(dcp->can_reuse_video(film));
+	BOOST_CHECK(dcp->can_reuse_audio(film));
 	/* (but reels_test2 has no texts to reference) */
-	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::OPEN_SUBTITLE, why_not));
-	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::CLOSED_CAPTION, why_not));
+	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::OPEN_SUBTITLE));
+	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::CLOSED_CAPTION));
 
 	auto other = make_shared<FFmpegContent>("test/data/test.mp4");
 	film->examine_and_add_content({other});
@@ -93,15 +92,15 @@ BOOST_AUTO_TEST_CASE(vf_test1)
 
 	/* Not possible if there is overlap; we only check video here as that's all test.mp4 has */
 	other->set_position(film, DCPTime());
-	BOOST_CHECK(!dcp->can_reuse_video(film, why_not));
+	BOOST_CHECK(!dcp->can_reuse_video(film));
 
 	/* This should not be considered an overlap */
 	other->set_position(film, dcp->end(film));
-	BOOST_CHECK(dcp->can_reuse_video(film, why_not));
-	BOOST_CHECK(dcp->can_reuse_audio(film, why_not));
+	BOOST_CHECK(dcp->can_reuse_video(film));
+	BOOST_CHECK(dcp->can_reuse_audio(film));
 	/* (reels_test2 has no texts to reference) */
-	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::OPEN_SUBTITLE, why_not));
-	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::CLOSED_CAPTION, why_not));
+	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::OPEN_SUBTITLE));
+	BOOST_CHECK(!dcp->can_reuse_text(film, TextType::CLOSED_CAPTION));
 }
 
 
@@ -389,9 +388,7 @@ BOOST_AUTO_TEST_CASE(test_referencing_ov_with_subs_when_adding_ccaps)
 	ccaps->text[0]->set_type(TextType::CLOSED_CAPTION);
 	ccaps->set_position(vf, dcpomatic::DCPTime());
 
-	string why_not;
-	BOOST_CHECK(ov_dcp->can_reuse_text(vf, TextType::OPEN_SUBTITLE, why_not));
-	std::cout << why_not << "\n";
+	BOOST_CHECK(ov_dcp->can_reuse_text(vf, TextType::OPEN_SUBTITLE));
 }
 
 
@@ -416,8 +413,7 @@ BOOST_AUTO_TEST_CASE(test_duplicate_font_id_in_vf)
 	ov_dcp->text[0]->set_use(true);
 	ccaps->text[0]->set_type(TextType::CLOSED_CAPTION);
 	ccaps->set_position(vf, dcpomatic::DCPTime());
-	string why_not;
-	BOOST_CHECK_MESSAGE(ov_dcp->can_reuse_text(vf, TextType::OPEN_SUBTITLE, why_not), why_not);
+	BOOST_CHECK(ov_dcp->can_reuse_text(vf, TextType::OPEN_SUBTITLE));
 	ov_dcp->set_reference_text(TextType::OPEN_SUBTITLE, true);
 	vf->write_metadata();
 	make_dcp(vf, TranscodeJob::ChangedBehaviour::IGNORE);

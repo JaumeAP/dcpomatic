@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(test_text_entry_point)
 	film2->read_metadata();
 
 	string why_not;
-	BOOST_CHECK(!dcp_content->can_reuse_text(film2, TextType::OPEN_SUBTITLE, why_not));
+	BOOST_CHECK(!dcp_content->can_reuse_text(film2, TextType::OPEN_SUBTITLE, &why_not));
 	BOOST_CHECK_EQUAL(why_not, "one of its subtitle reels has a non-zero entry point so it must be re-written.");
 }
 

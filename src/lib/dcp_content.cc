@@ -684,25 +684,31 @@ DCPContent::reel_split_points(shared_ptr<const Film> film) const
 
 
 bool
-DCPContent::can_reuse_anything(shared_ptr<const Film> film, string& why_not) const
+DCPContent::can_reuse_anything(shared_ptr<const Film> film, string* why_not) const
 {
 	/* We must be using the same standard as the film */
 	if (_standard) {
 		if (_standard.get() == dcp::Standard::INTEROP && !film->interop()) {
-			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-			why_not = _("it is Interop and the film is set to SMPTE.");
+			if (why_not) {
+				/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+				*why_not = _("it is Interop and the film is set to SMPTE.");
+			}
 			return false;
 		} else if (_standard.get() == dcp::Standard::SMPTE && film->interop()) {
-			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-			why_not = _("it is SMPTE and the film is set to Interop.");
+			if (why_not) {
+				/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+				*why_not = _("it is SMPTE and the film is set to Interop.");
+			}
 			return false;
 		}
 	}
 
 	/* And the same frame rate */
 	if (!video_frame_rate() || (lrint(video_frame_rate().get()) != film->video_frame_rate())) {
-		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-		why_not = _("it has a different frame rate to the film.");
+		if (why_not) {
+			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+			*why_not = _("it has a different frame rate to the film.");
+		}
 		return false;
 	}
 
@@ -724,8 +730,10 @@ DCPContent::can_reuse_anything(shared_ptr<const Film> film, string& why_not) con
 	*/
 	for (auto i: reel_list) {
 		if (find(fr.begin(), fr.end(), i) == fr.end()) {
-			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-			why_not = _("its reel lengths differ from those in the film; set the reel mode to 'split by video content'.");
+			if (why_not) {
+				/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+				*why_not = _("its reel lengths differ from those in the film; set the reel mode to 'split by video content'.");
+			}
 			return false;
 		}
 	}
@@ -742,25 +750,31 @@ DCPContent::overlaps(shared_ptr<const Film> film, function<bool (shared_ptr<cons
 
 
 bool
-DCPContent::can_reuse_video(shared_ptr<const Film> film, string& why_not) const
+DCPContent::can_reuse_video(shared_ptr<const Film> film, string* why_not) const
 {
 	if (!video) {
-		why_not = _("There is no video in this DCP");
+		if (why_not) {
+			*why_not = _("There is no video in this DCP");
+		}
 		return false;
 	}
 
 	if (film->resolution() != resolution()) {
-		if (resolution() == Resolution::FOUR_K) {
-			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-			why_not = _("it is 4K and the film is 2K.");
-		} else {
-			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-			why_not = _("it is 2K and the film is 4K.");
+		if (why_not) {
+			if (resolution() == Resolution::FOUR_K) {
+				/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+				*why_not = _("it is 4K and the film is 2K.");
+			} else {
+				/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+				*why_not = _("it is 2K and the film is 4K.");
+			}
 		}
 		return false;
 	} else if (film->frame_size() != video->size()) {
-		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-		why_not = _("its video frame size differs from the film's.");
+		if (why_not) {
+			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+			*why_not = _("its video frame size differs from the film's.");
+		}
 		return false;
 	}
 
@@ -769,8 +783,10 @@ DCPContent::can_reuse_video(shared_ptr<const Film> film, string& why_not) const
 	};
 
 	if (overlaps(film, part)) {
-		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-		why_not = _("it overlaps other video content.");
+		if (why_not) {
+			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+			*why_not = _("it overlaps other video content.");
+		}
 		return false;
 	}
 
@@ -779,12 +795,14 @@ DCPContent::can_reuse_video(shared_ptr<const Film> film, string& why_not) const
 
 
 bool
-DCPContent::can_reuse_audio(shared_ptr<const Film> film, string& why_not) const
+DCPContent::can_reuse_audio(shared_ptr<const Film> film, string* why_not) const
 {
 	if (audio && audio->stream()) {
 		auto const channels = audio->stream()->channels();
 		if (channels != film->audio_channels()) {
-			why_not = fmt::format(_("it has a different number of audio channels than the project; set the project to have {} channels."), channels);
+			if (why_not) {
+				*why_not = fmt::format(_("it has a different number of audio channels than the project; set the project to have {} channels."), channels);
+			}
 			return false;
 		}
 	}
@@ -794,8 +812,10 @@ DCPContent::can_reuse_audio(shared_ptr<const Film> film, string& why_not) const
 	};
 
 	if (overlaps(film, part)) {
-		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-		why_not = _("it overlaps other audio content.");
+		if (why_not) {
+			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+			*why_not = _("it overlaps other audio content.");
+		}
 		return false;
 	}
 
@@ -804,23 +824,29 @@ DCPContent::can_reuse_audio(shared_ptr<const Film> film, string& why_not) const
 
 
 bool
-DCPContent::can_reuse_text(shared_ptr<const Film> film, TextType type, string& why_not) const
+DCPContent::can_reuse_text(shared_ptr<const Film> film, TextType type, string* why_not) const
 {
 	if (_has_non_zero_entry_point[TextType::OPEN_SUBTITLE]) {
-		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-		why_not = _("one of its subtitle reels has a non-zero entry point so it must be re-written.");
+		if (why_not) {
+			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+			*why_not = _("one of its subtitle reels has a non-zero entry point so it must be re-written.");
+		}
 		return false;
 	}
 
 	if (_has_non_zero_entry_point[TextType::CLOSED_CAPTION]) {
-		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-		why_not = _("one of its closed caption has a non-zero entry point so it must be re-written.");
+		if (why_not) {
+			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+			*why_not = _("one of its closed caption has a non-zero entry point so it must be re-written.");
+		}
 		return false;
         }
 
 	if (trim_start() != dcpomatic::ContentTime()) {
-		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-		why_not = _("it has a start trim so its subtitles or closed captions must be re-written.");
+		if (why_not) {
+			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+			*why_not = _("it has a start trim so its subtitles or closed captions must be re-written.");
+		}
 		return false;
 	}
 
@@ -829,8 +855,10 @@ DCPContent::can_reuse_text(shared_ptr<const Film> film, TextType type, string& w
 	};
 
 	if (overlaps(film, part)) {
-		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
-		why_not = _("it overlaps other text content.");
+		if (why_not) {
+			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
+			*why_not = _("it overlaps other text content.");
+		}
 		return false;
 	}
 
