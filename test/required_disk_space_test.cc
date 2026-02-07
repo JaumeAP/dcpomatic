@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE (required_disk_space_test)
 		);
 
 	std::string why_not;
-	BOOST_CHECK(content_b->can_reference_audio(film, why_not));
+	BOOST_CHECK(content_b->can_reuse_audio(film, why_not));
 	content_b->set_reference_audio (true);
 
 	check_within_n (

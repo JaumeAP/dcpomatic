@@ -130,7 +130,7 @@ public:
 	bool needs_kdm() const;
 	bool needs_assets() const;
 
-	bool can_reference_anything(std::shared_ptr<const Film> film, std::string& why_not) const;
+	bool can_reuse_anything(std::shared_ptr<const Film> film, std::string& why_not) const;
 
 	void set_reference_video(bool r);
 
@@ -139,7 +139,7 @@ public:
 		return _reference_video;
 	}
 
-	bool can_reference_video(std::shared_ptr<const Film> film, std::string &) const;
+	bool can_reuse_video(std::shared_ptr<const Film> film, std::string &) const;
 
 	void set_reference_audio(bool r);
 
@@ -148,7 +148,7 @@ public:
 		return _reference_audio;
 	}
 
-	bool can_reference_audio(std::shared_ptr<const Film> film, std::string &) const;
+	bool can_reuse_audio(std::shared_ptr<const Film> film, std::string &) const;
 
 	void set_reference_text(TextType type, bool r);
 
@@ -160,7 +160,7 @@ public:
 		return _reference_text[type];
 	}
 
-	bool can_reference_text(std::shared_ptr<const Film> film, TextType type, std::string &) const;
+	bool can_reuse_text(std::shared_ptr<const Film> film, TextType type, std::string &) const;
 
 	bool reference_anything() const;
 

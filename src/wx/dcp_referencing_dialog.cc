@@ -168,34 +168,34 @@ DCPReferencingDialog::setup()
 
 		string why_not;
 
-		if (!dcp_content->can_reference_anything(_film, why_not)) {
+		if (!dcp_content->can_reuse_anything(_film, why_not)) {
 			for (auto const& part: all_parts) {
 				record.check_box[part]->Enable(false);
 			}
 			add_problem(_("Cannot reference this DCP"), why_not);
 		} else {
-			if (!dcp_content->can_reference_video(_film, why_not)) {
+			if (!dcp_content->can_reuse_video(_film, why_not)) {
 				record.check_box[Part::VIDEO]->Enable(false);
 				if (dcp_content->video) {
 					add_problem(_("Cannot reference this DCP's video"), why_not);
 				}
 			}
 
-			if (!dcp_content->can_reference_audio(_film, why_not)) {
+			if (!dcp_content->can_reuse_audio(_film, why_not)) {
 				record.check_box[Part::AUDIO]->Enable(false);
 				if (dcp_content->audio) {
 					add_problem(_("Cannot reference this DCP's audio"), why_not);
 				}
 			}
 
-			if (!dcp_content->can_reference_text(_film, TextType::OPEN_SUBTITLE, why_not)) {
+			if (!dcp_content->can_reuse_text(_film, TextType::OPEN_SUBTITLE, why_not)) {
 				record.check_box[Part::SUBTITLES]->Enable(false);
 				if (dcp_content->text_of_original_type(TextType::OPEN_SUBTITLE)) {
 					add_problem(_("Cannot reference this DCP's subtitles"), why_not);
 				}
 			}
 
-			if (!dcp_content->can_reference_text(_film, TextType::CLOSED_CAPTION, why_not)) {
+			if (!dcp_content->can_reuse_text(_film, TextType::CLOSED_CAPTION, why_not)) {
 				record.check_box[Part::CLOSED_CAPTIONS]->Enable(false);
 				if (dcp_content->text_of_original_type(TextType::CLOSED_CAPTION)) {
 					add_problem(_("Cannot reference this DCP's closed captions"), why_not);

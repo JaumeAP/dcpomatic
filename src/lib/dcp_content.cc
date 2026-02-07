@@ -684,7 +684,7 @@ DCPContent::reel_split_points(shared_ptr<const Film> film) const
 
 
 bool
-DCPContent::can_reference_anything(shared_ptr<const Film> film, string& why_not) const
+DCPContent::can_reuse_anything(shared_ptr<const Film> film, string& why_not) const
 {
 	/* We must be using the same standard as the film */
 	if (_standard) {
@@ -742,7 +742,7 @@ DCPContent::overlaps(shared_ptr<const Film> film, function<bool (shared_ptr<cons
 
 
 bool
-DCPContent::can_reference_video(shared_ptr<const Film> film, string& why_not) const
+DCPContent::can_reuse_video(shared_ptr<const Film> film, string& why_not) const
 {
 	if (!video) {
 		why_not = _("There is no video in this DCP");
@@ -774,12 +774,12 @@ DCPContent::can_reference_video(shared_ptr<const Film> film, string& why_not) co
 		return false;
 	}
 
-	return can_reference_anything(film, why_not);
+	return can_reuse_anything(film, why_not);
 }
 
 
 bool
-DCPContent::can_reference_audio(shared_ptr<const Film> film, string& why_not) const
+DCPContent::can_reuse_audio(shared_ptr<const Film> film, string& why_not) const
 {
 	if (audio && audio->stream()) {
 		auto const channels = audio->stream()->channels();
@@ -799,12 +799,12 @@ DCPContent::can_reference_audio(shared_ptr<const Film> film, string& why_not) co
 		return false;
 	}
 
-	return can_reference_anything(film, why_not);
+	return can_reuse_anything(film, why_not);
 }
 
 
 bool
-DCPContent::can_reference_text(shared_ptr<const Film> film, TextType type, string& why_not) const
+DCPContent::can_reuse_text(shared_ptr<const Film> film, TextType type, string& why_not) const
 {
 	if (_has_non_zero_entry_point[TextType::OPEN_SUBTITLE]) {
 		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
@@ -834,7 +834,7 @@ DCPContent::can_reference_text(shared_ptr<const Film> film, TextType type, strin
 		return false;
 	}
 
-	return can_reference_anything(film, why_not);
+	return can_reuse_anything(film, why_not);
 }
 
 void
