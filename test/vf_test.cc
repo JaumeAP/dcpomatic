@@ -266,9 +266,11 @@ BOOST_AUTO_TEST_CASE(vf_test5)
 	make_and_verify_dcp(vf, {dcp::VerificationNote::Code::EXTERNAL_ASSET}, false);
 
 	/* Check that the selected reel assets are right */
-	BOOST_REQUIRE_EQUAL(a.size(), 4U);
-	auto i = a.begin();
 	auto a = get_reusable_reel_assets(vf, vf->playlist());
+	vector<ReusableReelAsset> b;
+	std::copy_if(a.begin(), a.end(), back_inserter(b), [](ReusableReelAsset const& asset) { return asset.use == ReusableReelAsset::Use::REFERENCE; });
+	BOOST_REQUIRE_EQUAL(b.size(), 4U);
+	auto i = b.begin();
 	BOOST_CHECK(i->period == DCPTimePeriod(DCPTime(0), DCPTime(960000)));
 	++i;
 	BOOST_CHECK(i->period == DCPTimePeriod(DCPTime(0), DCPTime(960000)));

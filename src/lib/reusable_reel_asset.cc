@@ -50,7 +50,7 @@ maybe_add_asset(list<ReusableReelAsset>& a, shared_ptr<dcp::ReelAsset> r, Frame 
 	r->set_duration (r->actual_duration() - reel_trim_start - reel_trim_end);
 	if (r->actual_duration() > 0) {
 		a.push_back (
-			ReusableReelAsset(r, DCPTimePeriod(from, from + DCPTime::from_frames(r->actual_duration(), ffr)))
+			ReusableReelAsset(r, DCPTimePeriod(from, from + DCPTime::from_frames(r->actual_duration(), ffr)), ReusableReelAsset::Use::REFERENCE)
 			);
 	}
 }

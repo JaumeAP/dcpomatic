@@ -34,15 +34,23 @@ class Playlist;
 class ReusableReelAsset
 {
 public:
-	ReusableReelAsset (std::shared_ptr<dcp::ReelAsset> asset_, dcpomatic::DCPTimePeriod period_)
-		: asset (asset_)
-		, period (period_)
+	enum class Use {
+		REFERENCE,
+		COPY
+	};
+
+	ReusableReelAsset(std::shared_ptr<dcp::ReelAsset> asset_, dcpomatic::DCPTimePeriod period_, Use use_)
+		: asset(asset_)
+		, period(period_)
+		, use(use_)
 	{}
 
 	/** The asset */
 	std::shared_ptr<dcp::ReelAsset> asset;
 	/** Period that this asset covers in the DCP */
 	dcpomatic::DCPTimePeriod period;
+	/** How this asset is used - referred to or copied */
+	Use use;
 };
 
 
