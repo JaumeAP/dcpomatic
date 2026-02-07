@@ -414,6 +414,31 @@ ReelWriter::finish(boost::filesystem::path output_dcp)
 }
 
 
+template <class Asset>
+shared_ptr<Asset>
+maybe_reuse_asset(char const* log_name, list<ReusableReelAsset> const& refs, DCPTimePeriod period)
+{
+	shared_ptr<Asset> reusable;
+
+	LOG_GENERAL("no {} asset of our own; look through {}", log_name, refs.size());
+	for (auto ref: refs) {
+		auto asset = dynamic_pointer_cast<Asset>(ref.asset);
+		if (asset) {
+			LOG_GENERAL("candidate {} asset period is {}-{}", log_name, ref.period.from.get(), ref.period.to.get());
+		}
+		if (asset && ref.period == period) {
+			reusable = asset;
+			/* If we have a hash for this asset in the CPL, assume that it is correct */
+			if (reusable->hash()) {
+				reusable->asset_ref()->set_hash(reusable->hash().get());
+			}
+		}
+	}
+
+	return reusable;
+}
+
+
 /** Try to make a ReelAsset for a subtitles or closed captions in a given period in the DCP.
  *  A TextAsset can be provided, or we will use one from @ref refs if not.
  */
@@ -463,17 +488,8 @@ ReelWriter::maybe_add_text(
 		}
 
 	} else {
-		/* We don't have a subtitle asset of our own; hopefully we have one to reference */
-		for (auto j: refs) {
-			auto k = dynamic_pointer_cast<dcp::ReelTextAsset>(j.asset);
-			if (k && j.period == _period) {
-				reel_asset = k;
-				/* If we have a hash for this asset in the CPL, assume that it is correct */
-				if (k->hash()) {
-					k->asset_ref()->set_hash(k->hash().get());
-				}
-			}
-		}
+		/* We don't have a subtitle asset of our own; hopefully we have one to reuse */
+		reel_asset = maybe_reuse_asset<dcp::ReelTextAsset>("subtitle", refs, _period);
 	}
 
 	if (reel_asset) {
@@ -507,17 +523,8 @@ ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReusableReelAss
 	} else if (_mpeg2_picture_asset) {
 		reel_asset = make_shared<dcp::ReelMonoPictureAsset>(_mpeg2_picture_asset, 0);
 	} else {
-		LOG_GENERAL("no picture asset of our own; look through {}", refs.size());
-		/* We don't have a picture asset of our own; hopefully we have one to reference */
-		for (auto j: refs) {
-			auto k = dynamic_pointer_cast<dcp::ReelPictureAsset>(j.asset);
-			if (k) {
-				LOG_GENERAL("candidate picture asset period is {}-{}", j.period.from.get(), j.period.to.get());
-			}
-			if (k && j.period == _period) {
-				reel_asset = k;
-			}
-		}
+		/* We don't have a picture asset of our own; hopefully we have one to reuse */
+		reel_asset = maybe_reuse_asset<dcp::ReelPictureAsset>("picture", refs, _period);
 	}
 
 	Frame const period_duration = _period.duration().frames_round(film()->video_frame_rate());
@@ -549,21 +556,8 @@ ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReusableReelAsset
 		/* We have made a sound asset of our own.  Put it into the reel */
 		reel_asset = make_shared<dcp::ReelSoundAsset>(_sound_asset, 0);
 	} else {
-		LOG_GENERAL("no sound asset of our own; look through {}", refs.size());
-		/* We don't have a sound asset of our own; hopefully we have one to reference */
-		for (auto j: refs) {
-			auto k = dynamic_pointer_cast<dcp::ReelSoundAsset>(j.asset);
-			if (k) {
-				LOG_GENERAL("candidate sound asset period is {}-{}", j.period.from.get(), j.period.to.get());
-			}
-			if (k && j.period == _period) {
-				reel_asset = k;
-				/* If we have a hash for this asset in the CPL, assume that it is correct */
-				if (k->hash()) {
-					k->asset_ref()->set_hash(k->hash().get());
-				}
-			}
-		}
+		/* We don't have a sound asset of our own; hopefully we have one to reuse */
+		reel_asset = maybe_reuse_asset<dcp::ReelSoundAsset>("sound", refs, _period);
 	}
 
 	auto const period_duration = _period.duration().frames_round(film()->video_frame_rate());
