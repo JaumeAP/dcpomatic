@@ -81,7 +81,7 @@ AnalyseSubtitlesJob::run ()
 	auto player = make_shared<Player>(_film, playlist, false);
 	player->set_ignore_audio ();
 	player->set_fast ();
-	player->set_play_referenced ();
+	player->set_play_reusable();
 	player->Text.connect (bind(&AnalyseSubtitlesJob::analyse, this, _1, _2));
 
 	set_progress_unknown ();

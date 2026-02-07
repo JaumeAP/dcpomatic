@@ -92,7 +92,7 @@ Player::Player(shared_ptr<const Film> film, Image::Alignment subtitle_alignment,
 	, _always_burn_open_subtitles(false)
 	, _fast(false)
 	, _tolerant(tolerant)
-	, _play_referenced(false)
+	, _play_reusable(false)
 	, _audio_merger(film->audio_frame_rate())
 	, _subtitle_alignment(subtitle_alignment)
 {
@@ -110,7 +110,7 @@ Player::Player(shared_ptr<const Film> film, shared_ptr<const Playlist> playlist_
 	, _always_burn_open_subtitles(false)
 	, _fast(false)
 	, _tolerant(tolerant)
-	, _play_referenced(false)
+	, _play_reusable(false)
 	, _audio_merger(film->audio_frame_rate())
 {
 	construct();
@@ -161,7 +161,7 @@ Player::Player(Player&& other)
 	, _always_burn_open_subtitles(other._always_burn_open_subtitles.load())
 	, _fast(other._fast.load())
 	, _tolerant(other._tolerant)
-	, _play_referenced(other._play_referenced.load())
+	, _play_reusable(other._play_reusable.load())
 	, _next_video_time(other._next_video_time)
 	, _next_audio_time(other._next_audio_time)
 	, _dcp_decode_reduction(other._dcp_decode_reduction.load())
@@ -201,7 +201,7 @@ Player::operator=(Player&& other)
 	_always_burn_open_subtitles = other._always_burn_open_subtitles.load();
 	_fast = other._fast.load();
 	_tolerant = other._tolerant;
-	_play_referenced = other._play_referenced.load();
+	_play_reusable = other._play_reusable.load();
 	_next_video_time = other._next_video_time;
 	_next_audio_time = other._next_audio_time;
 	_dcp_decode_reduction = other._dcp_decode_reduction.load();
@@ -306,8 +306,8 @@ Player::setup_pieces()
 		}
 
 		if (auto dcp = dynamic_pointer_cast<DCPDecoder>(decoder)) {
-			dcp->set_decode_referenced(_play_referenced);
-			if (_play_referenced) {
+			dcp->set_decode_reusable(_play_reusable);
+			if (_play_reusable) {
 				dcp->set_forced_reduction(_dcp_decode_reduction);
 			}
 		}
@@ -663,10 +663,10 @@ Player::set_fast()
 
 
 void
-Player::set_play_referenced()
+Player::set_play_reusable()
 {
-	ChangeSignaller<Player, int> cc(this, PlayerProperty::PLAY_REFERENCED);
-	_play_referenced = true;
+	ChangeSignaller<Player, int> cc(this, PlayerProperty::PLAY_REUSABLE);
+	_play_reusable = true;
 	setup_pieces();
 }
 
@@ -757,7 +757,7 @@ Player::pass()
 		LOG_DEBUG_PLAYER("PLY: Calling pass() on {}", earliest_content->content->path(0).string());
 		earliest_content->done = earliest_content->decoder->pass();
 		auto dcp = dynamic_pointer_cast<DCPContent>(earliest_content->content);
-		if (dcp && !_play_referenced) {
+		if (dcp && !_play_reusable) {
 			if (dcp->reference_video()) {
 				_next_video_time = dcp->end(film);
 			}

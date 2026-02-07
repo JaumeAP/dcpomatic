@@ -69,7 +69,7 @@ public:
 	static int constexpr IGNORE_AUDIO = 808;
 	static int constexpr IGNORE_TEXT = 808;
 	static int constexpr ALWAYS_BURN_OPEN_SUBTITLES = 809;
-	static int constexpr PLAY_REFERENCED = 810;
+	static int constexpr PLAY_REUSABLE = 810;
 };
 
 
@@ -104,7 +104,7 @@ public:
 	void set_ignore_text();
 	void set_always_burn_open_subtitles();
 	void set_fast();
-	void set_play_referenced();
+	void set_play_reusable();
 	void set_dcp_decode_reduction(boost::optional<int> reduction);
 	void set_disable_audio_processor();
 
@@ -213,8 +213,11 @@ private:
 	boost::atomic<bool> _fast;
 	/** true if we should keep going in the face of `survivable' errors */
 	bool _tolerant;
-	/** true if we should `play' (i.e output) referenced DCP data (e.g. for preview) */
-	boost::atomic<bool> _play_referenced;
+	/** true if we should `play' (i.e output) reusable DCP data.
+	 *  For example, for a preview we want to play everything even if when making
+	 *  a DCP it would be re-used verbatim or referenced from an OV.
+	 */
+	boost::atomic<bool> _play_reusable;
 
 	/** Time of the next video that we will emit, or the time of the last accurate seek */
 	boost::optional<dcpomatic::DCPTime> _next_video_time;

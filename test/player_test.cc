@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE (player_seek_test)
 	Player player(film, Image::Alignment::COMPACT, false);
 	player.set_fast();
 	player.set_always_burn_open_subtitles();
-	player.set_play_referenced();
+	player.set_play_reusable();
 
 	auto butler = std::make_shared<Butler>(
 		film, player, AudioMapping(), 2, AV_PIX_FMT_RGB24, VideoRange::FULL, Image::Alignment::PADDED, true, false, Butler::Audio::DISABLED
@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE (player_seek_test2)
 	Player player(film, Image::Alignment::COMPACT, false);
 	player.set_fast();
 	player.set_always_burn_open_subtitles();
-	player.set_play_referenced();
+	player.set_play_reusable();
 
 	auto butler = std::make_shared<Butler>
 		(film, player, AudioMapping(), 2, AV_PIX_FMT_RGB24, VideoRange::FULL, Image::Alignment::PADDED, true, false, Butler::Audio::DISABLED

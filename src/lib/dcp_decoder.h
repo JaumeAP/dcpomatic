@@ -61,7 +61,7 @@ public:
 		return _reels;
 	}
 
-	void set_decode_referenced(bool r);
+	void set_decode_reusable(bool r);
 	void set_forced_reduction(boost::optional<int> reduction);
 
 	bool pass() override;
@@ -110,7 +110,7 @@ private:
 
 	std::shared_ptr<dcp::MPEG2Decompressor> _mpeg2_decompressor;
 
-	bool _decode_referenced = false;
+	bool _decode_reusable = false;
 	boost::optional<int> _forced_reduction;
 
 	std::string _lazy_digest;

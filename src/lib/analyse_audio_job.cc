@@ -90,7 +90,7 @@ AnalyseAudioJob::run()
 	player->set_ignore_video();
 	player->set_ignore_text();
 	player->set_fast();
-	player->set_play_referenced();
+	player->set_play_reusable();
 	player->Audio.connect(bind(&AudioAnalyser::analyse, &_analyser, _1, _2));
 	if (!_whole_film) {
 		player->set_disable_audio_processor();

@@ -139,7 +139,7 @@ DCPDecoder::DCPDecoder(shared_ptr<const Film> film, shared_ptr<const DCPContent>
 		_reels = cpl->reels();
 	}
 
-	set_decode_referenced(false);
+	set_decode_reusable(false);
 
 	_reel = _reels.begin();
 	get_readers();
@@ -176,7 +176,7 @@ DCPDecoder::pass()
 	*/
 	pass_texts(_next, picture_asset->size());
 
-	if ((_j2k_mono_reader || _j2k_stereo_reader || _mpeg2_mono_reader) && (_decode_referenced || !_dcp_content->reference_video())) {
+	if ((_j2k_mono_reader || _j2k_stereo_reader || _mpeg2_mono_reader) && (_decode_reusable || !_dcp_content->reference_video())) {
 		auto const entry_point = (*_reel)->main_picture()->entry_point().get_value_or(0);
 		if (_j2k_mono_reader) {
 			video->emit(
@@ -233,7 +233,7 @@ DCPDecoder::pass()
 		}
 	}
 
-	if (_sound_reader && (_decode_referenced || !_dcp_content->reference_audio())) {
+	if (_sound_reader && (_decode_reusable || !_dcp_content->reference_audio())) {
 		auto const entry_point = (*_reel)->main_sound()->entry_point().get_value_or(0);
 		auto sf = _sound_reader->get_frame(entry_point + frame);
 		auto from = sf->data();
@@ -331,7 +331,7 @@ DCPDecoder::pass_texts(
 	auto const asset = reel_asset->asset();
 	auto const entry_point = reel_asset->entry_point().get_value_or(0);
 
-	if (_decode_referenced || !_dcp_content->reference_text(type)) {
+	if (_decode_reusable || !_dcp_content->reference_text(type)) {
 		auto subs = asset->texts_during(
 			dcp::Time(entry_point + frame, vfr, vfr),
 			dcp::Time(entry_point + frame + 1, vfr, vfr),
@@ -517,15 +517,15 @@ DCPDecoder::seek(ContentTime t, bool accurate)
 
 
 void
-DCPDecoder::set_decode_referenced(bool r)
+DCPDecoder::set_decode_reusable(bool r)
 {
-	_decode_referenced = r;
+	_decode_reusable = r;
 
 	if (video) {
-		video->set_ignore(_dcp_content->reference_video() && !_decode_referenced);
+		video->set_ignore(_dcp_content->reference_video() && !_decode_reusable);
 	}
 	if (audio) {
-		audio->set_ignore(_dcp_content->reference_audio() && !_decode_referenced);
+		audio->set_ignore(_dcp_content->reference_audio() && !_decode_reusable);
 	}
 }
 

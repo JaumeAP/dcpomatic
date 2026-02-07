@@ -65,7 +65,7 @@ SubtitleFilmEncoder::SubtitleFilmEncoder(
 	, _length(film->length())
 	, _standard(standard)
 {
-	_player.set_play_referenced();
+	_player.set_play_reusable();
 	_player.set_ignore_video();
 	_player.set_ignore_audio();
 	_player.Text.connect(boost::bind(&SubtitleFilmEncoder::text, this, _1, _2, _3, _4));
