@@ -937,9 +937,8 @@ try
 {
 	int64_t total_size = 0;
 	for (auto const& i: _reel_assets) {
-		auto file = dynamic_pointer_cast<dcp::ReelFileAsset>(i.asset);
-		if (file && !file->hash()) {
-			auto filename = file->asset_ref().asset()->file();
+		if (!i.asset->hash()) {
+			auto const filename = i.asset->asset_ref().asset()->file();
 			DCPOMATIC_ASSERT(filename);
 			total_size += boost::filesystem::file_size(*filename);
 		}
@@ -947,13 +946,13 @@ try
 
 	int64_t total_done = 0;
 	for (auto const& i: _reel_assets) {
-		auto file = dynamic_pointer_cast<dcp::ReelFileAsset>(i.asset);
-		if (file && !file->hash()) {
-			file->asset_ref().asset()->hash([&total_done, total_size, set_progress](int64_t done, int64_t) {
+		if (!i.asset->hash()) {
+			auto asset = i.asset->asset_ref().asset();
+			asset->hash([&total_done, total_size, set_progress](int64_t done, int64_t) {
 				set_progress(total_done + done, total_size);
 			});
-			total_done += boost::filesystem::file_size(*file->asset_ref().asset()->file());
-			file->set_hash(file->asset_ref().asset()->hash());
+			total_done += boost::filesystem::file_size(*asset->file());
+			i.asset->set_hash(asset->hash());
 		}
 	}
 } catch (boost::thread_interrupted) {

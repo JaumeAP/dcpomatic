@@ -43,7 +43,7 @@ using namespace dcpomatic;
 
 
 static void
-maybe_add_asset(list<ReusableReelAsset>& a, shared_ptr<dcp::ReelAsset> r, Frame reel_trim_start, Frame reel_trim_end, DCPTime from, int const ffr)
+maybe_add_asset(list<ReusableReelAsset>& a, shared_ptr<dcp::ReelFileAsset> r, Frame reel_trim_start, Frame reel_trim_end, DCPTime from, int const ffr, bool reference)
 {
 	DCPOMATIC_ASSERT (r);
 	r->set_entry_point (r->entry_point().get_value_or(0) + reel_trim_start);
