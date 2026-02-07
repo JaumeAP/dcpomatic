@@ -305,8 +305,7 @@ Player::setup_pieces()
 			}
 		}
 
-		auto dcp = dynamic_pointer_cast<DCPDecoder>(decoder);
-		if (dcp) {
+		if (auto dcp = dynamic_pointer_cast<DCPDecoder>(decoder)) {
 			dcp->set_decode_referenced(_play_referenced);
 			if (_play_referenced) {
 				dcp->set_forced_reduction(_dcp_decode_reduction);
