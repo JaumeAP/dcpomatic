@@ -19,6 +19,7 @@
 */
 
 
+#include "asset_filename_register.h"
 #include "audio_buffers.h"
 #include "audio_mapping.h"
 #include "config.h"
@@ -604,10 +605,12 @@ Writer::finish()
 
 	calculate_digests();
 
+	AssetFilenameRegister filename_register;
+
 	/* Add reels */
 
 	for (auto& i: _reels) {
-		cpl->add(i.create_reel(_reel_assets, _output_dir, _have_subtitles, _have_closed_captions));
+		cpl->add(i.create_reel(_reel_assets, filename_register, _output_dir, _have_subtitles, _have_closed_captions));
 	}
 
 	/* Add metadata */

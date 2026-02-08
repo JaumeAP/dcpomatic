@@ -25,6 +25,7 @@ sources = """
           analyse_audio_job.cc
           analyse_subtitles_job.cc
           analytics.cc
+          asset_filename_register.cc
           atmos_content.cc
           atmos_mxf_content.cc
           atmos_decoder.cc

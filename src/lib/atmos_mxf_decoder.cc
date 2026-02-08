@@ -42,12 +42,17 @@ AtmosMXFDecoder::AtmosMXFDecoder (std::shared_ptr<const Film> film, std::shared_
 	_reader = asset->start_read ();
 	_reader->set_check_hmac (false);
 	_metadata = AtmosMetadata (asset);
+	_can_reuse = content->can_reuse(film);
 }
 
 
 bool
 AtmosMXFDecoder::pass ()
 {
+	if (!_decode_reusable && _can_reuse) {
+		return true;
+	}
+
 	auto const vfr = _content->active_video_frame_rate (film());
 	auto const frame = _next.frames_round (vfr);
 

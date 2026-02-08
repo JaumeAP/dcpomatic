@@ -19,6 +19,7 @@
 */
 
 
+#include "asset_filename_register.h"
 #include "audio_buffers.h"
 #include "config.h"
 #include "constants.h"
@@ -411,7 +412,7 @@ ReelWriter::finish(boost::filesystem::path output_dcp)
 
 template <class Asset>
 shared_ptr<Asset>
-maybe_reuse_asset(char const* log_name, list<ReusableReelAsset> const& refs, DCPTimePeriod period, boost::filesystem::path output_dir)
+maybe_reuse_asset(char const* log_name, list<ReusableReelAsset> const& refs, AssetFilenameRegister& filename_register, DCPTimePeriod period, boost::filesystem::path output_dir)
 {
 	shared_ptr<Asset> reusable;
 
@@ -426,8 +427,13 @@ maybe_reuse_asset(char const* log_name, list<ReusableReelAsset> const& refs, DCP
 			if (ref.use == ReusableReelAsset::Use::COPY) {
 				auto mxf = reusable->asset_ref().asset();
 				DCPOMATIC_ASSERT(mxf->file());
-				auto const destination = output_dir / mxf->file()->filename();
-				copy_file(*mxf->file(), destination);
+				auto const destination = output_dir / filename_register.destination_filename(mxf->file()->filename(), mxf->id());
+				/* We may be using this more than once, so it's OK if it exists.  The AssetFilenameRegister
+				 * will have disambiguated anything that needs it.
+				 */
+				if (!dcp::filesystem::exists(destination)) {
+					copy_file(*mxf->file(), destination);
+				}
 				mxf->set_file(destination);
 			}
 			/* If we have a hash for this asset in the CPL, assume that it is correct */
@@ -451,6 +457,7 @@ ReelWriter::maybe_add_text(
 	int64_t picture_duration,
 	shared_ptr<dcp::Reel> reel,
 	list<ReusableReelAsset> const & refs,
+	AssetFilenameRegister& filename_register,
 	boost::filesystem::path output_dcp
 	) const
 {
@@ -491,7 +498,7 @@ ReelWriter::maybe_add_text(
 
 	} else {
 		/* We don't have a subtitle asset of our own; hopefully we have one to reuse */
-		reel_asset = maybe_reuse_asset<dcp::ReelTextAsset>("subtitle", refs, _period, _output_dir);
+		reel_asset = maybe_reuse_asset<dcp::ReelTextAsset>("subtitle", refs, filename_register, _period, _output_dir);
 	}
 
 	if (reel_asset) {
@@ -509,7 +516,7 @@ ReelWriter::maybe_add_text(
 
 
 shared_ptr<dcp::ReelPictureAsset>
-ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReusableReelAsset> const & refs) const
+ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReusableReelAsset> const & refs, AssetFilenameRegister& filename_register) const
 {
 	shared_ptr<dcp::ReelPictureAsset> reel_asset;
 
@@ -526,7 +533,7 @@ ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReusableReelAss
 		reel_asset = make_shared<dcp::ReelMonoPictureAsset>(_mpeg2_picture_asset, 0);
 	} else {
 		/* We don't have a picture asset of our own; hopefully we have one to reuse */
-		reel_asset = maybe_reuse_asset<dcp::ReelPictureAsset>("picture", refs, _period, _output_dir);
+		reel_asset = maybe_reuse_asset<dcp::ReelPictureAsset>("picture", refs, filename_register, _period, _output_dir);
 	}
 
 	Frame const period_duration = _period.duration().frames_round(film()->video_frame_rate());
@@ -550,7 +557,7 @@ ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReusableReelAss
 
 
 void
-ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReusableReelAsset> const & refs) const
+ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReusableReelAsset> const & refs, AssetFilenameRegister& filename_register) const
 {
 	shared_ptr<dcp::ReelSoundAsset> reel_asset;
 
@@ -559,7 +566,7 @@ ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReusableReelAsset
 		reel_asset = make_shared<dcp::ReelSoundAsset>(_sound_asset, 0);
 	} else {
 		/* We don't have a sound asset of our own; hopefully we have one to reuse */
-		reel_asset = maybe_reuse_asset<dcp::ReelSoundAsset>("sound", refs, _period, _output_dir);
+		reel_asset = maybe_reuse_asset<dcp::ReelSoundAsset>("sound", refs, filename_register, _period, _output_dir);
 	}
 
 	auto const period_duration = _period.duration().frames_round(film()->video_frame_rate());
@@ -584,19 +591,20 @@ void
 ReelWriter::create_reel_text(
 	shared_ptr<dcp::Reel> reel,
 	list<ReusableReelAsset> const & refs,
+	AssetFilenameRegister& filename_register,
 	int64_t duration,
 	boost::filesystem::path output_dcp,
 	bool ensure_subtitles,
 	set<DCPTextTrack> ensure_closed_captions
 	) const
 {
-	auto subtitle = maybe_add_text(_subtitle_asset, dcp::TextType::OPEN_SUBTITLE, duration, reel, refs, output_dcp);
+	auto subtitle = maybe_add_text(_subtitle_asset, dcp::TextType::OPEN_SUBTITLE, duration, reel, refs, filename_register, output_dcp);
 
 	if (!subtitle && ensure_subtitles) {
 		/* We had no subtitle asset, but we've been asked to make sure there is one */
 		subtitle = maybe_add_text(
 			empty_text_asset(TextType::OPEN_SUBTITLE, optional<DCPTextTrack>(), true),
-			dcp::TextType::OPEN_SUBTITLE, duration, reel, refs, output_dcp
+			dcp::TextType::OPEN_SUBTITLE, duration, reel, refs, filename_register, output_dcp
 		);
 	}
 
@@ -608,7 +616,7 @@ ReelWriter::create_reel_text(
 	}
 
 	for (auto const& i: _closed_caption_assets) {
-		auto a = maybe_add_text(i.second, dcp::TextType::CLOSED_CAPTION, duration, reel, refs, output_dcp);
+		auto a = maybe_add_text(i.second, dcp::TextType::CLOSED_CAPTION, duration, reel, refs, filename_register, output_dcp);
 		DCPOMATIC_ASSERT(a);
 		a->set_annotation_text(i.first.name);
 		if (i.first.language) {
@@ -622,7 +630,7 @@ ReelWriter::create_reel_text(
 	for (auto i: ensure_closed_captions) {
 		auto a = maybe_add_text(
 			empty_text_asset(TextType::CLOSED_CAPTION, i, true),
-			dcp::TextType::CLOSED_CAPTION, duration, reel, refs, output_dcp
+			dcp::TextType::CLOSED_CAPTION, duration, reel, refs, filename_register, output_dcp
 		);
 		DCPOMATIC_ASSERT(a);
 		a->set_annotation_text(i.name);
@@ -663,6 +671,7 @@ ReelWriter::create_reel_markers(shared_ptr<dcp::Reel> reel) const
 shared_ptr<dcp::Reel>
 ReelWriter::create_reel(
 	list<ReusableReelAsset> const & refs,
+	AssetFilenameRegister& filename_register,
 	boost::filesystem::path output_dcp,
 	bool ensure_subtitles,
 	set<DCPTextTrack> ensure_closed_captions
@@ -678,18 +687,20 @@ ReelWriter::create_reel(
 	 */
 	int64_t duration = 0;
 	if (!_text_only) {
-		auto reel_picture_asset = create_reel_picture(reel, refs);
+		auto reel_picture_asset = create_reel_picture(reel, refs, filename_register);
 		duration = reel_picture_asset->actual_duration();
-		create_reel_sound(reel, refs);
+		create_reel_sound(reel, refs, filename_register);
 		if (!film()->interop()) {
 			create_reel_markers(reel);
 		}
 	}
 
-	create_reel_text(reel, refs, duration, output_dcp, ensure_subtitles, ensure_closed_captions);
+	create_reel_text(reel, refs, filename_register, duration, output_dcp, ensure_subtitles, ensure_closed_captions);
 
 	if (_atmos_asset) {
 		reel->add(make_shared<dcp::ReelAtmosAsset>(_atmos_asset, 0));
+	} else if (auto reuse = maybe_reuse_asset<dcp::ReelAtmosAsset>("atmos", refs, filename_register, _period, _output_dir)) {
+		reel->add(reuse);
 	}
 
 	return reel;

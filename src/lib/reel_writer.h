@@ -37,6 +37,7 @@
 #include <dcp/mpeg2_picture_asset_writer.h>
 
 
+class AssetFilenameRegister;
 class AudioBuffers;
 class Film;
 class InfoFileHandle;
@@ -86,6 +87,7 @@ public:
 	void finish(boost::filesystem::path output_dcp);
 	std::shared_ptr<dcp::Reel> create_reel(
 		std::list<ReusableReelAsset> const & refs,
+		AssetFilenameRegister& filename_register,
 		boost::filesystem::path output_dcp,
 		bool ensure_subtitles,
 		std::set<DCPTextTrack> ensure_closed_captions
@@ -110,11 +112,20 @@ private:
 	bool existing_picture_frame_ok(dcp::File& asset_file, Frame frame);
 	std::shared_ptr<dcp::TextAsset> empty_text_asset(TextType type, boost::optional<DCPTextTrack> track, bool with_dummy) const;
 
-	std::shared_ptr<dcp::ReelPictureAsset> create_reel_picture(std::shared_ptr<dcp::Reel> reel, std::list<ReusableReelAsset> const & refs) const;
-	void create_reel_sound(std::shared_ptr<dcp::Reel> reel, std::list<ReusableReelAsset> const & refs) const;
+	std::shared_ptr<dcp::ReelPictureAsset> create_reel_picture(
+		std::shared_ptr<dcp::Reel> reel,
+		std::list<ReusableReelAsset> const & refs,
+		AssetFilenameRegister& filename_register
+	) const;
+	void create_reel_sound(
+		std::shared_ptr<dcp::Reel> reel,
+		std::list<ReusableReelAsset> const & refs,
+		AssetFilenameRegister& filename_register
+	) const;
 	void create_reel_text(
 		std::shared_ptr<dcp::Reel> reel,
 		std::list<ReusableReelAsset> const& refs,
+		AssetFilenameRegister& filename_register,
 		int64_t duration,
 		boost::filesystem::path output_dcp,
 		bool ensure_subtitles,
@@ -124,13 +135,13 @@ private:
 	float convert_vertical_position(StringText const& subtitle, dcp::SubtitleStandard to) const;
 	void copy_file(boost::filesystem::path from, boost::filesystem::path to);
 
-
 	std::shared_ptr<dcp::ReelTextAsset> maybe_add_text(
 		std::shared_ptr<dcp::TextAsset> asset,
 		dcp::TextType type,
 		int64_t picture_duration,
 		std::shared_ptr<dcp::Reel> reel,
 		std::list<ReusableReelAsset> const & refs,
+		AssetFilenameRegister& filename_register,
 		boost::filesystem::path output_dcp
 	) const;
 

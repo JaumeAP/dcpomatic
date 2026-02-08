@@ -19,6 +19,7 @@
 */
 
 
+#include "atmos_mxf_content.h"
 #include "dcp_content.h"
 #include "dcp_decoder.h"
 #include "dcpomatic_assert.h"
@@ -27,6 +28,7 @@
 #include "reusable_reel_asset.h"
 #include <dcp/reel.h>
 #include <dcp/reel_asset.h>
+#include <dcp/reel_atmos_asset.h>
 #include <dcp/reel_picture_asset.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/reel_text_asset.h>
@@ -34,10 +36,11 @@
 
 
 using std::list;
+using std::make_shared;
 using std::max;
 using std::min;
 using std::shared_ptr;
-using boost::dynamic_pointer_cast;
+using std::dynamic_pointer_cast;
 using boost::scoped_ptr;
 using namespace dcpomatic;
 
@@ -132,6 +135,36 @@ add_reusable_reel_assets_from_dcp(shared_ptr<const Film> film, shared_ptr<const 
 
 
 
+static
+void
+add_reusable_reel_assets_for_atmos(shared_ptr<const Film> film, shared_ptr<const AtmosMXFContent> atmos, list<ReusableReelAsset>& reel_assets)
+{
+	if (!atmos->can_reuse(film)) {
+		return;
+	}
+
+	auto const vfr = film->video_frame_rate();
+	auto asset = make_shared<dcp::AtmosAsset>(atmos->path(0));
+	auto period = atmos->period(film);
+	auto entry_point = atmos->trim_start().frames_round(vfr);
+	for (auto reel: film->reels()) {
+		if (reel.overlap(period)) {
+			/* We already checked that the trimmed Atmos content overlaps complete reels,
+			 * so we can assume that here.
+			 */
+			auto reel_asset = make_shared<dcp::ReelAtmosAsset>(asset, entry_point);
+			reel_asset->set_duration(reel.duration().frames_round(vfr));
+			entry_point += reel_asset->actual_duration();
+
+			reel_assets.push_back(
+				ReusableReelAsset(reel_asset, reel, ReusableReelAsset::Use::COPY)
+			);
+		}
+	}
+}
+
+
+
 /** @return Details of all the DCP assets in a playlist that are marked to refer to */
 list<ReusableReelAsset>
 get_reusable_reel_assets(shared_ptr<const Film> film, shared_ptr<const Playlist> playlist)
@@ -141,6 +174,8 @@ get_reusable_reel_assets(shared_ptr<const Film> film, shared_ptr<const Playlist>
 	for (auto content: playlist->content()) {
 		if (auto dcp = dynamic_pointer_cast<DCPContent>(content)) {
 			add_reusable_reel_assets_from_dcp(film, dcp, reel_assets);
+		} else if (auto atmos = dynamic_pointer_cast<AtmosMXFContent>(content)) {
+			add_reusable_reel_assets_for_atmos(film, atmos, reel_assets);
 		}
 	}
 

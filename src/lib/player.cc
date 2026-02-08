@@ -20,6 +20,7 @@
 
 
 #include "atmos_decoder.h"
+#include "atmos_mxf_decoder.h"
 #include "audio_buffers.h"
 #include "audio_content.h"
 #include "audio_decoder.h"
@@ -310,6 +311,10 @@ Player::setup_pieces()
 			if (_play_reusable) {
 				dcp->set_forced_reduction(_dcp_decode_reduction);
 			}
+		}
+
+		if (auto atmos = dynamic_pointer_cast<AtmosMXFDecoder>(decoder)) {
+			atmos->set_decode_reusable(_play_reusable);
 		}
 
 		auto piece = make_shared<Piece>(content, decoder, frc);

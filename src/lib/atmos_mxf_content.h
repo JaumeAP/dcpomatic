@@ -50,5 +50,7 @@ public:
 	dcpomatic::DCPTime full_length (std::shared_ptr<const Film> film) const override;
 	dcpomatic::DCPTime approximate_length () const override;
 
+	bool can_reuse(std::shared_ptr<const Film> film) const;
+
 	static bool valid_mxf (boost::filesystem::path path);
 };

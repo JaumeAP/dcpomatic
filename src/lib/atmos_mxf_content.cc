@@ -118,3 +118,33 @@ AtmosMXFContent::approximate_length () const
 {
 	return DCPTime::from_frames (atmos->length(), 24);
 }
+
+
+bool
+AtmosMXFContent::can_reuse(shared_ptr<const Film> film) const
+{
+	auto atmos_period = period(film);
+
+	/* Check that this content has been trimmed by an exact number of video frames,
+	 * otherwise we can't represent the required trim in the CPL.
+	 */
+	if (
+		trim_start().round(film->video_frame_rate()) != trim_start() ||
+		trim_end().round(film->video_frame_rate()) != trim_end()
+	   ) {
+		return false;
+	}
+
+	/* We assume that if the content made it into the film it must be valid, so
+	 * we just have to check that there isn't any reel which has part of this
+	 * asset (with some empty space).
+	 */
+
+	auto const reels = film->reels();
+	return std::none_of(reels.begin(), reels.end(), [atmos_period](DCPTimePeriod reel) {
+		/* Check for incomplete overlap */
+		auto overlap = atmos_period.overlap(reel);
+		return overlap && *overlap != reel;
+	});
+}
+

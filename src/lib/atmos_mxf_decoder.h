@@ -36,10 +36,16 @@ public:
 	bool pass () override;
 	void seek (dcpomatic::ContentTime t, bool accurate) override;
 
+	void set_decode_reusable(bool decode_reusable) {
+		_decode_reusable = decode_reusable;
+	}
+
 private:
 	std::shared_ptr<const AtmosMXFContent> _content;
 	dcpomatic::ContentTime _next;
 	std::shared_ptr<dcp::AtmosAssetReader> _reader;
 	boost::optional<AtmosMetadata> _metadata;
+	bool _decode_reusable = true;
+	bool _can_reuse;
 };
 
