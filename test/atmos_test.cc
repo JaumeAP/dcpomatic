@@ -45,16 +45,28 @@ BOOST_AUTO_TEST_CASE(atmos_passthrough_test)
 {
 	Cleanup cl;
 
+	auto atmos = content_factory(TestPaths::private_data() / "atmos_asset.mxf")[0];
+	auto picture = content_factory("test/data/flat_red.png")[0];
+
 	auto film = new_test_film(
 		"atmos_passthrough_test",
-		content_factory(TestPaths::private_data() / "atmos_asset.mxf"),
+		{ atmos, picture },
 		&cl
 		);
 
-	make_and_verify_dcp(film, {dcp::VerificationNote::Code::MISSING_CPL_METADATA});
+	make_and_verify_dcp(film);
 
 	auto ref = TestPaths::private_data() / "atmos_asset.mxf";
 	BOOST_REQUIRE(mxf_atmos_files_same(ref, dcp_file(film, "atmos"), true));
+
+	dcp::DCP dcp(film->dir(film->dcp_name()));
+	dcp.read();
+	BOOST_REQUIRE_EQUAL(dcp.cpls().size(), 1U);
+	auto cpl = dcp.cpls()[0];
+	auto msc = cpl->main_sound_configuration();
+	BOOST_REQUIRE(msc);
+	BOOST_REQUIRE(msc->channels() > 13);
+	BOOST_CHECK(msc->mapping(13).get_value_or(dcp::Channel::LEFT) == dcp::Channel::SYNC_SIGNAL);
 
 	cl.run();
 }
@@ -180,4 +192,3 @@ BOOST_AUTO_TEST_CASE(atmos_multi_reel_test)
 		BOOST_CHECK(reels[i]->atmos());
 	}
 }
-

@@ -680,6 +680,13 @@ Writer::finish()
 		}
 	}
 
+	if (film()->contains_atmos_content()) {
+		if (msc.channels() < 14) {
+			msc.set_channels(14);
+		}
+		msc.set_mapping(13, dcp::Channel::SYNC_SIGNAL);
+	}
+
 	cpl->set_main_sound_configuration(msc);
 	cpl->set_main_sound_sample_rate(film()->audio_frame_rate());
 	cpl->set_main_picture_stored_area(film()->frame_size());
