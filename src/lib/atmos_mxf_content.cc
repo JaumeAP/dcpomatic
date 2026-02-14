@@ -123,6 +123,10 @@ AtmosMXFContent::approximate_length () const
 bool
 AtmosMXFContent::can_reuse(shared_ptr<const Film> film) const
 {
+	if (film->encrypted()) {
+		return false;
+	}
+
 	auto atmos_period = period(film);
 
 	/* Check that this content has been trimmed by an exact number of video frames,

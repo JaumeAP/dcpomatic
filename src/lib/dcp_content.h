@@ -32,6 +32,7 @@
 #include "enum_indexed_vector.h"
 #include "font.h"
 #include "resolution.h"
+#include "reuse_type.h"
 #include "video_encoding.h"
 #include <libcxml/cxml.h>
 #include <dcp/content_kind.h>
@@ -139,7 +140,7 @@ public:
 		return _reference_video;
 	}
 
-	bool can_reuse_video(std::shared_ptr<const Film> film, std::string* why_not = nullptr) const;
+	bool can_reuse_video(std::shared_ptr<const Film> film, boost::optional<ReuseType> reuse_type, std::string* why_not = nullptr) const;
 
 	void set_reference_audio(bool r);
 
@@ -148,7 +149,7 @@ public:
 		return _reference_audio;
 	}
 
-	bool can_reuse_audio(std::shared_ptr<const Film> film, std::string* why_not = nullptr) const;
+	bool can_reuse_audio(std::shared_ptr<const Film> film, boost::optional<ReuseType> reuse_type, std::string* why_not = nullptr) const;
 
 	void set_reference_text(TextType type, bool r);
 
@@ -160,7 +161,7 @@ public:
 		return _reference_text[type];
 	}
 
-	bool can_reuse_text(std::shared_ptr<const Film> film, TextType type, std::string* why_not = nullptr) const;
+	bool can_reuse_text(std::shared_ptr<const Film> film, TextType type, boost::optional<ReuseType> reuse_type, std::string* why_not = nullptr) const;
 
 	bool reference_anything() const;
 

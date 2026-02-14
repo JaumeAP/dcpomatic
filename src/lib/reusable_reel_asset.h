@@ -24,6 +24,7 @@
 
 
 #include "dcpomatic_time.h"
+#include "reuse_type.h"
 #include <dcp/reel_asset.h>
 
 
@@ -34,23 +35,18 @@ class Playlist;
 class ReusableReelAsset
 {
 public:
-	enum class Use {
-		REFERENCE,
-		COPY
-	};
-
-	ReusableReelAsset(std::shared_ptr<dcp::ReelFileAsset> asset_, dcpomatic::DCPTimePeriod period_, Use use_)
+	ReusableReelAsset(std::shared_ptr<dcp::ReelFileAsset> asset_, dcpomatic::DCPTimePeriod period_, ReuseType type_)
 		: asset(asset_)
 		, period(period_)
-		, use(use_)
+		, type(type_)
 	{}
 
 	/** The asset */
 	std::shared_ptr<dcp::ReelFileAsset> asset;
 	/** Period that this asset covers in the DCP */
 	dcpomatic::DCPTimePeriod period;
-	/** How this asset is used - referred to or copied */
-	Use use;
+	/** How this asset is re-used - referred to or copied */
+	ReuseType type;
 };
 
 

@@ -1810,19 +1810,19 @@ Film::check_settings_consistency()
 			continue;
 		}
 
-		if (d->reference_video() && !d->can_reuse_video(shared_from_this())) {
+		if (d->reference_video() && !d->can_reuse_video(shared_from_this(), ReuseType::REFERENCE)) {
 			d->set_reference_video(false);
 			change_made = true;
 		}
-		if (d->reference_audio() && !d->can_reuse_audio(shared_from_this())) {
+		if (d->reference_audio() && !d->can_reuse_audio(shared_from_this(), ReuseType::REFERENCE)) {
 			d->set_reference_audio(false);
 			change_made = true;
 		}
-		if (d->reference_text(TextType::OPEN_SUBTITLE) && !d->can_reuse_text(shared_from_this(), TextType::OPEN_SUBTITLE)) {
+		if (d->reference_text(TextType::OPEN_SUBTITLE) && !d->can_reuse_text(shared_from_this(), TextType::OPEN_SUBTITLE, ReuseType::REFERENCE)) {
 			d->set_reference_text(TextType::OPEN_SUBTITLE, false);
 			change_made = true;
 		}
-		if (d->reference_text(TextType::CLOSED_CAPTION) && !d->can_reuse_text(shared_from_this(), TextType::CLOSED_CAPTION)) {
+		if (d->reference_text(TextType::CLOSED_CAPTION) && !d->can_reuse_text(shared_from_this(), TextType::CLOSED_CAPTION, ReuseType::REFERENCE)) {
 			d->set_reference_text(TextType::CLOSED_CAPTION, false);
 			change_made = true;
 		}

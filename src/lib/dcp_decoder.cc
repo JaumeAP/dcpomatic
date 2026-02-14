@@ -148,10 +148,11 @@ DCPDecoder::DCPDecoder(shared_ptr<const Film> film, shared_ptr<const DCPContent>
 	_font_id_allocator.add_fonts_from_reels(_reels);
 	_font_id_allocator.allocate();
 
-	_can_reuse_video = _dcp_content->can_reuse_video(film) && !film->reencode_j2k();
-	_can_reuse_audio = _dcp_content->can_reuse_audio(film);
+	_reuse_video = _dcp_content->reference_video() || _dcp_content->can_reuse_video(film, ReuseType::COPY);
+	_reuse_audio = _dcp_content->reference_audio() || _dcp_content->can_reuse_audio(film, ReuseType::COPY);
 	for (int i = 0; i < static_cast<int>(TextType::COUNT); ++i) {
-		_can_reuse_text[i] = _dcp_content->can_reuse_text(film, static_cast<TextType>(i));
+		auto const type = static_cast<TextType>(i);
+		_reuse_text[i] = _dcp_content->reference_text(type) || _dcp_content->can_reuse_text(film, type, ReuseType::COPY);
 	}
 }
 
@@ -183,7 +184,7 @@ DCPDecoder::pass()
 	*/
 	pass_texts(_next, picture_asset->size());
 
-	if ((_j2k_mono_reader || _j2k_stereo_reader || _mpeg2_mono_reader) && (_decode_reusable || !_can_reuse_video)) {
+	if ((_j2k_mono_reader || _j2k_stereo_reader || _mpeg2_mono_reader) && (_decode_reusable || !_reuse_video)) {
 		auto const entry_point = (*_reel)->main_picture()->entry_point().get_value_or(0);
 		if (_j2k_mono_reader) {
 			video->emit(
@@ -240,7 +241,7 @@ DCPDecoder::pass()
 		}
 	}
 
-	if (_sound_reader && (_decode_reusable || !_can_reuse_audio)) {
+	if (_sound_reader && (_decode_reusable || !_reuse_audio)) {
 		auto const entry_point = (*_reel)->main_sound()->entry_point().get_value_or(0);
 		auto sf = _sound_reader->get_frame(entry_point + frame);
 		auto from = sf->data();
@@ -338,7 +339,7 @@ DCPDecoder::pass_texts(
 	auto const asset = reel_asset->asset();
 	auto const entry_point = reel_asset->entry_point().get_value_or(0);
 
-	if (_decode_reusable || !_can_reuse_text[type]) {
+	if (_decode_reusable || !_reuse_text[type]) {
 		auto subs = asset->texts_during(
 			dcp::Time(entry_point + frame, vfr, vfr),
 			dcp::Time(entry_point + frame + 1, vfr, vfr),
@@ -529,10 +530,10 @@ DCPDecoder::set_decode_reusable(bool r)
 	_decode_reusable = r;
 
 	if (video) {
-		video->set_ignore(_can_reuse_video && !_decode_reusable);
+		video->set_ignore(_reuse_video && !_decode_reusable);
 	}
 	if (audio) {
-		audio->set_ignore(_can_reuse_audio && !_decode_reusable);
+		audio->set_ignore(_reuse_audio && !_decode_reusable);
 	}
 }
 

@@ -750,8 +750,20 @@ DCPContent::overlaps(shared_ptr<const Film> film, function<bool (shared_ptr<cons
 
 
 bool
-DCPContent::can_reuse_video(shared_ptr<const Film> film, string* why_not) const
+DCPContent::can_reuse_video(shared_ptr<const Film> film, optional<ReuseType> reuse_type, string* why_not) const
 {
+	if (reuse_type && *reuse_type == ReuseType::COPY) {
+		if (film->encrypted() || picture_encrypted()) {
+			/* This could perhaps be improved if the content is encrypted and the
+			 * film is still using the same key, but we'll just be lazy for now.
+			 */
+			return false;
+		}
+		if (film->reencode_j2k()) {
+			return false;
+		}
+	}
+
 	if (!video) {
 		if (why_not) {
 			*why_not = _("There is no video in this DCP");
@@ -795,8 +807,15 @@ DCPContent::can_reuse_video(shared_ptr<const Film> film, string* why_not) const
 
 
 bool
-DCPContent::can_reuse_audio(shared_ptr<const Film> film, string* why_not) const
+DCPContent::can_reuse_audio(shared_ptr<const Film> film, optional<ReuseType> reuse_type, string* why_not) const
 {
+	if (reuse_type && *reuse_type == ReuseType::COPY && (film->encrypted() || sound_encrypted())) {
+		/* This could perhaps be improved if the content is encrypted and the
+		 * film is still using the same key, but we'll just be lazy for now.
+		 */
+		return false;
+	}
+
 	if (audio && audio->stream()) {
 		auto const channels = audio->stream()->channels();
 		if (channels != film->audio_channels()) {
@@ -824,8 +843,15 @@ DCPContent::can_reuse_audio(shared_ptr<const Film> film, string* why_not) const
 
 
 bool
-DCPContent::can_reuse_text(shared_ptr<const Film> film, TextType type, string* why_not) const
+DCPContent::can_reuse_text(shared_ptr<const Film> film, TextType text_type, optional<ReuseType> reuse_type, string* why_not) const
 {
+	if (reuse_type && *reuse_type == ReuseType::COPY && (film->encrypted() || text_encrypted())) {
+		/* This could perhaps be improved if the content is encrypted and the
+		 * film is still using the same key, but we'll just be lazy for now.
+		 */
+		return false;
+	}
+
 	if (_has_non_zero_entry_point[TextType::OPEN_SUBTITLE]) {
 		if (why_not) {
 			/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
@@ -850,8 +876,8 @@ DCPContent::can_reuse_text(shared_ptr<const Film> film, TextType type, string* w
 		return false;
 	}
 
-	auto part = [type](shared_ptr<const Content> c) {
-		return std::find_if(c->text.begin(), c->text.end(), [type](shared_ptr<const TextContent> t) { return t->type() == type; }) != c->text.end();
+	auto part = [text_type](shared_ptr<const Content> c) {
+		return std::find_if(c->text.begin(), c->text.end(), [text_type](shared_ptr<const TextContent> t) { return t->type() == text_type; }) != c->text.end();
 	};
 
 	if (overlaps(film, part)) {

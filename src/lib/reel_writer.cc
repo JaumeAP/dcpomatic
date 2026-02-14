@@ -424,7 +424,7 @@ maybe_reuse_asset(char const* log_name, list<ReusableReelAsset> const& refs, Ass
 		}
 		if (asset && ref.period == period) {
 			reusable = asset;
-			if (ref.use == ReusableReelAsset::Use::COPY) {
+			if (ref.type == ReuseType::COPY) {
 				auto mxf = reusable->asset_ref().asset();
 				DCPOMATIC_ASSERT(mxf->file());
 				auto const destination = output_dir / filename_register.destination_filename(mxf->file()->filename(), mxf->id());

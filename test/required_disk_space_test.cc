@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE (required_disk_space_test)
 		16
 		);
 
-	BOOST_CHECK(content_b->can_reuse_audio(film));
+	BOOST_CHECK(content_b->can_reuse_audio(film, ReuseType::REFERENCE));
 	content_b->set_reference_audio (true);
 
 	check_within_n (

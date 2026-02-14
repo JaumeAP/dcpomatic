@@ -56,7 +56,7 @@ maybe_add_asset(list<ReusableReelAsset>& a, shared_ptr<dcp::ReelFileAsset> r, Fr
 			ReusableReelAsset(
 				r,
 				DCPTimePeriod(from, from + DCPTime::from_frames(r->actual_duration(), ffr)),
-				reference ? ReusableReelAsset::Use::REFERENCE : ReusableReelAsset::Use::COPY
+				reference ? ReuseType::REFERENCE : ReuseType::COPY
 			)
 		);
 	}
@@ -68,10 +68,10 @@ void
 add_reusable_reel_assets_from_dcp(shared_ptr<const Film> film, shared_ptr<const DCPContent> dcp, list<ReusableReelAsset>& reel_assets)
 {
 	if (
-		!dcp->can_reuse_video(film) &&
-		!dcp->can_reuse_audio(film) &&
-		!dcp->can_reuse_text(film, TextType::OPEN_SUBTITLE) &&
-		!dcp->can_reuse_text(film, TextType::CLOSED_CAPTION)
+		!dcp->can_reuse_video(film, {}) &&
+		!dcp->can_reuse_audio(film, {}) &&
+		!dcp->can_reuse_text(film, TextType::OPEN_SUBTITLE, {}) &&
+		!dcp->can_reuse_text(film, TextType::CLOSED_CAPTION, {})
 	   ) {
 		return;
 	}
@@ -110,19 +110,19 @@ add_reusable_reel_assets_from_dcp(shared_ptr<const Film> film, shared_ptr<const 
 		Frame const reel_trim_end =   min(reel_duration, max(int64_t(0), reel_duration - (offset_from_end - trim_end)));
 
 		auto const from = dcp->position() + std::max(DCPTime(), DCPTime::from_frames(offset_from_start - trim_start, frame_rate));
-		if (dcp->can_reuse_video(film)) {
+		if (dcp->can_reuse_video(film, {})) {
 			maybe_add_asset(reel_assets, reel->main_picture(), reel_trim_start, reel_trim_end, from, frame_rate, dcp->reference_video());
 		}
 
-		if (dcp->can_reuse_audio(film)) {
+		if (dcp->can_reuse_audio(film, {})) {
 			maybe_add_asset(reel_assets, reel->main_sound(), reel_trim_start, reel_trim_end, from, frame_rate, dcp->reference_audio());
 		}
 
-		if (dcp->can_reuse_text(film, TextType::OPEN_SUBTITLE) && reel->main_subtitle()) {
+		if (dcp->can_reuse_text(film, TextType::OPEN_SUBTITLE, {}) && reel->main_subtitle()) {
 			maybe_add_asset(reel_assets, reel->main_subtitle(), reel_trim_start, reel_trim_end, from, frame_rate, dcp->reference_text(TextType::OPEN_SUBTITLE));
 		}
 
-		if (dcp->can_reuse_text(film, TextType::CLOSED_CAPTION)) {
+		if (dcp->can_reuse_text(film, TextType::CLOSED_CAPTION, {})) {
 			for (auto caption: reel->closed_captions()) {
 				maybe_add_asset(reel_assets, caption, reel_trim_start, reel_trim_end, from, frame_rate, dcp->reference_text(TextType::CLOSED_CAPTION));
 			}
@@ -157,7 +157,7 @@ add_reusable_reel_assets_for_atmos(shared_ptr<const Film> film, shared_ptr<const
 			entry_point += reel_asset->actual_duration();
 
 			reel_assets.push_back(
-				ReusableReelAsset(reel_asset, reel, ReusableReelAsset::Use::COPY)
+				ReusableReelAsset(reel_asset, reel, ReuseType::COPY)
 			);
 		}
 	}
