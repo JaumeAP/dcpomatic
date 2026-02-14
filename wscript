@@ -74,7 +74,8 @@ def options(opt):
     opt.add_option('--workaround-mutter', action='store_true', default=False, help='work around window maximising bug on (e.g.) Ubuntu 24.04')
     opt.add_option('--use-lld',           action='store_true', default=False, help='use lld linker')
     opt.add_option('--enable-disk',       action='store_true', default=False, help='build dcpomatic2_disk tool; requires Boost process, lwext4 and nanomsg libraries')
-    opt.add_option('--enable-grok',       action='store_true', default=False, help='build with support for grok J2K encoder')
+    opt.add_option('--enable-grok',       action='store_true', default=False, help='build with support for the Grok J2K encoder')
+    opt.add_option('--enable-kakadu',     action='store_true', default=False, help='build the support for the Kakadu library')
     opt.add_option('--warnings-are-errors', action='store_true', default=False, help='build with -Werror')
     opt.add_option('--wx-config',         help='path to wx-config')
     opt.add_option('--enable-asan',       action='store_true', help='build with asan')
@@ -113,6 +114,7 @@ def configure(conf):
     conf.env.STATIC_DCPOMATIC = conf.options.static_dcpomatic
     conf.env.ENABLE_DISK = conf.options.enable_disk
     conf.env.ENABLE_GROK = conf.options.enable_grok
+    conf.env.ENABLE_KAKADU = conf.options.enable_kakadu
     if conf.options.destdir == '':
         conf.env.INSTALL_PREFIX = conf.options.prefix
     else:
@@ -185,6 +187,9 @@ def configure(conf):
 
     if conf.options.enable_grok:
         conf.env.append_value('CXXFLAGS', '-DDCPOMATIC_GROK')
+
+    if conf.options.enable_kakadu:
+        conf.env.append_value('CXXFLAGS', '-DDCPOMATIC_KAKADU')
 
     if conf.options.use_lld:
         try:
