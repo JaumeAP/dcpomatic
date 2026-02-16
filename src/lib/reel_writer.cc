@@ -243,7 +243,8 @@ ReelWriter::ReelWriter(
 			film()->directory().get() / audio_asset_filename(_sound_asset, _reel_index, _reel_count, _content_summary),
 			extra_active_channels,
 			film()->contains_atmos_content() ? dcp::SoundAsset::AtmosSync::ENABLED : dcp::SoundAsset::AtmosSync::DISABLED,
-			film()->limit_to_smpte_bv20() ? dcp::SoundAsset::MCASubDescriptors::DISABLED : dcp::SoundAsset::MCASubDescriptors::ENABLED
+			// film()->limit_to_smpte_bv20() ? dcp::SoundAsset::MCASubDescriptors::DISABLED : dcp::SoundAsset::MCASubDescriptors::ENABLED
+			dcp::SoundAsset::MCASubDescriptors::DISABLED
 			);
 	}
 }
