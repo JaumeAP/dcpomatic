@@ -35,6 +35,9 @@
 #include "grok/context.h"
 #include "grok_j2k_encoder_thread.h"
 #endif
+#ifdef DCPOMATIC_KAKADU
+#include "kakadu_j2k_encoder_thread.h"
+#endif
 #include "openjpeg_j2k_encoder_thread.h"
 #include "remote_j2k_encoder_thread.h"
 #include "j2k_encoder.h"
@@ -104,6 +107,15 @@ J2KEncoder::J2KEncoder(shared_ptr<const Film> film, Writer& writer)
 		_context = new grk_plugin::GrokContext(_dcpomatic_context);
 	}
 #endif
+
+#ifdef DCPOMATIC_KAKADU
+	try {
+		_kakadu_shared_memory = new KakaduSharedMemory();
+		LOG_GENERAL("Found Kakadu server");
+	} catch (boost::interprocess::interprocess_exception& e) {
+		LOG_ERROR("Could not find Kakadu server ({})", e.what());
+	}
+#endif
 }
 
 
@@ -127,6 +139,10 @@ J2KEncoder::~J2KEncoder()
 	delete _context;
 	delete _dcpomatic_context;
 #endif
+
+#ifdef DCPOMATIC_KAKADU
+	delete _kakadu_shared_memory;
+#endif
 }
 
 
@@ -140,11 +156,12 @@ J2KEncoder::servers_list_changed()
 	auto const grok_enable = false;
 #endif
 
-	auto const openjpeg = (grok_enable || config->only_servers_encode()) ? 0 : config->master_encoding_threads();
+	auto const openjpeg = 0;// (grok_enable || config->only_servers_encode()) ? 0 : config->master_encoding_threads();
+	auto const kakadu = 1;
 	auto const gpu = grok_enable ? config->master_encoding_threads() : 0;
 
 	LOG_GENERAL("Thread counts from: grok={}, only_servers={}, master={}", grok_enable ? "yes" : "no", config->only_servers_encode() ? "yes" : "no", config->master_encoding_threads());
-	remake_threads(openjpeg, gpu, EncodeServerFinder::instance()->servers());
+	remake_threads(openjpeg, kakadu, gpu, EncodeServerFinder::instance()->servers());
 }
 
 
@@ -362,10 +379,10 @@ J2KEncoder::terminate_threads()
 
 
 void
-J2KEncoder::remake_threads(int openjpeg, int gpu, list<EncodeServerDescription> servers)
+J2KEncoder::remake_threads(int openjpeg, int kakadu, int gpu, list<EncodeServerDescription> servers)
 {
-	LOG_GENERAL("Making threads: OpenJPEG={}, GPU={}, Remote={}", openjpeg, gpu, servers.size());
-	if ((openjpeg + gpu + servers.size()) == 0) {
+	LOG_GENERAL("Making threads: OpenJPEG={}, Kakadu={}, GPU={}, Remote={}", openjpeg, kakadu, gpu, servers.size());
+	if ((openjpeg + kakadu + gpu + servers.size()) == 0) {
 		/* Make at least one thread, even if all else fails.  Maybe we are configured
 		 * for "only servers encode" but no servers have been registered yet.
 		 */
@@ -403,6 +420,24 @@ J2KEncoder::remake_threads(int openjpeg, int gpu, list<EncodeServerDescription> 
 	}
 
 	remove_threads(openjpeg, current_openjpeg_threads, is_openjpeg_thread);
+
+#ifdef DCPOMATIC_KAKADU
+	/* Kakadu (on CPU) */
+
+	auto const is_kakadu_thread = [](shared_ptr<J2KEncoderThread> thread) {
+		return static_cast<bool>(dynamic_pointer_cast<KakaduJ2KEncoderThread>(thread));
+	};
+
+	auto const current_kakadu_threads = std::count_if(_threads.begin(), _threads.end(), is_kakadu_thread);
+
+	for (auto i = current_kakadu_threads; i < kakadu; ++i) {
+		auto thread = make_shared<KakaduJ2KEncoderThread>(*this);
+		thread->start();
+		_threads.push_back(thread);
+	}
+
+	remove_threads(kakadu, current_kakadu_threads, is_kakadu_thread);
+#endif
 
 #ifdef DCPOMATIC_GROK
 	/* GPU */

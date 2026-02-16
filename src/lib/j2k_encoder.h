@@ -33,6 +33,9 @@
 #include "event_history.h"
 #include "exception_store.h"
 #include "j2k_encoder_thread.h"
+#ifdef DCPOMATIC_KAKADU
+#include "kakadu.h"
+#endif
 #include "writer.h"
 #include "video_encoder.h"
 #include <dcp/warnings.h>
@@ -94,6 +97,12 @@ public:
 	void retry(DCPVideo frame);
 	void write(std::shared_ptr<const dcp::Data> data, int index, Eyes eyes);
 
+#ifdef DCPOMATIC_KAKADU
+	KakaduSharedMemory* kakadu_shared_memory() {
+		return _kakadu_shared_memory;
+	}
+#endif
+
 private:
 	friend struct ::local_threads_created_and_destroyed;
 	friend struct ::remote_threads_created_and_destroyed;
@@ -101,7 +110,7 @@ private:
 
 	void frame_done();
 	void servers_list_changed();
-	void remake_threads(int openjpeg, int gpu, std::list<EncodeServerDescription> servers);
+	void remake_threads(int openjpeg, int kakadu, int gpu, std::list<EncodeServerDescription> servers);
 	void terminate_threads();
 
 	boost::mutex _threads_mutex;
@@ -124,6 +133,10 @@ private:
 	grk_plugin::DcpomaticContext* _dcpomatic_context = nullptr;
 	grk_plugin::GrokContext *_context = nullptr;
 	std::atomic<bool> _give_up;
+#endif
+
+#ifdef DCPOMATIC_KAKADU
+	KakaduSharedMemory* _kakadu_shared_memory = nullptr;
 #endif
 
 	bool _ending = false;
