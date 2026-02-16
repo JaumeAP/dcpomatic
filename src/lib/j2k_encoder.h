@@ -101,7 +101,7 @@ private:
 
 	void frame_done();
 	void servers_list_changed();
-	void remake_threads(int cpu, int gpu, std::list<EncodeServerDescription> servers);
+	void remake_threads(int openjpeg, int gpu, std::list<EncodeServerDescription> servers);
 	void terminate_threads();
 
 	boost::mutex _threads_mutex;

@@ -19,11 +19,11 @@
 */
 
 
-#include "cpu_j2k_encoder_thread.h"
 #include "cross.h"
 #include "dcpomatic_log.h"
 #include "dcp_video.h"
 #include "j2k_encoder.h"
+#include "openjpeg_j2k_encoder_thread.h"
 #include "util.h"
 
 #include "i18n.h"
@@ -33,7 +33,7 @@ using std::make_shared;
 using std::shared_ptr;
 
 
-CPUJ2KEncoderThread::CPUJ2KEncoderThread(J2KEncoder& encoder)
+OpenJPEGJ2KEncoderThread::OpenJPEGJ2KEncoderThread(J2KEncoder& encoder)
 	: J2KSyncEncoderThread(encoder)
 {
 
@@ -41,15 +41,15 @@ CPUJ2KEncoderThread::CPUJ2KEncoderThread(J2KEncoder& encoder)
 
 
 void
-CPUJ2KEncoderThread::log_thread_start() const
+OpenJPEGJ2KEncoderThread::log_thread_start() const
 {
-	start_of_thread("CPUJ2KEncoder");
+	start_of_thread("OpenJPEGJ2KEncoder");
 	LOG_TIMING("start-encoder-thread thread={} server=localhost", thread_id());
 }
 
 
 shared_ptr<dcp::ArrayData>
-CPUJ2KEncoderThread::encode(DCPVideo const& frame)
+OpenJPEGJ2KEncoderThread::encode(DCPVideo const& frame)
 {
 	try {
 		return make_shared<dcp::ArrayData>(frame.encode_locally());
