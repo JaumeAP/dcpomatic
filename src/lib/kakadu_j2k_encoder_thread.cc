@@ -34,8 +34,9 @@ using std::make_shared;
 using std::shared_ptr;
 
 
-KakaduJ2KEncoderThread::KakaduJ2KEncoderThread(J2KEncoder& encoder)
+KakaduJ2KEncoderThread::KakaduJ2KEncoderThread(J2KEncoder& encoder, int index)
 	: J2KSyncEncoderThread(encoder)
+	, _index(index)
 {
 
 }
@@ -52,7 +53,7 @@ KakaduJ2KEncoderThread::log_thread_start() const
 shared_ptr<dcp::ArrayData>
 KakaduJ2KEncoderThread::encode(DCPVideo const& frame)
 {
-	auto shmem = _encoder.kakadu_shared_memory();
+	auto shmem = _encoder.kakadu_shared_memory(_index);
 	if (!shmem) {
 		LOG_ERROR(N_("Kakadu encode failed (no shared memory)"));
 		return {};

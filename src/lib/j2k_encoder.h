@@ -98,8 +98,8 @@ public:
 	void write(std::shared_ptr<const dcp::Data> data, int index, Eyes eyes);
 
 #ifdef DCPOMATIC_KAKADU
-	KakaduSharedMemory* kakadu_shared_memory() {
-		return _kakadu_shared_memory;
+	KakaduSharedMemory* kakadu_shared_memory(int index) {
+		return _kakadu_shared_memory[index];
 	}
 #endif
 
@@ -136,7 +136,7 @@ private:
 #endif
 
 #ifdef DCPOMATIC_KAKADU
-	KakaduSharedMemory* _kakadu_shared_memory = nullptr;
+	KakaduSharedMemory* _kakadu_shared_memory[16];
 #endif
 
 	bool _ending = false;

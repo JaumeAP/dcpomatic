@@ -110,7 +110,9 @@ J2KEncoder::J2KEncoder(shared_ptr<const Film> film, Writer& writer)
 
 #ifdef DCPOMATIC_KAKADU
 	try {
-		_kakadu_shared_memory = new KakaduSharedMemory();
+		for (int i = 0; i < 16; ++i) {
+			_kakadu_shared_memory[i] = new KakaduSharedMemory(i);
+		}
 		LOG_GENERAL("Found Kakadu server");
 	} catch (boost::interprocess::interprocess_exception& e) {
 		LOG_ERROR("Could not find Kakadu server ({})", e.what());
@@ -141,7 +143,9 @@ J2KEncoder::~J2KEncoder()
 #endif
 
 #ifdef DCPOMATIC_KAKADU
-	delete _kakadu_shared_memory;
+	for (int i = 0; i < 16; ++i) {
+		delete _kakadu_shared_memory[i];
+	}
 #endif
 }
 
@@ -157,7 +161,7 @@ J2KEncoder::servers_list_changed()
 #endif
 
 	auto const openjpeg = 0;// (grok_enable || config->only_servers_encode()) ? 0 : config->master_encoding_threads();
-	auto const kakadu = 1;
+	auto const kakadu = 16;
 	auto const gpu = grok_enable ? config->master_encoding_threads() : 0;
 
 	LOG_GENERAL("Thread counts from: grok={}, only_servers={}, master={}", grok_enable ? "yes" : "no", config->only_servers_encode() ? "yes" : "no", config->master_encoding_threads());
@@ -431,7 +435,7 @@ J2KEncoder::remake_threads(int openjpeg, int kakadu, int gpu, list<EncodeServerD
 	auto const current_kakadu_threads = std::count_if(_threads.begin(), _threads.end(), is_kakadu_thread);
 
 	for (auto i = current_kakadu_threads; i < kakadu; ++i) {
-		auto thread = make_shared<KakaduJ2KEncoderThread>(*this);
+		auto thread = make_shared<KakaduJ2KEncoderThread>(*this, i);
 		thread->start();
 		_threads.push_back(thread);
 	}

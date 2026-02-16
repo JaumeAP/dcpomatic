@@ -29,9 +29,12 @@ class DCPVideo;
 class KakaduJ2KEncoderThread : public J2KSyncEncoderThread
 {
 public:
-	KakaduJ2KEncoderThread(J2KEncoder& encoder);
+	KakaduJ2KEncoderThread(J2KEncoder& encoder, int index);
 
 	void log_thread_start() const override;
 	std::shared_ptr<dcp::ArrayData> encode(DCPVideo const& frame) override;
+
+private:
+	int _index;
 };
 

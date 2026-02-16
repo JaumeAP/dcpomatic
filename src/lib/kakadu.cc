@@ -20,10 +20,11 @@
 
 
 #include "kakadu.h"
+#include <fmt/format.h>
 
 
-KakaduSharedMemory::KakaduSharedMemory()
-	: _segment(boost::interprocess::open_only, "dcpomatic:kakadu")
+KakaduSharedMemory::KakaduSharedMemory(int index)
+	: _segment(boost::interprocess::open_only, fmt::format("dcpomatic:kakadu_{}", index).c_str())
 {
 
 }

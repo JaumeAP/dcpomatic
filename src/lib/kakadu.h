@@ -39,7 +39,7 @@ struct KakaduSharedMetadata
 class KakaduSharedMemory
 {
 public:
-	KakaduSharedMemory();
+	KakaduSharedMemory(int index);
 	~KakaduSharedMemory();
 
 	KakaduSharedMemory(KakaduSharedMemory const&) = delete;
