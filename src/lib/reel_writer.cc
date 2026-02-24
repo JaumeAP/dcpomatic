@@ -236,6 +236,10 @@ ReelWriter::ReelWriter(
 			}
 		}
 
+		if (film()->contains_atmos_content()) {
+			extra_active_channels.push_back(dcp::Channel::SYNC_SIGNAL);
+		}
+
 		/* Write the sound asset into the film directory so that we leave the creation
 		   of the DCP directory until the last minute.
 		*/
