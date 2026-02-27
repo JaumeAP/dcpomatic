@@ -47,23 +47,23 @@ dcpomatic::operator<=(HMSF const& a, HMSF const& b)
 
 
 template <>
-Time<ContentTimeDifferentiator, DCPTimeDifferentiator>::Time (DCPTime d, FrameRateChange f)
-	: _t (llrint(d.get() * f.speed_up))
+Time<ContentTimeDifferentiator, DCPTimeDifferentiator>::Time(DCPTime d, FrameRateChange f)
+	: _t(llrint(d.get() * f.speed_up))
 {
 
 }
 
 
 template <>
-Time<DCPTimeDifferentiator, ContentTimeDifferentiator>::Time (ContentTime d, FrameRateChange f)
-	: _t (llrint(d.get() / f.speed_up))
+Time<DCPTimeDifferentiator, ContentTimeDifferentiator>::Time(ContentTime d, FrameRateChange f)
+	: _t(llrint(d.get() / f.speed_up))
 {
 
 }
 
 
 DCPTime
-dcpomatic::min (DCPTime a, DCPTime b)
+dcpomatic::min(DCPTime a, DCPTime b)
 {
 	if (a < b) {
 		return a;
@@ -74,7 +74,7 @@ dcpomatic::min (DCPTime a, DCPTime b)
 
 
 DCPTime
-dcpomatic::max (DCPTime a, DCPTime b)
+dcpomatic::max(DCPTime a, DCPTime b)
 {
 	if (a > b) {
 		return a;
@@ -85,7 +85,7 @@ dcpomatic::max (DCPTime a, DCPTime b)
 
 
 ContentTime
-dcpomatic::min (ContentTime a, ContentTime b)
+dcpomatic::min(ContentTime a, ContentTime b)
 {
 	if (a < b) {
 		return a;
@@ -96,7 +96,7 @@ dcpomatic::min (ContentTime a, ContentTime b)
 
 
 ContentTime
-dcpomatic::max (ContentTime a, ContentTime b)
+dcpomatic::max(ContentTime a, ContentTime b)
 {
 	if (a > b) {
 		return a;
@@ -107,39 +107,39 @@ dcpomatic::max (ContentTime a, ContentTime b)
 
 
 string
-dcpomatic::to_string (ContentTime t)
+dcpomatic::to_string(ContentTime t)
 {
 	char buffer[64];
 #ifdef DCPOMATIC_WINDOWS
-	__mingw_snprintf (buffer, sizeof(buffer), "[CONT %" PRId64 " %fs]", t.get(), t.seconds());
+	__mingw_snprintf(buffer, sizeof(buffer), "[CONT %" PRId64 " %fs]", t.get(), t.seconds());
 #else
-	snprintf (buffer, sizeof(buffer), "[CONT %" PRId64 " %fs]", t.get(), t.seconds());
+	snprintf(buffer, sizeof(buffer), "[CONT %" PRId64 " %fs]", t.get(), t.seconds());
 #endif
 	return buffer;
 }
 
 
 string
-dcpomatic::to_string (DCPTime t)
+dcpomatic::to_string(DCPTime t)
 {
 	char buffer[64];
 #ifdef DCPOMATIC_WINDOWS
-	__mingw_snprintf (buffer, sizeof(buffer), "[DCP %" PRId64 " %fs]", t.get(), t.seconds());
+	__mingw_snprintf(buffer, sizeof(buffer), "[DCP %" PRId64 " %fs]", t.get(), t.seconds());
 #else
-	snprintf (buffer, sizeof(buffer), "[DCP %" PRId64 " %fs]", t.get(), t.seconds());
+	snprintf(buffer, sizeof(buffer), "[DCP %" PRId64 " %fs]", t.get(), t.seconds());
 #endif
 	return buffer;
 }
 
 
 string
-dcpomatic::to_string (DCPTimePeriod p)
+dcpomatic::to_string(DCPTimePeriod p)
 {
 	char buffer[64];
 #ifdef DCPOMATIC_WINDOWS
-	__mingw_snprintf (buffer, sizeof(buffer), "[DCP %" PRId64 " %fs -> %" PRId64 " %fs]", p.from.get(), p.from.seconds(), p.to.get(), p.to.seconds());
+	__mingw_snprintf(buffer, sizeof(buffer), "[DCP %" PRId64 " %fs -> %" PRId64 " %fs]", p.from.get(), p.from.seconds(), p.to.get(), p.to.seconds());
 #else
-	snprintf (buffer, sizeof(buffer), "[DCP %" PRId64 " %fs -> %" PRId64 " %fs]", p.from.get(), p.from.seconds(), p.to.get(), p.to.seconds());
+	snprintf(buffer, sizeof(buffer), "[DCP %" PRId64 " %fs -> %" PRId64 " %fs]", p.from.get(), p.from.seconds(), p.to.get(), p.to.seconds());
 #endif
 	return buffer;
 }
