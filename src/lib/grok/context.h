@@ -226,7 +226,7 @@ public:
 					12,
 					device,
 					_dcpomatic_context->film->resolution() == Resolution::FOUR_K,
-					_dcpomatic_context->film->video_frame_rate(),
+					std::round(_dcpomatic_context->film->video_frame_rate().as_float()),
 					_dcpomatic_context->film->video_bit_rate(VideoEncoding::JPEG2000),
 					grok.licence_server,
 					grok.licence)) {

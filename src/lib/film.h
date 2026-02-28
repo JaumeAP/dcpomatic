@@ -151,7 +151,7 @@ public:
 
 	ContentList content() const;
 	dcpomatic::DCPTime length() const;
-	int best_video_frame_rate() const;
+	dcp::Fraction best_video_frame_rate() const;
 	FrameRateChange active_frame_rate_change(dcpomatic::DCPTime) const;
 	std::pair<double, double> speed_up_range(int dcp_frame_rate) const;
 
@@ -253,7 +253,7 @@ public:
 	}
 
 	/** @return The frame rate of the DCP */
-	int video_frame_rate() const {
+	dcp::Fraction video_frame_rate() const {
 		return _video_frame_rate;
 	}
 
@@ -406,7 +406,7 @@ public:
 	void set_encrypt_sound(bool);
 	void set_encrypt_text(bool);
 	void set_video_bit_rate(VideoEncoding encoding, int64_t);
-	void set_video_frame_rate(int rate, bool user_explicit = true);
+	void set_video_frame_rate(dcp::Fraction rate, bool user_explicit = true);
 	void set_audio_channels(int);
 	void set_three_d(bool);
 	void set_isdcf_date_today();
@@ -534,7 +534,7 @@ private:
 	/** bit rate for encoding video using in bits per second */
 	EnumIndexedVector<int64_t, VideoEncoding> _video_bit_rate;
 	/** Frames per second to run our DCP at */
-	int _video_frame_rate;
+	dcp::Fraction _video_frame_rate;
 	/** The date that we should use in a ISDCF name */
 	boost::gregorian::date _isdcf_date;
 	/** Number of audio channels requested for the DCP */

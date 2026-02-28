@@ -148,7 +148,7 @@ void
 ImageContent::prepare_for_add_to_film(shared_ptr<const Film> film)
 {
 	if (still()) {
-		video->set_length(Config::instance()->default_still_length() * video_frame_rate().get_value_or(film->video_frame_rate()));
+		video->set_length(Config::instance()->default_still_length() * video_frame_rate().get_value_or(film->video_frame_rate().as_float()));
 	}
 }
 

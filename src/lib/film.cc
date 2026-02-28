@@ -172,7 +172,7 @@ Film::Film(optional<boost::filesystem::path> dir)
 	, _encrypt_sound(false)
 	, _encrypt_text(false)
 	, _context_id(dcp::make_uuid())
-	, _video_frame_rate(24)
+	, _video_frame_rate(24, 1)
 	, _audio_channels(6)
 	, _three_d(false)
 	, _sequence(true)
@@ -598,7 +598,19 @@ Film::read_metadata(optional<boost::filesystem::path> path)
 		_video_bit_rate[VideoEncoding::JPEG2000] = f.number_child<int64_t>("J2KVideoBitRate");
 	}
 	_video_bit_rate[VideoEncoding::MPEG2] = f.optional_number_child<int64_t>("MPEG2VideoBitRate").get_value_or(5000000);
-	_video_frame_rate = f.number_child<int>("VideoFrameRate");
+
+	{
+		auto vfr = f.string_child("VideoFrameRate");
+		vector<string> parts;
+		boost::split(parts, vfr, boost::is_any_of(" "));
+		DCPOMATIC_ASSERT(parts.size() == 1 || parts.size() == 2);
+		if (parts.size() == 1) {
+			_video_frame_rate = dcp::Fraction(dcp::raw_convert<int>(parts[0]), 1);
+		} else {
+			_video_frame_rate = dcp::Fraction(dcp::raw_convert<int>(parts[0]), dcp::raw_convert<int>(parts[1]));
+		}
+	}
+
 	_audio_frame_rate = f.optional_number_child<int>("AudioFrameRate").get_value_or(48000);
 	auto encrypted = f.optional_bool_child("Encrypted").get_value_or(false);
 	_encrypt_picture = f.optional_bool_child("EncryptPicture").get_value_or(encrypted);
@@ -2122,7 +2134,11 @@ Film::reels_for_type(ReelType type) const
 		/* Integer-divide reel length by the size of one frame to give the number of frames per reel,
 		 * making sure we don't go less than 1s long.
 		 */
-		Frame const reel_in_frames = max(_reel_length / ((video_bit_rate(video_encoding()) / video_frame_rate()) / 8), static_cast<Frame>(video_frame_rate()));
+		auto const minimum = std::ceil(video_frame_rate().as_float());
+		Frame const reel_in_frames = max(
+			_reel_length / ((video_bit_rate(video_encoding()) * video_frame_rate().denominator / video_frame_rate().numerator) / 8),
+			static_cast<int64_t>(minimum)
+		);
 		while (current < len) {
 			DCPTime end = min(len, current + DCPTime::from_frames(reel_in_frames, video_frame_rate()));
 			periods.emplace_back(current, end);

@@ -30,6 +30,7 @@
 
 #include "dcpomatic_assert.h"
 #include "frame_rate_change.h"
+#include <dcp/types.h>
 #include <boost/optional.hpp>
 #include <stdint.h>
 #include <cmath>
@@ -178,6 +179,10 @@ public:
 		return Time<S, O>(llrint(HZ * frames_round(r) / r));
 	}
 
+	Time<S, O> round(dcp::Fraction r) const {
+		return Time<S, O>(llrint(HZ * frames_round(r) * r.denominator / r.numerator));
+	}
+
 	double seconds() const {
 		return double(_t) / HZ;
 	}
@@ -195,9 +200,21 @@ public:
 		return llrint(_t * double(r) / HZ);
 	}
 
+	int64_t frames_round(dcp::Fraction r) const {
+		/* We must cast to double here otherwise if T is integer
+		   the calculation will round down before we get the chance
+		   to llrint().
+		*/
+		return llrint(_t * double(r.numerator) / (HZ * r.denominator));
+	}
+
 	template <typename T>
 	int64_t frames_floor(T r) const {
 		return ::floor(_t * r / HZ);
+	}
+
+	int64_t frames_floor(dcp::Fraction r) const {
+		return ::floor(_t * r.numerator / (HZ * r.denominator));
 	}
 
 	template <typename T>
@@ -233,6 +250,25 @@ public:
 		return hmsf;
 	}
 
+	HMSF split(dcp::Fraction r) const
+	{
+		/* Do this calculation with frames so that we can round
+		   to a frame boundary at the start rather than the end.
+		*/
+		auto ff = frames_round(r);
+		HMSF hmsf;
+
+		hmsf.h = ff / (3600 * r.as_float());
+		ff -= static_cast<int64_t>(hmsf.h) * 3600 * r.as_float();
+		hmsf.m = ff / (60 * r.as_float());
+		ff -= static_cast<int64_t>(hmsf.m) * 60 * r.as_float();
+		hmsf.s = ff / r.as_float();
+		ff -= static_cast<int64_t>(hmsf.s) * r.as_float();
+
+		hmsf.f = static_cast<int>(ff);
+		return hmsf;
+	}
+
 	template <typename T>
 	std::string timecode(T r) const {
 		auto hmsf = split(r);
@@ -250,6 +286,11 @@ public:
 	static Time<S, O> from_frames(int64_t f, T r) {
 		DCPOMATIC_ASSERT(r > 0);
 		return Time<S, O>(f * HZ / r);
+	}
+
+	static Time<S, O> from_frames(int64_t f, dcp::Fraction r) {
+		DCPOMATIC_ASSERT(r.numerator > 0);
+		return Time<S, O>(f * HZ * r.denominator / r.numerator);
 	}
 
 	static Time<S, O> delta() {

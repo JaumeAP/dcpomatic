@@ -44,8 +44,9 @@ class FFmpegContent;
  *  64 - first version used
  *  65 - v2.16.0 - checksums added to communication
  *  66 - v2.17.x - J2KBandwidth -> VideoBitRate in metadata
+ *  67 - v2.19.x - FramesPerSecond in XML description became a fraction
  */
-#define SERVER_LINK_VERSION (64+2)
+#define SERVER_LINK_VERSION (64+3)
 
 /** A film of F seconds at f FPS will be Ff frames;
     Consider some delta FPS d, so if we run the same

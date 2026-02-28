@@ -22,6 +22,7 @@
 #include "content.h"
 #include "film.h"
 #include "frame_rate_change.h"
+#include <dcp/types.h>
 #include <cmath>
 
 #include "i18n.h"
@@ -32,29 +33,30 @@ using std::string;
 
 
 FrameRateChange::FrameRateChange()
+	: dcp(24, 1)
 {
 
 }
 
 
-FrameRateChange::FrameRateChange(double source_, int dcp_)
+FrameRateChange::FrameRateChange(double source_, dcp::Fraction dcp_)
 	: source(source_)
 	, dcp(dcp_)
 {
-	if (fabs(source / 2.0 - dcp) < fabs(source - dcp)) {
+	if (fabs(source / 2.0 - dcp.as_float()) < fabs(source - dcp.as_float())) {
 		/* The difference between source and DCP frame rate will be lower
 		   (i.e. better) if we skip.
 		*/
 		skip = true;
-	} else if (fabs(source * 2 - dcp) < fabs(source - dcp)) {
+	} else if (fabs(source * 2 - dcp.as_float()) < fabs(source - dcp.as_float())) {
 		/* The difference between source and DCP frame rate would be better
 		   if we repeated each frame once; it may be better still if we
 		   repeated more than once.  Work out the required repeat.
 		*/
-		repeat = round(dcp / source);
+		repeat = round(dcp.as_float() / source);
 	}
 
-	speed_up = dcp / (source * factor());
+	speed_up = dcp.as_float() / (source * factor());
 
 	auto about_equal = [](double a, double b) {
 		return (fabs(a - b) < VIDEO_FRAME_RATE_EPSILON);
@@ -95,7 +97,7 @@ FrameRateChange::description() const
 		}
 
 		if (change_speed) {
-			double const pc = dcp * 100 / (source * factor());
+			double const pc = dcp.as_float() * 100 / (source * factor());
 			char buffer[256];
 			snprintf(buffer, sizeof(buffer), _("DCP will run at %.1f%% of the content speed.\n"), pc);
 			description += buffer;

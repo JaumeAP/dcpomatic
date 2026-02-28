@@ -96,8 +96,10 @@ BOOST_AUTO_TEST_CASE(time_to_hmsf_test)
 	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_frames(12, 24), 24), "00:00:00.12");
 	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_frames(24, 24), 24), "00:00:01.00");
 	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_frames(32, 24), 24), "00:00:01.08");
+	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_frames(32, dcp::Fraction(200, 11)), dcp::Fraction(200, 11)), "00:00:01.08");
 	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_seconds(92), 24), "00:01:32.00");
 	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_seconds(2 * 60 * 60 + 92), 24), "02:01:32.00");
+	BOOST_CHECK_EQUAL(time_to_hmsf(DCPTime::from_seconds(2 * 60 * 60 + 92), dcp::Fraction(200, 11)), "02:01:32.00");
 }
 
 

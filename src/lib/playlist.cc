@@ -564,15 +564,15 @@ Playlist::active_frame_rate_change(DCPTime t, int dcp_video_frame_rate) const
 			*/
 			if ((*i)->video_frame_rate()) {
 				/* This content specified a rate, so use it */
-				return FrameRateChange((*i)->video_frame_rate().get(), dcp_video_frame_rate);
+				return FrameRateChange((*i)->video_frame_rate().get(), dcp::Fraction(dcp_video_frame_rate, 1));
 			} else {
 				/* No specified rate so just use the DCP one */
-				return FrameRateChange(dcp_video_frame_rate, dcp_video_frame_rate);
+				return FrameRateChange(dcp_video_frame_rate, dcp::Fraction(dcp_video_frame_rate, 1));
 			}
 		}
 	}
 
-	return FrameRateChange(dcp_video_frame_rate, dcp_video_frame_rate);
+	return FrameRateChange(dcp_video_frame_rate, dcp::Fraction(dcp_video_frame_rate, 1));
 }
 
 

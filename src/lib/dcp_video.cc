@@ -46,6 +46,7 @@
 #include <dcp/openjpeg_image.h>
 #include <dcp/rgb_xyz.h>
 #include <dcp/j2k_transcode.h>
+#include <dcp/raw_convert.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <libxml++/libxml++.h>
@@ -67,6 +68,7 @@ using std::cout;
 using std::make_shared;
 using std::shared_ptr;
 using std::string;
+using std::vector;
 using dcp::ArrayData;
 #if BOOST_VERSION >= 106100
 using namespace boost::placeholders;
@@ -79,7 +81,7 @@ using namespace boost::placeholders;
  *  @param bit_rate Video bit rate to use.
  */
 DCPVideo::DCPVideo(
-	shared_ptr<const PlayerVideo> frame, int index, int dcp_fps, int64_t bit_rate, Resolution r
+	shared_ptr<const PlayerVideo> frame, int index, dcp::Fraction dcp_fps, int64_t bit_rate, Resolution r
 	)
 	: _frame(frame)
 	, _index(index)
@@ -94,7 +96,7 @@ DCPVideo::DCPVideo(shared_ptr<const PlayerVideo> frame, shared_ptr<const cxml::N
 	: _frame(frame)
 {
 	_index = node->number_child<int>("Index");
-	_frames_per_second = node->number_child<int>("FramesPerSecond");
+	_frames_per_second = dcp::Fraction(node->string_child("FramesPerSecond"));
 	_video_bit_rate = node->number_child<int64_t>("VideoBitRate");
 	_resolution = Resolution(node->optional_number_child<int>("Resolution").get_value_or(static_cast<int>(Resolution::TWO_K)));
 }
@@ -168,7 +170,7 @@ DCPVideo::encode_locally() const
 		enc = dcp::compress_j2k(
 			xyz,
 			_video_bit_rate,
-			_frames_per_second,
+			_frames_per_second.as_float(),
 			_frame->eyes() == Eyes::LEFT || _frame->eyes() == Eyes::RIGHT,
 			_resolution == Resolution::FOUR_K,
 			comment.empty() ? "libdcp" : comment
@@ -281,7 +283,7 @@ void
 DCPVideo::add_metadata(xmlpp::Element* el) const
 {
 	cxml::add_text_child(el, "Index", fmt::to_string(_index));
-	cxml::add_text_child(el, "FramesPerSecond", fmt::to_string(_frames_per_second));
+	cxml::add_text_child(el, "FramesPerSecond", _frames_per_second.as_string());
 	cxml::add_text_child(el, "VideoBitRate", fmt::to_string(_video_bit_rate));
 	cxml::add_text_child(el, "Resolution", fmt::to_string(int(_resolution)));
 	_frame->add_metadata(el);

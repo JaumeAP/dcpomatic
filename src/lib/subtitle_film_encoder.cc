@@ -177,9 +177,13 @@ SubtitleFilmEncoder::text(PlayerText subs, TextType type, optional<DCPTextTrack>
 			} else if (track->language) {
 				s->set_language(track->language.get());
 			}
-			s->set_edit_rate(dcp::Fraction(_film->video_frame_rate(), 1));
+			s->set_edit_rate(_film->video_frame_rate());
 			s->set_reel_number(_reel_index + 1);
-			s->set_time_code_rate(_film->video_frame_rate());
+			if (_film->video_frame_rate().denominator == 1) {
+				s->set_time_code_rate(_film->video_frame_rate().numerator);
+			} else {
+				s->set_time_code_rate(10 * _film->video_frame_rate().as_float());
+			}
 			s->set_start_time(dcp::Time());
 			if (_film->encrypted()) {
 				s->set_key(_film->key());

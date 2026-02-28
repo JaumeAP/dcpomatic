@@ -57,7 +57,7 @@ private:
 	public:
 		FileEncoderSet(
 			dcp::Size video_frame_size,
-			int video_frame_rate,
+			dcp::Fraction video_frame_rate,
 			int audio_frame_rate,
 			int channels,
 			ExportFormat,

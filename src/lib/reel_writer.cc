@@ -140,7 +140,7 @@ ReelWriter::ReelWriter(
 	if (_first_nonexistent_frame < period.duration().frames_round(film()->video_frame_rate())) {
 		/* No existing asset, or an incomplete one */
 
-		auto const rate = dcp::Fraction(film()->video_frame_rate(), 1);
+		auto const rate = film()->video_frame_rate();
 
 		auto setup = [this](shared_ptr<dcp::PictureAsset> asset) {
 			asset->set_size(film()->frame_size());

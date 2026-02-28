@@ -181,32 +181,21 @@ Hints::check_high_video_bit_rate()
 void
 Hints::check_frame_rate()
 {
-	auto f = film();
-	switch (f->video_frame_rate()) {
-	case 24:
-		/* Fine */
-		break;
-	case 25:
-	{
+	auto const vfr = film()->video_frame_rate();
+	if (vfr == dcp::Fraction(25, 1)) {
 		/* You might want to go to 24 */
 		string base = fmt::format(_("You are set up for a DCP at a frame rate of {} fps.  This frame rate is not supported by all projectors.  You may want to consider changing your frame rate to {} fps."), 25, 24);
-		if (f->interop()) {
+		if (film()->interop()) {
 			base += "  ";
 			base += _("If you do use 25fps you should change your DCP standard to SMPTE.");
 		}
 		hint(base);
-		break;
-	}
-	case 30:
+	} else if (vfr == dcp::Fraction(30, 1)) {
 		/* 30fps: we can't really offer any decent solutions */
 		hint(_("You are set up for a DCP frame rate of 30fps, which is not supported by all projectors.  Be aware that you may have compatibility problems."));
-		break;
-	case 48:
-	case 50:
-	case 60:
+	} else if (vfr == dcp::Fraction(48, 1) || vfr == dcp::Fraction(50, 1) || vfr == dcp::Fraction(60, 1)) {
 		/* You almost certainly want to go to half frame rate */
-		hint(fmt::format(_("You are set up for a DCP at a frame rate of {} fps.  This frame rate is not supported by all projectors.  It is advisable to change the DCP frame rate to {} fps."), f->video_frame_rate(), f->video_frame_rate() / 2));
-		break;
+		hint(fmt::format(_("You are set up for a DCP at a frame rate of {} fps.  This frame rate is not supported by all projectors.  It is advisable to change the DCP frame rate to {} fps."), vfr.numerator, vfr.numerator / 2));
 	}
 }
 
@@ -624,7 +613,7 @@ Hints::open_subtitle(PlayerText text, DCPTimePeriod period)
 		hint(_("It is advisable to put your first subtitle at least 4 seconds after the start of the DCP to make sure it is seen."));
 	}
 
-	int const vfr = film()->video_frame_rate();
+	auto const vfr = film()->video_frame_rate();
 
 	if (period.duration().frames_round(vfr) < 15 && !_short_subtitle) {
 		_short_subtitle = true;

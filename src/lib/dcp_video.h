@@ -49,7 +49,7 @@ class PlayerVideo;
 class DCPVideo
 {
 public:
-	DCPVideo(std::shared_ptr<const PlayerVideo>, int index, int dcp_fps, int64_t bit_rate, Resolution r);
+	DCPVideo(std::shared_ptr<const PlayerVideo>, int index, dcp::Fraction dcp_fps, int64_t bit_rate, Resolution r);
 	DCPVideo(std::shared_ptr<const PlayerVideo>, cxml::ConstNodePtr);
 
 	DCPVideo(DCPVideo const&) = default;
@@ -76,10 +76,10 @@ private:
 	void add_metadata(xmlpp::Element *) const;
 
 	std::shared_ptr<const PlayerVideo> _frame;
-	int _index;			 ///< frame index within the DCP's intrinsic duration
-	int _frames_per_second;		 ///< Frames per second that we will use for the DCP
-	int64_t _video_bit_rate;	 ///< Video bit rate to use
-	Resolution _resolution;          ///< Resolution (2K or 4K)
+	int _index;			  ///< frame index within the DCP's intrinsic duration
+	dcp::Fraction _frames_per_second; ///< Frames per second that we will use for the DCP
+	int64_t _video_bit_rate;	  ///< Video bit rate to use
+	Resolution _resolution;           ///< Resolution (2K or 4K)
 };
 
 #endif

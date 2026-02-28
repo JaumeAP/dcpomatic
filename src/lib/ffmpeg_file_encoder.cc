@@ -220,7 +220,7 @@ private:
 
 FFmpegFileEncoder::FFmpegFileEncoder(
 	dcp::Size video_frame_size,
-	int video_frame_rate,
+	dcp::Fraction video_frame_rate,
 	int audio_frame_rate,
 	int channels,
 	ExportFormat format,
@@ -339,7 +339,7 @@ FFmpegFileEncoder::setup_video()
 	_video_codec_context->global_quality = 0;
 	_video_codec_context->width = _video_frame_size.width;
 	_video_codec_context->height = _video_frame_size.height;
-	_video_codec_context->time_base = (AVRational) { 1, _video_frame_rate };
+	_video_codec_context->time_base = (AVRational) { _video_frame_rate.denominator, _video_frame_rate.numerator };
 	_video_codec_context->pix_fmt = _pixel_format;
 	_video_codec_context->flags |= AV_CODEC_FLAG_QSCALE | AV_CODEC_FLAG_GLOBAL_HEADER;
 
@@ -401,7 +401,7 @@ FFmpegFileEncoder::flush()
 			throw EncodeError(N_("avcodec_receive_packet"), N_("FFmpegFileEncoder::flush"), r);
 		} else {
 			packet->stream_index = _video_stream_index;
-			packet->duration = _video_stream->time_base.den / _video_frame_rate;
+			packet->duration = _video_stream->time_base.den * _video_frame_rate.denominator / _video_frame_rate.numerator;
 			av_interleaved_write_frame(_format_context, packet.get());
 		}
 
@@ -459,7 +459,7 @@ FFmpegFileEncoder::video(shared_ptr<PlayerVideo> video, DCPTime time)
 		throw EncodeError(N_("avcodec_receive_packet"), N_("FFmpegFileEncoder::video"), r);
 	} else if (r >= 0) {
 		packet->stream_index = _video_stream_index;
-		packet->duration = _video_stream->time_base.den / _video_frame_rate;
+		packet->duration = _video_stream->time_base.den * _video_frame_rate.denominator / _video_frame_rate.numerator;
 		av_interleaved_write_frame(_format_context, packet.get());
 	}
 }
@@ -475,7 +475,7 @@ FFmpegFileEncoder::audio(shared_ptr<AudioBuffers> audio)
 	int frame_size = _audio_streams[0]->frame_size();
 	if (frame_size == 0) {
 		/* codec has AV_CODEC_CAP_VARIABLE_FRAME_SIZE */
-		frame_size = _audio_frame_rate / _video_frame_rate;
+		frame_size = _audio_frame_rate * _video_frame_rate.denominator / _video_frame_rate.numerator;
 	}
 
 	while (_pending_audio->frames() >= frame_size) {

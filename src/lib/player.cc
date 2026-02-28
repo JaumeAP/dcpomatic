@@ -1002,7 +1002,7 @@ Player::emit_video_until(DCPTime time)
 
 	auto const age_threshold = [this, film](pair<shared_ptr<PlayerVideo>, dcpomatic::DCPTime> video) {
 		if (auto content = video.first->content().lock()) {
-			return one_video_frame() * (std::ceil(film->video_frame_rate() / content->video_frame_rate().get_value_or(24)) + 1);
+			return one_video_frame() * (std::ceil(film->video_frame_rate().as_float() / content->video_frame_rate().get_value_or(24)) + 1);
 		} else {
 			return one_video_frame() * 2;
 		}

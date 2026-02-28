@@ -177,7 +177,7 @@ CreateCLI::CreateCLI(int argc, char* argv[])
 	optional<string> dcp_content_type_string;
 	string container_ratio_string;
 	optional<string> standard_string;
-	int dcp_frame_rate_int = 0;
+	string dcp_frame_rate_string;
 	string template_name_string;
 	int64_t video_bit_rate_int = 0;
 	optional<int> audio_channels;
@@ -257,7 +257,7 @@ CreateCLI::CreateCLI(int argc, char* argv[])
 		argument_option(i, argc, argv, "-t", "--template",         &claimed, &error, &template_name_string);
 		/* See comment below about --cpl */
 		argument_option(i, argc, argv, "-c", "--dcp-content-type", &claimed, &error, &dcp_content_type_string, string_to_string);
-		argument_option(i, argc, argv, "-f", "--dcp-frame-rate",   &claimed, &error, &dcp_frame_rate_int);
+		argument_option(i, argc, argv, "-f", "--dcp-frame-rate",   &claimed, &error, &dcp_frame_rate_string);
 		argument_option(i, argc, argv, "",   "--container-ratio",  &claimed, &error, &container_ratio_string);
 		argument_option(i, argc, argv, "-s", "--still-length",     &claimed, &error, &still_length, string_to_nonzero_int);
 		argument_option(i, argc, argv, "",   "--auto-crop-threshold", &claimed, &error, &auto_crop_threshold, string_to_int);
@@ -356,8 +356,18 @@ CreateCLI::CreateCLI(int argc, char* argv[])
 		_template_name = template_name_string;
 	}
 
-	if (dcp_frame_rate_int) {
-		dcp_frame_rate = dcp_frame_rate_int;
+	if (!dcp_frame_rate_string.empty()) {
+		vector<string> parts;
+		boost::split(parts, dcp_frame_rate_string, boost::is_any_of("/"));
+		if (parts.empty() || parts.size() > 2) {
+			error = fmt::format("{}: unrecognised DCP frame rate '{}'", argv[0], dcp_frame_rate_string);
+			return;
+		}
+		if (parts.size() == 1) {
+			dcp_frame_rate = dcp::Fraction(dcp::raw_convert<int>(parts[0]), 1);
+		} else {
+			dcp_frame_rate = dcp::Fraction(dcp::raw_convert<int>(parts[0]), dcp::raw_convert<int>(parts[1]));
+		}
 	}
 
 	if (video_bit_rate_int) {

@@ -172,6 +172,24 @@ time_to_hmsf(DCPTime time, Frame rate)
 	return buffer;
 }
 
+
+string
+time_to_hmsf(DCPTime time, dcp::Fraction rate)
+{
+	Frame f = time.frames_round(rate);
+	int s = f / rate.as_float();
+	f -= (s * rate.as_float());
+	int m = s / 60;
+	s -= m * 60;
+	int h = m / 60;
+	m -= h * 60;
+
+	char buffer[64];
+	snprintf(buffer, sizeof(buffer), "%02d:%02d:%02d.%02d", h, m, s, static_cast<int>(f));
+	return buffer;
+}
+
+
 /** @param s Number of seconds.
  *  @return String containing an approximate description of s (e.g. "about 2 hours")
  */

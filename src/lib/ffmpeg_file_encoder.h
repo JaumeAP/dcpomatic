@@ -59,7 +59,7 @@ class FFmpegFileEncoder
 public:
 	FFmpegFileEncoder(
 		dcp::Size video_frame_size,
-		int video_frame_rate,
+		dcp::Fraction video_frame_rate,
 		int audio_frame_rate,
 		int channels,
 		ExportFormat,
@@ -99,7 +99,7 @@ private:
 
 	boost::filesystem::path _output;
 	dcp::Size _video_frame_size;
-	int _video_frame_rate;
+	dcp::Fraction _video_frame_rate;
 	int _audio_frame_rate;
 
 	int64_t _audio_frames = 0;

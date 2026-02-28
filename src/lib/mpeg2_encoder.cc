@@ -32,9 +32,9 @@ using std::shared_ptr;
 
 MPEG2Encoder::MPEG2Encoder(shared_ptr<const Film> film, Writer& writer)
 	: VideoEncoder(film, writer)
-	, _transcoder(film->frame_size(), film->video_frame_rate(), film->video_bit_rate(VideoEncoding::MPEG2))
+	, _transcoder(film->frame_size(), film->video_frame_rate().numerator, film->video_bit_rate(VideoEncoding::MPEG2))
 {
-
+	DCPOMATIC_ASSERT(film->video_frame_rate().denominator == 1);
 }
 
 
@@ -43,7 +43,7 @@ MPEG2Encoder::encode(shared_ptr<PlayerVideo> pv, dcpomatic::DCPTime time)
 {
 	auto image = pv->image(force(AV_PIX_FMT_YUV420P), VideoRange::VIDEO, false);
 
-	dcp::FFmpegImage ffmpeg_image(time.get() * _film->video_frame_rate() / dcpomatic::DCPTime::HZ);
+	dcp::FFmpegImage ffmpeg_image(time.get() * _film->video_frame_rate().numerator / dcpomatic::DCPTime::HZ);
 
 	DCPOMATIC_ASSERT(image->size() == ffmpeg_image.size());
 

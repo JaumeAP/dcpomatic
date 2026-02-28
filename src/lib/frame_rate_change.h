@@ -23,6 +23,7 @@
 #define DCPOMATIC_FRAME_RATE_CHANGE_H
 
 
+#include <dcp/types.h>
 #include <memory>
 #include <string>
 
@@ -35,7 +36,7 @@ class FrameRateChange
 {
 public:
 	FrameRateChange();
-	FrameRateChange(double, int);
+	FrameRateChange(double, dcp::Fraction);
 	FrameRateChange(std::shared_ptr<const Film> film, std::shared_ptr<const Content> content);
 	FrameRateChange(std::shared_ptr<const Film> film, Content const * content);
 
@@ -51,7 +52,7 @@ public:
 	}
 
 	double source = 24;
-	int dcp = 24;
+	dcp::Fraction dcp;
 
 	/** true to skip every other frame */
 	bool skip = false;

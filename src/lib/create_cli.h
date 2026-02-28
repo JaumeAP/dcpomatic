@@ -52,7 +52,7 @@ public:
 	};
 
 	bool version;
-	boost::optional<int> dcp_frame_rate;
+	boost::optional<dcp::Fraction> dcp_frame_rate;
 	boost::optional<int> still_length;
 	boost::optional<int> auto_crop_threshold;
 	boost::optional<boost::filesystem::path> config_dir;
