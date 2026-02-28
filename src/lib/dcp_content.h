@@ -211,10 +211,12 @@ public:
 	Resolution resolution() const;
 
 	std::vector<dcp::Rating> ratings() const {
+		boost::mutex::scoped_lock lm(_mutex);
 		return _ratings;
 	}
 
 	std::vector<std::string> content_versions() const {
+		boost::mutex::scoped_lock lm(_mutex);
 		return _content_versions;
 	}
 
@@ -224,28 +226,38 @@ public:
 	 *  and they have different langauges, this could be wrong.
 	 */
 	boost::optional<dcp::LanguageTag> audio_language() const {
+		boost::mutex::scoped_lock lm(_mutex);
 		return _audio_language;
 	}
 
 	void check_font_ids();
 
 	boost::optional<std::string> chain() const {
+		boost::mutex::scoped_lock lm(_mutex);
 		return _chain;
 	}
 
 	boost::optional<std::string> distributor() const {
+		boost::mutex::scoped_lock lm(_mutex);
 		return _distributor;
 	}
 
 	boost::optional<std::string> facility() const {
+		boost::mutex::scoped_lock lm(_mutex);
 		return _facility;
 	}
 
 	boost::optional<dcp::Luminance> luminance() const {
+		boost::mutex::scoped_lock lm(_mutex);
 		return _luminance;
 	}
 
 	std::list<dcpomatic::DCPTimePeriod> reels(std::shared_ptr<const Film> film) const;
+
+	boost::optional<dcp::Fraction> rational_video_frame_rate() const {
+		boost::mutex::scoped_lock lm(_mutex);
+		return _rational_video_frame_rate;
+	}
 
 private:
 	friend struct reels_test5;
@@ -279,6 +291,7 @@ private:
 	 */
 	EnumIndexedVector<bool, TextType> _reference_text;
 
+	boost::optional<dcp::Fraction> _rational_video_frame_rate;
 	boost::optional<dcp::Standard> _standard;
 	boost::optional<VideoEncoding> _video_encoding;
 	boost::optional<dcp::ContentKind> _content_kind;

@@ -91,6 +91,10 @@ DCPContent::DCPContent(cxml::ConstNodePtr node, boost::optional<boost::filesyste
 	text = TextContent::from_xml(this, node, version, notes);
 	atmos = AtmosContent::from_xml(this, node);
 
+	if (auto rational = node->optional_string_child("RationalVideoFrameRate")) {
+		_rational_video_frame_rate = dcp::Fraction(*rational);
+	}
+
 	if (video && audio) {
 		audio->set_stream(
 			make_shared<AudioStream>(
@@ -281,6 +285,7 @@ DCPContent::examine(shared_ptr<Job> job, bool tolerant)
 			video = make_shared<VideoContent>(this);
 		}
 		video->take_from_examiner(examiner);
+		_rational_video_frame_rate = examiner->rational_video_frame_rate();
 		set_default_colour_conversion();
 	}
 
@@ -425,6 +430,9 @@ DCPContent::as_xml(xmlpp::Element* element, bool with_paths, PathBehaviour path_
 
 	if (video) {
 		video->as_xml(element);
+		if (_rational_video_frame_rate) {
+			cxml::add_text_child(element, "RationalVideoFrameRate", _rational_video_frame_rate->as_string());
+		}
 	}
 
 	if (audio) {

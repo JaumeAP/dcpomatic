@@ -166,6 +166,7 @@ DCPExaminer::DCPExaminer(shared_ptr<const DCPContent> content, bool tolerant)
 				float const fr = float(frac.numerator) / frac.denominator;
 				if (!_video_frame_rate) {
 					_video_frame_rate = fr;
+					_rational_video_frame_rate = frac;
 				} else if (_video_frame_rate.get() != fr) {
 					throw DCPError(_("Mismatched frame rates in DCP"));
 				}

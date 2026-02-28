@@ -49,6 +49,10 @@ public:
 		return _video_frame_rate;
 	}
 
+	boost::optional<dcp::Fraction> rational_video_frame_rate() const {
+		return _rational_video_frame_rate;
+	}
+
 	boost::optional<dcp::Size> video_size() const override {
 		return _video_size;
 	}
@@ -225,6 +229,7 @@ public:
 
 private:
 	boost::optional<double> _video_frame_rate;
+	boost::optional<dcp::Fraction> _rational_video_frame_rate;
 	boost::optional<dcp::Size> _video_size;
 	Frame _video_length = 0;
 	boost::optional<int> _audio_channels;
