@@ -79,9 +79,7 @@ template <class S, class O>
 class Time
 {
 public:
-	Time()
-		: _t(0)
-	{}
+	Time() = default;
 
 	typedef int64_t Type;
 
@@ -272,7 +270,7 @@ private:
 	friend struct ::dcpomatic_time_ceil_test;
 	friend struct ::dcpomatic_time_floor_test;
 
-	Type _t;
+	Type _t = 0;
 };
 
 
