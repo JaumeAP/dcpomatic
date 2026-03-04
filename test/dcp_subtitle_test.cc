@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_within_dcp_test)
 	auto film = new_test_film("dcp_subtitle_within_dcp_test", { content });
 
 	auto decoder = make_shared<DCPDecoder>(film, content, false, false, shared_ptr<DCPDecoder>());
-	decoder->only_text()->PlainStart.connect (bind (store, _1));
+	decoder->only_text()->StringStart.connect(bind(store, _1));
 
 	stored = optional<ContentStringText> ();
 	while (!decoder->pass() && !stored) {}
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test2)
 	auto film = new_test_film("dcp_subtitle_test2", { content });
 
 	auto decoder = make_shared<DCPSubtitleDecoder>(film, content);
-	decoder->only_text()->PlainStart.connect (bind (store, _1));
+	decoder->only_text()->StringStart.connect(bind(store, _1));
 
 	stored = optional<ContentStringText> ();
 	while (!decoder->pass()) {
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE (dcp_subtitle_test3)
 	auto decoder = make_shared<DCPSubtitleDecoder>(film, content);
 	stored = optional<ContentStringText> ();
 	while (!decoder->pass ()) {
-		decoder->only_text()->PlainStart.connect (bind (store, _1));
+		decoder->only_text()->StringStart.connect(bind(store, _1));
 		if (stored && stored->from() == ContentTime::from_seconds(0.08)) {
 			auto s = stored->subs;
 			auto i = s.begin ();

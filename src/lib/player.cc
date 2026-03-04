@@ -335,7 +335,7 @@ Player::setup_pieces()
 			(*j)->BitmapStart.connect(
 				bind(&Player::bitmap_text_start, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>((*j)->content()), _1)
 				);
-			(*j)->PlainStart.connect(
+			(*j)->StringStart.connect(
 				bind(&Player::plain_text_start, this, weak_ptr<Piece>(piece), weak_ptr<const TextContent>((*j)->content()), _1)
 				);
 			(*j)->Stop.connect(

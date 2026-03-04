@@ -134,7 +134,7 @@ TextDecoder::emit_plain_start(ContentTime from, vector<dcp::TextString> subtitle
 		string_texts.push_back(string_text);
 	}
 
-	PlainStart(ContentStringText(from, string_texts));
+	StringStart(ContentStringText(from, string_texts));
 	maybe_set_position(from);
 }
 
@@ -318,7 +318,7 @@ TextDecoder::emit_plain_start(ContentTime from, sub::Subtitle const & sub_subtit
 		}
 	}
 
-	PlainStart(ContentStringText(from, string_texts));
+	StringStart(ContentStringText(from, string_texts));
 	maybe_set_position(from);
 }
 

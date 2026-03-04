@@ -101,7 +101,7 @@ TextView::TextView (
 	/* Find the decoder that is being used for our TextContent and attach to it */
 	for (auto i: decoder->text) {
 		if (i->content() == text) {
-			i->PlainStart.connect (bind (&TextView::data_start, this, _1));
+			i->StringStart.connect(bind(&TextView::data_start, this, _1));
 			i->Stop.connect (bind (&TextView::data_stop, this, _1));
 		}
 	}
