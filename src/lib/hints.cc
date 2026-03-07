@@ -586,17 +586,19 @@ Hints::closed_caption(PlayerText text, DCPTimePeriod period)
 {
 	int lines = text.string.size();
 	for (auto i: text.string) {
-		if (utf8_strlen(i.text()) > MAX_CLOSED_CAPTION_LENGTH) {
-			++lines;
-			if (!_long_ccap) {
-				_long_ccap = true;
-				hint(
-					fmt::format(
-						"At least one of your closed caption lines has more than {} characters.  "
-						"It is advisable to make each line {} characters at most in length.",
-						MAX_CLOSED_CAPTION_LENGTH,
-						MAX_CLOSED_CAPTION_LENGTH)
-				     );
+		if (auto text_string = i.string_text()) {
+			if (utf8_strlen(*text_string) > MAX_CLOSED_CAPTION_LENGTH) {
+				++lines;
+				if (!_long_ccap) {
+					_long_ccap = true;
+					hint(
+						fmt::format(
+							"At least one of your closed caption lines has more than {} characters.  "
+							"It is advisable to make each line {} characters at most in length.",
+							MAX_CLOSED_CAPTION_LENGTH,
+							MAX_CLOSED_CAPTION_LENGTH)
+					     );
+				}
 			}
 		}
 	}

@@ -227,6 +227,30 @@ BOOST_AUTO_TEST_CASE(render_text_with_stretch_test)
 }
 
 
+BOOST_AUTO_TEST_CASE(render_ruby)
+{
+	auto dcp_string = dcp::TextString(
+		{}, true, false, false, dcp::Colour(255, 255, 255), 42, 1.0,
+		dcp::Time(0, 0, 0, 0, 24), dcp::Time(0, 0, 1, 0, 24),
+		0.5, dcp::HAlign::CENTER,
+		0.5, dcp::VAlign::CENTER,
+		0.0,
+		vector<dcp::Text::VariableZPosition>(),
+		dcp::Direction::LTR,
+		"",
+		dcp::Effect::NONE, dcp::Colour(0, 0, 0),
+		{}, {},
+		0,
+		std::vector<dcp::Ruby>{dcp::Ruby("新幹線", "しんかんせん")}
+	);
+
+	auto string_text = StringText(dcp_string, 0, make_shared<dcpomatic::Font>("foo"), dcp::SubtitleStandard::SMPTE_2014);
+	auto images = render_text({ string_text }, dcp::Size(1998, 1080), {}, 24);
+	BOOST_CHECK_EQUAL(images.size(), 1U);
+	image_as_png(Image::ensure_alignment(images.front().image, Image::Alignment::PADDED)).write("build/test/render_ruby.png");
+}
+
+
 #if 0
 
 BOOST_AUTO_TEST_CASE (render_text_test)

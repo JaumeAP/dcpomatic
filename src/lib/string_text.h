@@ -28,7 +28,7 @@
 #include <dcp/text_string.h>
 
 
-/** A wrapper for SubtitleString which allows us to:
+/** A wrapper for dcp::TextString which allows us to:
  *
  *    - include settings that are not applicable to true DCP subtitles.
  *      For example, we can set outline width for burn-in but this cannot be specified in DCP XML.

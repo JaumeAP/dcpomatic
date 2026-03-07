@@ -151,7 +151,11 @@ marked_up(vector<StringText> subtitles, int target_height, float fade_factor, st
 			out += make_span(i, " ", "letter_spacing=\"" + fmt::to_string(std::round(spacing)) + "\"");
 		}
 
-		out += make_span(i, i.text(), {});
+		if (i.string_text()) {
+			out += make_span(i, *i.string_text(), {});
+		} else {
+			out += make_span(i, i.ruby_text()->base, {});
+		}
 	}
 
 	return out;
