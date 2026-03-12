@@ -36,27 +36,27 @@
 class Socket
 {
 public:
-	explicit Socket (int timeout = 30);
+	explicit Socket(int timeout = 30);
 
-	Socket (Socket const&) = delete;
-	Socket& operator= (Socket const&) = delete;
+	Socket(Socket const&) = delete;
+	Socket& operator=(Socket const&) = delete;
 
 	/** @return Our underlying socket */
-	boost::asio::ip::tcp::socket& socket () {
+	boost::asio::ip::tcp::socket& socket() {
 		return _socket;
 	}
 
-	void set_send_buffer_size (int size);
+	void set_send_buffer_size(int size);
 
 	void connect(std::string host_name, int port);
 	void connect(boost::asio::ip::address address, int port);
 
-	void write (uint32_t n);
-	void write (uint8_t const * data, int size);
+	void write(uint32_t n);
+	void write(uint8_t const * data, int size);
 	void write(std::string const& str);
 
-	void read (uint8_t* data, int size);
-	uint32_t read_uint32 ();
+	void read(uint8_t* data, int size);
+	uint32_t read_uint32();
 
 	void set_deadline_from_now(int seconds);
 	void run();
@@ -69,8 +69,8 @@ public:
 	class ReadDigestScope
 	{
 	public:
-		ReadDigestScope (std::shared_ptr<Socket> socket);
-		bool check ();
+		ReadDigestScope(std::shared_ptr<Socket> socket);
+		bool check();
 	private:
 		std::weak_ptr<Socket> _socket;
 	};
@@ -82,8 +82,8 @@ public:
 	class WriteDigestScope
 	{
 	public:
-		WriteDigestScope (std::shared_ptr<Socket> socket);
-		~WriteDigestScope ();
+		WriteDigestScope(std::shared_ptr<Socket> socket);
+		~WriteDigestScope();
 	private:
 		std::weak_ptr<Socket> _socket;
 	};
@@ -91,11 +91,11 @@ public:
 private:
 	friend class DigestScope;
 
-	void check ();
-	void start_read_digest ();
-	bool check_read_digest ();
-	void start_write_digest ();
-	void finish_write_digest ();
+	void check();
+	void start_read_digest();
+	bool check_read_digest();
+	void start_write_digest();
+	void finish_write_digest();
 	void connect(boost::asio::ip::tcp::endpoint endpoint);
 #ifdef DCPOMATIC_HAVE_BOOST_ASIO_IP_BASIC_RESOLVER_RESULTS
 	void connect(boost::asio::ip::basic_resolver_results<boost::asio::ip::tcp> endpoints);

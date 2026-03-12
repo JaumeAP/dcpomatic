@@ -38,24 +38,24 @@ using std::weak_ptr;
 
 
 /** @param timeout Timeout in seconds */
-Socket::Socket (int timeout)
+Socket::Socket(int timeout)
 	: _deadline(_io_context)
 	, _socket(_io_context)
-	, _timeout (timeout)
+	, _timeout(timeout)
 {
-	_deadline.expires_at (boost::posix_time::pos_infin);
-	check ();
+	_deadline.expires_at(boost::posix_time::pos_infin);
+	check();
 }
 
 void
-Socket::check ()
+Socket::check()
 {
-	if (_deadline.expires_at() <= boost::asio::deadline_timer::traits_type::now ()) {
-		_socket.close ();
-		_deadline.expires_at (boost::posix_time::pos_infin);
+	if (_deadline.expires_at() <= boost::asio::deadline_timer::traits_type::now()) {
+		_socket.close();
+		_deadline.expires_at(boost::posix_time::pos_infin);
 	}
 
-	_deadline.async_wait (boost::bind (&Socket::check, this));
+	_deadline.async_wait(boost::bind(&Socket::check, this));
 }
 
 
@@ -78,8 +78,8 @@ Socket::connect(boost::asio::ip::basic_resolver_results<boost::asio::ip::tcp> en
 		throw NetworkError(fmt::format(_("error during async_connect: ({})"), error_details(ec)));
 	}
 
-	if (!_socket.is_open ()) {
-		throw NetworkError (_("connect timed out"));
+	if (!_socket.is_open()) {
+		throw NetworkError(_("connect timed out"));
 	}
 
 	if (_send_buffer_size) {
@@ -99,7 +99,7 @@ Socket::connect(boost::asio::ip::tcp::endpoint endpoint)
 {
 	set_deadline_from_now(_timeout);
 	boost::system::error_code ec = boost::asio::error::would_block;
-	_socket.async_connect (endpoint, boost::lambda::var(ec) = boost::lambda::_1);
+	_socket.async_connect(endpoint, boost::lambda::var(ec) = boost::lambda::_1);
 	do {
 		_io_context.run_one();
 	} while (ec == boost::asio::error::would_block);
@@ -108,8 +108,8 @@ Socket::connect(boost::asio::ip::tcp::endpoint endpoint)
 		throw NetworkError(fmt::format(_("error during async_connect ({})"), error_details(ec)));
 	}
 
-	if (!_socket.is_open ()) {
-		throw NetworkError (_("connect timed out"));
+	if (!_socket.is_open()) {
+		throw NetworkError(_("connect timed out"));
 	}
 
 	if (_send_buffer_size) {
@@ -144,12 +144,12 @@ Socket::connect(boost::asio::ip::address address, int port)
  *  @param size Number of bytes to write.
  */
 void
-Socket::write (uint8_t const * data, int size)
+Socket::write(uint8_t const * data, int size)
 {
 	set_deadline_from_now(_timeout);
 	boost::system::error_code ec = boost::asio::error::would_block;
 
-	boost::asio::async_write (_socket, boost::asio::buffer (data, size), boost::lambda::var(ec) = boost::lambda::_1);
+	boost::asio::async_write(_socket, boost::asio::buffer(data, size), boost::lambda::var(ec) = boost::lambda::_1);
 
 	do {
 		_io_context.run_one();
@@ -160,7 +160,7 @@ Socket::write (uint8_t const * data, int size)
 	}
 
 	if (_write_digester) {
-		_write_digester->add (data, static_cast<size_t>(size));
+		_write_digester->add(data, static_cast<size_t>(size));
 	}
 }
 
@@ -173,10 +173,10 @@ Socket::write(std::string const& str)
 
 
 void
-Socket::write (uint32_t v)
+Socket::write(uint32_t v)
 {
-	v = htonl (v);
-	write (reinterpret_cast<uint8_t*> (&v), 4);
+	v = htonl(v);
+	write(reinterpret_cast<uint8_t*>(&v), 4);
 }
 
 
@@ -185,12 +185,12 @@ Socket::write (uint32_t v)
  *  @param size Number of bytes to read.
  */
 void
-Socket::read (uint8_t* data, int size)
+Socket::read(uint8_t* data, int size)
 {
 	set_deadline_from_now(_timeout);
 	boost::system::error_code ec = boost::asio::error::would_block;
 
-	boost::asio::async_read (_socket, boost::asio::buffer (data, size), boost::lambda::var(ec) = boost::lambda::_1);
+	boost::asio::async_read(_socket, boost::asio::buffer(data, size), boost::lambda::var(ec) = boost::lambda::_1);
 
 	do {
 		_io_context.run_one();
@@ -201,52 +201,52 @@ Socket::read (uint8_t* data, int size)
 	}
 
 	if (_read_digester) {
-		_read_digester->add (data, static_cast<size_t>(size));
+		_read_digester->add(data, static_cast<size_t>(size));
 	}
 }
 
 
 uint32_t
-Socket::read_uint32 ()
+Socket::read_uint32()
 {
 	uint32_t v;
-	read (reinterpret_cast<uint8_t *> (&v), 4);
-	return ntohl (v);
+	read(reinterpret_cast<uint8_t *>(&v), 4);
+	return ntohl(v);
 }
 
 
 void
-Socket::start_read_digest ()
+Socket::start_read_digest()
 {
-	DCPOMATIC_ASSERT (!_read_digester);
-	_read_digester.reset (new Digester());
+	DCPOMATIC_ASSERT(!_read_digester);
+	_read_digester.reset(new Digester());
 }
 
 
 void
-Socket::start_write_digest ()
+Socket::start_write_digest()
 {
-	DCPOMATIC_ASSERT (!_write_digester);
-	_write_digester.reset (new Digester());
+	DCPOMATIC_ASSERT(!_write_digester);
+	_write_digester.reset(new Digester());
 }
 
 
-Socket::ReadDigestScope::ReadDigestScope (shared_ptr<Socket> socket)
-	: _socket (socket)
+Socket::ReadDigestScope::ReadDigestScope(shared_ptr<Socket> socket)
+	: _socket(socket)
 {
-	socket->start_read_digest ();
+	socket->start_read_digest();
 }
 
 
 bool
-Socket::ReadDigestScope::check ()
+Socket::ReadDigestScope::check()
 {
-	auto sp = _socket.lock ();
+	auto sp = _socket.lock();
 	if (!sp) {
 		return false;
 	}
 
-	return sp->check_read_digest ();
+	return sp->check_read_digest();
 }
 
 
