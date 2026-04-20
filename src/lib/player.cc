@@ -927,7 +927,7 @@ Player::open_texts_for_frame(DCPTime time) const
 	}
 
 	list<PositionImage> texts;
-	int const vfr = film->video_frame_rate();
+	auto const vfr = film->video_frame_rate();
 
 	for (auto type: { TextType::OPEN_SUBTITLE, TextType::OPEN_CAPTION }) {
 		for (

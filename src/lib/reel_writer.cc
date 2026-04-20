@@ -214,7 +214,7 @@ ReelWriter::ReelWriter(
 	if (film()->audio_channels()) {
 		auto lang = film()->audio_language();
 		_sound_asset = make_shared<dcp::SoundAsset>(
-			dcp::Fraction(film()->video_frame_rate(), 1),
+			film()->video_frame_rate(),
 			film()->audio_frame_rate(),
 			film()->audio_channels(),
 			lang ? *lang : dcp::LanguageTag("en-US"),
@@ -314,7 +314,7 @@ void
 ReelWriter::write(shared_ptr<const dcp::AtmosFrame> atmos, AtmosMetadata metadata)
 {
 	if (!_atmos_asset) {
-		_atmos_asset = metadata.create(dcp::Fraction(film()->video_frame_rate(), 1));
+		_atmos_asset = metadata.create(film()->video_frame_rate());
 		if (film()->encrypt_sound()) {
 			_atmos_asset->set_key(film()->key());
 		}
@@ -446,7 +446,7 @@ maybe_add_text(
 			reel_asset = make_shared<Interop>(
 				type,
 				interop,
-				dcp::Fraction(film->video_frame_rate(), 1),
+				film->video_frame_rate(),
 				picture_duration,
 				0
 				);
@@ -463,7 +463,7 @@ maybe_add_text(
 			reel_asset = make_shared<SMPTE>(
 				type,
 				smpte,
-				dcp::Fraction(film->video_frame_rate(), 1),
+				film->video_frame_rate(),
 				picture_duration,
 				0
 				);
@@ -681,11 +681,10 @@ ReelWriter::create_reel_markers(shared_ptr<dcp::Reel> reel) const
 	}
 
 	if (!reel_markers.empty()) {
-		auto ma = make_shared<dcp::ReelMarkersAsset>(dcp::Fraction(film()->video_frame_rate(), 1), reel->duration());
+		auto ma = make_shared<dcp::ReelMarkersAsset>(film()->video_frame_rate(), reel->duration());
 		for (auto const& i: reel_markers) {
 			DCPTime relative = i.second - _period.from;
-			auto hmsf = relative.split(film()->video_frame_rate());
-			ma->set(i.first, dcp::Time(hmsf.h, hmsf.m, hmsf.s, hmsf.f, film()->video_frame_rate()));
+			ma->set(i.first, relative.frames_round(film()->video_frame_rate()));
 		}
 		reel->add(ma);
 	}
@@ -818,9 +817,13 @@ ReelWriter::empty_text_asset(TextType type, optional<DCPTextTrack> track, bool w
 		} else if (track && track->language) {
 			s->set_language(dcp::LanguageTag(track->language->as_string()));
 		}
-		s->set_edit_rate(dcp::Fraction(film()->video_frame_rate(), 1));
+		s->set_edit_rate(film()->video_frame_rate());
 		s->set_reel_number(_reel_index + 1);
-		s->set_time_code_rate(film()->video_frame_rate());
+		if (film()->video_frame_rate().denominator == 1) {
+			s->set_time_code_rate(film()->video_frame_rate().numerator);
+		} else {
+			s->set_time_code_rate(10 * film()->video_frame_rate().as_float());
+		}
 		s->set_start_time(dcp::Time());
 		if (film()->encrypt_text()) {
 			s->set_key(film()->key());

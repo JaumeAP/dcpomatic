@@ -185,7 +185,7 @@ public:
 		return _tms_password;
 	}
 
-	std::list<int> allowed_dcp_frame_rates() const {
+	std::list<dcp::Fraction> allowed_dcp_frame_rates() const {
 		return _allowed_dcp_frame_rates;
 	}
 

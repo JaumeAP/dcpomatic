@@ -145,8 +145,10 @@ static constexpr char assets_file[] = "assets.xml";
  * VideoContent scale expressed just as "guess" or "custom"
  * 38 -> 39
  * Fade{In,Out} -> VideoFade{In,Out}
+ * 39 -> 40
+ * VideoFrameRate becomes rational.
  */
-int const Film::current_state_version = 39;
+int const Film::current_state_version = 40;
 
 
 /** Construct a Film object in a given directory.
@@ -411,7 +413,7 @@ Film::metadata(bool with_content_paths) const
 	cxml::add_text_child(root, "Resolution", resolution_to_string(_resolution));
 	cxml::add_text_child(root, "J2KVideoBitRate", fmt::to_string(_video_bit_rate[VideoEncoding::JPEG2000]));
 	cxml::add_text_child(root, "MPEG2VideoBitRate", fmt::to_string(_video_bit_rate[VideoEncoding::MPEG2]));
-	cxml::add_text_child(root, "VideoFrameRate", fmt::to_string(_video_frame_rate));
+	cxml::add_text_child(root, "VideoFrameRate", _video_frame_rate.as_string());
 	cxml::add_text_child(root, "AudioFrameRate", fmt::to_string(_audio_frame_rate));
 	cxml::add_text_child(root, "ISDCFDate", boost::gregorian::to_iso_string(_isdcf_date));
 	cxml::add_text_child(root, "AudioChannels", fmt::to_string(_audio_channels));
@@ -1032,8 +1034,8 @@ Film::isdcf_name(bool if_created_now) const
 		isdcf_name += fmt::format("-{}fl", std::round(_luminance->value_in_foot_lamberts() * 10));
 	}
 
-	if (video_frame_rate() != 24) {
-		isdcf_name += "-" + fmt::to_string(video_frame_rate());
+	if (video_frame_rate() != dcp::Fraction(24, 1)) {
+		isdcf_name += "-" + fmt::to_string(std::round(video_frame_rate().as_float()));
 	}
 
 	isdcf_name += "_" + container().isdcf_name();
@@ -1256,12 +1258,13 @@ Film::set_video_bit_rate(VideoEncoding encoding, int64_t bit_rate)
 	_video_bit_rate[encoding] = bit_rate;
 }
 
+
 /** @param f New frame rate.
  *  @param user_explicit true if this comes from a direct user instruction, false if it is from
  *  DCP-o-matic being helpful.
  */
 void
-Film::set_video_frame_rate(int f, bool user_explicit)
+Film::set_video_frame_rate(dcp::Fraction f, bool user_explicit)
 {
 	if (_video_frame_rate == f) {
 		return;
@@ -1273,6 +1276,18 @@ Film::set_video_frame_rate(int f, bool user_explicit)
 		_user_explicit_video_frame_rate = true;
 	}
 }
+
+
+/** @param f New frame rate.
+ *  @param user_explicit true if this comes from a direct user instruction, false if it is from
+ *  DCP-o-matic being helpful.
+ */
+void
+Film::set_video_frame_rate(int f, bool user_explicit)
+{
+	set_video_frame_rate({f, 1}, user_explicit);
+}
+
 
 void
 Film::set_audio_channels(int c)
@@ -1685,12 +1700,12 @@ Film::length() const
 	return max(DCPTime::from_seconds(1), _playlist->length(shared_from_this()).ceil(video_frame_rate()));
 }
 
-int
+dcp::Fraction
 Film::best_video_frame_rate() const
 {
 	/* Don't default to anything above 30fps (make the user select that explicitly) */
 	auto best = _playlist->best_video_frame_rate();
-	if (best > 30) {
+	if (best.fraction() > 30) {
 		best /= 2;
 	}
 	return best;

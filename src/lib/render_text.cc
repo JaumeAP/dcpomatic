@@ -208,7 +208,7 @@ create_surface(shared_ptr<Image> image)
 
 
 static float
-calculate_fade_factor(StringText const& first, DCPTime time, int frame_rate)
+calculate_fade_factor(StringText const& first, DCPTime time, dcp::Fraction frame_rate)
 {
 	float fade_factor = 1;
 
@@ -338,7 +338,7 @@ struct Layout
  *  at the same time and with the same fade in/out.
  */
 static Layout
-setup_layout(vector<StringText> subtitles, dcp::Size target, DCPTime time, int frame_rate)
+setup_layout(vector<StringText> subtitles, dcp::Size target, DCPTime time, dcp::Fraction frame_rate)
 {
 	DCPOMATIC_ASSERT(!subtitles.empty());
 	auto const& first = subtitles.front();
@@ -379,7 +379,7 @@ border_width_for_subtitle(StringText const& subtitle, dcp::Size target)
  *  at the same time and with the same fade in/out.
  */
 static PositionImage
-render_line(vector<StringText> subtitles, dcp::Size target, DCPTime time, int frame_rate)
+render_line(vector<StringText> subtitles, dcp::Size target, DCPTime time, dcp::Fraction frame_rate)
 {
 	/* XXX: this method can only handle italic / bold changes mid-line,
 	   nothing else yet.
@@ -464,7 +464,7 @@ render_line(vector<StringText> subtitles, dcp::Size target, DCPTime time, int fr
  *  @param frame_rate DCP frame rate.
  */
 vector<PositionImage>
-render_text(vector<StringText> subtitles, dcp::Size target, DCPTime time, int frame_rate)
+render_text(vector<StringText> subtitles, dcp::Size target, DCPTime time, dcp::Fraction frame_rate)
 {
 	vector<StringText> pending;
 	vector<PositionImage> images;
@@ -501,7 +501,7 @@ bounding_box(vector<StringText> subtitles, dcp::Size target, optional<dcp::Subti
 		auto const& subtitle = pending.front();
 		auto standard = override_standard.get_value_or(subtitle.valign_standard);
 		/* We can provide dummy values for time and frame rate here as they are only used to calculate fades */
-		auto layout = setup_layout(pending, target, DCPTime(), 24);
+		auto layout = setup_layout(pending, target, DCPTime(), {24, 1});
 		int const x = x_position(subtitle.h_align(), subtitle.h_position(), target.width, layout.size.width);
 		auto const border_width = border_width_for_subtitle(subtitle, target);
 		int const y = y_position(standard, subtitle.v_align(), subtitle.v_position(), target.height, layout.baseline_to_bottom(border_width), layout.size.height);

@@ -65,7 +65,7 @@ enum {
 class ReelBoundary
 {
 public:
-	ReelBoundary(wxWindow* parent, wxGridBagSizer* sizer, int index, DCPTime maximum, int fps, DCPTimeline& timeline, bool editable)
+	ReelBoundary(wxWindow* parent, wxGridBagSizer* sizer, int index, DCPTime maximum, dcp::Fraction fps, DCPTimeline& timeline, bool editable)
 		: _label(new wxStaticText(parent, wxID_ANY, wxString::Format(_("Reel %d to reel %d"), index + 1, index + 2)))
 		, _timecode(new Timecode<DCPTime>(parent, true))
 		, _index(index)
@@ -133,7 +133,7 @@ private:
 	Timecode<dcpomatic::DCPTime>* _timecode = nullptr;
 	int _index = 0;
 	DCPTimelineReelMarkerView _view;
-	int _fps;
+	dcp::Fraction _fps;
 };
 
 

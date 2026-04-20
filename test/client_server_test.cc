@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_rgb)
 	auto frame = make_shared<DCPVideo> (
 		pvf,
 		0,
-		24,
+		dcp::Fraction(24, 1),
 		200000000,
 		Resolution::TWO_K
 		);
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_yuv)
 	auto frame = make_shared<DCPVideo>(
 		pvf,
 		0,
-		24,
+		dcp::Fraction(24, 1),
 		200000000,
 		Resolution::TWO_K
 		);
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 	auto raw_frame = make_shared<DCPVideo> (
 		raw_pvf,
 		0,
-		24,
+		dcp::Fraction(24, 1),
 		200000000,
 		Resolution::TWO_K
 		);
@@ -282,7 +282,7 @@ BOOST_AUTO_TEST_CASE (client_server_test_j2k)
 	auto j2k_frame = make_shared<DCPVideo> (
 		j2k_pvf,
 		0,
-		24,
+		dcp::Fraction(24, 1),
 		200000000,
 		Resolution::TWO_K
 		);

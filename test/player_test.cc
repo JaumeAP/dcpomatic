@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE (player_subframe_test)
 	auto A = content_factory("test/data/flat_red.png")[0];
 	auto B = content_factory("test/data/awkward_length.wav")[0];
 	auto film = new_test_film("reels_test7", { A, B });
-	film->set_video_frame_rate (24);
+	film->set_video_frame_rate(24);
 	A->video->set_length (3 * 24);
 
 	BOOST_CHECK (A->full_length(film) == DCPTime::from_frames(3 * 24, 24));
@@ -431,7 +431,7 @@ BOOST_AUTO_TEST_CASE (player_silence_at_end_crash)
 	auto content1 = content_factory("test/data/flat_red.png")[0];
 	auto film1 = new_test_film("player_silence_at_end_crash_1", {content1});
 	content1->video->set_length (25);
-	film1->set_video_frame_rate (25);
+	film1->set_video_frame_rate(25);
 	make_and_verify_dcp (film1);
 
 	/* Make another project importing this DCP */

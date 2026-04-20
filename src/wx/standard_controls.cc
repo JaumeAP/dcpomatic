@@ -67,7 +67,7 @@ StandardControls::play_clicked ()
 void
 StandardControls::check_play_state ()
 {
-	if (!_film || _film->video_frame_rate() == 0) {
+	if (!_film) {
 		return;
 	}
 

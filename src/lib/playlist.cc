@@ -550,7 +550,7 @@ Playlist::text_end(shared_ptr<const Film> film) const
 
 
 FrameRateChange
-Playlist::active_frame_rate_change(DCPTime t, int dcp_video_frame_rate) const
+Playlist::active_frame_rate_change(DCPTime t, dcp::Fraction dcp_video_frame_rate) const
 {
 	auto cont = content();
 	for (ContentList::const_reverse_iterator i = cont.rbegin(); i != cont.rend(); ++i) {
@@ -564,15 +564,15 @@ Playlist::active_frame_rate_change(DCPTime t, int dcp_video_frame_rate) const
 			*/
 			if ((*i)->video_frame_rate()) {
 				/* This content specified a rate, so use it */
-				return FrameRateChange((*i)->video_frame_rate().get(), dcp::Fraction(dcp_video_frame_rate, 1));
+				return FrameRateChange((*i)->video_frame_rate().get(), dcp_video_frame_rate);
 			} else {
 				/* No specified rate so just use the DCP one */
-				return FrameRateChange(dcp_video_frame_rate, dcp::Fraction(dcp_video_frame_rate, 1));
+				return FrameRateChange(dcp_video_frame_rate.as_float(), dcp_video_frame_rate);
 			}
 		}
 	}
 
-	return FrameRateChange(dcp_video_frame_rate, dcp::Fraction(dcp_video_frame_rate, 1));
+	return FrameRateChange(dcp_video_frame_rate.as_float(), dcp_video_frame_rate);
 }
 
 
@@ -720,7 +720,7 @@ Playlist::content_summary(shared_ptr<const Film> film, DCPTimePeriod period) con
 
 
 pair<double, double>
-Playlist::speed_up_range(int dcp_video_frame_rate) const
+Playlist::speed_up_range(dcp::Fraction dcp_video_frame_rate) const
 {
 	pair<double, double> range(DBL_MAX, -DBL_MAX);
 
@@ -733,7 +733,7 @@ Playlist::speed_up_range(int dcp_video_frame_rate) const
 			range.first = min(range.first, frc.speed_up);
 			range.second = max(range.second, frc.speed_up);
 		} else {
-			FrameRateChange const frc(dcp_video_frame_rate, dcp_video_frame_rate);
+			FrameRateChange const frc(dcp_video_frame_rate.as_float(), dcp_video_frame_rate);
 			range.first = min(range.first, frc.speed_up);
 			range.second = max(range.second, frc.speed_up);
 		}

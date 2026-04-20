@@ -285,7 +285,7 @@ DCPExaminer::DCPExaminer(shared_ptr<const DCPContent> content, bool tolerant)
 		if (reel->main_markers ()) {
 			auto edit_rate = reel->main_markers()->edit_rate().numerator;
 			for (auto const& marker: reel->main_markers()->get()) {
-				_markers[marker.first] = reel_time + dcpomatic::ContentTime::from_frames(marker.second.as_editable_units_floor(edit_rate), edit_rate);
+				_markers[marker.first] = reel_time + dcpomatic::ContentTime::from_frames(marker.second, edit_rate);
 			}
 		}
 

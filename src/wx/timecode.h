@@ -81,7 +81,8 @@ public:
 
 	}
 
-	void set (T t, float fps)
+	template <class F>
+	void set(T t, F fps)
 	{
 		auto const hmsf = t.split (fps);
 
@@ -93,7 +94,8 @@ public:
 		checked_set (_fixed, t.timecode (fps));
 	}
 
-	void set_hint (T t, float fps)
+	template <class F>
+	void set_hint(T t, F fps)
 	{
 		auto hmsf = t.split (fps);
 
@@ -124,7 +126,8 @@ public:
 			value_or_hint(_frames) };
 	}
 
-	T get (float fps) const
+	template <class F>
+	T get(F fps) const
 	{
 		return T(get(), fps);
 	}

@@ -39,7 +39,7 @@ using namespace dcpomatic;
 static void
 push(Shuffler& s, int frame, Eyes eyes)
 {
-	auto piece = make_shared<Piece>(shared_ptr<Content>(), shared_ptr<Decoder>(), FrameRateChange(24, 24));
+	auto piece = make_shared<Piece>(shared_ptr<Content>(), shared_ptr<Decoder>(), FrameRateChange(24, dcp::Fraction(24, 1)));
 	ContentVideo cv;
 	cv.time = ContentTime::from_frames(frame, 24);
 	cv.eyes = eyes;

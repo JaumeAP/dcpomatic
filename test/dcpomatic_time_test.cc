@@ -35,7 +35,7 @@ using namespace dcpomatic;
 
 BOOST_AUTO_TEST_CASE (dcpomatic_time_test)
 {
-	FrameRateChange frc (24, 48);
+	FrameRateChange frc(24, {48, 1});
 	int j = 0;
 	int k = 0;
 	for (int64_t i = 0; i < 62000; i += 2000) {

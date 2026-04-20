@@ -81,9 +81,9 @@ get_referenced_reel_assets(shared_ptr<const Film> film, shared_ptr<const Playlis
 		}
 
 		auto const frame_rate = film->video_frame_rate();
-		DCPOMATIC_ASSERT (dcp->video_frame_rate());
+		DCPOMATIC_ASSERT(dcp->rational_video_frame_rate());
 		/* We should only be referencing if the DCP rate is the same as the film rate */
-		DCPOMATIC_ASSERT(std::abs(dcp->video_frame_rate().get() - frame_rate.as_float()) < 1e-3);
+		DCPOMATIC_ASSERT(*dcp->rational_video_frame_rate() == frame_rate);
 
 		Frame const trim_start = dcp->trim_start().frames_round(frame_rate);
 		Frame const trim_end = dcp->trim_end().frames_round(frame_rate);

@@ -93,6 +93,18 @@ DCPContent::DCPContent(cxml::ConstNodePtr node, boost::optional<boost::filesyste
 
 	if (auto rational = node->optional_string_child("RationalVideoFrameRate")) {
 		_rational_video_frame_rate = dcp::Fraction(*rational);
+	} else if (auto const vfr = video_frame_rate()) {
+		optional<dcp::Fraction> best;
+		float best_error = FLT_MAX;
+		for (auto rate: vector<dcp::Fraction>{dcp::Fraction{16, 1}, {200, 11}, {20, 1}, {240, 11}, {24, 1}, {25, 1}, {30, 1}, {48, 1}, {60, 1}}) {
+			auto const error = std::abs(rate.as_float() - *vfr);
+			if (error < best_error) {
+				best = rate;
+				best_error = error;
+			}
+		}
+
+		_rational_video_frame_rate = *best;
 	}
 
 	if (video && audio) {
@@ -430,7 +442,7 @@ DCPContent::as_xml(xmlpp::Element* element, bool with_paths, PathBehaviour path_
 
 	if (video) {
 		video->as_xml(element);
-		if (_rational_video_frame_rate) {
+		if (rational_video_frame_rate()) {
 			cxml::add_text_child(element, "RationalVideoFrameRate", _rational_video_frame_rate->as_string());
 		}
 	}
@@ -745,7 +757,7 @@ DCPContent::can_reference_anything(shared_ptr<const Film> film, string& why_not)
 	}
 
 	/* And the same frame rate */
-	if (!video_frame_rate() || (lrint(video_frame_rate().get()) != film->video_frame_rate())) {
+	if (!rational_video_frame_rate() || (rational_video_frame_rate().get() != film->video_frame_rate())) {
 		/// TRANSLATORS: this string will follow "Cannot reference this DCP: "
 		why_not = _("it has a different frame rate to the film.");
 		return false;

@@ -105,6 +105,16 @@ public:
 			+ from_frames(hmsf.f, fps);
 	}
 
+	/** @param hmsf Hours, minutes, seconds, frames.
+	 *  @param fps Frame rate
+	 */
+	Time(HMSF const& hmsf, dcp::Fraction fps) {
+		*this = from_seconds(hmsf.h * 3600)
+			+ from_seconds(hmsf.m * 60)
+			+ from_seconds(hmsf.s)
+			+ from_frames(hmsf.f, fps.as_float());
+	}
+
 	Type get() const {
 		return _t;
 	}
@@ -169,6 +179,10 @@ public:
 	 */
 	Time<S, O> ceil(double r) const {
 		return Time<S, O>(llrint(HZ * frames_ceil(r) / r));
+	}
+
+	Time<S, O> ceil(dcp::Fraction r) const {
+		return Time<S, O>(llrint(HZ * frames_ceil(r) * r.denominator / r.numerator));
 	}
 
 	Time<S, O> floor(double r) const {

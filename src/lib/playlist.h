@@ -71,12 +71,12 @@ public:
 	boost::optional<dcpomatic::DCPTime> start() const;
 	int64_t required_disk_space(std::shared_ptr<const Film> film, int64_t video_bit_rate, int audio_channels, int audio_frame_rate) const;
 
-	int best_video_frame_rate() const;
+	dcp::Fraction best_video_frame_rate() const;
 	dcpomatic::DCPTime video_end(std::shared_ptr<const Film> film) const;
 	dcpomatic::DCPTime text_end(std::shared_ptr<const Film> film) const;
-	FrameRateChange active_frame_rate_change(dcpomatic::DCPTime, int dcp_frame_rate) const;
+	FrameRateChange active_frame_rate_change(dcpomatic::DCPTime, dcp::Fraction dcp_frame_rate) const;
 	std::string content_summary(std::shared_ptr<const Film> film, dcpomatic::DCPTimePeriod period) const;
-	std::pair<double, double> speed_up_range(int dcp_video_frame_rate) const;
+	std::pair<double, double> speed_up_range(dcp::Fraction dcp_video_frame_rate) const;
 
 	void set_sequence(bool);
 	void maybe_sequence(std::shared_ptr<const Film> film);
