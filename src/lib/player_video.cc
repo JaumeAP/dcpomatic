@@ -20,6 +20,7 @@
 
 
 #include "content.h"
+#include "dcpomatic_log.h"
 #include "film.h"
 #include "image.h"
 #include "image_proxy.h"
@@ -142,6 +143,8 @@ PlayerVideo::raw_image() const
 void
 PlayerVideo::make_image(function<AVPixelFormat (AVPixelFormat)> pixel_format, VideoRange video_range, bool fast) const
 {
+	LOG_GENERAL("make_image: crop {} {} {} {} inter {} {} out {} {} fade {}", _crop.left, _crop.right, _crop.top, _crop.bottom, _inter_size.width, _inter_size.height, _out_size.width, _out_size.height, _fade.get_value_or(-1));
+
 	_image_crop = _crop;
 	_image_inter_size = _inter_size;
 	_image_out_size = _out_size;

@@ -25,6 +25,7 @@
 
 
 #include "dcpomatic_assert.h"
+#include "dcpomatic_log.h"
 #include "dcpomatic_socket.h"
 #include "enum_indexed_vector.h"
 #include "exceptions.h"
@@ -241,6 +242,7 @@ Image::crop_scale_window(
 	std::tie(scale_in_data, cropped_size) = crop_source_pointers(crop);
 
 	/* Scale context for a scale from cropped_size to inter_size */
+	LOG_GENERAL("sws_getContext");
 	auto scale_context = sws_getContext(
 			cropped_size.width, cropped_size.height, pixel_format(),
 			inter_size.width, inter_size.height, out_format,
@@ -268,6 +270,7 @@ Image::crop_scale_window(
 	   parameters unless the both source and destination images
 	   are isYUV or isGray.  (If either is not, it uses video range).
 	*/
+	LOG_GENERAL("sws_setColorspaceDetails");
 	sws_setColorspaceDetails(
 		scale_context,
 		sws_getCoefficients(lut[yuv_to_rgb]), video_range == VideoRange::VIDEO ? 0 : 1,
@@ -292,6 +295,7 @@ Image::crop_scale_window(
 		scale_out_data[c] = out->data()[c] + x + out->stride()[c] * (corner.y / out->vertical_factor(c));
 	}
 
+	LOG_GENERAL("sws_scale context {} data {} stride {} height {} out data {} out stride {}", reinterpret_cast<void*>(scale_context), reinterpret_cast<void*>(scale_in_data.data()), stride()[0], cropped_size.height, reinterpret_cast<void*>(scale_out_data.data()), out->stride()[0]);
 	sws_scale(
 		scale_context,
 		scale_in_data.data(), stride(),
