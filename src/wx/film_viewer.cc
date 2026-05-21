@@ -356,6 +356,8 @@ FilmViewer::start_audio_stream_if_open()
 	if (audio.isStreamOpen()) {
 		_set_time_required = true;
 		auto error = AudioBackend::instance()->start_stream();
+		std::cout << "______set__________\n";
+		audio.setStreamTime(_video_view->position().seconds());
 		if (error) {
 			_audio_channels = 0;
 			error_dialog(
@@ -733,6 +735,7 @@ FilmViewer::audio_callback(void* out_p, unsigned int frames)
 		_set_time_required = false;
 	}
 
+	std::cout << to_string(uncorrected_time()) << "\n";
 	while (true) {
 		auto t = _butler->get_audio(Butler::Behaviour::NON_BLOCKING, reinterpret_cast<float*>(out_p), frames);
 		if (!t || DCPTime(uncorrected_time() - *t) < one_video_frame()) {
