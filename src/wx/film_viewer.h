@@ -230,5 +230,10 @@ private:
 	 */
 	std::shared_ptr<const PlayerVideo> _last_image;
 
+	/** true if we need to call setStreamTime on the audio backend to set
+	 *  the timing reference.
+	 */
+	std::atomic<bool> _set_time_required;
+
 	boost::signals2::scoped_connection _config_changed_connection;
 };
