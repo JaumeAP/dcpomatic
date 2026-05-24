@@ -470,7 +470,7 @@ def make_spec(filename, version, target, options, requires=None):
     print('cd dcpomatic-%s' % version, file=f)
     print('export PKG_CONFIG_PATH=%s/lib/pkgconfig:%s/lib64/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig' % (target.directory, target.directory), file=f)
     print('CXXFLAGS="-I%s/include" LDFLAGS="-L%s/lib" ./waf configure --prefix=%%{buildroot}/usr --destdir=/usr %s' %
-          (target.directory, target.directory, configure_options(target, options, for_package=True)), file=f)
+          (target.directory, target.directory, configure_options(target, options, purpose)), file=f)
     print('./waf', file=f)
     print('%install', file=f)
     print('cd dcpomatic-%s' % version, file=f)
@@ -536,10 +536,10 @@ def build_tests(target):
         )
 
 
-def configure_options(target, options, for_package=False):
+def configure_options(target, options, purpose):
     opt = ' --warnings-are-errors'
 
-    if for_package or not build_tests(target):
+    if purpose == 'package' or not build_tests(target):
         opt += ' --disable-tests'
 
     if target.debug:
@@ -558,7 +558,7 @@ def configure_options(target, options, for_package=False):
             elif target.version == 'stream9':
                 opt += ' --static-xmlsec'
 
-    if not options['gui']:
+    if not options['gui'] or purpose == 'test':
         opt += ' --disable-gui'
 
     if options['variant']:
@@ -592,7 +592,7 @@ def configure_options(target, options, for_package=False):
 
     return opt
 
-def build(target, options, for_package):
+def build(target, options, purpose):
     if target.platform == 'flatpak':
         target.checkout_dependencies()
         prefix = 'https://dcpomatic.com/deps'
@@ -707,7 +707,7 @@ def build(target, options, for_package):
         with open('build/com.dcpomatic.DCP-o-matic.json', 'w') as outfile:
             json.dump(desc, outfile)
         target.command('%s --repo=build/platform/repo build/platform/flatpak build/com.dcpomatic.DCP-o-matic.json' % target.flatpak_builder())
-    elif target.platform != 'linux' or target.detail == 'appimage' or target.distro != 'arch' or not for_package:
+    elif target.platform != 'linux' or target.detail == 'appimage' or target.distro != 'arch' or purpose != 'package':
         if target.platform == 'linux' and target.distro == 'arch':
             # We're using a special pinned distro FFmpeg on Arch, and this is necessary to find it
             target.append_with_colon('PKG_CONFIG_PATH', '/usr/lib/ffmpeg4.4/pkgconfig')
@@ -716,7 +716,7 @@ def build(target, options, for_package):
                                                  '-fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer '
                                                  '-Wp,-D_GLIBCXX_ASSERTIONS -g -flto=auto')
             target.append_with_space('LINKFLAGS', '-Werror')
-        target.command('./waf configure --prefix=%s %s' % (target.directory, configure_options(target, options, for_package)))
+        target.command('./waf configure --prefix=%s %s' % (target.directory, configure_options(target, options, purpose)))
         target.command('./waf')
         target.command('./waf install')
 
@@ -767,7 +767,7 @@ def package_debian(target, cpu, version, options):
     target.set('CDIST_PKG_CONFIG_PATH', target.get('PKG_CONFIG_PATH'))
     target.set('CDIST_DIRECTORY', target.directory)
 
-    target.set('CDIST_CONFIGURE', '"' + configure_options(target, options, for_package=True) + '"')
+    target.set('CDIST_CONFIGURE', '"' + configure_options(target, options, purpose='package') + '"')
     target.set('CDIST_PACKAGE', f'{name}{suffix}')
     target.set('CDIST_WX_VERSION', "3.1" if target.version in ("16.04", "18.04", "20.04", "22.04", "11", "12") else "3.2")
     if not target.debug:
