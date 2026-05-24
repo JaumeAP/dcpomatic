@@ -83,8 +83,8 @@ if [ "$(uname)" == "Darwin" ]; then
     cp ../libdcp/ratings build/test
     rm -f build/test/openssl
     ln -s ../../../openssl/apps/openssl build/test/openssl
-    # We need to find ffcmp in here
-    export PATH=$PATH:$HOME/workspace/bin
+    # We need to find ffcmp and ffprobe in here
+    export PATH=$PATH:$HOME/workspace/bin:$DIR/../../../bin
     if [ -d "$environment/$(uname -m)/11.0" ]; then
         export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$environment/$(uname -m)/11.0/lib:$DIR/../../../lib
     else

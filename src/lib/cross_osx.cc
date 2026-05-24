@@ -112,8 +112,8 @@ run_ffprobe(boost::filesystem::path content, boost::filesystem::path out, bool e
 {
 	auto path = directory_containing_executable() / "ffprobe";
 	if (!dcp::filesystem::exists(path)) {
-		/* This is a hack but we need ffprobe during tests */
-		path = "/Users/ci/workspace/bin/ffprobe";
+		/* Just get it from the path */
+		path = "ffprobe";
 	}
 	string const redirect = err ? "2>" : ">";
 
