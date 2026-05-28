@@ -52,7 +52,7 @@ else:
 
 
 class strip(Task.Task):
-    run_str = '${STRIP} -d --strip-unneeded ${SRC[0].abspath()}'
+    run_str = '${STRIP} -s --keep-symbol=dcpomatic_setup ${SRC[0].abspath()}'
     color = 'BLUE'
 
 @TaskGen.feature('strip')
