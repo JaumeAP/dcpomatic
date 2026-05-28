@@ -50,6 +50,23 @@ if this_version == '':
 else:
     VERSION = this_version[1:].strip()
 
+
+class strip(Task.Task):
+    run_str = '${STRIP} -s ${SRC[0].abspath()}'
+    color = 'BLUE'
+
+@TaskGen.feature('strip')
+@TaskGen.after_method('apply_link')
+def add_strip_tasks(self):
+    link_task = getattr(self, 'link_task', None)
+    for task in getattr(self, 'compiled_tasks', []):
+        obj = task.outputs[0]
+        strip_task = self.create_task('strip', obj)
+        strip_task.set_run_after(task)
+        if link_task is not None:
+            link_task.set_run_after(strip_task)
+
+
 def options(opt):
     opt.load('compiler_cxx')
     opt.load('winres')
@@ -83,22 +100,6 @@ def options(opt):
     opt.add_option('--variant', help="build with variant")
 
 def configure(conf):
-
-    if conf.options.target_windows_32:
-        class strip(Task.Task):
-            run_str = '${STRIP} -s ${SRC[0].abspath()}'
-            color = 'BLUE'
-
-        @TaskGen.feature('cxx')
-        @TaskGen.after_method('apply_link')
-        def add_strip_tasks(self):
-            link_task = getattr(self, 'link_task', None)
-            for task in getattr(self, 'compiled_tasks', []):
-                obj = task.outputs[0]
-                strip_task = self.create_task('strip', obj)
-                strip_task.set_run_after(task)
-                if link_task is not None:
-                    link_task.set_run_after(strip_task)
 
     conf.load('compiler_cxx')
     if conf.options.target_windows_32:

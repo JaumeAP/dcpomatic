@@ -250,10 +250,13 @@ sources = """
           """
 
 def build(bld):
+    base = 'cxx '
+    if bld.env.TARGET_WINDOWS_32:
+        base += 'strip '
     if bld.env.STATIC_DCPOMATIC:
-        obj = bld(features = 'cxx cxxstlib')
+        obj = bld(features=base + 'cxxstlib')
     else:
-        obj = bld(features = 'cxx cxxshlib')
+        obj = bld(features=base + 'cxxshlib')
 
     obj.name = 'libdcpomatic2'
     obj.export_includes = ['..']
