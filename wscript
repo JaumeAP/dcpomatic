@@ -30,7 +30,7 @@ try:
 except ImportError:
     # python 3
     from urllib.parse import urlencode
-from waflib import Logs, Context
+from waflib import Context, Logs, Task, TaskGen
 
 APPNAME = 'dcpomatic'
 libdcp_version = '1.9.22'
@@ -83,7 +83,27 @@ def options(opt):
     opt.add_option('--variant', help="build with variant")
 
 def configure(conf):
+
+    if conf.options.target_windows_32:
+        class strip(Task.Task):
+            run_str = '${STRIP} -s ${SRC[0].abspath()}'
+            color = 'BLUE'
+
+        @TaskGen.feature('cxx')
+        @TaskGen.after_method('apply_link')
+        def add_strip_tasks(self):
+            link_task = getattr(self, 'link_task', None)
+            for task in getattr(self, 'compiled_tasks', []):
+                obj = task.outputs[0]
+                strip_task = self.create_task('strip', obj)
+                strip_task.set_run_after(task)
+                if link_task is not None:
+                    link_task.set_run_after(strip_task)
+
     conf.load('compiler_cxx')
+    if conf.options.target_windows_32:
+        conf.find_program('strip', var='STRIP')
+
     conf.load('clang_compilation_database', tooldir=['waf-tools'])
     if conf.options.target_windows_64 or conf.options.target_windows_32:
         conf.load('winres')
