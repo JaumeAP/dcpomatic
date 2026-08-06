@@ -55,7 +55,7 @@ dcpomatic::gl::check_error(char const * last)
 {
 	auto const e = glGetError();
 	if (e != GL_NO_ERROR) {
-		throw GLError(last, e);
+		boost::throw_exception(GLError(last, e));
 	}
 }
 
