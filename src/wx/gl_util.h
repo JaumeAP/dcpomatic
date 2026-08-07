@@ -23,6 +23,11 @@
 #define DCPOMATIC_GL_UTIL_H
 
 
+#include "lib/crop.h"
+#include <dcp/types.h>
+#include <wx/wx.h>
+
+
 namespace dcpomatic {
 namespace gl {
 
@@ -70,6 +75,80 @@ public:
 	UniformMatrix4fv(int program, char const* name);
 
 	void set(float const* matrix);
+};
+
+
+class Rectangle
+{
+public:
+	Rectangle(wxSize canvas_size, float x, float y, dcp::Size out_size, Crop crop, dcp::Size original_size)
+		: _canvas_size(canvas_size)
+	{
+		auto const x1 = x_pixels_to_gl(x);
+		auto const y1 = y_pixels_to_gl(y);
+		auto const x2 = x_pixels_to_gl(x + out_size.width);
+		auto const y2 = y_pixels_to_gl(y + out_size.height);
+
+		/* The texture coordinates here have to account for the fact that when we put images into the texture OpenGL
+		 * expected us to start at the lower left but we actually started at the top left.  So although the
+		 * top of the texture is at 1.0 we pretend it's the other way round.
+		 */
+
+		float const top = static_cast<float>(crop.top) / original_size.height;
+		float const bottom = 1.0f - (static_cast<float>(crop.bottom) / original_size.height);
+		float const left = static_cast<float>(crop.left) / original_size.width;
+		float const right = 1.0f - static_cast<float>(crop.right) / original_size.width;
+
+		// bottom right
+		_vertices[0] = x2;
+		_vertices[1] = y2;
+		_vertices[2] = 0.0f;
+		_vertices[3] = right;
+		_vertices[4] = bottom;
+
+		// top right
+		_vertices[5] = x2;
+		_vertices[6] = y1;
+		_vertices[7] = 0.0f;
+		_vertices[8] = right;
+		_vertices[9] = top;
+
+		// top left
+		_vertices[10] = x1;
+		_vertices[11] = y1;
+		_vertices[12] = 0.0f;
+		_vertices[13] = left;
+		_vertices[14] = top;
+
+		// bottom left
+		_vertices[15] = x1;
+		_vertices[16] = y2;
+		_vertices[17] = 0.0f;
+		_vertices[18] = left;
+		_vertices[19] = bottom;
+	}
+
+	float const * vertices() const {
+		return _vertices;
+	}
+
+	int const size() const {
+		return sizeof(_vertices);
+	}
+
+private:
+	/* @param x x position in pixels where 0 is left and canvas_width is right on screen */
+	float x_pixels_to_gl(int x) const {
+		return x * 2.0f / _canvas_size.GetWidth() - 1.0f;
+	}
+
+	/* @param y y position in pixels where 0 is top and canvas_height is bottom on screen */
+	float y_pixels_to_gl(int y) const {
+		return 1.0f - y * 2.0f / _canvas_size.GetHeight();
+	}
+
+	wxSize _canvas_size;
+	float _vertices[20];
 };
 
 
