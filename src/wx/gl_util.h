@@ -177,6 +177,9 @@ public:
 	Texture(GLint unpack_alignment, int unit = 0);
 	~Texture();
 
+	Texture(Texture&&);
+	Texture& operator=(Texture&&);
+
 	Texture(Texture const&) = delete;
 	Texture& operator=(Texture const&) = delete;
 
