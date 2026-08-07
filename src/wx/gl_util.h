@@ -24,8 +24,26 @@
 
 
 #include "lib/crop.h"
+#include "lib/image.h"
 #include <dcp/types.h>
 #include <wx/wx.h>
+
+
+#ifdef DCPOMATIC_OSX
+#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
+#include <OpenGL/OpenGL.h>
+#include <OpenGL/gl3.h>
+#endif
+
+#ifdef DCPOMATIC_LINUX
+#include <GL/glu.h>
+#include <GL/glext.h>
+#endif
+
+#ifdef DCPOMATIC_WINDOWS
+#include <GL/glu.h>
+#include <GL/wglext.h>
+#endif
 
 
 namespace dcpomatic {
@@ -149,6 +167,26 @@ private:
 
 	wxSize _canvas_size;
 	float _vertices[20];
+};
+
+
+class Texture
+{
+public:
+	Texture(GLint unpack_alignment, int unit = 0);
+	~Texture();
+
+	Texture(Texture const&) = delete;
+	Texture& operator=(Texture const&) = delete;
+
+	void bind();
+	void set(std::shared_ptr<const Image> image, int component = 0);
+
+private:
+	GLuint _name;
+	GLint _unpack_alignment;
+	int _unit;
+	boost::optional<dcp::Size> _size;
 };
 
 

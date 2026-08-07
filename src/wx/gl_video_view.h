@@ -50,26 +50,6 @@ LIBDCP_ENABLE_WARNINGS
 #include <atomic>
 
 
-class Texture
-{
-public:
-	Texture(GLint unpack_alignment, int unit = 0);
-	~Texture();
-
-	Texture(Texture const&) = delete;
-	Texture& operator=(Texture const&) = delete;
-
-	void bind();
-	void set(std::shared_ptr<const Image> image, int component = 0);
-
-private:
-	GLuint _name;
-	GLint _unpack_alignment;
-	int _unit;
-	boost::optional<dcp::Size> _size;
-};
-
-
 class GLVideoView : public VideoView
 {
 public:
@@ -148,8 +128,8 @@ private:
 
 	std::atomic<wxSize> _canvas_size;
 	std::atomic<bool> _rec2020;
-	std::vector<std::unique_ptr<Texture>> _video_textures;
-	std::unique_ptr<Texture> _subtitle_texture;
+	std::vector<std::unique_ptr<dcpomatic::gl::Texture>> _video_textures;
+	std::unique_ptr<dcpomatic::gl::Texture> _subtitle_texture;
 	bool _have_subtitle_to_render = false;
 	bool _vsync_enabled;
 	boost::thread _thread;
