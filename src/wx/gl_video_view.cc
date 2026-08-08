@@ -425,33 +425,8 @@ GLVideoView::setup_shaders()
 	glEnableVertexAttribArray(1);
 	check_error("glEnableVertexAttribArray");
 
-	auto compile = [](GLenum type, char const* source) -> GLuint {
-		auto shader = glCreateShader(type);
-		DCPOMATIC_ASSERT(shader);
-		GLchar const * src[] = { static_cast<GLchar const *>(source) };
-		glShaderSource(shader, 1, src, nullptr);
-		check_error("glShaderSource");
-		glCompileShader(shader);
-		check_error("glCompileShader");
-		GLint ok;
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
-		if (!ok) {
-			GLint log_length;
-			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length);
-			string log;
-			if (log_length > 0) {
-				std::vector<char> log_char(log_length);
-				glGetShaderInfoLog(shader, log_length, nullptr, log_char.data());
-				log = string(log_char.data());
-			}
-			glDeleteShader(shader);
-			boost::throw_exception(GLError(fmt::format("Could not compile shader ({})", log).c_str(), -1));
-		}
-		return shader;
-	};
-
-	auto vertex_shader = compile(GL_VERTEX_SHADER, vertex_source);
-	auto fragment_shader = compile(GL_FRAGMENT_SHADER, fragment_source);
+	auto vertex_shader = compile_shader(GL_VERTEX_SHADER, vertex_source);
+	auto fragment_shader = compile_shader(GL_FRAGMENT_SHADER, fragment_source);
 
 	auto program = glCreateProgram();
 	check_error("glCreateProgram");
