@@ -51,6 +51,7 @@ namespace gl {
 
 
 extern void check_error(char const * last);
+extern GLuint compile_shader(GLenum type, char const* source);
 
 
 class Uniform
