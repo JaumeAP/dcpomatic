@@ -128,8 +128,8 @@ private:
 
 	std::atomic<wxSize> _canvas_size;
 	std::atomic<bool> _rec2020;
-	std::vector<std::unique_ptr<dcpomatic::gl::Texture>> _video_textures;
-	std::unique_ptr<dcpomatic::gl::Texture> _subtitle_texture;
+	std::vector<dcpomatic::gl::Texture> _video_textures;
+	boost::optional<dcpomatic::gl::Texture> _subtitle_texture;
 	bool _have_subtitle_to_render = false;
 
 	dcpomatic::gl::Coords _coords;
