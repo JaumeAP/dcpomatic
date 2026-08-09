@@ -73,6 +73,10 @@ GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent, bool wake)
 	, _context(nullptr)
 	, _canvas_size(wxSize{})
 	, _rec2020(false)
+	, _image(_coords.add_filled_rectangle())
+	, _outline_content(_coords.add_outline_rectangle())
+	, _crop_guess(_coords.add_outline_rectangle())
+	, _subtitle(_coords.add_filled_rectangle())
 	, _vsync_enabled(false)
 	, _playing(false)
 	, _pending_request(Request::NONE)
@@ -338,38 +342,6 @@ GLVideoView::ensure_context()
 }
 
 
-/* Offset and number of indices for the things in the indices array below */
-static constexpr int indices_video_texture_offset = 0;
-static constexpr int indices_video_texture_number = 6;
-static constexpr int indices_subtitle_texture_offset = indices_video_texture_offset + indices_video_texture_number;
-static constexpr int indices_subtitle_texture_number = 6;
-static constexpr int indices_outline_content_offset = indices_subtitle_texture_offset + indices_subtitle_texture_number;
-static constexpr int indices_outline_content_number = 8;
-static constexpr int indices_crop_guess_offset = indices_outline_content_offset + indices_outline_content_number;
-static constexpr int indices_crop_guess_number = 8;
-
-static constexpr unsigned int indices[] = {
-	0, 1, 3, // video texture triangle #1
-	1, 2, 3, // video texture triangle #2
-	4, 5, 7, // subtitle texture triangle #1
-	5, 6, 7, // subtitle texture triangle #2
-	8, 9,    // outline content line #1
-	9, 10,   // outline content line #2
-	10, 11,  // outline content line #3
-	11, 8,   // outline content line #4
-	12, 13,  // crop guess line #1
-	13, 14,  // crop guess line #2
-	14, 15,  // crop guess line #3
-	15, 12,  // crop guess line #4
-};
-
-/* Offsets of things in the GL_ARRAY_BUFFER */
-static constexpr int array_buffer_video_offset = 0;
-static constexpr int array_buffer_subtitle_offset = array_buffer_video_offset + 4 * 5 * sizeof(float);
-static constexpr int array_buffer_outline_content_offset = array_buffer_subtitle_offset + 4 * 5 * sizeof(float);
-static constexpr int array_buffer_crop_guess_offset = array_buffer_outline_content_offset + 4 * 5 * sizeof(float);
-
-
 void
 GLVideoView::setup_shaders()
 {
@@ -414,8 +386,7 @@ GLVideoView::setup_shaders()
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	check_error("glBindBuffer");
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	check_error("glBufferData");
+	_coords.setup();
 
 	/* position attribute to vertex shader (location = 0) */
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
@@ -514,10 +485,6 @@ GLVideoView::setup_shaders()
 	check_error("glEnable");
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	check_error("glBlendFunc");
-
-	/* Reserve space for the GL_ARRAY_BUFFER */
-	glBufferData(GL_ARRAY_BUFFER, 16 * 5 * sizeof(float), nullptr, GL_STATIC_DRAW);
-	check_error("glBufferData");
 }
 
 
@@ -572,21 +539,20 @@ GLVideoView::draw()
 	for (auto& texture: _video_textures) {
 		texture->bind();
 	}
-	glDrawElements(GL_TRIANGLES, indices_video_texture_number, GL_UNSIGNED_INT, reinterpret_cast<void*>(indices_video_texture_offset * sizeof(int)));
+	_image.draw();
+
 	if (_have_subtitle_to_render) {
 		_fragment_type.set(static_cast<GLint>(FragmentType::REC709_SUBTITLE));
 		_subtitle_texture->bind();
-		glDrawElements(GL_TRIANGLES, indices_subtitle_texture_number, GL_UNSIGNED_INT, reinterpret_cast<void*>(indices_subtitle_texture_offset * sizeof(int)));
+		_subtitle.draw();
 	}
 	if (_viewer->outline_content()) {
 		_fragment_type.set(static_cast<GLint>(FragmentType::OUTLINE_CONTENT));
-		glDrawElements(GL_LINES, indices_outline_content_number, GL_UNSIGNED_INT, reinterpret_cast<void*>(indices_outline_content_offset * sizeof(int)));
-		check_error("glDrawElements");
+		_outline_content.draw();
 	}
 	if (auto guess = _viewer->crop_guess()) {
 		_fragment_type.set(static_cast<GLint>(FragmentType::CROP_GUESS));
-		glDrawElements(GL_LINES, indices_crop_guess_number, GL_UNSIGNED_INT, reinterpret_cast<void*>(indices_crop_guess_offset * sizeof(int)));
-		check_error("glDrawElements");
+		_crop_guess.draw();
 	}
 
 	glFlush();
@@ -667,23 +633,18 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 		_last_out_size.changed() ||
 		_last_crop.changed();
 
-	using dcpomatic::gl::Rectangle;
-
 	if (sizing_changed) {
-		auto const rectangle = _optimisation == Optimisation::NONE
-			? Rectangle(canvas_size, x_offset, y_offset, out_size, Crop{}, video->size())
-			: Rectangle(canvas_size, inter_position.x + x_offset, inter_position.y + y_offset, inter_size, crop, video->size());
+		if (_optimisation == Optimisation::NONE) {
+			_image.set(canvas_size, x_offset, y_offset, out_size);
+		} else {
+			_image.set(canvas_size, inter_position.x + x_offset, inter_position.y + y_offset, inter_size);
+		}
 
-		glBufferSubData(GL_ARRAY_BUFFER, array_buffer_video_offset, rectangle.size(), rectangle.vertices());
-		check_error("glBufferSubData (video)");
+		_outline_content.set(canvas_size, inter_position.x + x_offset, inter_position.y + y_offset, inter_size);
 
-		auto const outline_content = Rectangle(canvas_size, inter_position.x + x_offset, inter_position.y + y_offset, inter_size, crop, video->size());
-		glBufferSubData(GL_ARRAY_BUFFER, array_buffer_outline_content_offset, outline_content.size(), outline_content.vertices());
-		check_error("glBufferSubData (outline_content)");
 	}
-
 	if ((sizing_changed || _last_crop_guess.changed()) && crop_guess) {
-		auto const crop_guess_rectangle = Rectangle(
+		_crop_guess.set(
 			canvas_size,
 			inter_position.x + x_offset + inter_size.width * crop_guess->x,
 			inter_position.y + y_offset + inter_size.height * crop_guess->y,
@@ -691,12 +652,10 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 			crop,
 			video->size()
 			);
-		glBufferSubData(GL_ARRAY_BUFFER, array_buffer_crop_guess_offset, crop_guess_rectangle.size(), crop_guess_rectangle.vertices());
-		check_error("glBufferSubData (crop_guess_rectangle)");
 	}
 
 	if (_have_subtitle_to_render) {
-		auto const subtitle = Rectangle(
+		_subtitle.set(
 			canvas_size,
 			inter_position.x + x_offset + text->position.x,
 			inter_position.y + y_offset + text->position.y,
@@ -704,9 +663,6 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 			crop,
 			video->size()
 		);
-
-		glBufferSubData(GL_ARRAY_BUFFER, array_buffer_subtitle_offset, subtitle.size(), subtitle.vertices());
-		check_error("glBufferSubData (subtitle)");
 	}
 
 	_rec2020 = pv->colour_conversion() && pv->colour_conversion()->about_equal(dcp::ColourConversion::rec2020_to_xyz(), 1e-6);
@@ -731,6 +687,10 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	check_error("glTexParameterf");
+
+	if (sizing_changed || _have_subtitle_to_render) {
+		_coords.set_array_buffer();
+	}
 
 	_last_canvas_size.update();
 	_last_video_size.update();

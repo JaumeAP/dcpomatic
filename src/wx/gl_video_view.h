@@ -131,6 +131,13 @@ private:
 	std::vector<std::unique_ptr<dcpomatic::gl::Texture>> _video_textures;
 	std::unique_ptr<dcpomatic::gl::Texture> _subtitle_texture;
 	bool _have_subtitle_to_render = false;
+
+	dcpomatic::gl::Coords _coords;
+	dcpomatic::gl::Coords::FilledRectangle _image;
+	dcpomatic::gl::Coords::OutlineRectangle _outline_content;
+	dcpomatic::gl::Coords::OutlineRectangle _crop_guess;
+	dcpomatic::gl::Coords::FilledRectangle _subtitle;
+
 	bool _vsync_enabled;
 	boost::thread _thread;
 
