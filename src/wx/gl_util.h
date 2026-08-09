@@ -97,77 +97,67 @@ public:
 };
 
 
-class Rectangle
+class Coords
 {
 public:
-	Rectangle(wxSize canvas_size, float x, float y, dcp::Size out_size, Crop crop, dcp::Size original_size)
-		: _canvas_size(canvas_size)
+	class Rectangle
 	{
-		auto const x1 = x_pixels_to_gl(x);
-		auto const y1 = y_pixels_to_gl(y);
-		auto const x2 = x_pixels_to_gl(x + out_size.width);
-		auto const y2 = y_pixels_to_gl(y + out_size.height);
+	public:
+		Rectangle(Coords& coords, int node, int index);
 
-		/* The texture coordinates here have to account for the fact that when we put images into the texture OpenGL
-		 * expected us to start at the lower left but we actually started at the top left.  So although the
-		 * top of the texture is at 1.0 we pretend it's the other way round.
-		 */
+		virtual void draw() = 0;
 
-		float const top = static_cast<float>(crop.top) / original_size.height;
-		float const bottom = 1.0f - (static_cast<float>(crop.bottom) / original_size.height);
-		float const left = static_cast<float>(crop.left) / original_size.width;
-		float const right = 1.0f - static_cast<float>(crop.right) / original_size.width;
+		void set(wxSize canvas_size, int x, int y, dcp::Size size, Crop crop = {}, dcp::Size original_size = {1, 1});
+		void set(wxSize canvas_size, int x, int y, wxSize size, Crop crop = {}, wxSize original_size = {1, 1});
 
-		// bottom right
-		_vertices[0] = x2;
-		_vertices[1] = y2;
-		_vertices[2] = 0.0f;
-		_vertices[3] = right;
-		_vertices[4] = bottom;
+		int index() const {
+			return _index;
+		}
 
-		// top right
-		_vertices[5] = x2;
-		_vertices[6] = y1;
-		_vertices[7] = 0.0f;
-		_vertices[8] = right;
-		_vertices[9] = top;
+	protected:
+		Coords& _coords;
+		int _node;
+		int _index;
+	};
 
-		// top left
-		_vertices[10] = x1;
-		_vertices[11] = y1;
-		_vertices[12] = 0.0f;
-		_vertices[13] = left;
-		_vertices[14] = top;
+	class FilledRectangle : public Rectangle
+	{
+	public:
+		FilledRectangle(Coords& coords);
+		void draw() override;
+	};
 
-		// bottom left
-		_vertices[15] = x1;
-		_vertices[16] = y2;
-		_vertices[17] = 0.0f;
-		_vertices[18] = left;
-		_vertices[19] = bottom;
-	}
+	class OutlineRectangle : public Rectangle
+	{
+	public:
+		OutlineRectangle(Coords& coords);
+		void draw() override;
+	};
 
-	float const * vertices() const {
-		return _vertices;
-	}
+	class FilledRectangleGroup
+	{
+	public:
+		void add(FilledRectangle const& rectangle);
+		void draw();
 
-	int const size() const {
-		return sizeof(_vertices);
-	}
+	private:
+		int _index = -1;
+		int _number = 0;
+	};
+
+	FilledRectangle add_filled_rectangle();
+	OutlineRectangle add_outline_rectangle();
+
+	void setup();
+	void set_array_buffer();
 
 private:
-	/* @param x x position in pixels where 0 is left and canvas_width is right on screen */
-	float x_pixels_to_gl(int x) const {
-		return x * 2.0f / _canvas_size.GetWidth() - 1.0f;
-	}
+	friend class Rectangle;
 
-	/* @param y y position in pixels where 0 is top and canvas_height is bottom on screen */
-	float y_pixels_to_gl(int y) const {
-		return 1.0f - y * 2.0f / _canvas_size.GetHeight();
-	}
-
-	wxSize _canvas_size;
-	float _vertices[20];
+	bool _setup = false;
+	int _nodes = 0;
+	std::vector<unsigned int> _indices;
+	std::vector<float> _coords;
 };
 
 
