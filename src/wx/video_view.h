@@ -66,6 +66,8 @@ public:
 	/** Called when playback stops */
 	virtual void stop() {}
 
+	virtual wxWindow* get_audio_meters() const = 0;
+
 	enum NextFrameResult {
 		FAIL,
 		AGAIN,

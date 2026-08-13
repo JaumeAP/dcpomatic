@@ -206,6 +206,7 @@ GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent, bool wake)
 	, _subtitle(_coords.add_filled_rectangle())
 	, _playing(false)
 	, _pending_request(Request::NONE)
+	, _audio_meters(viewer, parent)
 {
 	_view.get()->Bind(wxEVT_TIMER, boost::bind(&GLVideoView::check_for_butler_errors, this));
 	_view.Sized.connect(boost::bind(boost::ref(Sized)));

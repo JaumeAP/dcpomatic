@@ -44,7 +44,7 @@ public:
 		return _panel;
 	}
 
-	wxWindow* get_audio_meters() {
+	wxWindow* get_audio_meters() const override {
 		return _audio_meters.get();
 	}
 

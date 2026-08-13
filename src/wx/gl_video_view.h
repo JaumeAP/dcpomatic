@@ -19,9 +19,6 @@
 */
 
 
-#include "gl_util.h"
-#include "gl_view.h"
-#include "lib/crop.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
 #include <wx/glcanvas.h>
@@ -42,8 +39,11 @@ LIBDCP_ENABLE_WARNINGS
 #if wxCHECK_VERSION(3,1,0)
 
 
+#include "gl_audio_meters.h"
+#include "gl_util.h"
+#include "gl_view.h"
 #include "video_view.h"
-#include "lib/signaller.h"
+#include "lib/crop.h"
 #include "lib/position.h"
 #include <dcp/util.h>
 #include <boost/thread.hpp>
@@ -59,6 +59,11 @@ public:
 	wxWindow* get() const override {
 		return _view.get();
 	}
+
+	wxWindow* get_audio_meters() const override {
+		return _audio_meters.get();
+	}
+
 	void update() override;
 	void update_crop_guess() override;
 	void start() override;
@@ -145,6 +150,8 @@ private:
 	std::shared_ptr<wxTimer> _timer;
 
 	std::map<GLenum, std::string> _information;
+
+	GLAudioMeters _audio_meters;
 };
 
 #endif
