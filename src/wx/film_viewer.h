@@ -34,7 +34,6 @@
 #include "lib/config.h"
 #include "lib/film_property.h"
 #include "lib/player.h"
-#include "lib/player_text.h"
 #include "lib/signaller.h"
 #include "lib/timer.h"
 #include <dcp/warnings.h>

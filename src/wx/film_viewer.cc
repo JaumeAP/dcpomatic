@@ -99,20 +99,15 @@ FilmViewer::FilmViewer(wxWindow* p, bool wake)
 		_video_view = std::make_shared<GLVideoView>(this, p, wake);
 		break;
 	case Config::VIDEO_VIEW_SIMPLE:
-	{
-		auto simple = std::make_shared<SimpleVideoView>(this, p, wake);
-		_meters_dialog->set_meters(simple->get_meters());
-		_video_view = simple;
-	}
+		_video_view = std::make_shared<SimpleVideoView>(this, p, wake);
 		break;
 	}
 #else
-	auto simple = std::make_shared<SimpleVideoView>(this, p, wake);
-	_meters_dialog->set_meters(simple->get_meters());
-	_video_view = simple;
+	_video_view = std::make_shared<SimpleVideoView>(this, p, wake);
 #endif
 
 	_meters_dialog->Bind(wxEVT_SHOW, boost::bind(&FilmViewer::meters_shown, this, _1));
+	_meters_dialog->set_meters(_video_view->get_meters());
 
 	_video_view->Sized.connect(boost::bind(&FilmViewer::video_view_sized, this));
 	_video_view->TooManyDropped.connect(boost::bind(boost::ref(TooManyDropped)));

@@ -19,6 +19,7 @@
 */
 
 
+#include "gl_meters.h"
 #include "gl_util.h"
 #include "lib/crop.h"
 #include <dcp/warnings.h>
@@ -42,7 +43,6 @@ LIBDCP_ENABLE_WARNINGS
 
 
 #include "video_view.h"
-#include "lib/signaller.h"
 #include "lib/position.h"
 #include <dcp/util.h>
 #include <boost/thread.hpp>
@@ -59,6 +59,11 @@ public:
 	wxWindow* get() const override {
 		return _canvas;
 	}
+
+	wxWindow* get_meters() const override {
+		return _meters.get();
+	}
+
 	void update() override;
 	void update_crop_guess() override;
 	void start() override;
@@ -153,6 +158,8 @@ private:
 	std::shared_ptr<wxTimer> _timer;
 
 	std::map<GLenum, std::string> _information;
+
+	GLMeters _meters;
 };
 
 #endif

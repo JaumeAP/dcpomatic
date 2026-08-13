@@ -432,6 +432,64 @@ Coords::add_outline_rectangle()
 }
 
 
+Coords::Line::Line(Coords& coords)
+	: _coords(coords)
+	, _node(coords._nodes)
+	  , _index(coords._indices.size())
+{
+	auto& indices = coords._indices;
+	auto& nodes = coords._nodes;
+
+	indices.push_back(nodes + 0);
+	indices.push_back(nodes + 1);
+	nodes += 2;
+
+	auto& c = _coords._coords;
+
+	auto offset = c.size();
+
+	c.resize(c.size() + 5 * 2);
+
+	c[offset + 2] = 0.0f;
+	c[offset + 3] = 1.0f;
+	c[offset + 4] = 1.0f;
+
+	c[offset + 7] = 0.0f;
+	c[offset + 8] = 1.0f;
+	c[offset + 9] = 0.0f;
+}
+
+
+void
+Coords::Line::set(wxSize canvas_size, int x1, int y1, int x2, int y2)
+{
+	auto& coords = _coords._coords;
+
+	auto const o = _node * 5;
+
+	coords[o] = x_pixels_to_gl(canvas_size, x1);
+	coords[o + 1] = y_pixels_to_gl(canvas_size, y1);
+
+	coords[o + 5] = x_pixels_to_gl(canvas_size, x2);
+	coords[o + 6] = y_pixels_to_gl(canvas_size, y2);
+}
+
+
+void
+Coords::Line::draw()
+{
+	glDrawElements(GL_LINES, 2, GL_UNSIGNED_INT, reinterpret_cast<void*>(_index * sizeof(int)));
+}
+
+
+Coords::Line
+Coords::add_line()
+{
+	DCPOMATIC_ASSERT(!_setup);
+	return Line(*this);
+}
+
+
 void
 Coords::FilledRectangleGroup::add(Coords::FilledRectangle const& rectangle)
 {

@@ -134,6 +134,20 @@ public:
 		void draw() override;
 	};
 
+	class Line
+	{
+	public:
+		Line(Coords& coords);
+
+		void set(wxSize canvas_size, int x1, int y1, int x2, int y2);
+		void draw();
+
+	private:
+		Coords& _coords;
+		int _node;
+		int _index;
+	};
+
 	class FilledRectangleGroup
 	{
 	public:
@@ -145,6 +159,7 @@ public:
 		int _number = 0;
 	};
 
+	Line add_line();
 	FilledRectangle add_filled_rectangle();
 	OutlineRectangle add_outline_rectangle();
 
