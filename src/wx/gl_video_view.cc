@@ -68,134 +68,6 @@ using namespace boost::placeholders;
 using namespace dcpomatic::gl;
 
 
-GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent, bool wake)
-	: VideoView(viewer, wake)
-	, _context(nullptr)
-	, _canvas_size(wxSize{})
-	, _rec2020(false)
-	, _image(_coords.add_filled_rectangle())
-	, _outline_content(_coords.add_outline_rectangle())
-	, _crop_guess(_coords.add_outline_rectangle())
-	, _subtitle(_coords.add_filled_rectangle())
-	, _vsync_enabled(false)
-	, _playing(false)
-	, _pending_request(Request::NONE)
-{
-	wxGLAttributes attributes;
-	/* We don't need a depth buffer, and indeed there is apparently a bug with Windows/Intel HD 630
-	 * which puts green lines over the OpenGL display if you have a non-zero depth buffer size.
-	 * https://community.intel.com/t5/Graphics/Request-for-details-on-Intel-HD-630-green-lines-in-OpenGL-apps/m-p/1202179
-	 */
-	attributes.PlatformDefaults().MinRGBA(8, 8, 8, 8).DoubleBuffer().Depth(0).EndList();
-	_canvas = new wxGLCanvas(
-		parent, attributes, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE
-	);
-	_canvas->Bind(wxEVT_PAINT, boost::bind(&GLVideoView::update, this));
-	_canvas->Bind(wxEVT_SIZE, boost::bind(&GLVideoView::size_changed, this, _1));
-
-	_canvas->Bind(wxEVT_TIMER, boost::bind(&GLVideoView::check_for_butler_errors, this));
-	_timer.reset(new wxTimer(_canvas));
-	_timer->Start(2000);
-}
-
-
-void
-GLVideoView::size_changed(wxSizeEvent const& ev)
-{
-	auto const scale = _canvas->GetDPIScaleFactor();
-	int const width = std::round(ev.GetSize().GetWidth() * scale);
-	int const height = std::round(ev.GetSize().GetHeight() * scale);
-	_canvas_size = { width, height };
-	LOG_GENERAL("GLVideoView canvas size changed to {}x{}", width, height);
-	Sized();
-}
-
-
-GLVideoView::~GLVideoView()
-{
-	boost::this_thread::disable_interruption dis;
-
-	try {
-		_thread.interrupt();
-		_thread.join();
-	} catch (...) {}
-}
-
-void
-GLVideoView::check_for_butler_errors()
-{
-	if (!_viewer->butler()) {
-		return;
-	}
-
-	try {
-		_viewer->butler()->rethrow();
-	} catch (DecodeError& e) {
-		error_dialog(get(), std_to_wx(e.what()));
-	} catch (dcp::ReadError& e) {
-		error_dialog(get(), wxString::Format(_("Could not read DCP: %s"), std_to_wx(e.what())));
-	}
-
-	LOG_DEBUG_PLAYER("Latency {}", _viewer->average_latency());
-}
-
-
-void
-GLVideoView::update_crop_guess()
-{
-	/* Assume at least one update() has happened before now */
-	request(Request::SET_CROP_GUESS_AND_DRAW);
-	rethrow();
-}
-
-
-/** Called from the UI thread */
-void
-GLVideoView::update()
-{
-	if (!_canvas->IsShownOnScreen()) {
-		return;
-	}
-
-	/* It appears important to do this from the GUI thread; if we do it from the GL thread
-	 * on Linux we get strange failures to create the context for any version of GL higher
-	 * than 3.2.
-	 */
-	ensure_context();
-
-#ifdef DCPOMATIC_OSX
-	/* macOS gives errors if we don't do this (and therefore [NSOpenGLContext setView:]) from the main thread */
-	if (!_setup_shaders_done) {
-		setup_shaders();
-		_setup_shaders_done = true;
-	}
-#endif
-
-	if (!_thread.joinable()) {
-		_thread = boost::thread(boost::bind(&GLVideoView::thread, this));
-	}
-
-	request(Request::SET_IMAGE_AND_DRAW);
-
-	rethrow();
-}
-
-
-static constexpr char vertex_source[] =
-"#version 330 core\n"
-"\n"
-"layout (location = 0) in vec3 in_pos;\n"
-"layout (location = 1) in vec2 in_tex_coord;\n"
-"\n"
-"out vec2 TexCoord;\n"
-"\n"
-"void main()\n"
-"{\n"
-"	gl_Position = vec4(in_pos, 1.0);\n"
-"	TexCoord = in_tex_coord;\n"
-"}\n";
-
-
 /* Bicubic interpolation stolen from https://stackoverflow.com/questions/13501081/efficient-bicubic-filtering-code-in-glsl */
 static constexpr char fragment_source[] =
 "#version 330 core\n"
@@ -316,6 +188,69 @@ static constexpr char fragment_source[] =
 "}\n";
 
 
+
+GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent, bool wake)
+	: VideoView(viewer, wake)
+	, _view(
+		parent,
+		fragment_source,
+		boost::bind(&GLVideoView::setup_shaders, this),
+		boost::bind(&GLVideoView::setup_textures, this),
+		boost::bind(&GLVideoView::thread_body, this),
+		boost::bind(&GLVideoView::update, this)
+	)
+	, _rec2020(false)
+	, _image(_coords.add_filled_rectangle())
+	, _outline_content(_coords.add_outline_rectangle())
+	, _crop_guess(_coords.add_outline_rectangle())
+	, _subtitle(_coords.add_filled_rectangle())
+	, _playing(false)
+	, _pending_request(Request::NONE)
+{
+	_view.get()->Bind(wxEVT_TIMER, boost::bind(&GLVideoView::check_for_butler_errors, this));
+	_view.Sized.connect(boost::bind(boost::ref(Sized)));
+
+	_timer.reset(new wxTimer(_view.get()));
+	_timer->Start(2000);
+}
+
+
+void
+GLVideoView::check_for_butler_errors()
+{
+	if (!_viewer->butler()) {
+		return;
+	}
+
+	try {
+		_viewer->butler()->rethrow();
+	} catch (DecodeError& e) {
+		error_dialog(get(), std_to_wx(e.what()));
+	} catch (dcp::ReadError& e) {
+		error_dialog(get(), wxString::Format(_("Could not read DCP: %s"), std_to_wx(e.what())));
+	}
+
+	LOG_DEBUG_PLAYER("Latency {}", _viewer->average_latency());
+}
+
+
+void
+GLVideoView::update_crop_guess()
+{
+	/* Assume at least one update() has happened before now */
+	request(Request::SET_CROP_GUESS_AND_DRAW);
+	rethrow();
+}
+
+
+/** Called from the UI thread */
+void
+GLVideoView::update()
+{
+	request(Request::SET_IMAGE_AND_DRAW);
+}
+
+
 enum class FragmentType
 {
 	OUTLINE_CONTENT = 0,
@@ -329,34 +264,8 @@ enum class FragmentType
 
 
 void
-GLVideoView::ensure_context()
-{
-	if (!_context) {
-		wxGLContextAttrs attrs;
-		attrs.PlatformDefaults().CoreProfile().OGLVersion(4, 1).EndList();
-		_context = new wxGLContext(_canvas, nullptr, &attrs);
-		if (!_context->IsOK()) {
-			boost::throw_exception(GLError("Making GL context", -1));
-		}
-	}
-}
-
-
-void
 GLVideoView::setup_shaders()
 {
-	DCPOMATIC_ASSERT(_canvas);
-	DCPOMATIC_ASSERT(_context);
-	auto r = _canvas->SetCurrent(*_context);
-	DCPOMATIC_ASSERT(r);
-
-#ifdef DCPOMATIC_WINDOWS
-	r = glewInit();
-	if (r != GLEW_OK) {
-		boost::throw_exception(GLError(reinterpret_cast<char const*>(glewGetErrorString(r))));
-	}
-#endif
-
 	auto get_information = [this](GLenum name) {
 		auto s = glGetString(name);
 		if (s) {
@@ -369,74 +278,20 @@ GLVideoView::setup_shaders()
 	get_information(GL_VERSION);
 	get_information(GL_SHADING_LANGUAGE_VERSION);
 
-	glGenVertexArrays(1, &_vao);
-	check_error("glGenVertexArrays");
-	GLuint vbo;
-	glGenBuffers(1, &vbo);
-	check_error("glGenBuffers");
-	GLuint ebo;
-	glGenBuffers(1, &ebo);
-	check_error("glGenBuffers");
-
-	glBindVertexArray(_vao);
-	check_error("glBindVertexArray");
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	check_error("glBindBuffer");
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	check_error("glBindBuffer");
 	_coords.setup();
 
-	/* position attribute to vertex shader (location = 0) */
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
-	glEnableVertexAttribArray(0);
-	/* texture coord attribute to vertex shader (location = 1) */
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	check_error("glEnableVertexAttribArray");
-
-	auto vertex_shader = compile_shader(GL_VERTEX_SHADER, vertex_source);
-	auto fragment_shader = compile_shader(GL_FRAGMENT_SHADER, fragment_source);
-
-	auto program = glCreateProgram();
-	check_error("glCreateProgram");
-	glAttachShader(program, vertex_shader);
-	check_error("glAttachShader");
-	glAttachShader(program, fragment_shader);
-	check_error("glAttachShader");
-	glLinkProgram(program);
-	check_error("glLinkProgram");
-	GLint ok;
-	glGetProgramiv(program, GL_LINK_STATUS, &ok);
-	if (!ok) {
-		GLint log_length;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_length);
-		string log;
-		if (log_length > 0) {
-			std::vector<char> log_char(log_length);
-			glGetProgramInfoLog(program, log_length, nullptr, log_char.data());
-			log = string(log_char.data());
-		}
-		glDeleteProgram(program);
-		boost::throw_exception(GLError(fmt::format("Could not link shader ({})", log).c_str(), -1));
-	}
-	glDeleteShader(vertex_shader);
-	glDeleteShader(fragment_shader);
-
-	glUseProgram(program);
-	auto texture_0 = Uniform1i(program, "texture_sampler_0");
+	auto texture_0 = Uniform1i(_view.program(), "texture_sampler_0");
 	texture_0.set(0);
-	auto texture_1 = Uniform1i(program, "texture_sampler_1");
+	auto texture_1 = Uniform1i(_view.program(), "texture_sampler_1");
 	texture_1.set(1);
-	auto texture_2 = Uniform1i(program, "texture_sampler_2");
+	auto texture_2 = Uniform1i(_view.program(), "texture_sampler_2");
 	texture_2.set(2);
-	auto texture_3 = Uniform1i(program, "texture_sampler_3");
+	auto texture_3 = Uniform1i(_view.program(), "texture_sampler_3");
 	texture_3.set(3);
 
-	_fragment_type.setup(program, "type");
-	set_outline_content_colour(program);
-	set_crop_guess_colour(program);
+	_fragment_type.setup(_view.program(), "type");
+	set_outline_content_colour();
+	set_crop_guess_colour();
 
 	auto ublas_to_gl = [](boost::numeric::ublas::matrix<double> const& ublas, GLfloat* gl) {
 		gl[0] = static_cast<float>(ublas(0, 0));
@@ -463,7 +318,7 @@ GLVideoView::setup_shaders()
 		GLfloat gl_matrix[16];
 		ublas_to_gl(matrix, gl_matrix);
 
-		auto xyz_rec709_colour_conversion = UniformMatrix4fv(program, "xyz_rec709_colour_conversion");
+		auto xyz_rec709_colour_conversion = UniformMatrix4fv(_view.program(), "xyz_rec709_colour_conversion");
 		xyz_rec709_colour_conversion.set(gl_matrix);
 	}
 
@@ -475,7 +330,7 @@ GLVideoView::setup_shaders()
 		GLfloat gl_matrix[16];
 		ublas_to_gl(product, gl_matrix);
 
-		auto rec2020_rec709_colour_conversion = UniformMatrix4fv(program, "rec2020_rec709_colour_conversion");
+		auto rec2020_rec709_colour_conversion = UniformMatrix4fv(_view.program(), "rec2020_rec709_colour_conversion");
 		rec2020_rec709_colour_conversion.set(gl_matrix);
 	}
 
@@ -489,18 +344,18 @@ GLVideoView::setup_shaders()
 
 
 void
-GLVideoView::set_outline_content_colour(GLuint program)
+GLVideoView::set_outline_content_colour()
 {
-	auto uniform = UniformVec4f(program, "outline_content_colour");
+	auto uniform = UniformVec4f(_view.program(), "outline_content_colour");
 	auto colour = outline_content_colour();
 	uniform.set(colour.Red() / 255.0f, colour.Green() / 255.0f, colour.Blue() / 255.0f, 1.0f);
 }
 
 
 void
-GLVideoView::set_crop_guess_colour(GLuint program)
+GLVideoView::set_crop_guess_colour()
 {
-	auto uniform = UniformVec4f(program, "crop_guess_colour");
+	auto uniform = UniformVec4f(_view.program(), "crop_guess_colour");
 	auto colour = crop_guess_colour();
 	uniform.set(colour.Red() / 255.0f, colour.Green() / 255.0f, colour.Blue() / 255.0f, 1.0f);
 }
@@ -514,7 +369,7 @@ GLVideoView::draw()
 	glClear(GL_COLOR_BUFFER_BIT);
 	check_error("glClear");
 
-	auto const size = _canvas_size.load();
+	auto const size = _view.size();
 	int const width = size.GetWidth();
 	int const height = size.GetHeight();
 
@@ -525,7 +380,7 @@ GLVideoView::draw()
 	glViewport(0, 0, width, height);
 	check_error("glViewport");
 
-	glBindVertexArray(_vao);
+	glBindVertexArray(_view.vao());
 	check_error("glBindVertexArray");
 	if (_optimisation == Optimisation::MPEG2) {
 		_fragment_type.set(static_cast<GLint>(FragmentType::YUV420P_IMAGE));
@@ -558,7 +413,7 @@ GLVideoView::draw()
 	glFlush();
 	check_error("glFlush");
 
-	_canvas->SwapBuffers();
+	_view.get()->SwapBuffers();
 }
 
 
@@ -607,7 +462,7 @@ GLVideoView::set_image(shared_ptr<const PlayerVideo> pv)
 		_subtitle_texture->set(text->image);
 	}
 
-	auto const canvas_size = _canvas_size.load();
+	auto const canvas_size = _view.size();
 	int const canvas_width = canvas_size.GetWidth();
 	int const canvas_height = canvas_size.GetHeight();
 	auto const inter_position = pv->inter_position();
@@ -763,91 +618,29 @@ GLVideoView::set_image_and_draw()
 
 
 void
-GLVideoView::thread()
-try
+GLVideoView::thread_body()
 {
-	start_of_thread("GLVideoView");
-
-#if defined(DCPOMATIC_OSX)
-	/* Without this we see errors like
-	 * ../src/osx/cocoa/glcanvas.mm(194): assert ""context"" failed in SwapBuffers(): should have current context [in thread 700006970000]
-	 */
-	WXGLSetCurrentContext(_context->GetWXGLContext());
-#else
-	if (!_setup_shaders_done) {
-		setup_shaders();
-		_setup_shaders_done = true;
+	boost::mutex::scoped_lock lm(_playing_mutex);
+	while (!_playing && _pending_request == Request::NONE) {
+		_thread_work_condition.wait(lm);
 	}
-#endif
+	lm.unlock();
 
-#if defined(DCPOMATIC_LINUX) && defined(DCPOMATIC_HAVE_GLX_SWAP_INTERVAL_EXT)
-	if (_canvas->IsExtensionSupported("GLX_EXT_swap_control")) {
-		/* Enable vsync */
-		Display* dpy = wxGetX11Display();
-		glXSwapIntervalEXT(dpy, DefaultScreen(dpy), 1);
-		_vsync_enabled = true;
-	}
-#endif
-
-#ifdef DCPOMATIC_WINDOWS
-	if (_canvas->IsExtensionSupported("WGL_EXT_swap_control")) {
-		/* Enable vsync */
-		PFNWGLSWAPINTERVALEXTPROC swap = (PFNWGLSWAPINTERVALEXTPROC) wglGetProcAddress("wglSwapIntervalEXT");
-		if (swap) {
-			swap(1);
-			_vsync_enabled = true;
+	if (_playing) {
+		thread_playing();
+	} else if (_pending_request == Request::SET_IMAGE_AND_DRAW) {
+		_pending_request = Request::NONE;
+		set_image_and_draw();
+	} else if (_pending_request == Request::SET_CROP_GUESS_AND_DRAW) {
+		_pending_request = Request::NONE;
+		if (auto pv = player_video().first) {
+			set_image(pv);
 		}
+		draw();
 	}
 
-#endif
-
-#ifdef DCPOMATIC_OSX
-	/* Enable vsync */
-	GLint swapInterval = 1;
-	CGLSetParameter(CGLGetCurrentContext(), kCGLCPSwapInterval, &swapInterval);
-	_vsync_enabled = true;
-#endif
-
-	for (int i = 0; i < 3; ++i) {
-		_video_textures.emplace_back(_optimisation == Optimisation::JPEG2000 ? 2 : 1, i);
-	}
-	_subtitle_texture.emplace(Texture(1, 3));
-
-	while (true) {
-		boost::mutex::scoped_lock lm(_playing_mutex);
-		while (!_playing && _pending_request == Request::NONE) {
-			_thread_work_condition.wait(lm);
-		}
-		lm.unlock();
-
-		if (_playing) {
-			thread_playing();
-		} else if (_pending_request == Request::SET_IMAGE_AND_DRAW) {
-			_pending_request = Request::NONE;
-			set_image_and_draw();
-		} else if (_pending_request == Request::SET_CROP_GUESS_AND_DRAW) {
-			_pending_request = Request::NONE;
-			if (auto pv = player_video().first) {
-				set_image(pv);
-			}
-			draw();
-		}
-
-		boost::this_thread::interruption_point();
-		dcpomatic_sleep_milliseconds(time_until_next_frame().get_value_or(0));
-	}
-
-	/* XXX: leaks _context, but that seems preferable to deleting it here
-	 * without also deleting the wxGLCanvas.
-	 */
-}
-catch (boost::thread_interrupted&)
-{
-
-}
-catch (...)
-{
-	store_current();
+	boost::this_thread::interruption_point();
+	dcpomatic_sleep_milliseconds(time_until_next_frame().get_value_or(0));
 }
 
 
@@ -873,5 +666,14 @@ GLVideoView::request(Request request)
 	_thread_work_condition.notify_all();
 }
 
+
+void
+GLVideoView::setup_textures()
+{
+	for (int i = 0; i < 3; ++i) {
+		_video_textures.emplace_back(_optimisation == Optimisation::JPEG2000 ? 2 : 1, i);
+	}
+	_subtitle_texture.emplace(Texture(1, 3));
+}
 
 #endif

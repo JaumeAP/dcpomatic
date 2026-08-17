@@ -20,6 +20,7 @@
 
 
 #include "gl_util.h"
+#include "gl_view.h"
 #include "lib/crop.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -54,10 +55,9 @@ class GLVideoView : public VideoView
 {
 public:
 	GLVideoView(FilmViewer* viewer, wxWindow* parent, bool wake);
-	~GLVideoView();
 
 	wxWindow* get() const override {
-		return _canvas;
+		return _view.get();
 	}
 	void update() override;
 	void update_crop_guess() override;
@@ -67,7 +67,7 @@ public:
 	NextFrameResult display_next_frame(bool) override;
 
 	bool vsync_enabled() const {
-		return _vsync_enabled;
+		return _view.vsync_enabled();
 	}
 
 	std::map<GLenum, std::string> information() const {
@@ -84,18 +84,16 @@ private:
 	void set_image(std::shared_ptr<const PlayerVideo> pv);
 	void set_image_and_draw();
 	void draw();
-	void thread();
+	void thread_body();
 	void thread_playing();
 	void request(Request request);
 	void check_for_butler_errors();
-	void ensure_context();
-	void size_changed(wxSizeEvent const &);
 	void setup_shaders();
-	void set_outline_content_colour(GLuint program);
-	void set_crop_guess_colour(GLuint program);
+	void set_outline_content_colour();
+	void set_crop_guess_colour();
+	void setup_textures();
 
-	wxGLCanvas* _canvas;
-	wxGLContext* _context;
+	GLView _view;
 
 	template <class T>
 	class Last
@@ -126,7 +124,6 @@ private:
 	Last<Crop> _last_crop;
 	Last<boost::optional<dcpomatic::Rect<float>>> _last_crop_guess;
 
-	std::atomic<wxSize> _canvas_size;
 	std::atomic<bool> _rec2020;
 	std::vector<dcpomatic::gl::Texture> _video_textures;
 	boost::optional<dcpomatic::gl::Texture> _subtitle_texture;
@@ -138,17 +135,12 @@ private:
 	dcpomatic::gl::Coords::OutlineRectangle _crop_guess;
 	dcpomatic::gl::Coords::FilledRectangle _subtitle;
 
-	bool _vsync_enabled;
-	boost::thread _thread;
-
 	boost::mutex _playing_mutex;
 	boost::condition _thread_work_condition;
 	std::atomic<bool> _playing;
 	std::atomic<Request> _pending_request;
 
-	GLuint _vao;
 	dcpomatic::gl::Uniform1i _fragment_type;
-	bool _setup_shaders_done = false;
 
 	std::shared_ptr<wxTimer> _timer;
 
