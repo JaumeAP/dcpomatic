@@ -38,6 +38,7 @@
 class AudioBuffers
 {
 public:
+	/** Create a set of silent audio buffers */
 	AudioBuffers(int channels, int frames);
 	AudioBuffers(AudioBuffers const &);
 	explicit AudioBuffers(std::shared_ptr<const AudioBuffers>);
