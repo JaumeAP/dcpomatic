@@ -36,7 +36,6 @@ LIBDCP_DISABLE_WARNINGS
 #include <wx/wx.h>
 #include <boost/signals2.hpp>
 LIBDCP_ENABLE_WARNINGS
-#include <boost/thread.hpp>
 
 
 class FilmViewer;
