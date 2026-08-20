@@ -77,7 +77,7 @@ public:
 	void copy_from(AudioBuffers const * from, int frames_to_copy, int read_offset, int write_offset);
 	void copy_channel_from(AudioBuffers const * from, int from_channel, int to_channel);
 	void move(int frames, int from, int to);
-	void accumulate_channel(AudioBuffers const * from, int from_channel, int to_channel, float gain = 1);
+	void accumulate_channel(AudioBuffers const * from, int from_channel, int to_channel, float const gain = 1);
 	void accumulate_frames(AudioBuffers const * from, int frames, int read_offset, int write_offset);
 	void append(std::shared_ptr<const AudioBuffers> other);
 	void trim_start(int frames);

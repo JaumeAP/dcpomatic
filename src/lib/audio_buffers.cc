@@ -221,7 +221,7 @@ AudioBuffers::move(int frames_to_move, int from, int to)
  *  @param gain Linear gain to apply to the data before it is added.
  */
 void
-AudioBuffers::accumulate_channel(AudioBuffers const * from, int from_channel, int to_channel, float gain)
+AudioBuffers::accumulate_channel(AudioBuffers const * from, int from_channel, int to_channel, float const gain)
 {
 	int const N = frames();
 	DCPOMATIC_ASSERT(from->frames() == N);
