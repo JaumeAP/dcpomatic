@@ -810,7 +810,6 @@ shared_ptr<AudioBuffers>
 remap(shared_ptr<const AudioBuffers> input, int output_channels, AudioMapping map)
 {
 	auto mapped = make_shared<AudioBuffers>(output_channels, input->frames());
-	mapped->make_silent();
 
 	int to_do = min(map.input_channels(), input->channels());
 
