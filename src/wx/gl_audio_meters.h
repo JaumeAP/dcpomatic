@@ -54,7 +54,7 @@ private:
 	GLView _view;
 	FilmViewer* _viewer;
 
-	boost::optional<dcpomatic::DCPTime> _last_time;
+	boost::optional<dcpomatic::DCPTime> _peaks_time;
 	std::vector<float> _peaks;
 
 	dcpomatic::gl::Uniform1i _fragment_type;

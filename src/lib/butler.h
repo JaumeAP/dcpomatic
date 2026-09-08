@@ -99,7 +99,6 @@ public:
 	boost::optional<AudioLevels> get_audio_levels();
 	boost::optional<TextRingBuffers::Data> get_closed_caption();
 
-	void enable_audio_level_calculation(bool enable);
 	dcpomatic::DCPTime time_between_audio_level_measurements() const;
 
 	std::pair<size_t, std::string> memory_used() const;
@@ -162,8 +161,6 @@ private:
 	    seeking to.
 	*/
 	boost::optional<dcpomatic::DCPTime> _awaiting;
-
-	boost::atomic<bool> _enable_audio_level_calculation;
 
 	boost::signals2::scoped_connection _player_video_connection;
 	boost::signals2::scoped_connection _player_audio_connection;

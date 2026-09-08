@@ -84,6 +84,7 @@ public:
 
 private:
 	void size_changed(wxSizeEvent const &);
+	void show_changed(wxShowEvent const &);
 	void update();
 	void thread();
 	void ensure_shaders();

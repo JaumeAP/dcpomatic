@@ -89,7 +89,6 @@ Butler::Butler(
 	, _alignment(alignment)
 	, _fast(fast)
 	, _prepare_only_proxy(prepare_only_proxy)
-	, _enable_audio_level_calculation(false)
 {
 	_player_video_connection = _player.Video.connect(bind(&Butler::video, this, _1, _2));
 	_player_audio_connection = _player.Audio.connect(bind(&Butler::audio, this, _1, _2, _3));
@@ -117,6 +116,7 @@ Butler::Butler(
 
 Butler::~Butler()
 {
+	std::cout << "~Butler " << this << " from " << pthread_self() << "\n";
 	boost::this_thread::disable_interruption dis;
 
 	{
@@ -376,9 +376,7 @@ Butler::audio(shared_ptr<AudioBuffers> audio, DCPTime time, int frame_rate)
 	}
 
 	_audio.put(remap(audio, _audio_channels, _audio_mapping), time, frame_rate);
-	if (_enable_audio_level_calculation) {
-		_audio_level_calculator.put(audio, time, frame_rate);
-	}
+	_audio_level_calculator.put(audio, time, frame_rate);
 }
 
 
@@ -491,13 +489,6 @@ Butler::Error::summary() const
 	}
 
 	return "";
-}
-
-
-void
-Butler::enable_audio_level_calculation(bool enable)
-{
-	_enable_audio_level_calculation = enable;
 }
 
 

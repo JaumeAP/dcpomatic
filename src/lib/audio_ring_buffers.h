@@ -42,13 +42,31 @@ public:
 	boost::optional<dcpomatic::DCPTime> get(float* out, int channels, int frames);
 	boost::optional<dcpomatic::DCPTime> peek() const;
 
+	struct Buffer
+	{
+		Buffer(std::shared_ptr<const AudioBuffers> buffers_, dcpomatic::DCPTime time_, int frame_rate_)
+			: buffers(buffers_)
+			, time(time_)
+			, frame_rate(frame_rate_)
+		{}
+
+		std::shared_ptr<const AudioBuffers> buffers;
+		dcpomatic::DCPTime time;
+		int frame_rate;
+	};
+
+	std::list<Buffer> buffers() const {
+		boost::mutex::scoped_lock lm(_mutex);
+		return _buffers;
+	}
+
 	void clear();
 	/** @return number of frames currently available */
 	Frame size() const;
 
 private:
 	mutable boost::mutex _mutex;
-	std::list<std::pair<std::shared_ptr<const AudioBuffers>, dcpomatic::DCPTime>> _buffers;
+	std::list<Buffer> _buffers;
 	int _used_in_head = 0;
 };
 

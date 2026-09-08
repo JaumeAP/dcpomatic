@@ -76,6 +76,7 @@ GLView::GLView(
 
 	_canvas->Bind(wxEVT_SIZE, boost::bind(&GLView::size_changed, this, _1));
 	_canvas->Bind(wxEVT_PAINT, boost::bind(&GLView::update, this));
+	_canvas->Bind(wxEVT_SHOW, boost::bind(&GLView::show_changed, this, _1));
 }
 
 
@@ -87,6 +88,19 @@ GLView::~GLView()
 		_thread.interrupt();
 		_thread.join();
 	} catch (...) {}
+}
+
+
+void
+GLView::show_changed(wxShowEvent const& ev)
+{
+	if (!ev.IsShown() && _thread.joinable()) {
+		_thread.interrupt();
+		_thread.join();
+	} else if (ev.IsShown()) {
+		std::cout << "shown ...\n";
+		update();
+	}
 }
 
 
@@ -238,10 +252,16 @@ try
 }
 catch (boost::thread_interrupted&)
 {
-
+	std::cout << "thread interrupted.\n";
+}
+catch (std::exception& e)
+{
+	std::cout << "exception " << e.what() << "\n";
+	store_current();
 }
 catch (...)
 {
+	std::cout << "some other exception.\n";
 	store_current();
 }
 
@@ -272,6 +292,7 @@ GLView::update()
 #endif
 
 	if (!_thread.joinable()) {
+		std::cout << "restart the thread\n";
 		_thread = boost::thread(boost::bind(&GLView::thread, this));
 	}
 

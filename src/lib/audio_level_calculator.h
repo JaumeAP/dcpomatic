@@ -48,6 +48,7 @@ public:
 	boost::optional<AudioLevels> get();
 
 	dcpomatic::DCPTime time_between_measurements() const {
+		DCPOMATIC_ASSERT(_calculation_frame_rate);
 		return dcpomatic::DCPTime::from_seconds(1) / _calculation_frame_rate;
 	};
 

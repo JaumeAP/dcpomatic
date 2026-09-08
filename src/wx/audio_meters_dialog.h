@@ -27,6 +27,13 @@ class AudioMetersDialog : public wxDialog
 public:
 	AudioMetersDialog(wxWindow* parent);
 
+	bool Show(bool show = true) override;
+
 	void set_meters(wxWindow* meters);
+
+private:
+	void closed(wxCloseEvent& ev);
+
+	wxWindow* _meters = nullptr;
 };
 

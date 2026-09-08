@@ -191,14 +191,6 @@ static constexpr char fragment_source[] =
 
 GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent, bool wake)
 	: VideoView(viewer, wake)
-	, _view(
-		parent,
-		fragment_source,
-		boost::bind(&GLVideoView::setup_shaders, this),
-		boost::bind(&GLVideoView::setup_textures, this),
-		boost::bind(&GLVideoView::thread_body, this),
-		boost::bind(&GLVideoView::update, this)
-	)
 	, _rec2020(false)
 	, _image(_coords.add_filled_rectangle())
 	, _outline_content(_coords.add_outline_rectangle())
@@ -207,6 +199,14 @@ GLVideoView::GLVideoView(FilmViewer* viewer, wxWindow *parent, bool wake)
 	, _playing(false)
 	, _pending_request(Request::NONE)
 	, _audio_meters(viewer, parent)
+	, _view(
+		parent,
+		fragment_source,
+		boost::bind(&GLVideoView::setup_shaders, this),
+		boost::bind(&GLVideoView::setup_textures, this),
+		boost::bind(&GLVideoView::thread_body, this),
+		boost::bind(&GLVideoView::update, this)
+	)
 {
 	_view.get()->Bind(wxEVT_TIMER, boost::bind(&GLVideoView::check_for_butler_errors, this));
 	_view.Sized.connect(boost::bind(boost::ref(Sized)));

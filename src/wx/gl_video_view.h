@@ -98,8 +98,6 @@ private:
 	void set_crop_guess_colour();
 	void setup_textures();
 
-	GLView _view;
-
 	template <class T>
 	class Last
 	{
@@ -152,6 +150,12 @@ private:
 	std::map<GLenum, std::string> _information;
 
 	GLAudioMeters _audio_meters;
+
+	/* We have a condition that waits on a lock in a thread controlled by
+	 * this _view so we need this view to be destructed first.
+	 */
+	GLView _view;
+
 };
 
 #endif

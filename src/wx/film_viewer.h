@@ -192,7 +192,6 @@ private:
 	void film_length_change();
 	void ui_finished();
 	void start_audio_stream_if_open();
-	void audio_meters_shown(wxShowEvent& ev);
 
 	dcpomatic::DCPTime uncorrected_time() const;
 
@@ -201,7 +200,6 @@ private:
 	std::shared_ptr<Film> _film;
 	boost::optional<Player> _player;
 
-	std::shared_ptr<VideoView> _video_view;
 	bool _coalesce_player_changes = false;
 	std::vector<int> _pending_player_changes;
 
@@ -210,6 +208,11 @@ private:
 	bool _playing = false;
 	int _suspended = 0;
 	std::shared_ptr<Butler> _butler;
+
+	/* This view could request the butler as it's being destroyed, so
+	 * we need it to go away before the _butler.
+	 */
+	std::shared_ptr<VideoView> _video_view;
 
 	std::list<Frame> _latency_history;
 	/** Mutex to protect _latency_history */

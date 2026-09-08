@@ -48,15 +48,15 @@ AudioRingBuffers::put(shared_ptr<const AudioBuffers> data, DCPTime time, int fra
 	boost::mutex::scoped_lock lm(_mutex);
 
 	if (!_buffers.empty()) {
-		DCPOMATIC_ASSERT(_buffers.front().first->channels() == data->channels());
-		DCPTime const end = (_buffers.back().second + DCPTime::from_frames(_buffers.back().first->frames(), frame_rate));
+		DCPOMATIC_ASSERT(_buffers.front().buffers->channels() == data->channels());
+		DCPTime const end = (_buffers.back().time + DCPTime::from_frames(_buffers.back().buffers->frames(), frame_rate));
 		if (labs(end.get() - time.get()) > 1) {
-			cout << "bad put " << to_string(_buffers.back().second) << " " << _buffers.back().first->frames() << " " << to_string(time) << "\n";
+			cout << "bad put " << to_string(_buffers.back().time) << " " << _buffers.back().buffers->frames() << " " << to_string(time) << "\n";
 		}
 		DCPOMATIC_ASSERT(labs(end.get() - time.get()) < 2);
 	}
 
-	_buffers.push_back(make_pair(data, time));
+	_buffers.push_back(Buffer(data, time, frame_rate));
 }
 
 
@@ -80,12 +80,12 @@ AudioRingBuffers::get(float* out, int channels, int frames)
 
 		auto front = _buffers.front();
 		if (!time) {
-			time = front.second + DCPTime::from_frames(_used_in_head, 48000);
+			time = front.time + DCPTime::from_frames(_used_in_head, 48000);
 		}
 
-		int const to_do = min(frames, front.first->frames() - _used_in_head);
-		float* const* p = front.first->data();
-		int const c = min(front.first->channels(), channels);
+		int const to_do = min(frames, front.buffers->frames() - _used_in_head);
+		float* const* p = front.buffers->data();
+		int const c = min(front.buffers->channels(), channels);
 		for (int i = 0; i < to_do; ++i) {
 			for (int j = 0; j < c; ++j) {
 				*out++ = p[j][i + _used_in_head];
@@ -97,7 +97,7 @@ AudioRingBuffers::get(float* out, int channels, int frames)
 		_used_in_head += to_do;
 		frames -= to_do;
 
-		if (_used_in_head == front.first->frames()) {
+		if (_used_in_head == front.buffers->frames()) {
 			_buffers.pop_front();
 			_used_in_head = 0;
 		}
@@ -114,7 +114,7 @@ AudioRingBuffers::peek() const
 	if (_buffers.empty()) {
 		return {};
 	}
-	return _buffers.front().second;
+	return _buffers.front().time;
 }
 
 
@@ -133,7 +133,7 @@ AudioRingBuffers::size() const
 	boost::mutex::scoped_lock lm(_mutex);
 	Frame s = 0;
 	for (auto const& i: _buffers) {
-		s += i.first->frames();
+		s += i.buffers->frames();
 	}
 	return s - _used_in_head;
 }

@@ -166,10 +166,12 @@ void
 GLAudioMeters::get_next_frame()
 {
 	if (auto levels = _viewer->butler()->get_audio_levels()) {
-		_last_time = levels->time;
+		// std::cout << "got some levels.\n";
+		_peaks_time = levels->time;
 		_peaks = levels->peaks;
 	} else {
-		_last_time = boost::none;
+		// std::cout << "got no levels.\n";
+		_peaks_time = boost::none;
 		_peaks.clear();
 	}
 }
@@ -185,28 +187,33 @@ GLAudioMeters::update()
 void
 GLAudioMeters::thread_body()
 {
-	get_next_frame();
-	draw();
+	auto butler = _viewer->butler();
+	if (!butler) {
+		return;
+	}
+	std::cout << "thread_body got butler with " << butler.use_count() << "\n";
 
-	boost::this_thread::interruption_point();
+	auto const gap = butler->time_between_audio_level_measurements();
+	auto const half_gap = gap / 2;
 
-	auto time_until_next_frame = [this]() -> boost::optional<int> {
-		if (!_last_time) {
-			return {};
-		}
+	auto const viewer = _viewer->position();
 
-		return dcpomatic::DCPTime(*_last_time - _viewer->position() + _viewer->butler()->time_between_audio_level_measurements()).seconds() * 1000;
-	};
-
-	while (true) {
-		auto const n = time_until_next_frame();
-		if (!n || *n > 5) {
-			break;
-		}
+	while (!_peaks_time || (*_peaks_time < viewer && (viewer - *_peaks_time) > half_gap)) {
+		/* The peaks we have are a bit behind the viewer, so try and get some more */
 		get_next_frame();
 	}
 
-	dcpomatic_sleep_milliseconds(time_until_next_frame().get_value_or(0));
+	if (_peaks_time) {
+		std::cout << "draw: " << to_string(*_peaks_time) << " " << to_string(viewer) << "\n";
+	}
+
+	draw();
+
+	if (!_peaks_time || (*_peaks_time - viewer) > gap) {
+		boost::this_thread::sleep_for(boost::chrono::milliseconds(static_cast<int>(half_gap.seconds() * 1000)));
+	} else {
+		boost::this_thread::sleep_for(boost::chrono::milliseconds(static_cast<int>(dcpomatic::DCPTime(*_peaks_time - viewer + gap).seconds() * 1000)));
+	}
 }
 
 

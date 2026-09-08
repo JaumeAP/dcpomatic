@@ -106,7 +106,6 @@ FilmViewer::FilmViewer(wxWindow* p, bool wake)
 	_video_view = std::make_shared<SimpleVideoView>(this, p, wake);
 #endif
 
-	_audio_meters_dialog->Bind(wxEVT_SHOW, boost::bind(&FilmViewer::audio_meters_shown, this, _1));
 	_audio_meters_dialog->set_meters(_video_view->get_audio_meters());
 
 	_video_view->Sized.connect(boost::bind(&FilmViewer::video_view_sized, this));
@@ -122,13 +121,6 @@ FilmViewer::FilmViewer(wxWindow* p, bool wake)
 FilmViewer::~FilmViewer()
 {
 	stop();
-}
-
-
-void
-FilmViewer::audio_meters_shown(wxShowEvent& ev)
-{
-	_butler->enable_audio_level_calculation(ev.IsShown());
 }
 
 
@@ -830,6 +822,7 @@ FilmViewer::show_closed_captions()
 void
 FilmViewer::show_audio_meters()
 {
+	std::cout << "Call Show() on AM dialog.\n";
 	_audio_meters_dialog->Show();
 }
 
