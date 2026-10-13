@@ -614,6 +614,7 @@ try
 
 	if (f.optional_node_child("AudioMapping")) {
 		_audio_mapping = AudioMapping(f.node_child("AudioMapping"), Film::current_state_version);
+		_audio_mapping_is_default = false;
 	}
 
 	for (auto i: f.node_children("CustomLanguage")) {
@@ -1104,7 +1105,7 @@ Config::write_config() const
 		/* [XML] PlayerKDMDirectory Directory to use for player KDMs in the dual-screen mode. */
 		cxml::add_text_child(root, "PlayerKDMDirectory", _player_kdm_directory->string());
 	}
-	if (_audio_mapping) {
+	if (_audio_mapping && !_audio_mapping_is_default) {
 		_audio_mapping->as_xml(cxml::add_child(root, "AudioMapping"));
 	}
 	for (auto const& i: _custom_languages) {
@@ -1516,28 +1517,31 @@ Config::have_write_permission() const
  *  @return Audio mapping for this output channel count (may be a default).
  */
 AudioMapping
-Config::audio_mapping(int output_channels)
+Config::audio_mapping(int output_channels, int film_channels)
 {
-	if (!_audio_mapping || _audio_mapping->output_channels() != output_channels) {
+	/* A default depends on the film's channel count only for stereo output; regenerate it if the film changed */
+	bool const stale_default = _audio_mapping_is_default && _audio_mapping_film_channels != film_channels;
+
+	if (!_audio_mapping || _audio_mapping->output_channels() != output_channels || stale_default) {
 		/* Set up a default */
-		_audio_mapping = AudioMapping(MAX_DCP_AUDIO_CHANNELS, output_channels);
+		_audio_mapping_is_default = true;
+		_audio_mapping_film_channels = film_channels;
 		if (output_channels == 2) {
-			/* Special case for stereo output.
-			   Map so that Lt = L(-3dB) + Ls(-3dB) + C(-6dB) + Lfe(-10dB)
-			   Rt = R(-3dB) + Rs(-3dB) + C(-6dB) + Lfe(-10dB)
-			*/
-			_audio_mapping->set(dcp::Channel::LEFT,   0, 1 / sqrt(2));  // L   -> Lt
-			_audio_mapping->set(dcp::Channel::RIGHT,  1, 1 / sqrt(2));  // R   -> Rt
-			_audio_mapping->set(dcp::Channel::CENTRE, 0, 1 / 2.0);      // C   -> Lt
-			_audio_mapping->set(dcp::Channel::CENTRE, 1, 1 / 2.0);      // C   -> Rt
-			_audio_mapping->set(dcp::Channel::LFE,    0, 1 / sqrt(10)); // Lfe -> Lt
-			_audio_mapping->set(dcp::Channel::LFE,    1, 1 / sqrt(10)); // Lfe -> Rt
-			_audio_mapping->set(dcp::Channel::LS,     0, 1 / sqrt(2));  // Ls  -> Lt
-			_audio_mapping->set(dcp::Channel::RS,     1, 1 / sqrt(2));  // Rs  -> Rt
+			/* Same stereo downmix as the stereo mixdown export: ETSI TS 102 366 6.8, see doc/design/downmix_7_1_to_5_1.md */
+			_audio_mapping = stereo_downmix_map(film_channels, MAX_DCP_AUDIO_CHANNELS);
 		} else {
+			_audio_mapping = AudioMapping(MAX_DCP_AUDIO_CHANNELS, output_channels);
 			/* 1:1 mapping */
 			for (int i = 0; i < min(MAX_DCP_AUDIO_CHANNELS, output_channels); ++i) {
 				_audio_mapping->set(i, i, 1);
+			}
+			if (output_channels == 6) {
+				/* 5.1 output of a 7.1 DCP: Lrs (11) and Rrs (12) are added to Ls and Rs at 0 dB, as Dolby's
+				   standard 7.1 to 5.1 fold (Atmos Renderer Guide 3.0, pp. 223-224). Cinema: no attenuation.
+				   shortcut: 7.1 content at full level overloads Ls/Rs (sum 2.0).
+				   See doc/design/downmix_7_1_to_5_1.md. */
+				_audio_mapping->set(dcp::Channel::BSL, static_cast<int>(dcp::Channel::LS), 1);
+				_audio_mapping->set(dcp::Channel::BSR, static_cast<int>(dcp::Channel::RS), 1);
 			}
 		}
 	}
@@ -1549,6 +1553,7 @@ void
 Config::set_audio_mapping(AudioMapping m)
 {
 	_audio_mapping = m;
+	_audio_mapping_is_default = false;
 	changed(AUDIO_MAPPING);
 }
 
@@ -1558,6 +1563,7 @@ Config::set_audio_mapping_to_default()
 	DCPOMATIC_ASSERT(_audio_mapping);
 	auto const ch = _audio_mapping->output_channels();
 	_audio_mapping = boost::none;
+	_audio_mapping_is_default = false;
 	_audio_mapping = audio_mapping(ch);
 	changed(AUDIO_MAPPING);
 }

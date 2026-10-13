@@ -86,4 +86,13 @@ private:
 };
 
 
+/** Stereo downmix of a DCP with film_channels channels, used by both the Player and the stereo mixdown export.
+ *  @param film_channels Channels of the film's audio.
+ *  @param input_channels Number of input channels of the returned mapping.
+ *  For 5.1 and 7.1 this follows ETSI TS 102 366 6.8.1/6.8.2, normalized (see doc/design/downmix_7_1_to_5_1.md).
+ *  LFE is not mapped.
+ */
+AudioMapping stereo_downmix_map(int film_channels, int input_channels);
+
+
 #endif

@@ -305,3 +305,51 @@ AudioMapping::take_from(AudioMapping const& other)
 	}
 }
 
+
+AudioMapping
+stereo_downmix_map(int film_channels, int input_channels)
+{
+	auto map = AudioMapping(input_channels, 2);
+	float const minus_3dB = 1 / sqrt(2);
+
+	switch (film_channels) {
+	case 2:
+		map.set(dcp::Channel::LEFT, 0, 1);
+		map.set(dcp::Channel::RIGHT, 1, 1);
+		break;
+	case 4:
+		/* Not in ETSI TS 102 366; unchanged from before. */
+		{
+			float const overall_gain = 2 / (4 + sqrt(2));
+			map.set(dcp::Channel::LEFT,   0, overall_gain);
+			map.set(dcp::Channel::RIGHT,  1, overall_gain);
+			map.set(dcp::Channel::CENTRE, 0, overall_gain * minus_3dB);
+			map.set(dcp::Channel::CENTRE, 1, overall_gain * minus_3dB);
+			map.set(dcp::Channel::LS,     0, overall_gain);
+		}
+		break;
+	default:
+		/* ETSI TS 102 366 6.8.1 normalization: the coefficients into each output sum to at most 1.
+		   5.1: L + C(0.707) + Ls(0.707) -> 1 / (1 + sqrt(2)).
+		   7.1 adds Lrs(0.707) (and Rrs for the right output) -> 1 / (1 + 3 / sqrt(2)).
+		*/
+		{
+			bool const seven_one = film_channels > static_cast<int>(dcp::Channel::BSR);
+			float const gain = seven_one ? 1 / (1 + 3 / sqrt(2)) : 1 / (1 + sqrt(2));
+			map.set(dcp::Channel::LEFT,   0, gain);
+			map.set(dcp::Channel::RIGHT,  1, gain);
+			map.set(dcp::Channel::CENTRE, 0, gain * minus_3dB);
+			map.set(dcp::Channel::CENTRE, 1, gain * minus_3dB);
+			map.set(dcp::Channel::LS,     0, gain * minus_3dB);
+			map.set(dcp::Channel::RS,     1, gain * minus_3dB);
+			if (seven_one) {
+				map.set(dcp::Channel::BSL, 0, gain * minus_3dB);
+				map.set(dcp::Channel::BSR, 1, gain * minus_3dB);
+			}
+		}
+		break;
+	}
+
+	return map;
+}
+

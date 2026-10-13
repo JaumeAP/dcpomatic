@@ -246,7 +246,7 @@ FilmViewer::create_butler()
 	_butler = std::make_shared<Butler>(
 		_film,
 		*_player,
-		Config::instance()->audio_mapping(_audio_channels),
+		Config::instance()->audio_mapping(_audio_channels, _film->audio_channels()),
 		_audio_channels,
 		AV_PIX_FMT_RGB24,
 		VideoRange::FULL,

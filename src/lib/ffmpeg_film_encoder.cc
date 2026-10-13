@@ -90,31 +90,8 @@ FFmpegFilmEncoder::FFmpegFilmEncoder(
 AudioMapping
 FFmpegFilmEncoder::stereo_map() const
 {
-	auto map = AudioMapping(_film->audio_channels(), 2);
-	float const overall_gain = 2 / (4 + sqrt(2));
-	float const minus_3dB = 1 / sqrt(2);
-	switch (_film->audio_channels()) {
-	case 2:
-		map.set(dcp::Channel::LEFT, 0, 1);
-		map.set(dcp::Channel::RIGHT, 1, 1);
-		break;
-	case 4:
-		map.set(dcp::Channel::LEFT,   0, overall_gain);
-		map.set(dcp::Channel::RIGHT,  1, overall_gain);
-		map.set(dcp::Channel::CENTRE, 0, overall_gain * minus_3dB);
-		map.set(dcp::Channel::CENTRE, 1, overall_gain * minus_3dB);
-		map.set(dcp::Channel::LS,     0, overall_gain);
-		break;
-	default:
-		map.set(dcp::Channel::LEFT,   0, overall_gain);
-		map.set(dcp::Channel::RIGHT,  1, overall_gain);
-		map.set(dcp::Channel::CENTRE, 0, overall_gain * minus_3dB);
-		map.set(dcp::Channel::CENTRE, 1, overall_gain * minus_3dB);
-		map.set(dcp::Channel::LS,     0, overall_gain);
-		map.set(dcp::Channel::RS,     1, overall_gain);
-		break;
-	}
-	return map;
+	/* Shared with the Player so that the monitor and the export give the same stereo */
+	return stereo_downmix_map(_film->audio_channels(), _film->audio_channels());
 }
 
 
