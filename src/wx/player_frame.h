@@ -108,6 +108,8 @@ private:
 	void setup_screen();
 	void dual_screen_key_press(wxKeyEvent& ev);
 	void view_closed_captions();
+	void view_audio_changed();
+	void update_view_audio_menu();
 	void tools_verify();
 	void tools_audio_graph();
 	void tools_check_for_updates();
@@ -143,6 +145,9 @@ private:
 	wxMenu* _file_menu = nullptr;
 	wxMenuItem* _view_cpl = nullptr;
 	wxMenu* _cpl_menu = nullptr;
+	wxMenuItem* _view_audio_main = nullptr;
+	wxMenuItem* _view_audio_hi = nullptr;
+	wxMenuItem* _view_audio_vi = nullptr;
 	wxMenuItem* _view_eye = nullptr;
 	wxMenuItem* _view_eye_left = nullptr;
 	wxMenu* _view_eye_menu = nullptr;
