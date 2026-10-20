@@ -846,10 +846,10 @@ limit_peaks(shared_ptr<AudioBuffers> audio, float& gain, int frame_rate)
 	for (int i = 0; i < audio->frames(); ++i) {
 		float peak = 0;
 		for (int c = 0; c < audio->channels(); ++c) {
-			peak = max(peak, fabsf(audio->data(c)[i]));
+			peak = std::max(peak, fabsf(audio->data(c)[i]));
 		}
 		float const wanted = peak > 1 ? 1 / peak : 1;
-		gain = min(wanted, gain + (1 - gain) * release);
+		gain = std::min(wanted, gain + (1 - gain) * release);
 		for (int c = 0; c < audio->channels(); ++c) {
 			audio->data(c)[i] *= gain;
 		}
