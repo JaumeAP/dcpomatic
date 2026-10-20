@@ -34,12 +34,12 @@ Each output sums to 1.0 (5.1: 0.414 + 0.293 + 0.293; 7.1: 0.320 + 3 × 0.227). L
 |---|---|---|---|
 | Channels 1 to 6 | Outputs 1 to 6 | 1.0 | 1:1 |
 | Channels 7 and 8 (HI, VI) | Outputs 7 and 8, if the device has them | 1.0 | 1:1 |
-| Ls (5) | Ls (output 5) | 0.5 (−6 dB) | 7.1 films only |
-| Rs (6) | Rs (output 6) | 0.5 (−6 dB) | 7.1 films only |
-| Lrs (11) | Ls (output 5) | 0.5 (−6 dB) | 7.1 films only |
-| Rrs (12) | Rs (output 6) | 0.5 (−6 dB) | 7.1 films only |
+| Ls (5) | Ls (output 5) | 0.6 (−4.4 dB) | 7.1 films only |
+| Rs (6) | Rs (output 6) | 0.6 (−4.4 dB) | 7.1 films only |
+| Lrs (11) | Ls (output 5) | 0.4 (−8.0 dB) | |
+| Rrs (12) | Rs (output 6) | 0.4 (−8.0 dB) | |
 
-Ls and Rs keep 1.0 for films with fewer than 12 channels, so 5.1 sources pass unchanged. For a 7.1 film, the side and rear channel of each side are averaged, so the sum cannot exceed 1.0.
+Ls and Rs keep 1.0 for films with fewer than 12 channels, so 5.1 sources pass unchanged. For a 7.1 film, the side channel weighs 0.6 and the rear 0.4, so the sum cannot exceed 1.0.
 
 ### 2.3 Export, 5.1 or 7.1
 
@@ -61,7 +61,7 @@ Why normalize: Dolby's LoRo has no scaling, so full-scale 5.1 content can reach 
 ### 3.2 Monitor 5.1 from 7.1: Dolby Standard at 0 dB
 
 - Dolby's Standard 7.1-to-5.1 fold is Ls = 0 dB·Lss + 0 dB·Lrs, Rs = 0 dB·Rss + 0 dB·Rrs [3, p. 224].
-- Dolby's Standard sums two full-level channels, which reaches 2.0. The decision here: −6 dB on each of the two inputs (a plain average), so the sum stays within 1.0. The cost is that Ls and Rs of a 7.1 film are 6 dB lower than in the 7.1 mix. No source gives this value; it is ours.
+- Dolby's Standard sums two full-level channels, which reaches 2.0. The decision here: a weighted average, side 0.6 and rear 0.4, so the sum stays within 1.0. The cost is that Ls and Rs of a 7.1 film are 4.4 dB lower than in the 7.1 mix. No source gives these weights; they are ours.
 - The alternative in the same guide, Pro Logic IIx (Ls = Lss + (−1.2 dB)·Lrs + (−6.2 dB)·Rrs) [3], was not chosen because it is not basic 5.1 and because it does not match the cinema decision.
 - The ETSI option `dmixtyp = 2` (Table H.3.9, pp. 222-223 [1]) has the same −1.2 / −6.2 dB form, but it is encoder metadata, not a decoder rule.
 
@@ -89,7 +89,7 @@ Not mapped in either path. ETSI §6.8.2 equations do not include LFE, and §6.8.
 
 ## 5. Open points
 
-1. The 5.1 monitor fold (section 2.2) uses −6 dB per input, which is our choice and not Dolby's. −3 dB (0.707) keeps the power of uncorrelated signals but can reach 1.41.
+1. The 5.1 monitor fold (section 2.2) uses weights 0.6 (side) and 0.4 (rear), which are our choice and not Dolby's. −3 dB (0.707) keeps the power of uncorrelated signals but can reach 1.41.
 2. The export has no 7.1 to 5.1 path (section 2.3).
 3. `test/ffmpeg_encoder_test.cc` (mixdown 5.1 to stereo) may compare against stored output. The values changed, so it may fail. Run it on a machine with the build dependencies.
 
