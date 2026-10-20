@@ -1538,11 +1538,13 @@ Config::audio_mapping(int output_channels, int film_channels)
 			if (output_channels == 6) {
 				/* 5.1 output of a 7.1 DCP: Lrs (11) and Rrs (12) are folded into Ls and Rs as in Dolby's standard
 				   7.1 to 5.1 fold (Atmos Renderer Guide 3.0, pp. 223-224), but Dolby's 0 dB sum can reach 2.0, so
-				   the side channel goes in at 0.6 and the rear at 0.4: the weights add up to 1.0.
+				   the side channel goes in at 0.87 (-1.2 dB) and the rear at 0.49 (-6.2 dB), the Pro Logic IIx figures.
+				   Their squares add up to 1.0, so the power of uncorrelated signals is kept; Butler's peak limiter
+				   catches the rest.
 				   See doc/design/downmix_7_1_to_5_1.md. */
 				bool const seven_one = film_channels > static_cast<int>(dcp::Channel::BSR);
-				float const side = seven_one ? 0.6 : 1;
-				float const rear = seven_one ? 0.4 : 0;
+				float const side = seven_one ? 0.87 : 1;
+				float const rear = seven_one ? 0.49 : 0;
 				_audio_mapping->set(dcp::Channel::LS,  static_cast<int>(dcp::Channel::LS), side);
 				_audio_mapping->set(dcp::Channel::RS,  static_cast<int>(dcp::Channel::RS), side);
 				_audio_mapping->set(dcp::Channel::BSL, static_cast<int>(dcp::Channel::LS), rear);

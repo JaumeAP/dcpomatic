@@ -139,6 +139,8 @@ private:
 
 	AudioMapping _audio_mapping;
 	int _audio_channels;
+	/** gain of the peak limiter on the mapped audio, see limit_peaks() */
+	float _limiter_gain = 1;
 
 	bool _disable_video;
 	bool _disable_audio;

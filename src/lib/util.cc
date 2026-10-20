@@ -834,6 +834,29 @@ remap(shared_ptr<const AudioBuffers> input, int output_channels, AudioMapping ma
 }
 
 
+/** Peak limiter: instant attack, 100 ms release, one gain for all channels so the sound image does not move.
+ *  @param gain gain carried from one call to the next; start it at 1.
+ *  shortcut: no look-ahead, so a very sharp peak can click; upgrade if that is audible.
+ */
+void
+limit_peaks(shared_ptr<AudioBuffers> audio, float& gain, int frame_rate)
+{
+	float const release = 1.0f / (0.1f * frame_rate);
+
+	for (int i = 0; i < audio->frames(); ++i) {
+		float peak = 0;
+		for (int c = 0; c < audio->channels(); ++c) {
+			peak = max(peak, fabsf(audio->data(c)[i]));
+		}
+		float const wanted = peak > 1 ? 1 / peak : 1;
+		gain = min(wanted, gain + (1 - gain) * release);
+		for (int c = 0; c < audio->channels(); ++c) {
+			audio->data(c)[i] *= gain;
+		}
+	}
+}
+
+
 /** @param size Size of picture that the subtitle will be overlaid onto */
 void
 emit_subtitle_image(ContentTimePeriod period, dcp::TextImage sub, dcp::Size size, shared_ptr<TextDecoder> decoder)

@@ -373,7 +373,9 @@ Butler::audio(shared_ptr<AudioBuffers> audio, DCPTime time, int frame_rate)
 		return;
 	}
 
-	_audio.put(remap(audio, _audio_channels, _audio_mapping), time, frame_rate);
+	auto mapped = remap(audio, _audio_channels, _audio_mapping);
+	limit_peaks(mapped, _limiter_gain, frame_rate);
+	_audio.put(mapped, time, frame_rate);
 }
 
 
