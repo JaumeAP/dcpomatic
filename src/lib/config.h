@@ -28,6 +28,7 @@
 
 
 #include "audio_mapping.h"
+#include "constants.h"
 #include "enum_indexed_vector.h"
 #include "export_config.h"
 #include "rough_duration.h"
