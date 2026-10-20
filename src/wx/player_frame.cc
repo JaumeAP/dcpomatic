@@ -99,6 +99,10 @@ enum {
 	ID_view_full_screen = DCPOMATIC_MAIN_MENU + 200,
 	ID_view_dual_screen,
 	ID_view_closed_captions,
+	ID_view_audio,
+	ID_view_audio_main,
+	ID_view_audio_hi,
+	ID_view_audio_vi,
 	ID_view_eye,
 	ID_view_eye_left,
 	ID_view_eye_right,
@@ -203,6 +207,9 @@ PlayerFrame::PlayerFrame(bool auto_play)
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_full_screen, this), ID_view_full_screen);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_dual_screen, this), ID_view_dual_screen);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_closed_captions, this), ID_view_closed_captions);
+	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_audio_changed, this), ID_view_audio_main);
+	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_audio_changed, this), ID_view_audio_hi);
+	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_audio_changed, this), ID_view_audio_vi);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_cpl, this, _1), ID_view_cpl, ID_view_cpl + MAX_CPLS);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_eye_changed, this, _1), ID_view_eye_left);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_eye_changed, this, _1), ID_view_eye_right);
@@ -534,6 +541,7 @@ PlayerFrame::prepare_to_play_film(optional<float> crop_to_ratio)
 	}
 
 	_viewer.set_film(_film);
+	update_view_audio_menu();
 	_viewer.seek(DCPTime(), true);
 	_viewer.set_eyes(_view_eye_left->IsChecked() ? Eyes::LEFT : Eyes::RIGHT);
 	_info->triggered_update();
@@ -691,6 +699,11 @@ PlayerFrame::setup_menu(wxMenuBar* m)
 	setup_menu();
 	view->AppendSeparator();
 	view->Append(ID_view_closed_captions, _("Closed captions..."));
+	auto audio_menu = new wxMenu;
+	_view_audio_main = audio_menu->AppendRadioItem(ID_view_audio_main, _("Main mix"));
+	_view_audio_hi = audio_menu->AppendRadioItem(ID_view_audio_hi, _("Hearing impaired (HI)"));
+	_view_audio_vi = audio_menu->AppendRadioItem(ID_view_audio_vi, _("Visually impaired (VI)"));
+	view->Append(ID_view_audio, _("Audio"), audio_menu);
 	_view_eye_menu = new wxMenu;
 	_view_eye_left = _view_eye_menu->AppendRadioItem(ID_view_eye_left, _("Left"));
 	_view_eye_menu->AppendRadioItem(ID_view_eye_right, _("Right"));
@@ -1061,6 +1074,46 @@ void
 PlayerFrame::view_closed_captions()
 {
 	_viewer.show_closed_captions();
+}
+
+
+void
+PlayerFrame::view_audio_changed()
+{
+	if (_view_audio_hi->IsChecked()) {
+		_viewer.set_listen_to(dcp::Channel::HI);
+	} else if (_view_audio_vi->IsChecked()) {
+		_viewer.set_listen_to(dcp::Channel::VI);
+	} else {
+		_viewer.set_listen_to(boost::none);
+	}
+}
+
+
+/** Enable the HI and VI choices only if the film has those channels mapped; fall back to the
+ *  main mix if the one we were listening to has gone.
+ */
+void
+PlayerFrame::update_view_audio_menu()
+{
+	auto const hi = _viewer.can_listen_to(dcp::Channel::HI);
+	auto const vi = _viewer.can_listen_to(dcp::Channel::VI);
+	_view_audio_hi->Enable(hi);
+	_view_audio_vi->Enable(vi);
+
+	auto listen_to = _viewer.listen_to();
+	if ((listen_to == dcp::Channel::HI && !hi) || (listen_to == dcp::Channel::VI && !vi)) {
+		_viewer.set_listen_to(boost::none);
+		listen_to = boost::none;
+	}
+
+	if (listen_to == dcp::Channel::HI) {
+		_view_audio_hi->Check(true);
+	} else if (listen_to == dcp::Channel::VI) {
+		_view_audio_vi->Check(true);
+	} else {
+		_view_audio_main->Check(true);
+	}
 }
 
 
@@ -1569,6 +1622,7 @@ PlayerFrame::take_playlist_entry()
 	}
 
 	_viewer.set_film(_film);
+	update_view_audio_menu();
 	_viewer.seek(DCPTime(), true);
 	_viewer.set_eyes(_view_eye_left->IsChecked() ? Eyes::LEFT : Eyes::RIGHT);
 	_info->triggered_update();
