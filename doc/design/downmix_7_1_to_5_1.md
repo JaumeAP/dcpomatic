@@ -22,11 +22,11 @@ Both call the same function, `stereo_downmix_map(film_channels, input_channels)`
 | 6 or 8 (5.1) | L, R | 1/(1 + √2) | 0.414 |
 | 6 or 8 (5.1) | C | 0.707 / (1 + √2) | 0.293 |
 | 6 or 8 (5.1) | Ls, Rs | 0.707 / (1 + √2) | 0.293 |
-| 12 or more (7.1) | L, R | 1/(1 + 3/√2) | 0.320 |
-| 12 or more (7.1) | C | 0.707 × 0.320 | 0.227 |
-| 12 or more (7.1) | Ls, Rs, Lrs, Rrs | 0.707 × 0.320 | 0.227 |
+| 12 or more (7.1) | L, R | same as 5.1 | 0.414 |
+| 12 or more (7.1) | C | same as 5.1 | 0.293 |
+| 12 or more (7.1) | Ls, Rs, Lrs, Rrs | 0.707 × 0.707 / (1 + √2) | 0.207 |
 
-Each output sums to 1.0 (5.1: 0.414 + 0.293 + 0.293; 7.1: 0.320 + 3 × 0.227). LFE is not mapped.
+A 5.1 film sums to 1.0 in each output (0.414 + 0.293 + 0.293). A 7.1 film goes through 5.1 first (section 3.2), so L, R and C have the 5.1 gains and the sum is 1.12 (0.414 + 0.293 + 2 × 0.207), reached only with coherent full-level content in all of them. LFE is not mapped.
 
 ### 2.2 Monitor, 5.1 output
 
@@ -50,13 +50,14 @@ The export has no 5.1 output. A film is exported as stereo (section 2.1) or as 1
 ### 3.1 Stereo: ETSI normalization over Dolby's LoRo
 
 - The stereo equations are the LoRo downmix of ETSI TS 102 366 §6.8.2 [1] and ATSC A/52 §7.8.2 [2]: Lo = L + clev·C + slev·Ls, with clev = slev = 0.707 (−3 dB).
-- The scaling comes from ETSI §6.8.1 [1]: all coefficients into an output are attenuated equally so that their sum does not exceed 1. This prevents overflow when all channels are at full scale. The worst case for L0R0 is 1/2.414 = 0.414 (Table 6.31); for 7.1 the same rule gives 1/3.121 = 0.320.
-- Dolby's LoRo [3] uses the same ratio (L : C : Ls = 1 : 0.707 : 0.707) but no scaling. For 7.1, Dolby's chain is: Lrs and Rrs into Ls and Rs at 0 dB, then LoRo. After the chain, Ls contributes 0.707 and Lrs contributes 0.707. Scaling that chain by the same rule gives L 0.320, C 0.227, Ls 0.227, Lrs 0.227, which is the table above.
-- So the values are Dolby's stereo ratio with ETSI's normalization factor.
+- The scaling comes from ETSI §6.8.1 [1]: all coefficients into an output are attenuated equally so that their sum does not exceed 1. This prevents overflow when all channels are at full scale. The worst case for L0R0 is 1/2.414 = 0.414 (Table 6.31).
+- Dolby's LoRo [3] uses the same ratio (L : C : Ls = 1 : 0.707 : 0.707) but no scaling.
+- For 7.1, Dolby's Atmos Renderer makes stereo by folding 7.1 to 5.1 first and then 5.1 to 2.0 [3, pp. 223-224]. This code does the same, with the 7.1 to 5.1 fold of section 3.2 (Lss and Lrs at 0.707 each into Ls). L, R and C therefore keep exactly the 5.1 gains: a 7.1 film is not louder than a 5.1 one in those channels, and the two surrounds of each side add up to 0.207 + 0.207.
+- The 7.1 stereo output can reach 1.12 with coherent full-level content in all channels. The monitor has the peak limiter; the stereo mixdown export has none yet.
 
 Why LoRo and not Pro Logic: the requirement was basic stereo. Dolby's LoRo is its default stereo option. Lt/Rt and Pro Logic II are matrix-encoded and not what a stereo monitor or a stereo file needs.
 
-Why normalize: Dolby's LoRo has no scaling, so full-scale 5.1 content can reach 2.41 and full-scale 7.1 content 3.12. The normalization keeps the output within 1.0.
+Why normalize: Dolby's LoRo has no scaling, so full-scale 5.1 content can reach 2.41 and full-scale 7.1 content 3.12. The normalization keeps a 5.1 output within 1.0.
 
 ### 3.2 Monitor 5.1 from 7.1: −3 dB on the side and the rear
 
