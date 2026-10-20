@@ -34,12 +34,12 @@ Each output sums to 1.0 (5.1: 0.414 + 0.293 + 0.293; 7.1: 0.320 + 3 × 0.227). L
 |---|---|---|---|
 | Channels 1 to 6 | Outputs 1 to 6 | 1.0 | 1:1 |
 | Channels 7 and 8 (HI, VI) | Outputs 7 and 8, if the device has them | 1.0 | 1:1 |
-| Ls (5) | Ls (output 5) | 0.87 (−1.2 dB) | 7.1 films only |
-| Rs (6) | Rs (output 6) | 0.87 (−1.2 dB) | 7.1 films only |
-| Lrs (11) | Ls (output 5) | 0.49 (−6.2 dB) | |
-| Rrs (12) | Rs (output 6) | 0.49 (−6.2 dB) | |
+| Ls (5) | Ls (output 5) | 0.707 (−3 dB) | 7.1 films only |
+| Rs (6) | Rs (output 6) | 0.707 (−3 dB) | 7.1 films only |
+| Lrs (11) | Ls (output 5) | 0.707 (−3 dB) | |
+| Rrs (12) | Rs (output 6) | 0.707 (−3 dB) | |
 
-Ls and Rs keep 1.0 for films with fewer than 12 channels, so 5.1 sources pass unchanged. For a 7.1 film, the side channel weighs 0.87 and the rear 0.49. Their squares add up to 1.0 (power kept for uncorrelated signals), but the amplitudes add up to 1.36, so the monitor runs a peak limiter (`limit_peaks()` in `util.cc`, called from `Butler::audio`) after the mapping.
+Ls and Rs keep 1.0 for films with fewer than 12 channels, so 5.1 sources pass unchanged. For a 7.1 film, the side and the rear channel of each side go in at 0.707 each, with no cross-feed. The amplitudes add up to 1.41, so the monitor runs a peak limiter (`limit_peaks()` in `util.cc`, called from `Butler::audio`) after the mapping.
 
 ### 2.3 Export, 5.1 or 7.1
 
@@ -58,28 +58,29 @@ Why LoRo and not Pro Logic: the requirement was basic stereo. Dolby's LoRo is it
 
 Why normalize: Dolby's LoRo has no scaling, so full-scale 5.1 content can reach 2.41 and full-scale 7.1 content 3.12. The normalization keeps the output within 1.0.
 
-### 3.2 Monitor 5.1 from 7.1: our own fold, with Pro Logic IIx numbers
+### 3.2 Monitor 5.1 from 7.1: −3 dB on the side and the rear
 
-This is not a standard. It borrows two numbers from Dolby Pro Logic IIx and uses them differently.
+Ls = 0.707·Lss + 0.707·Lrs and Rs = 0.707·Rss + 0.707·Rrs, no cross-feed, for films of 12 or more channels. L, R, C and LFE pass at 1.0.
 
-What the sources say:
+Sources that give the same fold:
 
-- Dolby Standard: Ls = 0 dB·Lss + 0 dB·Lrs, Rs = 0 dB·Rss + 0 dB·Rrs [3, p. 224]. Two full-level channels sum to 2.0 and nothing normalizes it.
-- Dolby Pro Logic IIx: Ls = Lss + (−1.2 dB)·Lrs + (−6.2 dB)·Rrs [3]. That is 100% side, 87% rear of the same side and 49% rear of the opposite side. It is also unnormalized (sum 2.36).
-- ETSI `dmixtyp = 2` (Table H.3.9, pp. 222-223 [1]) has the same −1.2 / −6.2 dB form, but it is encoder metadata, not a decoder rule.
+- ETSI TS 103 190-1 V1.4.1 (AC-4), clause 6.2.17.5, Table 219, p. 272 [8]: the normative decoder matrix for 7 to 5 channels, Ls' = 0.707·Ls + 0.707·Lb, Rs' = 0.707·Rs + 0.707·Rb.
+- ETSI TS 102 366 V1.4.1 Table H.3.9, p. 223 [1], `dmixtyp` = 1: Ls' = −3 dB·Ls + −3 dB·Lrs. This is informational (it says how the encoder made the 5.1 programme), not a decoder rule.
+- Fraunhofer FDK-AAC, `libPCMutils/src/pcmdmx_lib.cpp` [9]: with no metadata, `dmix_a_idx` = `dmix_b_idx` = 2 gives 0.707 for both. Read in the source code, not in ISO/IEC 14496-3.
 
-What this code does:
+Sources that give other values:
 
-| | Side (Lss) | Rear, same side (Lrs) | Rear, opposite side (Rrs) |
+| Source | Lss | Lrs | Rrs (opposite side) |
 |---|---|---|---|
-| Pro Logic IIx | 100% | 87% (−1.2 dB) | 49% (−6.2 dB) |
-| This code | 87% (−1.2 dB) | 49% (−6.2 dB) | 0% |
+| This code, ETSI AC-4, FDK-AAC | 0.707 | 0.707 | 0 |
+| Dolby Standard [3, p. 224] | 1.0 | 1.0 | 0 |
+| Dolby Pro Logic IIx [3, p. 224] | 1.0 | 0.871 (−1.2 dB) | 0.490 (−6.2 dB) |
+| ETSI `dmixtyp` = 2 [1] | 1.0 | 0.871 | 0.490 |
 
-- The numbers 0.87 and 0.49 are the two Pro Logic IIx figures. Their squares add up to 1.0, so the power of uncorrelated signals is kept. Their amplitudes add up to 1.36.
-- The cross-feed is dropped, so the left rear goes only to the left surround and the right rear only to the right surround.
-- Full-level coherent content can still exceed 1.0 (up to 1.36). The monitor runs a peak limiter for that (`limit_peaks()` in `util.cc`, called from `Butler::audio`).
-- The side channel is the one that is lowered (87%), unlike Pro Logic IIx, which keeps it at 100%. The reason: the side is to dominate the rear, and the weights have to be normalized.
-- No source gives this exact fold. It was chosen with the user; the alternatives that were weighed are 100% / 100% (Dolby Standard, overloads), 60% / 40% (amplitude sum 1.0, needs no limiter, about 3 dB lower power) and 71% / 71% (−3 dB each).
+- No cinema or broadcast standard read (SMPTE ST 428-12, ST 2098-2, RDD 57, DCI, ITU-R BS.775, ISDCF Doc 4) defines a 7.1 to 5.1 fold. The DCI text and ARIB STD-B32 were not read in the primary document. See the research reports for the full list of what was and was not read.
+- Dolby's Standard fold sums two full-level channels, which reaches 2.0, and nothing normalizes it.
+- 0.707 + 0.707 reaches 1.41 with coherent full-level content, so the monitor runs a peak limiter. For uncorrelated signals the power is kept.
+- What the Dolby CP650 or other cinema processors do with Lrs/Rrs in a 5.1 auditorium was not found in any retrievable document.
 
 ### 3.3 Why no 7.1 coefficient is in ETSI
 
@@ -105,7 +106,7 @@ Not mapped in either path. ETSI §6.8.2 equations do not include LFE, and §6.8.
 
 ## 5. Open points
 
-1. The 5.1 monitor fold (section 2.2) uses weights 0.87 (side) and 0.49 (rear), which are our choice and not Dolby's. −3 dB (0.707) keeps the power of uncorrelated signals but can reach 1.41.
+1. The 5.1 monitor fold (section 2.2) can reach 1.41 with coherent full-level content; the peak limiter handles it. It differs from Dolby's Standard fold (1.0 + 1.0) and from Pro Logic IIx.
 2. The export has no 7.1 to 5.1 path (section 2.3).
 3. `test/ffmpeg_encoder_test.cc` (mixdown 5.1 to stereo) may compare against stored output. The values changed, so it may fail. Run it on a machine with the build dependencies.
 
@@ -124,3 +125,7 @@ Not mapped in either path. ETSI §6.8.2 equations do not include LFE, and §6.8.
 6. **ISDCF Doc 4**, Audio channel recommendations: channel 11 = Lrs, channel 12 = Rrs (7.1DS). Downloaded; the table was taken from the note in `doc/design/atmos_sync/standards_channel14.md`. <https://files.isdcf.com/papers/ISDCF-Doc4-Audio-channel-recommendations.pdf>
 
 7. **FFmpeg libswresample**: default `center_mix_level` and `surround_mix_level` = M_SQRT1_2. Secondary, from doxygen and search results; the source was not read in full. <https://ffmpeg.org/doxygen/trunk/group__lswr.html>
+
+8. **ETSI TS 103 190-1 V1.4.1 (2018)**, Digital Audio Compression (AC-4), Part 1. Clause 6.2.17.5, Table 219, p. 272: 7 to 5 channel rendering matrix; speaker indices in Table D.1, p. 302. Read from the PDF. <https://www.etsi.org/deliver/etsi_ts/103100_103199/10319001/01.04.01_60/ts_10319001v010401p.pdf>
+
+9. **Fraunhofer FDK AAC**, `libPCMutils/src/pcmdmx_lib.cpp` (tag v2.0.3): level table (lines 276-280), default `dmix_a_idx` = `dmix_b_idx` = 2 (lines 357-358), 7.1 surround-back case (lines 1091-1105). Read in the source. <https://github.com/mstorsjo/fdk-aac>

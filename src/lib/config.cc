@@ -1536,16 +1536,14 @@ Config::audio_mapping(int output_channels, int film_channels)
 				_audio_mapping->set(i, i, 1);
 			}
 			if (output_channels == 6) {
-				/* 5.1 output of a 7.1 DCP: Lrs (11) and Rrs (12) are folded into Ls and Rs as in Dolby's standard
-				   7.1 to 5.1 fold (Atmos Renderer Guide 3.0, pp. 223-224), but Dolby's 0 dB sum can reach 2.0, so
-				   the side channel goes in at 0.87 (-1.2 dB) and the rear at 0.49 (-6.2 dB). These are two numbers borrowed from
-				   Pro Logic IIx, not its fold: no cross-feed, and the side is lowered too.
-				   Their squares add up to 1.0, so the power of uncorrelated signals is kept; Butler's peak limiter
-				   catches the rest.
+				/* 5.1 output of a 7.1 DCP: Lrs (11) and Rrs (12) are folded into Ls and Rs at -3 dB each, together
+				   with the side channel: Ls = 0.707 Lss + 0.707 Lrs. This is the 7 to 5 matrix of ETSI TS 103 190-1
+				   table 219 and the dmixtyp 1 case of ETSI TS 102 366 table H.3.9; FDK-AAC's default is the same.
+				   The amplitudes add up to 1.41, so Butler's peak limiter catches full-level coherent content.
 				   See doc/design/downmix_7_1_to_5_1.md. */
 				bool const seven_one = film_channels > static_cast<int>(dcp::Channel::BSR);
-				float const side = seven_one ? 0.87 : 1;
-				float const rear = seven_one ? 0.49 : 0;
+				float const side = seven_one ? M_SQRT1_2 : 1;
+				float const rear = seven_one ? M_SQRT1_2 : 0;
 				_audio_mapping->set(dcp::Channel::LS,  static_cast<int>(dcp::Channel::LS), side);
 				_audio_mapping->set(dcp::Channel::RS,  static_cast<int>(dcp::Channel::RS), side);
 				_audio_mapping->set(dcp::Channel::BSL, static_cast<int>(dcp::Channel::LS), rear);
