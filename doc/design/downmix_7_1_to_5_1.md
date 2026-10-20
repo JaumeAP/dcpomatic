@@ -58,12 +58,28 @@ Why LoRo and not Pro Logic: the requirement was basic stereo. Dolby's LoRo is it
 
 Why normalize: Dolby's LoRo has no scaling, so full-scale 5.1 content can reach 2.41 and full-scale 7.1 content 3.12. The normalization keeps the output within 1.0.
 
-### 3.2 Monitor 5.1 from 7.1: Dolby Standard at 0 dB
+### 3.2 Monitor 5.1 from 7.1: our own fold, with Pro Logic IIx numbers
 
-- Dolby's Standard 7.1-to-5.1 fold is Ls = 0 dB·Lss + 0 dB·Lrs, Rs = 0 dB·Rss + 0 dB·Rrs [3, p. 224].
-- Dolby's Standard sums two full-level channels, which reaches 2.0. The decision here: side 0.87 and rear 0.49, the numbers of Pro Logic IIx (−1.2 dB and −6.2 dB) used here for same-side channels only, with no cross-feed. Their squares add up to 1.0. A peak limiter handles full-level coherent content. No source gives this exact fold; it is ours.
-- The alternative in the same guide, Pro Logic IIx (Ls = Lss + (−1.2 dB)·Lrs + (−6.2 dB)·Rrs) [3], was not chosen because it is not basic 5.1 and because it does not match the cinema decision.
-- The ETSI option `dmixtyp = 2` (Table H.3.9, pp. 222-223 [1]) has the same −1.2 / −6.2 dB form, but it is encoder metadata, not a decoder rule.
+This is not a standard. It borrows two numbers from Dolby Pro Logic IIx and uses them differently.
+
+What the sources say:
+
+- Dolby Standard: Ls = 0 dB·Lss + 0 dB·Lrs, Rs = 0 dB·Rss + 0 dB·Rrs [3, p. 224]. Two full-level channels sum to 2.0 and nothing normalizes it.
+- Dolby Pro Logic IIx: Ls = Lss + (−1.2 dB)·Lrs + (−6.2 dB)·Rrs [3]. That is 100% side, 87% rear of the same side and 49% rear of the opposite side. It is also unnormalized (sum 2.36).
+- ETSI `dmixtyp = 2` (Table H.3.9, pp. 222-223 [1]) has the same −1.2 / −6.2 dB form, but it is encoder metadata, not a decoder rule.
+
+What this code does:
+
+| | Side (Lss) | Rear, same side (Lrs) | Rear, opposite side (Rrs) |
+|---|---|---|---|
+| Pro Logic IIx | 100% | 87% (−1.2 dB) | 49% (−6.2 dB) |
+| This code | 87% (−1.2 dB) | 49% (−6.2 dB) | 0% |
+
+- The numbers 0.87 and 0.49 are the two Pro Logic IIx figures. Their squares add up to 1.0, so the power of uncorrelated signals is kept. Their amplitudes add up to 1.36.
+- The cross-feed is dropped, so the left rear goes only to the left surround and the right rear only to the right surround.
+- Full-level coherent content can still exceed 1.0 (up to 1.36). The monitor runs a peak limiter for that (`limit_peaks()` in `util.cc`, called from `Butler::audio`).
+- The side channel is the one that is lowered (87%), unlike Pro Logic IIx, which keeps it at 100%. The reason: the side is to dominate the rear, and the weights have to be normalized.
+- No source gives this exact fold. It was chosen with the user; the alternatives that were weighed are 100% / 100% (Dolby Standard, overloads), 60% / 40% (amplitude sum 1.0, needs no limiter, about 3 dB lower power) and 71% / 71% (−3 dB each).
 
 ### 3.3 Why no 7.1 coefficient is in ETSI
 
