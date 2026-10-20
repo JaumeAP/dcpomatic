@@ -1542,7 +1542,7 @@ Config::audio_mapping(int output_channels, int film_channels)
 				   See doc/design/downmix_7_1_to_5_1.md. */
 				bool const seven_one = film_channels > static_cast<int>(dcp::Channel::BSR);
 				float const side = seven_one ? 0.6 : 1;
-				float const rear = 0.4;
+				float const rear = seven_one ? 0.4 : 0;
 				_audio_mapping->set(dcp::Channel::LS,  static_cast<int>(dcp::Channel::LS), side);
 				_audio_mapping->set(dcp::Channel::RS,  static_cast<int>(dcp::Channel::RS), side);
 				_audio_mapping->set(dcp::Channel::BSL, static_cast<int>(dcp::Channel::LS), rear);
