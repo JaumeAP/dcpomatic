@@ -329,20 +329,19 @@ stereo_downmix_map(int film_channels, int input_channels)
 		}
 		break;
 	default:
-		/* ETSI TS 102 366 6.8.1 normalization: the coefficients into each output sum to at most 1.
-		   5.1: L + C(0.707) + Ls(0.707) -> 1 / (1 + sqrt(2)).
-		   7.1 goes through 5.1 first, as in Dolby's Atmos Renderer Guide 3.0 (pp. 223-224): Lss and Lrs enter
-		   Ls at 0.707 each (the same fold as Config::audio_mapping), then the 5.1 rule applies. So L, R and C
+		/* 5.1 as the stereo mixdown export has always done it: L, R, Ls and Rs at 2 / (4 + sqrt(2)), C at -3 dB
+		   of that. 7.1 goes through 5.1 first, as in Dolby's Atmos Renderer Guide 3.0 (pp. 223-224): Lss and Lrs
+		   enter Ls at 0.707 each (the same fold as Config::audio_mapping), then the 5.1 rule applies. So L, R and C
 		   have exactly the 5.1 gains, and a 7.1 film is not louder than a 5.1 one in those channels.
 		*/
 		{
 			bool const seven_one = film_channels > static_cast<int>(dcp::Channel::BSR);
-			float const gain = 1 / (1 + sqrt(2));
-			float const surround = gain * minus_3dB * (seven_one ? minus_3dB : 1);
-			map.set(dcp::Channel::LEFT,   0, gain);
-			map.set(dcp::Channel::RIGHT,  1, gain);
-			map.set(dcp::Channel::CENTRE, 0, gain * minus_3dB);
-			map.set(dcp::Channel::CENTRE, 1, gain * minus_3dB);
+			float const overall_gain = 2 / (4 + sqrt(2));
+			float const surround = overall_gain * (seven_one ? minus_3dB : 1);
+			map.set(dcp::Channel::LEFT,   0, overall_gain);
+			map.set(dcp::Channel::RIGHT,  1, overall_gain);
+			map.set(dcp::Channel::CENTRE, 0, overall_gain * minus_3dB);
+			map.set(dcp::Channel::CENTRE, 1, overall_gain * minus_3dB);
 			map.set(dcp::Channel::LS,     0, surround);
 			map.set(dcp::Channel::RS,     1, surround);
 			if (seven_one) {

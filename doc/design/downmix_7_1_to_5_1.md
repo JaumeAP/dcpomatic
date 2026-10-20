@@ -19,14 +19,13 @@ Both call the same function, `stereo_downmix_map(film_channels, input_channels)`
 |---|---|---|---|
 | 2 | L, R | identity | 1.0 |
 | 4 | L, R, C, Ls | unchanged from before (not in any source) | L, R 0.369; C 0.261; Ls 0.369 |
-| 6 or 8 (5.1) | L, R | 1/(1 + √2) | 0.414 |
-| 6 or 8 (5.1) | C | 0.707 / (1 + √2) | 0.293 |
-| 6 or 8 (5.1) | Ls, Rs | 0.707 / (1 + √2) | 0.293 |
-| 12 or more (7.1) | L, R | same as 5.1 | 0.414 |
-| 12 or more (7.1) | C | same as 5.1 | 0.293 |
-| 12 or more (7.1) | Ls, Rs, Lrs, Rrs | 0.707 × 0.707 / (1 + √2) | 0.207 |
+| 6 or 8 (5.1) | L, R, Ls, Rs | 2 / (4 + √2) | 0.369 |
+| 6 or 8 (5.1) | C | 0.707 × 0.369 | 0.261 |
+| 12 or more (7.1) | L, R | same as 5.1 | 0.369 |
+| 12 or more (7.1) | C | same as 5.1 | 0.261 |
+| 12 or more (7.1) | Ls, Rs, Lrs, Rrs | 0.707 × 0.369 | 0.261 |
 
-A 5.1 film sums to 1.0 in each output (0.414 + 0.293 + 0.293). A 7.1 film goes through 5.1 first (section 3.2), so L, R and C have the 5.1 gains and the sum is 1.12 (0.414 + 0.293 + 2 × 0.207), reached only with coherent full-level content in all of them. LFE is not mapped.
+A 5.1 film sums to 1.0 in each output (0.369 + 0.261 + 0.369). A 7.1 film goes through 5.1 first (section 3.2), so L, R and C have the 5.1 gains and the sum is 1.15 (0.369 + 3 × 0.261), reached only with coherent full-level content in all of them. LFE is not mapped.
 
 ### 2.2 Monitor, 5.1 output
 
@@ -47,17 +46,15 @@ The export has no 5.1 output. A film is exported as stereo (section 2.1) or as 1
 
 ## 3. Origin and reasons
 
-### 3.1 Stereo: ETSI normalization over Dolby's LoRo
+### 3.1 Stereo: the rule the export already had
 
-- The stereo equations are the LoRo downmix of ETSI TS 102 366 §6.8.2 [1] and ATSC A/52 §7.8.2 [2]: Lo = L + clev·C + slev·Ls, with clev = slev = 0.707 (−3 dB).
-- The scaling comes from ETSI §6.8.1 [1]: all coefficients into an output are attenuated equally so that their sum does not exceed 1. This prevents overflow when all channels are at full scale. The worst case for L0R0 is 1/2.414 = 0.414 (Table 6.31).
-- Dolby's LoRo [3] uses the same ratio (L : C : Ls = 1 : 0.707 : 0.707) but no scaling.
-- For 7.1, Dolby's Atmos Renderer makes stereo by folding 7.1 to 5.1 first and then 5.1 to 2.0 [3, pp. 223-224]. This code does the same, with the 7.1 to 5.1 fold of section 3.2 (Lss and Lrs at 0.707 each into Ls). L, R and C therefore keep exactly the 5.1 gains: a 7.1 film is not louder than a 5.1 one in those channels, and the two surrounds of each side add up to 0.207 + 0.207.
-- The 7.1 stereo output can reach 1.12 with coherent full-level content in all channels. The monitor has the peak limiter; the stereo mixdown export has none yet.
+- 5.1 to stereo is the rule the stereo mixdown export used before this change (`FFmpegFilmEncoder::stereo_map()`), unchanged: Lo = g·(L + 0.707·C + Ls), g = 2 / (4 + √2) = 0.369. The coefficients into each output add up to 1.0, so full-scale 5.1 content cannot overflow.
+- It has the shape of the LoRo downmix of ETSI TS 102 366 §6.8.2 [1] and ATSC A/52 §7.8.2 [2] (C at −3 dB), but the surround enters at the same level as L, not at −3 dB. That part is the old behaviour; it is not in any source read here, and it was kept so that existing 5.1 mixdowns do not change (`ffmpeg_encoder_h264_test5` compares against a stored file).
+- Dolby's LoRo [3] uses L : C : Ls = 1 : 0.707 : 0.707 with no scaling. ITU-R BS.775-4 [5] has L′ = L + 0.7071·C + 0.7071·LS, also unscaled.
+- For 7.1, Dolby's Atmos Renderer makes stereo by folding 7.1 to 5.1 first and then 5.1 to 2.0 [3, pp. 223-224]. This code does the same, with the 7.1 to 5.1 fold of section 3.2 (Lss and Lrs at 0.707 each into Ls). L, R and C therefore keep exactly the 5.1 gains: a 7.1 film is not louder than a 5.1 one in those channels. Each of the four surrounds enters at 0.707 × 0.369 = 0.261.
+- The 7.1 stereo output can reach 1.15 with coherent full-level content in all channels. The monitor has the peak limiter; the stereo mixdown export has none yet.
 
 Why LoRo and not Pro Logic: the requirement was basic stereo. Dolby's LoRo is its default stereo option. Lt/Rt and Pro Logic II are matrix-encoded and not what a stereo monitor or a stereo file needs.
-
-Why normalize: Dolby's LoRo has no scaling, so full-scale 5.1 content can reach 2.41 and full-scale 7.1 content 3.12. The normalization keeps a 5.1 output within 1.0.
 
 ### 3.2 Monitor 5.1 from 7.1: −3 dB on the side and the rear
 
@@ -103,13 +100,12 @@ Not mapped in either path. ETSI §6.8.2 equations do not include LFE, and §6.8.
 4. The preferences page calls `audio_mapping(channels)` with no film, so it shows the 16-channel (7.1) stereo default.
 5. "Reset to default" calls `audio_mapping(channels)` with 16 channels, so it restores the 7.1 stereo default. The Player then regenerates the default for the actual film on the next call.
 6. The Atmos guide [3] is version 3.0 (2018). Later Renderer versions may differ.
-7. ATSC A/52 §7.8.2 [2] says "scaled (by 0.453)" for LoRo, but its own table gives 0.4143. The table value is used.
 
 ## 5. Open points
 
 1. The 5.1 monitor fold (section 2.2) can reach 1.41 with coherent full-level content; the peak limiter handles it. It differs from Dolby's Standard fold (1.0 + 1.0) and from Pro Logic IIx.
 2. The export has no 7.1 to 5.1 path (section 2.3).
-3. `test/ffmpeg_encoder_test.cc` (mixdown 5.1 to stereo) may compare against stored output. The values changed, so it may fail. Run it on a machine with the build dependencies.
+3. `test/ffmpeg_encoder_test.cc` (mixdown 5.1 to stereo) compares against stored output. With the export rule unchanged for 5.1, `ffmpeg_encoder_h264_test5` and `_test8` pass. The monitor's stereo default changed (it now uses the export's rule), and no test covers it.
 
 ## 6. References
 
@@ -123,7 +119,7 @@ Not mapped in either path. ETSI §6.8.2 equations do not include LFE, and §6.8.
 
 5. **ITU-R BS.775-4 (12/2022)**, Annex 4, Table 2: 3/2 to 2/0, L′ = L + 0.7071·C + 0.7071·LS, no normalization, no LFE. Read from the PDF. <https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.775-4-202212-I!!PDF-E.pdf>
 
-6. **ISDCF Doc 4**, Audio channel recommendations: channel 11 = Lrs, channel 12 = Rrs (7.1DS). Downloaded; the table was taken from the note in `doc/design/atmos_sync/standards_channel14.md`. <https://files.isdcf.com/papers/ISDCF-Doc4-Audio-channel-recommendations.pdf>
+6. **ISDCF Doc 4**, Audio channel recommendations: channel 11 = Lrs, channel 12 = Rrs (7.1DS). Channel numbers as listed in that document. <https://files.isdcf.com/papers/ISDCF-Doc4-Audio-channel-recommendations.pdf>
 
 7. **FFmpeg libswresample**: default `center_mix_level` and `surround_mix_level` = M_SQRT1_2. Secondary, from doxygen and search results; the source was not read in full. <https://ffmpeg.org/doxygen/trunk/group__lswr.html>
 
