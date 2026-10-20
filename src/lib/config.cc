@@ -1536,12 +1536,15 @@ Config::audio_mapping(int output_channels, int film_channels)
 				_audio_mapping->set(i, i, 1);
 			}
 			if (output_channels == 6) {
-				/* 5.1 output of a 7.1 DCP: Lrs (11) and Rrs (12) are added to Ls and Rs at 0 dB, as Dolby's
-				   standard 7.1 to 5.1 fold (Atmos Renderer Guide 3.0, pp. 223-224). Cinema: no attenuation.
-				   shortcut: 7.1 content at full level overloads Ls/Rs (sum 2.0).
+				/* 5.1 output of a 7.1 DCP: Lrs (11) and Rrs (12) are folded into Ls and Rs as in Dolby's standard
+				   7.1 to 5.1 fold (Atmos Renderer Guide 3.0, pp. 223-224), but Dolby's 0 dB sum can reach 2.0, so each
+				   of the two inputs gets -6 dB (an average), and the sum stays within 1.0.
 				   See doc/design/downmix_7_1_to_5_1.md. */
-				_audio_mapping->set(dcp::Channel::BSL, static_cast<int>(dcp::Channel::LS), 1);
-				_audio_mapping->set(dcp::Channel::BSR, static_cast<int>(dcp::Channel::RS), 1);
+				float const gain = film_channels > static_cast<int>(dcp::Channel::BSR) ? 0.5 : 1;
+				_audio_mapping->set(dcp::Channel::LS,  static_cast<int>(dcp::Channel::LS), gain);
+				_audio_mapping->set(dcp::Channel::RS,  static_cast<int>(dcp::Channel::RS), gain);
+				_audio_mapping->set(dcp::Channel::BSL, static_cast<int>(dcp::Channel::LS), gain);
+				_audio_mapping->set(dcp::Channel::BSR, static_cast<int>(dcp::Channel::RS), gain);
 			}
 		}
 	}
