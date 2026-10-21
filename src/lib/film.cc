@@ -471,6 +471,9 @@ Film::metadata(bool with_content_paths) const
 	if (_studio) {
 		cxml::add_text_child(root, "Studio", *_studio);
 	}
+	if (_full_content_title_text) {
+		cxml::add_text_child(root, "FullContentTitleText", *_full_content_title_text);
+	}
 	cxml::add_text_child(root, "TempVersion", _temp_version ? "1" : "0");
 	cxml::add_text_child(root, "PreRelease", _pre_release ? "1" : "0");
 	cxml::add_text_child(root, "RedBand", _red_band ? "1" : "0");
@@ -702,6 +705,7 @@ Film::read_metadata(optional<boost::filesystem::path> path)
 	_pre_release = f.optional_bool_child("PreRelease").get_value_or(false);
 	_red_band = f.optional_bool_child("RedBand").get_value_or(false);
 	_two_d_version_of_three_d = f.optional_bool_child("TwoDVersionOfThreeD").get_value_or(false);
+	_full_content_title_text = f.optional_string_child("FullContentTitleText");
 
 	auto value = f.optional_number_child<float>("LuminanceValue");
 	auto unit = f.optional_string_child("LuminanceUnit");
@@ -931,7 +935,7 @@ Film::closed_text_languages(bool* caption) const
 
 /** @return a ISDCF-compliant name for a DCP of this film */
 string
-Film::isdcf_name(bool if_created_now) const
+Film::isdcf_name(bool if_created_now, bool multiple_open_text_languages) const
 {
 	string isdcf_name;
 
@@ -1069,15 +1073,25 @@ Film::isdcf_name(bool if_created_now) const
 	bool closed_caption = false;
 	auto const closed_langs = closed_text_languages(&closed_caption);
 
-	if (open_langs.first && open_langs.first->language()) {
-		auto lang = entry_for_language(*open_langs.first);
+	auto entry_for_open_language = [&entry_for_language, &to_upper](dcp::LanguageTag const& tag, bool burnt_in) {
+		auto lang = entry_for_language(tag);
 		if (burnt_in) {
 			transform(lang.begin(), lang.end(), lang.begin(), ::tolower);
 		} else {
 			lang = to_upper(lang);
 		}
+		return lang;
+	};
 
-		isdcf_name += "-" + lang;
+	if (open_langs.first && open_langs.first->language()) {
+		isdcf_name += "-" + entry_for_open_language(*open_langs.first, burnt_in);
+		if (multiple_open_text_languages) {
+			for (auto const& lang: open_langs.second) {
+				if (lang.language()) {
+					isdcf_name += "-" + entry_for_open_language(lang, burnt_in);
+				}
+			}
+		}
 		if (open_caption) {
 			isdcf_name += "-OCAP";
 		}
@@ -1165,11 +1179,11 @@ Film::isdcf_name(bool if_created_now) const
 
 /** @return name to give the DCP */
 string
-Film::dcp_name(bool if_created_now) const
+Film::dcp_name(bool if_created_now, bool multiple_open_text_languages) const
 {
 	string unfiltered;
 	if (use_isdcf_name()) {
-		return careful_string_filter(isdcf_name(if_created_now));
+		return careful_string_filter(isdcf_name(if_created_now, multiple_open_text_languages));
 	}
 
 	return careful_string_filter(name());
@@ -1918,7 +1932,12 @@ Film::active_area() const
 	dcp::Size active;
 
 	for (auto i: content()) {
-		if (i->video) {
+		auto dcp = dynamic_pointer_cast<DCPContent>(i);
+		if (dcp && dcp->main_picture_active_area()) {
+			auto area = dcp->main_picture_active_area();
+			active.width = max(active.width, area->width);
+			active.height = max(active.height, area->height);
+		} else if (i->video) {
 			if (auto s = i->video->scaled_size(frame)) {
 				active.width = max(active.width, s->width);
 				active.height = max(active.height, s->height);
@@ -2282,30 +2301,31 @@ Film::copy_from(shared_ptr<const Film> film, std::function<void (float)> set_pro
 }
 
 
-bool
-Film::references_dcp_video() const
+vector<shared_ptr<DCPContent>>
+Film::dcp_video_references() const
 {
-	for (auto i: _playlist->content()) {
-		auto d = dynamic_pointer_cast<DCPContent>(i);
-		if (d && d->reference_video()) {
-			return true;
+	vector<shared_ptr<DCPContent>> references;
+	for (auto content: _playlist->content()) {
+		auto dcp = dynamic_pointer_cast<DCPContent>(content);
+		if (dcp && dcp->reference_video()) {
+			references.push_back(dcp);
 		}
 	}
-
-	return false;
+	return references;
 }
 
-bool
-Film::references_dcp_audio() const
+
+vector<shared_ptr<DCPContent>>
+Film::dcp_audio_references() const
 {
-	for (auto i: _playlist->content()) {
-		auto d = dynamic_pointer_cast<DCPContent>(i);
-		if (d && d->reference_audio()) {
-			return true;
+	vector<shared_ptr<DCPContent>> references;
+	for (auto content: _playlist->content()) {
+		auto dcp = dynamic_pointer_cast<DCPContent>(content);
+		if (dcp && dcp->reference_audio()) {
+			references.push_back(dcp);
 		}
 	}
-
-	return false;
+	return references;
 }
 
 
@@ -2418,6 +2438,14 @@ Film::set_distributor(optional<string> d)
 {
 	FilmChangeSignaller ch(this, FilmProperty::DISTRIBUTOR);
 	_distributor = d;
+}
+
+
+void
+Film::set_full_content_title_text(optional<string> t)
+{
+	FilmChangeSignaller ch(this, FilmProperty::FULL_CONTENT_TITLE_TEXT);
+	_full_content_title_text = t;
 }
 
 

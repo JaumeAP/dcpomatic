@@ -46,24 +46,26 @@ using namespace boost::placeholders;
 
 
 static string
-content_versions_column (string v, int)
+content_versions_column(string v, int)
 {
 	return v;
 }
 
 
 void
-SMPTEMetadataDialog::setup_standard (wxPanel* panel, wxSizer* sizer)
+SMPTEMetadataDialog::setup_standard(wxPanel* panel, wxSizer* sizer)
 {
-	MetadataDialog::setup_standard (panel, sizer);
+	MetadataDialog::setup_standard(panel, sizer);
 
-	add_label_to_sizer (sizer, panel, _("Title language"), true, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL);
-	_name_language = new LanguageTagWidget(
-		panel,
-		wxString::Format(_("The language that the film's title (\"%s\") is in"), std_to_wx(film()->name())),
-		film()->name_language()
-		);
-	sizer->Add (_name_language->sizer(), 0, wxEXPAND);
+	add_label_to_sizer(sizer, panel, _("Full content title text"), true, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL);
+	_full_content_title_text = new wxTextCtrl(panel, wxID_ANY);
+	_full_content_title_text->SetToolTip(_("Full human-readable title, appropriate for the release territory and without technical or versioning information.  A display hint to the user."));
+	sizer->Add(_full_content_title_text, 1, wxEXPAND);
+
+	add_label_to_sizer(sizer, panel, _("Title language"), true, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL);
+	_name_language = new LanguageTagWidget(panel, wxString{}, film()->name_language());
+	set_name_language_tooltip();
+	sizer->Add(_name_language->sizer(), 0, wxEXPAND);
 
 	{
 		int flags = wxALIGN_TOP | wxRIGHT | wxTOP;
@@ -73,44 +75,44 @@ SMPTEMetadataDialog::setup_standard (wxPanel* panel, wxSizer* sizer)
 		/// TRANSLATORS: this is a button which opens a dialog box in which you can
 		/// edit the project's ratings (i.e. the legal/advisory limits on what age
 		/// groups can watch the film).
-		auto m = create_label (panel, _("Ratings"), true);
-		sizer->Add (m, 0, flags, DCPOMATIC_SIZER_GAP);
+		auto m = create_label(panel, _("Ratings"), true);
+		sizer->Add(m, 0, flags, DCPOMATIC_SIZER_GAP);
 	}
 
-	sizer->Add (_ratings, 1, wxEXPAND);
+	sizer->Add(_ratings, 1, wxEXPAND);
 }
 
 
 void
-SMPTEMetadataDialog::setup_advanced (wxPanel* panel, wxSizer* sizer)
+SMPTEMetadataDialog::setup_advanced(wxPanel* panel, wxSizer* sizer)
 {
-	MetadataDialog::setup_advanced (panel, sizer);
+	MetadataDialog::setup_advanced(panel, sizer);
 
-	add_label_to_sizer (sizer, panel, _("Version number"), true, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL);
-	_version_number = new wxSpinCtrl (panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 1, 1000);
-	sizer->Add (_version_number, 0);
+	add_label_to_sizer(sizer, panel, _("Version number"), true, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL);
+	_version_number = new wxSpinCtrl(panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 1, 1000);
+	sizer->Add(_version_number, 0);
 
-	add_label_to_sizer (sizer, panel, _("Status"), true, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL);
-	_status = new wxChoice (panel, wxID_ANY);
-	sizer->Add (_status, 0);
+	add_label_to_sizer(sizer, panel, _("Status"), true, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL);
+	_status = new wxChoice(panel, wxID_ANY);
+	sizer->Add(_status, 0);
 
 	_enable_distributor = new CheckBox(panel, _("Distributor"));
-	sizer->Add (_enable_distributor, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL);
-	_distributor = new wxTextCtrl (panel, wxID_ANY);
-	sizer->Add (_distributor, 1, wxEXPAND);
+	sizer->Add(_enable_distributor, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL);
+	_distributor = new wxTextCtrl(panel, wxID_ANY);
+	sizer->Add(_distributor, 1, wxEXPAND);
 
 	{
 		int flags = wxALIGN_TOP | wxRIGHT | wxTOP;
 #ifdef __WXOSX__
 		flags |= wxALIGN_RIGHT;
 #endif
-		auto m = create_label (panel, _("Content versions"), true);
-		sizer->Add (m, 0, flags, DCPOMATIC_SIZER_GAP);
+		auto m = create_label(panel, _("Content versions"), true);
+		sizer->Add(m, 0, flags, DCPOMATIC_SIZER_GAP);
 	}
 
 	vector<EditableListColumn> columns;
 	columns.push_back(EditableListColumn(_("Version"), 350, true));
-	_content_versions = new EditableList<string> (
+	_content_versions = new EditableList<string>(
 		panel,
 		columns,
 		boost::bind(&SMPTEMetadataDialog::content_versions, this),
@@ -121,106 +123,122 @@ SMPTEMetadataDialog::setup_advanced (wxPanel* panel, wxSizer* sizer)
 		EditableListTitle::INVISIBLE,
 		EditableListButton::NEW | EditableListButton::REMOVE
 		);
-	sizer->Add (_content_versions, 1, wxEXPAND);
+	sizer->Add(_content_versions, 1, wxEXPAND);
 }
 
 
-SMPTEMetadataDialog::SMPTEMetadataDialog (wxWindow* parent, weak_ptr<Film> weak_film)
-	: MetadataDialog (parent, weak_film)
+SMPTEMetadataDialog::SMPTEMetadataDialog(wxWindow* parent, weak_ptr<Film> weak_film)
+	: MetadataDialog(parent, weak_film)
 {
 
 }
 
 
 void
-SMPTEMetadataDialog::setup ()
+SMPTEMetadataDialog::setup()
 {
-	MetadataDialog::setup ();
+	MetadataDialog::setup();
 
-	_status->Append (_("Temporary"));
-	_status->Append (_("Pre-release"));
-	_status->Append (_("Final"));
+	_status->Append(_("Temporary"));
+	_status->Append(_("Pre-release"));
+	_status->Append(_("Final"));
 
-	_name_language->Changed.connect (boost::bind(&SMPTEMetadataDialog::name_language_changed, this, _1));
-	_version_number->Bind (wxEVT_SPINCTRL, boost::bind(&SMPTEMetadataDialog::version_number_changed, this));
-	_status->Bind (wxEVT_CHOICE, boost::bind(&SMPTEMetadataDialog::status_changed, this));
+	_name_language->Changed.connect(boost::bind(&SMPTEMetadataDialog::name_language_changed, this, _1));
+	_version_number->Bind(wxEVT_SPINCTRL, boost::bind(&SMPTEMetadataDialog::version_number_changed, this));
+	_status->Bind(wxEVT_CHOICE, boost::bind(&SMPTEMetadataDialog::status_changed, this));
 	_enable_distributor->bind(&SMPTEMetadataDialog::enable_distributor_changed, this);
-	_distributor->Bind (wxEVT_TEXT, boost::bind(&SMPTEMetadataDialog::distributor_changed, this));
+	_distributor->Bind(wxEVT_TEXT, boost::bind(&SMPTEMetadataDialog::distributor_changed, this));
+	_full_content_title_text->Bind(wxEVT_TEXT, boost::bind(&SMPTEMetadataDialog::full_content_title_text_changed, this));
 
+	film_changed(ChangeType::DONE, FilmProperty::NAME);
 	film_changed(ChangeType::DONE, FilmProperty::NAME_LANGUAGE);
 	film_changed(ChangeType::DONE, FilmProperty::VERSION_NUMBER);
 	film_changed(ChangeType::DONE, FilmProperty::STATUS);
 	film_changed(ChangeType::DONE, FilmProperty::DISTRIBUTOR);
 	film_changed(ChangeType::DONE, FilmProperty::CONTENT_VERSIONS);
+	film_changed(ChangeType::DONE, FilmProperty::FULL_CONTENT_TITLE_TEXT);
 
-	setup_sensitivity ();
+	setup_sensitivity();
 }
 
 
 void
 SMPTEMetadataDialog::film_changed(ChangeType type, FilmProperty property)
 {
-	MetadataDialog::film_changed (type, property);
+	MetadataDialog::film_changed(type, property);
 
 	if (type != ChangeType::DONE || film()->interop()) {
 		return;
 	}
 
-	if (property == FilmProperty::NAME_LANGUAGE) {
-		_name_language->set (film()->name_language());
+	if (property == FilmProperty::NAME) {
+		set_full_content_title_text_hint();
+		set_name_language_tooltip();
+	} else if (property == FilmProperty::FULL_CONTENT_TITLE_TEXT) {
+		checked_set(_full_content_title_text, film()->full_content_title_text().get_value_or(""));
+		set_name_language_tooltip();
+	} else if (property == FilmProperty::NAME_LANGUAGE) {
+		_name_language->set(film()->name_language());
 	} else if (property == FilmProperty::VERSION_NUMBER) {
-		checked_set (_version_number, film()->version_number());
+		checked_set(_version_number, film()->version_number());
 	} else if (property == FilmProperty::STATUS) {
 		switch (film()->status()) {
 		case dcp::Status::TEMP:
-			checked_set (_status, 0);
+			checked_set(_status, 0);
 			break;
 		case dcp::Status::PRE:
-			checked_set (_status, 1);
+			checked_set(_status, 1);
 			break;
 		case dcp::Status::FINAL:
-			checked_set (_status, 2);
+			checked_set(_status, 2);
 			break;
 		}
 	} else if (property == FilmProperty::DISTRIBUTOR) {
-		checked_set (_enable_distributor, static_cast<bool>(film()->distributor()));
+		checked_set(_enable_distributor, static_cast<bool>(film()->distributor()));
 		if (film()->distributor()) {
-			checked_set (_distributor, *film()->distributor());
+			checked_set(_distributor, *film()->distributor());
 		}
 	}
 }
 
 
+void
+SMPTEMetadataDialog::set_full_content_title_text_hint()
+{
+	_full_content_title_text->SetHint(std_to_wx(film()->name()));
+}
+
+
 vector<string>
-SMPTEMetadataDialog::content_versions () const
+SMPTEMetadataDialog::content_versions() const
 {
-	return film()->content_versions ();
+	return film()->content_versions();
 }
 
 
 void
-SMPTEMetadataDialog::set_content_versions (vector<string> cv)
+SMPTEMetadataDialog::set_content_versions(vector<string> cv)
 {
-	film()->set_content_versions (cv);
+	film()->set_content_versions(cv);
 }
 
 
 void
-SMPTEMetadataDialog::name_language_changed (dcp::LanguageTag tag)
+SMPTEMetadataDialog::name_language_changed(dcp::LanguageTag tag)
 {
-	film()->set_name_language (tag);
+	film()->set_name_language(tag);
 }
 
 
 void
-SMPTEMetadataDialog::version_number_changed ()
+SMPTEMetadataDialog::version_number_changed()
 {
-	film()->set_version_number (_version_number->GetValue());
+	film()->set_version_number(_version_number->GetValue());
 }
 
 
 void
-SMPTEMetadataDialog::status_changed ()
+SMPTEMetadataDialog::status_changed()
 {
 	switch (_status->GetSelection()) {
 	case 0:
@@ -237,30 +255,52 @@ SMPTEMetadataDialog::status_changed ()
 
 
 void
-SMPTEMetadataDialog::distributor_changed ()
+SMPTEMetadataDialog::distributor_changed()
 {
-	film()->set_distributor (wx_to_std(_distributor->GetValue()));
+	film()->set_distributor(wx_to_std(_distributor->GetValue()));
 }
 
 
 void
-SMPTEMetadataDialog::setup_sensitivity ()
+SMPTEMetadataDialog::full_content_title_text_changed()
 {
-	MetadataDialog::setup_sensitivity ();
-
-	_distributor->Enable (_enable_distributor->GetValue());
-}
-
-
-void
-SMPTEMetadataDialog::enable_distributor_changed ()
-{
-	setup_sensitivity ();
-	if (_enable_distributor->GetValue()) {
-		film()->set_distributor (wx_to_std(_distributor->GetValue()));
+	auto const value = wx_to_std(_full_content_title_text->GetValue());
+	if (value.empty()) {
+		film()->set_full_content_title_text();
 	} else {
-		film()->set_distributor ();
+		film()->set_full_content_title_text(value);
 	}
 }
 
 
+void
+SMPTEMetadataDialog::setup_sensitivity()
+{
+	MetadataDialog::setup_sensitivity();
+
+	_distributor->Enable(_enable_distributor->GetValue());
+}
+
+
+void
+SMPTEMetadataDialog::enable_distributor_changed()
+{
+	setup_sensitivity();
+	if (_enable_distributor->GetValue()) {
+		film()->set_distributor(wx_to_std(_distributor->GetValue()));
+	} else {
+		film()->set_distributor();
+	}
+}
+
+
+void
+SMPTEMetadataDialog::set_name_language_tooltip()
+{
+	_name_language->set_tooltip(
+		wxString::Format(
+			_("The language that the film's title (\"%s\") is in"),
+			std_to_wx(film()->full_content_title_text().get_value_or(film()->name()))
+		)
+	);
+}

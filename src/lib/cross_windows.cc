@@ -50,6 +50,7 @@ extern "C" {
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <fcntl.h>
+#include <algorithm>
 #include <fstream>
 #include <map>
 
@@ -473,19 +474,22 @@ typedef map<int, vector<boost::filesystem::path>> MountPoints;
 static void
 add_volume_mount_points(wchar_t* volume, MountPoints& mount_points)
 {
-	LOG_DISK("Looking at {}", wchar_to_utf8(volume));
+	LOG_DISK("add_volume_mount_points for {}", wchar_to_utf8(volume));
 
 	wchar_t volume_path_names[512];
-	vector<boost::filesystem::path> mp;
+	vector<boost::filesystem::path> volume_mount_points;
 	DWORD returned;
 	if (GetVolumePathNamesForVolumeNameW(volume, volume_path_names, sizeof(volume_path_names) / sizeof(wchar_t), &returned)) {
 		wchar_t* p = volume_path_names;
 		while (*p != L'\0') {
-			mp.push_back(wchar_to_utf8(p));
-			LOG_DISK("Found mount point {}", wchar_to_utf8(p));
+			auto const p_utf8 = wchar_to_utf8(p);
+			volume_mount_points.push_back(p_utf8);
+			LOG_DISK("Found mount point {}", p_utf8);
 			p += wcslen(p) + 1;
 		}
 	}
+
+	LOG_DISK("Found {} mount points for {}", volume_mount_points.size(), wchar_to_utf8(volume));
 
 	/* Strip trailing \ */
 	size_t const len = wcslen(volume);
@@ -505,11 +509,18 @@ add_volume_mount_points(wchar_t* volume, MountPoints& mount_points)
 	BOOL r = DeviceIoControl(handle, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, 0, 0, &extents, sizeof(extents), &size, 0);
 	CloseHandle(handle);
 	if (!r) {
+		LOG_DISK("DeviceIoControl returned {}.", r);
 		return;
 	}
 	DCPOMATIC_ASSERT(extents.NumberOfDiskExtents == 1);
 
-	mount_points[extents.Extents[0].DiskNumber] = mp;
+	auto iter = mount_points.find(extents.Extents[0].DiskNumber);
+	if (iter == mount_points.end()) {
+		mount_points[extents.Extents[0].DiskNumber] = volume_mount_points;
+	} else {
+		auto& mp = mount_points[extents.Extents[0].DiskNumber];
+		mp.insert(mp.end(), volume_mount_points.begin(), volume_mount_points.end());
+	}
 }
 
 
@@ -533,6 +544,12 @@ find_mount_points()
 	}
 	FindVolumeClose(volume);
 
+	for (auto& mp: mount_points) {
+		std::sort(mp.second.begin(), mp.second.end());
+		auto iter = std::unique(mp.second.begin(), mp.second.end());
+		mp.second.erase(iter, mp.second.end());
+	}
+
 	return mount_points;
 }
 
@@ -543,6 +560,12 @@ Drive::get()
 	vector<Drive> drives;
 
 	auto mount_points = find_mount_points();
+	for (auto const& mp: mount_points) {
+		LOG_DISK("Mount point: {} has {}", mp.first, mp.second.size());
+		for (auto const& p: mp.second) {
+			LOG_DISK("  {}", p.string());
+		}
+	}
 
 	/* Get a `device information set' containing information about all disks */
 	auto device_info = SetupDiGetClassDevsA(&GUID_DEVICE_INTERFACE_DISK, 0, 0, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
@@ -602,7 +625,7 @@ Drive::get()
 		if (r) {
 			uint64_t const disk_size = geom.Cylinders.QuadPart * geom.TracksPerCylinder * geom.SectorsPerTrack * geom.BytesPerSector;
 			drives.push_back(Drive(physical_drive, locked ? vector<boost::filesystem::path>() : mount_points[*device_number], disk_size, friendly_name, optional<string>()));
-			LOG_DISK("Added drive {}{}", drives.back().log_summary(), locked ? "(locked by us)" : "");
+			LOG_DISK("Added drive {}{}", drives.back().log_summary(), locked ? " (locked by us)" : "");
 		}
 
 		CloseHandle(device);
@@ -635,6 +658,26 @@ Drive::unmount()
 	LOG_DISK("Unmount of {} succeeded", _device);
 	locked_volumes.push_back(make_pair(device, _device));
 
+	return true;
+}
+
+
+bool
+Drive::eject()
+{
+	LOG_DISK("Ejecting {} with {} mount points", _device, _mount_points.size());
+	HANDLE device = CreateFileA(_device.c_str(), (GENERIC_READ | GENERIC_WRITE), FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+	if (device == INVALID_HANDLE_VALUE) {
+		LOG_DISK("Could not open {} for unmount ({})", _device, GetLastError());
+		return false;
+	}
+	BOOL r = DeviceIoControl(device, IOCTL_STORAGE_EJECT_MEDIA, NULL, 0, NULL, 0, NULL, NULL);
+	if (!r) {
+		LOG_DISK("Eject of {} failed ({})", _device, GetLastError());
+		return false;
+	}
+
+	LOG_DISK("Eject of {} succeeded", _device);
 	return true;
 }
 

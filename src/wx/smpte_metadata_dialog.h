@@ -45,23 +45,26 @@ class LanguageTagWidget;
 class SMPTEMetadataDialog : public MetadataDialog
 {
 public:
-	SMPTEMetadataDialog (wxWindow* parent, std::weak_ptr<Film> film);
+	SMPTEMetadataDialog(wxWindow* parent, std::weak_ptr<Film> film);
 
-	void setup () override;
+	void setup() override;
 
 private:
-	void setup_standard (wxPanel* parent, wxSizer* sizer) override;
-	void setup_advanced (wxPanel* parent, wxSizer* sizer) override;
+	void setup_standard(wxPanel* parent, wxSizer* sizer) override;
+	void setup_advanced(wxPanel* parent, wxSizer* sizer) override;
 	void film_changed(ChangeType type, FilmProperty property) override;
-	void setup_sensitivity () override;
+	void setup_sensitivity() override;
 
-	std::vector<std::string> content_versions () const;
-	void set_content_versions (std::vector<std::string> v);
-	void name_language_changed (dcp::LanguageTag tag);
-	void version_number_changed ();
-	void status_changed ();
-	void distributor_changed ();
-	void enable_distributor_changed ();
+	std::vector<std::string> content_versions() const;
+	void set_content_versions(std::vector<std::string> v);
+	void name_language_changed(dcp::LanguageTag tag);
+	void version_number_changed();
+	void status_changed();
+	void distributor_changed();
+	void enable_distributor_changed();
+	void set_full_content_title_text_hint();
+	void full_content_title_text_changed();
+	void set_name_language_tooltip();
 
 	LanguageTagWidget* _name_language;
 	wxSpinCtrl* _version_number;
@@ -69,6 +72,7 @@ private:
 	CheckBox* _enable_distributor;
 	wxTextCtrl* _distributor;
 	EditableList<std::string>* _content_versions;
+	wxTextCtrl* _full_content_title_text;
 };
 
 

@@ -119,14 +119,23 @@ DCPContent::DCPContent(cxml::ConstNodePtr node, boost::optional<boost::filesyste
 		_reference_text[TextType::OPEN_SUBTITLE] = node->optional_bool_child("ReferenceSubtitle").get_value_or(false);
 		_reference_text[TextType::CLOSED_CAPTION] = false;
 	}
-	if (node->optional_string_child("Standard")) {
-		auto const s = node->optional_string_child("Standard").get();
-		if (s == "Interop") {
+	if (auto standard = node->optional_string_child("Standard")) {
+		if (*standard == "Interop") {
 			_standard = dcp::Standard::INTEROP;
-		} else if (s == "SMPTE") {
+		} else if (*standard == "SMPTE") {
 			_standard = dcp::Standard::SMPTE;
 		} else {
 			DCPOMATIC_ASSERT(false);
+		}
+	}
+
+	if (auto msc = node->optional_string_child("MainSoundConfiguration")) {
+		_main_sound_configuration = dcp::MainSoundConfiguration(*msc);
+	}
+
+	if (auto mpaa_width = node->optional_number_child<int>("MainPictureActiveAreaWidth")) {
+		if (auto mpaa_height = node->optional_number_child<int>("MainPictureActiveAreaHeight")) {
+			_main_picture_active_area = dcp::Size(*mpaa_width, *mpaa_height);
 		}
 	}
 
@@ -344,6 +353,8 @@ DCPContent::examine(shared_ptr<const Film> film, shared_ptr<Job> job, bool toler
 		_needs_assets = examiner->needs_assets();
 		_kdm_valid = examiner->kdm_valid();
 		_standard = examiner->standard();
+		_main_sound_configuration = examiner->main_sound_configuration();
+		_main_picture_active_area = examiner->main_picture_active_area();
 		_video_encoding = examiner->video_encoding();
 		_three_d = examiner->three_d();
 		_content_kind = examiner->content_kind();

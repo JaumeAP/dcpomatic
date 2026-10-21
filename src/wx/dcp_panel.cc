@@ -157,7 +157,7 @@ DCPPanel::update_standards()
 {
 	_standard->Clear();
 
-	auto const ref = _film && (_film->references_dcp_video() || _film->references_dcp_audio());
+	auto const ref = _film && (!_film->dcp_video_references().empty() || !_film->dcp_audio_references().empty());
 	auto const atmos = _film && _film->contains_atmos_content();
 	auto const interop = _film && _film->interop();
 
@@ -715,21 +715,21 @@ DCPPanel::setup_sensitivity()
 	_markers->Enable               (_generally_sensitive && _film && !_film->interop());
 	_metadata->Enable              (_generally_sensitive);
 	_reels->Enable                 (_generally_sensitive && _film);
-	_frame_rate_choice->Enable     (_generally_sensitive && _film && !_film->references_dcp_video() && !_film->contains_atmos_content());
-	_frame_rate_spin->Enable       (_generally_sensitive && _film && !_film->references_dcp_video() && !_film->contains_atmos_content());
-	_audio_channels->Enable        (_generally_sensitive && _film && !_film->references_dcp_audio());
-	_audio_processor->Enable       (_generally_sensitive && _film && !_film->references_dcp_audio());
-	_video_bit_rate->Enable        (_generally_sensitive && _film && !_film->references_dcp_video());
-	_container->Enable             (_generally_sensitive && _film && !_film->references_dcp_video() && !mpeg2);
+	_frame_rate_choice->Enable     (_generally_sensitive && _film && _film->dcp_video_references().empty() && !_film->contains_atmos_content());
+	_frame_rate_spin->Enable       (_generally_sensitive && _film && _film->dcp_video_references().empty() && !_film->contains_atmos_content());
+	_audio_channels->Enable        (_generally_sensitive && _film && _film->dcp_audio_references().empty());
+	_audio_processor->Enable       (_generally_sensitive && _film && _film->dcp_audio_references().empty());
+	_video_bit_rate->Enable        (_generally_sensitive && _film && _film->dcp_video_references().empty());
+	_container->Enable             (_generally_sensitive && _film && _film->dcp_video_references().empty() && !mpeg2);
 	_best_frame_rate->Enable(
 		_generally_sensitive &&
 		_film &&
 		_film->best_video_frame_rate() != _film->video_frame_rate() &&
-		!_film->references_dcp_video() &&
+		_film->dcp_video_references().empty() &&
 		!_film->contains_atmos_content()
 		);
-	_resolution->Enable            (_generally_sensitive && _film && !_film->references_dcp_video() && !mpeg2);
-	_three_d->Enable               (_generally_sensitive && _film && !_film->references_dcp_video() && !mpeg2);
+	_resolution->Enable            (_generally_sensitive && _film && _film->dcp_video_references().empty() && !mpeg2);
+	_three_d->Enable               (_generally_sensitive && _film && _film->dcp_video_references().empty() && !mpeg2);
 
 	_standard->Enable(
 		_generally_sensitive &&
@@ -774,8 +774,9 @@ DCPPanel::setup_dcp_name()
 		return;
 	}
 
-	_dcp_name->SetLabel(std_to_wx(_film->dcp_name(true)));
-	_dcp_name->SetToolTip(std_to_wx(_film->dcp_name(true)));
+	auto const name = std_to_wx(_film->dcp_name(true, Config::instance()->add_multiple_open_text_languages_to_isdcf_name()));
+	_dcp_name->SetLabel(name);
+	_dcp_name->SetToolTip(name);
 }
 
 
@@ -831,7 +832,7 @@ DCPPanel::config_changed(Config::Property p)
 			film_changed(FilmProperty::INTEROP);
 			film_changed(FilmProperty::LIMIT_TO_SMPTE_BV20);
 		}
-	} else if (p == Config::ISDCF_NAME_PART_LENGTH) {
+	} else if (p == Config::ISDCF_NAME_PART_LENGTH || p == Config::ADD_MULTIPLE_OPEN_TEXT_LANGUAGES_TO_ISDCF_NAME) {
 		setup_dcp_name();
 	} else if (p == Config::ALLOW_ANY_CONTAINER) {
 		setup_container();
@@ -1061,7 +1062,7 @@ DCPPanel::copy_isdcf_name_button_clicked()
 		 */
 		_film->set_name(name.substr(0, name.find("_")));
 	}
-	_film->set_name(_film->isdcf_name(true));
+	_film->set_name(_film->isdcf_name(true, Config::instance()->add_multiple_open_text_languages_to_isdcf_name()));
 	_film->set_use_isdcf_name(false);
 }
 

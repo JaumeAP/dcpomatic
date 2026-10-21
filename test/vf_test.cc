@@ -539,7 +539,7 @@ BOOST_AUTO_TEST_CASE(ov_subs_in_vf_name)
 	ov_dcp->set_reference_text(TextType::OPEN_SUBTITLE, true);
 	vf->set_isdcf_date(boost::gregorian::date(2023, boost::gregorian::Jan, 18));
 
-	BOOST_CHECK_EQUAL(vf->isdcf_name(false), "Foo_TST-1_F_XX-DE_51-HI-VI_2K_20230118_SMPTE_VF");
+	BOOST_CHECK_EQUAL(vf->isdcf_name(false, false), "Foo_TST-1_F_XX-DE_51-HI-VI_2K_20230118_SMPTE_VF");
 }
 
 
@@ -686,5 +686,51 @@ BOOST_AUTO_TEST_CASE(ccaps_can_be_referred_and_filled_test)
 	);
 
 	BOOST_REQUIRE_EQUAL(vf_check.cpls()[0]->reels()[1]->closed_captions().size(), 1U);
+}
+
+
+/** Check that a VF takes on the MainSoundConfiguration of its OV */
+BOOST_AUTO_TEST_CASE(vf_gets_main_sound_configuration_from_ov)
+{
+	auto video = content_factory("test/data/flat_red.png")[0];
+	auto audio = content_factory("test/data/white.wav")[0];
+	auto ov = new_test_film("vf_gets_main_sound_configuration_from_ov_ov", { video, audio });
+	make_and_verify_dcp(ov);
+
+	auto ov_dcp = make_shared<DCPContent>(ov->dir(ov->dcp_name()));
+	auto vf = new_test_film("vf_gets_main_sound_configuration_from_ov_vf", { ov_dcp });
+	ov_dcp->set_reference_audio(true);
+	make_and_verify_dcp(vf, { dcp::VerificationNote::Code::EXTERNAL_ASSET }, false);
+
+	dcp::DCP check(vf->dir(vf->dcp_name()));
+	check.read();
+	BOOST_REQUIRE(!check.cpls().empty());
+	auto msc = check.cpls()[0]->main_sound_configuration();
+	BOOST_REQUIRE(msc);
+	BOOST_CHECK(msc->as_string() == "51/L,R,-,-,-,-");
+}
+
+
+/** Check that a VF takes on the MainPictureActiveArea of its OV */
+BOOST_AUTO_TEST_CASE(vf_gets_main_picture_active_area_from_ov)
+{
+	auto video = content_factory("test/data/flat_red.png")[0];
+	auto audio = content_factory("test/data/white.wav")[0];
+	auto ov = new_test_film("vf_gets_main_picture_active_area_from_ov_ov", { video, audio });
+	video->video->set_top_crop(4);
+	video->video->set_bottom_crop(4);
+	make_and_verify_dcp(ov);
+
+	auto ov_dcp = make_shared<DCPContent>(ov->dir(ov->dcp_name()));
+	auto vf = new_test_film("vf_gets_main_sound_configuration_from_ov_vf", { ov_dcp });
+	ov_dcp->set_reference_video(true);
+	make_and_verify_dcp(vf, { dcp::VerificationNote::Code::EXTERNAL_ASSET }, false);
+
+	dcp::DCP check(vf->dir(vf->dcp_name()));
+	check.read();
+	BOOST_REQUIRE(!check.cpls().empty());
+	auto paa = check.cpls()[0]->main_picture_active_area();
+	BOOST_REQUIRE(paa);
+	BOOST_CHECK(*paa == dcp::Size(1998, 1072));
 }
 

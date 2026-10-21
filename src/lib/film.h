@@ -72,6 +72,7 @@ namespace dcpomatic {
 class AudioContent;
 class AudioProcessor;
 class Content;
+class DCPContent;
 class DCPContentType;
 class Film;
 class Job;
@@ -124,8 +125,8 @@ public:
 
 	void copy_from(std::shared_ptr<const Film> film, std::function<void (float)> set_progress);
 
-	std::string isdcf_name(bool if_created_now) const;
-	std::string dcp_name(bool if_created_now = false) const;
+	std::string isdcf_name(bool if_created_now, bool multiple_open_text_languages) const;
+	std::string dcp_name(bool if_created_now = false, bool multiple_open_text_languages = false) const;
 
 	/** @return true if our state has changed since we last saved it */
 	bool dirty() const {
@@ -195,8 +196,10 @@ public:
 
 	std::string content_summary(dcpomatic::DCPTimePeriod period) const;
 
-	bool references_dcp_video() const;
-	bool references_dcp_audio() const;
+	/** @return Content whose video this film is referring to */
+	std::vector<std::shared_ptr<DCPContent>> dcp_video_references() const;
+	/** @return Content whose audio this film is referring to */
+	std::vector<std::shared_ptr<DCPContent>> dcp_audio_references() const;
 	bool contains_atmos_content() const;
 
 	bool last_written_by_git() const;
@@ -380,6 +383,13 @@ public:
 		return _luminance;
 	}
 
+	/* @return FullContentTitleText that the user explicitly requested
+	 * in the metadata configuration.
+	 */
+	boost::optional<std::string> full_content_title_text() const {
+		return _full_content_title_text;
+	}
+
 	boost::gregorian::date isdcf_date() const {
 		return _isdcf_date;
 	}
@@ -440,6 +450,7 @@ public:
 	void set_two_d_version_of_three_d(bool t);
 	void set_distributor(boost::optional<std::string> d = boost::none);
 	void set_luminance(boost::optional<dcp::Luminance> l = boost::none);
+	void set_full_content_title_text(boost::optional<std::string> t = boost::none);
 	void set_audio_language(boost::optional<dcp::LanguageTag> language);
 	void set_audio_frame_rate(int rate);
 
@@ -575,6 +586,7 @@ private:
 	dcp::Status _status;
 	boost::optional<std::string> _chain;
 	boost::optional<std::string> _distributor;
+	boost::optional<std::string> _full_content_title_text;
 	boost::optional<std::string> _facility;
 	boost::optional<std::string> _studio;
 	bool _temp_version = false;
