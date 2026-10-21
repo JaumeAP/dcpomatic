@@ -1,3 +1,6 @@
 [submodule "test/data"]
 	path = test/data
 	url = ../dcpomatic-test-data.git
+[submodule "third_party/New-Renderer"]
+	path = third_party/New-Renderer
+	url = https://github.com/JaumeAP/New-Renderer.git
