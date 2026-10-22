@@ -28,7 +28,9 @@
 #include "lib/audio_mapping.h"
 #include "lib/config.h"
 #include "lib/constants.h"
+#include "test.h"
 #include <dcp/types.h>
+#include <dcp/util.h>
 #include <boost/test/unit_test.hpp>
 #include <cmath>
 
@@ -167,4 +169,94 @@ BOOST_AUTO_TEST_CASE(downmix_5_1_monitor_passthrough_test)
 
 	/* Leave the cached default for a full-size film, as the Player would regenerate it */
 	Config::instance()->audio_mapping(6, MAX_DCP_AUDIO_CHANNELS);
+}
+
+
+/** 4-channel films keep the rule the stereo mixdown export has always used */
+BOOST_AUTO_TEST_CASE(downmix_4_channel_film_test)
+{
+	float const g = 2 / (4 + std::sqrt(2.0F));
+	float const c = g / std::sqrt(2.0F);
+
+	auto const map = stereo_downmix_map(4, MAX_DCP_AUDIO_CHANNELS);
+
+	check_gain(map, dcp::Channel::LEFT, 0, g);
+	check_gain(map, dcp::Channel::LEFT, 1, 0);
+	check_gain(map, dcp::Channel::RIGHT, 0, 0);
+	check_gain(map, dcp::Channel::RIGHT, 1, g);
+	check_gain(map, dcp::Channel::CENTRE, 0, c);
+	check_gain(map, dcp::Channel::CENTRE, 1, c);
+	check_gain(map, dcp::Channel::LS, 0, g);
+	check_gain(map, dcp::Channel::LS, 1, 0);
+	check_gain(map, dcp::Channel::RS, 0, 0);
+	check_gain(map, dcp::Channel::RS, 1, 0);
+}
+
+
+/** Monitor with 2 outputs: the same downmix as the stereo mixdown export, with no LFE */
+BOOST_AUTO_TEST_CASE(downmix_stereo_monitor_test)
+{
+	for (auto film_channels: { 6, MAX_DCP_AUDIO_CHANNELS }) {
+		auto const map = Config::instance()->audio_mapping(2, film_channels);
+		auto const expected = stereo_downmix_map(film_channels, MAX_DCP_AUDIO_CHANNELS);
+		BOOST_REQUIRE_EQUAL(map.input_channels(), MAX_DCP_AUDIO_CHANNELS);
+		BOOST_REQUIRE_EQUAL(map.output_channels(), 2);
+		for (int input = 0; input < MAX_DCP_AUDIO_CHANNELS; ++input) {
+			for (int output = 0; output < 2; ++output) {
+				BOOST_TEST_INFO("film channels " << film_channels << " input " << input << " output " << output);
+				BOOST_CHECK_EQUAL(map.get(input, output), expected.get(input, output));
+			}
+		}
+		check_gain(map, dcp::Channel::LFE, 0, 0);
+		check_gain(map, dcp::Channel::LFE, 1, 0);
+	}
+}
+
+
+/** A default mapping follows the film's channel count; a mapping the user set does not, and is kept */
+BOOST_AUTO_TEST_CASE(downmix_default_follows_film_test)
+{
+	boost::filesystem::path const dir = "build/test/downmix_default_follows_film_test";
+	boost::filesystem::remove_all(dir);
+	boost::filesystem::create_directories(dir);
+	ConfigRestorer cr(dir);
+
+	float const minus_3dB = 1 / std::sqrt(2.0F);
+
+	check_gain(Config::instance()->audio_mapping(6, 6), dcp::Channel::BSL, ch(dcp::Channel::LS), 0);
+	check_gain(Config::instance()->audio_mapping(6, MAX_DCP_AUDIO_CHANNELS), dcp::Channel::BSL, ch(dcp::Channel::LS), minus_3dB);
+	check_gain(Config::instance()->audio_mapping(6, 6), dcp::Channel::BSL, ch(dcp::Channel::LS), 0);
+
+	auto user = AudioMapping(MAX_DCP_AUDIO_CHANNELS, 6);
+	user.set(dcp::Channel::BSL, ch(dcp::Channel::LS), 0.25);
+	Config::instance()->set_audio_mapping(user);
+
+	check_gain(Config::instance()->audio_mapping(6, 6), dcp::Channel::BSL, ch(dcp::Channel::LS), 0.25);
+	check_gain(Config::instance()->audio_mapping(6, MAX_DCP_AUDIO_CHANNELS), dcp::Channel::BSL, ch(dcp::Channel::LS), 0.25);
+}
+
+
+/** A default mapping is not written to config.xml; one the user set is, and going back to the default removes it */
+BOOST_AUTO_TEST_CASE(downmix_default_mapping_not_saved_test)
+{
+	boost::filesystem::path const dir = "build/test/downmix_default_mapping_not_saved_test";
+	boost::filesystem::remove_all(dir);
+	boost::filesystem::create_directories(dir);
+	ConfigRestorer cr(dir);
+
+	auto saved = []() {
+		Config::instance()->write_config();
+		return dcp::file_to_string(Config::config_write_file()).find("<AudioMapping>") != std::string::npos;
+	};
+
+	Config::instance()->audio_mapping(2, 6);
+	BOOST_CHECK(!saved());
+
+	auto user = AudioMapping(MAX_DCP_AUDIO_CHANNELS, 2);
+	user.set(dcp::Channel::LEFT, 0, 0.5);
+	Config::instance()->set_audio_mapping(user);
+	BOOST_CHECK(saved());
+
+	Config::instance()->set_audio_mapping_to_default();
+	BOOST_CHECK(!saved());
 }

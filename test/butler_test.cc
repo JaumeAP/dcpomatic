@@ -85,6 +85,49 @@ BOOST_AUTO_TEST_CASE (butler_test1)
 }
 
 
+/** The Butler limits the peaks of its mapped audio, so a mapping that adds up to more than full scale cannot clip */
+BOOST_AUTO_TEST_CASE(butler_limits_peaks_test)
+{
+	auto video = content_factory("test/data/flat_red.png")[0];
+	auto audio = content_factory("test/data/staircase.wav")[0];
+	auto film = new_test_film("butler_limits_peaks_test", { video, audio });
+	film->set_audio_channels(6);
+
+	/* The staircase is on the centre channel; send it to both outputs far too loud */
+	auto map = AudioMapping(6, 2);
+	map.set(dcp::Channel::CENTRE, 0, 1000);
+	map.set(dcp::Channel::CENTRE, 1, 1000);
+
+	Player player(film, Image::Alignment::COMPACT, false);
+
+	Butler butler(
+		film,
+		player,
+		map,
+		2,
+		AV_PIX_FMT_RGB24,
+		VideoRange::FULL,
+		Image::Alignment::COMPACT,
+		false,
+		false,
+		Butler::Video::ENABLED,
+		Butler::Audio::ENABLED
+		);
+
+	butler.get_video(Butler::Behaviour::BLOCKING, 0);
+
+	float buffer[2048 * 2];
+	BOOST_REQUIRE(butler.get_audio(Butler::Behaviour::BLOCKING, buffer, 2048) == DCPTime());
+	float peak = 0;
+	for (auto sample: buffer) {
+		peak = std::max(peak, std::fabs(sample));
+	}
+	/* Without the limiter the staircase would reach 1000 * 2047 / 32768, about 62 */
+	BOOST_CHECK(peak <= 1.0f + 1e-6f);
+	BOOST_CHECK(peak > 0.5f);
+}
+
+
 BOOST_AUTO_TEST_CASE (butler_test2)
 {
 	auto content = content_factory(TestPaths::private_data() / "arrietty_JP-EN.mkv");

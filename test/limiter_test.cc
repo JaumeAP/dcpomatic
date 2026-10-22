@@ -60,3 +60,23 @@ BOOST_AUTO_TEST_CASE(limiter_test)
 	/* The gain comes back to 1 within a second */
 	BOOST_CHECK(gain > 0.99f);
 }
+
+
+/** The gain carries over from one buffer to the next: after a peak at the end of one buffer the next starts quieter and recovers */
+BOOST_AUTO_TEST_CASE(limiter_gain_carries_over_test)
+{
+	auto first = make_shared<AudioBuffers>(1, 100);
+	first->make_silent();
+	first->data(0)[99] = 2.0f;
+	float gain = 1;
+	limit_peaks(first, gain, 48000);
+	BOOST_CHECK_CLOSE(gain, 0.5f, 0.01);
+
+	auto second = make_shared<AudioBuffers>(1, 100);
+	for (int i = 0; i < 100; ++i) {
+		second->data(0)[i] = 0.5f;
+	}
+	limit_peaks(second, gain, 48000);
+	BOOST_CHECK_CLOSE(second->data(0)[0], 0.25f, 0.1);
+	BOOST_CHECK(second->data(0)[99] > second->data(0)[0]);
+}

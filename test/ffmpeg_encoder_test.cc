@@ -39,7 +39,9 @@
 #include "test.h"
 #include <dcp/file.h>
 #include <dcp/raw_convert.h>
+#include <sndfile.h>
 #include <boost/test/unit_test.hpp>
+#include <cmath>
 
 
 using std::make_shared;
@@ -590,6 +592,55 @@ BOOST_AUTO_TEST_CASE(ffmpeg_encoder_vob_to_wav_test)
 
 	make_wav(16, ExportFormat::WAV_16);
 	make_wav(24, ExportFormat::WAV_24);
+	cl.run();
+}
+
+
+/** The stereo mixdown export of a 7.1 film takes the rear surrounds too (see stereo_downmix_map) */
+BOOST_AUTO_TEST_CASE(ffmpeg_encoder_mixdown_7_1_rear_surround_test)
+{
+	Cleanup cl;
+
+	/* One second of a constant 0.25 on a mono WAV, which goes to the film's left rear surround (Lrs) */
+	boost::filesystem::path const input = "build/test/ffmpeg_encoder_mixdown_7_1_rear_surround_test_in.wav";
+	cl.add(input);
+	SF_INFO in_info = {};
+	in_info.samplerate = 48000;
+	in_info.channels = 1;
+	in_info.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+	auto in_file = sf_open(input.string().c_str(), SFM_WRITE, &in_info);
+	BOOST_REQUIRE(in_file);
+	vector<short> constant(48000, 8192);
+	sf_write_short(in_file, constant.data(), constant.size());
+	sf_close(in_file);
+
+	auto content = content_factory(input)[0];
+	auto film = new_test_film("ffmpeg_encoder_mixdown_7_1_rear_surround_test", { content }, &cl);
+	film->set_audio_channels(12);
+	AudioMapping map(1, MAX_DCP_AUDIO_CHANNELS);
+	map.set(0, static_cast<int>(dcp::Channel::BSL), 1);
+	content->audio->set_mapping(map);
+
+	boost::filesystem::path const output = "build/test/ffmpeg_encoder_mixdown_7_1_rear_surround_test.wav";
+	cl.add(output);
+	auto job = make_shared<TranscodeJob>(film, TranscodeJob::ChangedBehaviour::IGNORE);
+	FFmpegFilmEncoder encoder(film, job, output, ExportFormat::WAV_16, true, false, false, 23);
+	encoder.go();
+
+	SF_INFO out_info = {};
+	auto out_file = sf_open(output.string().c_str(), SFM_READ, &out_info);
+	BOOST_REQUIRE(out_file);
+	BOOST_REQUIRE_EQUAL(out_info.channels, 2);
+	BOOST_REQUIRE(out_info.frames > 24000);
+	vector<short> samples(out_info.frames * 2);
+	sf_readf_short(out_file, samples.data(), out_info.frames);
+	sf_close(out_file);
+
+	/* Lrs enters the left output at -3 dB of the 5.1 surround gain 2 / (4 + sqrt(2)) and the right output not at all */
+	float const expected = 8192 * (2 / (4 + std::sqrt(2.0F))) / std::sqrt(2.0F);
+	BOOST_CHECK_CLOSE(static_cast<float>(samples[24000 * 2]), expected, 1);
+	BOOST_CHECK(std::abs(samples[24000 * 2 + 1]) <= 1);
+
 	cl.run();
 }
 
