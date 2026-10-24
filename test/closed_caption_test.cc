@@ -29,6 +29,8 @@
 #include <dcp/dcp.h>
 #include <dcp/reel.h>
 #include <dcp/reel_text_asset.h>
+#include <dcp/text_asset.h>
+#include <dcp/text_string.h>
 #include <boost/test/unit_test.hpp>
 
 
@@ -162,5 +164,48 @@ BOOST_AUTO_TEST_CASE(closed_captions_with_italics_test)
 	BOOST_REQUIRE_EQUAL(strings.size(), 2U);
 	BOOST_CHECK_EQUAL(strings[0], "Hello world");
 	BOOST_CHECK_EQUAL(strings[1], "It's a new line");
+}
+
+
+/** Some servers show closed captions on screen if there is no open subtitle track, so a DCP with
+ *  closed captions and no open subtitles gets an empty open subtitle track.
+ */
+BOOST_AUTO_TEST_CASE(closed_captions_get_empty_open_subtitles)
+{
+	auto content = make_shared<StringTextFileContent>("test/data/subrip.srt");
+	auto film = new_test_film("closed_captions_get_empty_open_subtitles", { content });
+	film->set_name("Captions");
+	content->only_text()->set_type(TextType::CLOSED_CAPTION);
+	content->only_text()->set_dcp_track(DCPTextTrack("Captions", dcp::LanguageTag("en-US")));
+	auto const name = film->isdcf_name(false, false);
+
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::INVALID_CLOSED_CAPTION_LINE_LENGTH,
+			dcp::VerificationNote::Code::INVALID_SUBTITLE_FIRST_TEXT_TIME,
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA
+		});
+
+	/* The ISDCF name does not change: it still says there are no subtitles */
+	BOOST_CHECK_EQUAL(film->isdcf_name(false, false), name);
+
+	dcp::DCP check(film->dir(film->dcp_name()));
+	check.read();
+	BOOST_REQUIRE_EQUAL(check.cpls().size(), 1U);
+	auto reels = check.cpls().front()->reels();
+	BOOST_REQUIRE(!reels.empty());
+	for (auto reel: reels) {
+		BOOST_REQUIRE(!reel->closed_captions().empty());
+		auto subtitle = reel->main_subtitle();
+		BOOST_REQUIRE(subtitle);
+		BOOST_REQUIRE(subtitle->asset());
+		BOOST_CHECK_EQUAL(subtitle->language().get_value_or(""), "zxx");
+		auto texts = subtitle->asset()->texts();
+		BOOST_REQUIRE_EQUAL(texts.size(), 1U);
+		auto string = std::dynamic_pointer_cast<const dcp::TextString>(texts.front());
+		BOOST_REQUIRE(string);
+		BOOST_CHECK_EQUAL(string->text(), " ");
+	}
 }
 
