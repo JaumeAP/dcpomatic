@@ -19,11 +19,13 @@
 */
 
 
+#include "lib/content_factory.h"
 #include "lib/film.h"
 #include "lib/layout_closed_captions.h"
 #include "lib/string_text.h"
 #include "lib/string_text_file_content.h"
 #include "lib/text_content.h"
+#include "lib/video_content.h"
 #include "test.h"
 #include <dcp/cpl.h>
 #include <dcp/dcp.h>
@@ -209,3 +211,39 @@ BOOST_AUTO_TEST_CASE(closed_captions_get_empty_open_subtitles)
 	}
 }
 
+
+/** The dummy text of the empty open subtitle track of a first reel that is at least 5 s long is 4 s in, as Bv2.1
+ *  7.2.4 asks, but that of the next reels is at the start
+ */
+BOOST_AUTO_TEST_CASE(closed_captions_empty_open_subtitles_start_after_4s)
+{
+	auto red = content_factory("test/data/flat_red.png")[0];
+	auto green = content_factory("test/data/flat_green.png")[0];
+	auto content = make_shared<StringTextFileContent>("test/data/subrip.srt");
+	auto film = new_test_film("closed_captions_empty_open_subtitles_start_after_4s", { red, green, content });
+	film->set_reel_type(ReelType::BY_VIDEO_CONTENT);
+	content->set_position(film, dcpomatic::DCPTime());
+	content->only_text()->set_type(TextType::CLOSED_CAPTION);
+	content->only_text()->set_dcp_track(DCPTextTrack("Captions", dcp::LanguageTag("en-US")));
+
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::INVALID_CLOSED_CAPTION_LINE_LENGTH,
+			dcp::VerificationNote::Code::INVALID_SUBTITLE_FIRST_TEXT_TIME,
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA
+		});
+
+	dcp::DCP check(film->dir(film->dcp_name()));
+	check.read();
+	BOOST_REQUIRE_EQUAL(check.cpls().size(), 1U);
+	auto reels = check.cpls().front()->reels();
+	BOOST_REQUIRE(reels.size() >= 2U);
+	for (size_t i = 0; i < reels.size(); ++i) {
+		auto subtitle = reels[i]->main_subtitle();
+		BOOST_REQUIRE(subtitle);
+		auto texts = subtitle->asset()->texts();
+		BOOST_REQUIRE_EQUAL(texts.size(), 1U);
+		BOOST_CHECK(texts.front()->in() == dcp::Time(0, 0, i == 0 ? 4 : 0, 0, 24));
+	}
+}
