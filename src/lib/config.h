@@ -42,6 +42,8 @@ LIBDCP_DISABLE_WARNINGS
 #include <boost/signals2.hpp>
 LIBDCP_ENABLE_WARNINGS
 #include <boost/filesystem.hpp>
+#include <set>
+#include <string>
 #include <vector>
 
 
@@ -1284,6 +1286,10 @@ public:
 
 	void changed(Property p = OTHER);
 	boost::signals2::signal<void (Property)> Changed;
+	/** Emitted just before we change our list of DKDMs because another program has added or removed some in the
+	 *  config file.
+	 */
+	boost::signals2::signal<void ()> DKDMsChangedByOtherProgram;
 	/** Emitted if read() failed on an existing Config file.  There is nothing
 	    a listener can do about it: this is just for information.
 	*/
@@ -1364,6 +1370,7 @@ private:
 	void add_to_history_internal(std::vector<boost::filesystem::path>& h, boost::filesystem::path p);
 	void clean_history_internal(std::vector<boost::filesystem::path>& h);
 	void backup();
+	void merge_dkdms_from_file() const;
 	boost::filesystem::path template_write_path(std::string name) const;
 
 	/** number of threads which a master DoM should use for J2K encoding on the local machine */
@@ -1463,6 +1470,10 @@ private:
 	std::vector<boost::filesystem::path> _history;
 	std::vector<boost::filesystem::path> _player_history;
 	std::shared_ptr<DKDMGroup> _dkdms;
+	/** IDs of the DKDMs that were in our config file when we last read or wrote it, so that we can tell
+	 *  which ones another program has added or removed since.
+	 */
+	mutable std::set<std::string> _dkdm_ids_in_file;
 	boost::filesystem::path _cinemas_file;
 	boost::filesystem::path _dkdm_recipients_file;
 	bool _show_hints_before_make_dcp;
