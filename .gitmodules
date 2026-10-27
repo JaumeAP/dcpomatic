@@ -3,4 +3,4 @@
 	url = ../dcpomatic-test-data.git
 [submodule "libdcp"]
 	path = libdcp
-	url = https://github.com/JaumeAP/libdcp.git
+	url = https://git.carlh.net/git/libdcp.git
