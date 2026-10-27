@@ -1,3 +1,6 @@
 [submodule "test/data"]
 	path = test/data
 	url = ../dcpomatic-test-data.git
+[submodule "libdcp"]
+	path = libdcp
+	url = https://github.com/JaumeAP/libdcp.git
