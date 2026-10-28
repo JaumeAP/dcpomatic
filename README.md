@@ -28,4 +28,5 @@ The improvements, in plain words:
 7. [#61](https://github.com/cth103/dcpomatic/pull/61): stops DKDMs that another DCP-o-matic program deleted from
    coming back.
 8. [#62](https://github.com/cth103/dcpomatic/pull/62): adds an empty open subtitle track whenever there are closed
-   captions, so that some servers do not show the closed captions on the screen.
+   captions, so that some servers do not show the closed captions on the screen. Its empty text starts 4 seconds
+   into the first reel, as Bv2.1 asks.
