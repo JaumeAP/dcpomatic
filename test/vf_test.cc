@@ -734,3 +734,37 @@ BOOST_AUTO_TEST_CASE(vf_gets_main_picture_active_area_from_ov)
 	BOOST_CHECK(*paa == dcp::Size(1998, 1072));
 }
 
+
+/** Check that a VF still takes on the MainSoundConfiguration and MainPictureActiveArea of its OV
+ *  after the project has been saved and loaded again.
+ */
+BOOST_AUTO_TEST_CASE(vf_gets_main_parameters_from_ov_after_reload)
+{
+	auto video = content_factory("test/data/flat_red.png")[0];
+	auto audio = content_factory("test/data/white.wav")[0];
+	auto ov = new_test_film("vf_gets_main_parameters_from_ov_after_reload_ov", { video, audio });
+	video->video->set_top_crop(4);
+	video->video->set_bottom_crop(4);
+	make_and_verify_dcp(ov);
+
+	auto ov_dcp = make_shared<DCPContent>(ov->dir(ov->dcp_name()));
+	auto vf = new_test_film("vf_gets_main_parameters_from_ov_after_reload_vf", { ov_dcp });
+	ov_dcp->set_reference_video(true);
+	ov_dcp->set_reference_audio(true);
+	vf->write_metadata();
+
+	auto reread = make_shared<Film>(vf->directory().get());
+	reread->read_metadata();
+	make_and_verify_dcp(reread, { dcp::VerificationNote::Code::EXTERNAL_ASSET }, false);
+
+	dcp::DCP check(reread->dir(reread->dcp_name()));
+	check.read();
+	BOOST_REQUIRE(!check.cpls().empty());
+	auto msc = check.cpls()[0]->main_sound_configuration();
+	BOOST_REQUIRE(msc);
+	BOOST_CHECK_EQUAL(msc->as_string(), "51/L,R,-,-,-,-");
+	auto paa = check.cpls()[0]->main_picture_active_area();
+	BOOST_REQUIRE(paa);
+	BOOST_CHECK(*paa == dcp::Size(1998, 1072));
+}
+
