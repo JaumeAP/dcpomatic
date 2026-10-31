@@ -55,7 +55,6 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 #include <boost/algorithm/string.hpp>
-#include <iomanip>
 #include <iostream>
 #include <vector>
 #include <stdint.h>
@@ -104,12 +103,6 @@ FFmpegDecoder::FFmpegDecoder(shared_ptr<const Film> film, shared_ptr<const FFmpe
 	}
 
 	_dropped_time.resize(_format_context->nb_streams);
-
-	if (video && !text.empty()) {
-		_packet_queue.reset(new SubtitleSyncPacketQueue());
-	} else {
-		_packet_queue.reset(new PassthroughPacketQueue());
-	}
 }
 
 
@@ -223,7 +216,7 @@ FFmpegDecoder::flush_fill()
 bool
 FFmpegDecoder::process_from_packet_queue(bool flushing)
 {
-	auto process = _packet_queue->get(flushing);
+	auto process = packet_queue()->get(flushing);
 	if (!process) {
 		return false;
 	}
@@ -298,7 +291,7 @@ FFmpegDecoder::pass()
 	}
 
 	if (type) {
-		_packet_queue->add(packet, *type);
+		packet_queue()->add(packet, *type);
 		process_from_packet_queue(false);
 	}
 
@@ -460,7 +453,7 @@ FFmpegDecoder::seek(ContentTime time, bool accurate)
 	Decoder::seek(time, accurate);
 
 	_flush_state = FlushState::PACKET_QUEUE;
-	_packet_queue->clear();
+	packet_queue()->clear();
 
 	/* If we are doing an `accurate' seek, we need to use pre-roll, as
 	   we don't really know what the seek will give us.
@@ -939,5 +932,20 @@ FFmpegDecoder::position() const
 	}
 
 	return pos.get_value_or(ContentTime());
+}
+
+
+PacketQueue*
+FFmpegDecoder::packet_queue()
+{
+	if (!_packet_queue) {
+		if (video && !text.empty()) {
+			_packet_queue.reset(new SubtitleSyncPacketQueue());
+		} else {
+			_packet_queue.reset(new PassthroughPacketQueue());
+		}
+	}
+
+	return _packet_queue.get();
 }
 
