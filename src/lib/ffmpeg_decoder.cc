@@ -939,7 +939,7 @@ PacketQueue*
 FFmpegDecoder::packet_queue()
 {
 	if (!_packet_queue) {
-		if (video && !text.empty()) {
+		if (video && !video->ignore() && !text.empty()) {
 			_packet_queue.reset(new SubtitleSyncPacketQueue());
 		} else {
 			_packet_queue.reset(new PassthroughPacketQueue());
