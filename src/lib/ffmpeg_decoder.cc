@@ -64,14 +64,12 @@ extern "C" {
 
 
 using std::cout;
-using std::dynamic_pointer_cast;
 using std::make_shared;
 using std::min;
 using std::shared_ptr;
 using std::string;
 using std::vector;
 using boost::optional;
-using dcp::Size;
 using namespace dcpomatic;
 
 
