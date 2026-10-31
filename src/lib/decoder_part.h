@@ -28,7 +28,6 @@
 
 
 class Decoder;
-class Log;
 class Film;
 
 
