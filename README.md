@@ -30,3 +30,5 @@ The improvements, in plain words:
 8. [#62](https://github.com/cth103/dcpomatic/pull/62): adds an empty open subtitle track whenever there are closed
    captions, so that some servers do not show the closed captions on the screen. Its empty text starts 4 seconds
    into the first reel, as Bv2.1 asks.
+9. [#63](https://github.com/cth103/dcpomatic/pull/63): an imported DCP with more than 8 channels maps only the
+   channels it labels, so a copy of a DCP without HI and VI does not get them, nor "-HI" and "-VI" in its name.
