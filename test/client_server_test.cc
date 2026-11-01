@@ -325,10 +325,18 @@ BOOST_AUTO_TEST_CASE(real_encode_with_server)
 	auto film = new_test_film("real_encode_with_server", content, &cl);
 	film->set_interop(false);
 
+	/* Broadcast discovery does not reach the local server, so name it as a configured server */
+	auto const configured = Config::instance()->servers();
+	Config::instance()->set_servers({"127.0.0.1"});
+
 	EncodeServerFinder::instance();
 
 	EncodeServer server(true, 4);
 	thread server_thread(boost::bind(&EncodeServer::run, &server));
+
+	for (int i = 0; i < 30 && EncodeServerFinder::instance()->servers().empty(); ++i) {
+		dcpomatic_sleep_seconds (1);
+	}
 
 	make_and_verify_dcp(film);
 
@@ -337,6 +345,7 @@ BOOST_AUTO_TEST_CASE(real_encode_with_server)
 
 	BOOST_CHECK(server.frames_encoded() > 0);
 	EncodeServerFinder::drop();
+	Config::instance()->set_servers(configured);
 
 	cl.run();
 }
