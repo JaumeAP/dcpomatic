@@ -23,9 +23,9 @@
 #include "decoder.h"
 
 
-DecoderPart::DecoderPart (Decoder* parent)
-	: _parent (parent)
-	, _ignore (false)
+DecoderPart::DecoderPart(Decoder* parent)
+	: _parent(parent)
+	, _ignore(false)
 {
 
 }

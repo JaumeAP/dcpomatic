@@ -28,24 +28,23 @@
 
 
 class Decoder;
-class Log;
 class Film;
 
 
 class DecoderPart
 {
 public:
-	DecoderPart (Decoder* parent);
-	virtual ~DecoderPart () {}
+	DecoderPart(Decoder* parent);
+	virtual ~DecoderPart() {}
 
-	virtual boost::optional<dcpomatic::ContentTime> position (std::shared_ptr<const Film> film) const = 0;
-	virtual void seek () = 0;
+	virtual boost::optional<dcpomatic::ContentTime> position(std::shared_ptr<const Film> film) const = 0;
+	virtual void seek() = 0;
 
-	void set_ignore (bool i) {
+	void set_ignore(bool i) {
 		_ignore = i;
 	}
 
-	bool ignore () const {
+	bool ignore() const {
 		return _ignore;
 	}
 

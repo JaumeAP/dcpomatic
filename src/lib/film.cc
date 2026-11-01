@@ -2217,9 +2217,11 @@ Film::reels() const
 				boundary = *j;
 				++j;
 			}
-			current.to = boundary;
-			periods.push_back(current);
-			current.from = boundary;
+			if (boundary != current.from) {
+				current.to = boundary;
+				periods.push_back(current);
+				current.from = boundary;
+			}
 		}
 		current.to = len;
 		periods.push_back(current);

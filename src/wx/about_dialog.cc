@@ -106,6 +106,7 @@ AboutDialog::AboutDialog(wxWindow* parent)
 		written_by.Add(char_to_wx("Mart Jansink"));
 		written_by.Add(char_to_wx("Aaron Boxer"));
 		written_by.Add(char_to_wx("Benjamin Radel"));
+		written_by.Add(char_to_wx("Jaume Puig"));
 		add_section(_("Written by"), written_by);
 
 		wxArrayString with_help_from;
