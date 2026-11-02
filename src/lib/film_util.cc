@@ -106,3 +106,16 @@ dcpomatic::film::reuse_behaviour_from_string(string const& behaviour)
 	DCPOMATIC_ASSERT(false);
 }
 
+
+bool
+dcpomatic::film::reels_fit_inside(shared_ptr<const Film> film, DCPTimePeriod period)
+{
+	for (auto reel: film->reels()) {
+		if (reel.overlap(period) && !period.contains(reel)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
