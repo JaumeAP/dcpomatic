@@ -88,6 +88,8 @@ private:
 	FlushResult flush_codecs();
 	FlushResult flush_fill();
 
+	PacketQueue* packet_queue();
+
 	VideoFilterGraphSet _filter_graphs;
 
 	dcpomatic::ContentTime _pts_offset;

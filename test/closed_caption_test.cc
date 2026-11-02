@@ -260,3 +260,4 @@ BOOST_AUTO_TEST_CASE(closed_captions_empty_open_subtitles_start_after_4s)
 		BOOST_CHECK(texts.front()->in() == dcp::Time(0, 0, i == 0 ? 4 : 0, 0, 24));
 	}
 }
+

@@ -2241,13 +2241,11 @@ Film::reels() const
 				boundary = *j;
 				++j;
 			}
-			if (boundary == current.from) {
-				/* A custom boundary that is also a required one: don't make an empty reel */
-				continue;
+			if (boundary != current.from) {
+				current.to = boundary;
+				periods.push_back(current);
+				current.from = boundary;
 			}
-			current.to = boundary;
-			periods.push_back(current);
-			current.from = boundary;
 		}
 		current.to = len;
 		periods.push_back(current);

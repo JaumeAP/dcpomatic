@@ -113,7 +113,7 @@ Email::send_with_retry(string server, int port, EmailProtocol protocol, int retr
 			send(server, port, protocol, user, password);
 			return;
 		} catch (NetworkError& e) {
-			LOG_ERROR("Error {} when trying to send email on attempt {} of 3", e.what(), this_try + 1, retries);
+			LOG_ERROR("Error {} when trying to send email on attempt {} of {}", e.what(), this_try + 1, retries);
 			if (this_try == (retries - 1)) {
 				throw;
 			}

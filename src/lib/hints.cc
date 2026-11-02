@@ -797,17 +797,17 @@ Hints::check_closed_text_languages()
 
 	bool no_track = false;
 	bool no_language = false;
-	for (auto i: film()->content()) {
-		if (i->end(film()) == i->position()) {
+	for (auto content: film()->content()) {
+		if (content->length_after_trim(film()) == dcpomatic::DCPTime()) {
 			continue;
 		}
-		for (auto j: i->text) {
-			if (!j->use() || j->burn() || !is_closed(j->type())) {
+		for (auto text: content->text) {
+			if (!text->use() || text->burn() || !is_closed(text->type())) {
 				continue;
 			}
-			if (!j->dcp_track()) {
+			if (!text->dcp_track()) {
 				no_track = true;
-			} else if (!j->dcp_track()->language) {
+			} else if (!text->dcp_track()->language) {
 				no_language = true;
 			}
 		}
