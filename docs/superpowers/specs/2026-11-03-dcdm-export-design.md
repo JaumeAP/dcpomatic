@@ -42,17 +42,13 @@ The user chose A and asked for GUI plus CLI.
 - New class `DCDMFilmEncoder` in `src/lib/dcdm_film_encoder.{cc,h}`, added to `src/lib/wscript`.
 - Video: for each frame, request `AV_PIX_FMT_XYZ12LE` from the `Butler`/`PlayerVideo`, write `frame_<index>.dpx` (zero-padded) into the output directory. 12-bit components packed into 16-bit words per SMPTE 268M, XYZ colorimetric set in the header.
 - Audio: one WAV per channel, named by channel, at the film's audio rate.
-- 3D: out of scope for this pass. Refuse or export left eye only; builder decides, and documents it.
+- 3D: export both eyes. User decision. Layout is my call: `left/` and `right/` subdirectories, each with its own DPX sequence. Audio is written once, not per eye. 2D films write DPX files directly in the output directory.
 
 ## Left to the builder (flagged as my calls)
 
 - Exact DPX header field values (descriptor, transfer, colorimetric, packing/method bits). Validate against a reference DPX reader.
 - WAV writer: reuse libsndfile if the repo already links it, else a minimal writer.
-- Output directory layout and file naming.
+- File naming inside the layout above.
 - GUI: new dialog modelled on `export_video_file_dialog`, or a new format entry in it.
 - CLI flag names and docs.
 - Tests: unit test for the DPX writer header and pixel packing; an end-to-end test exporting a short film.
-
-## Open point for the user
-
-- 3D films: error out, or export one eye?
