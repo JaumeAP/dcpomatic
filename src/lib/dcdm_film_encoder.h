@@ -52,6 +52,9 @@ namespace dcp {
  *  Layout, per reel (in reel_NN/ when the film has more than one reel):
  *  frame_NNNNNNNN.dpx (or left/ and right/ for 3D), audio/<label>.wav and,
  *  if the film has Atmos, atmos.mxf with the Atmos frames that fall in the reel.
+ *  Open subtitles and closed captions that are not burnt in go to
+ *  subtitles/subtitles.xml and captions/NN_<track>.xml (Interop or SMPTE XML,
+ *  as the film is), with their fonts, timed relative to the reel as in a DCP.
  */
 class DCDMFilmEncoder : public FilmEncoder
 {
@@ -73,6 +76,7 @@ private:
 	boost::filesystem::path reel_directory(int reel) const;
 	void atmos(std::shared_ptr<const dcp::AtmosFrame> frame, dcpomatic::DCPTime time, AtmosMetadata metadata);
 	void finish_atmos();
+	void write_text();
 
 	boost::filesystem::path _output;
 	DCDMLayout _layout;

@@ -26,8 +26,10 @@
 #include "lib/dcdm_film_encoder.h"
 #include "lib/dpx_writer.h"
 #include "lib/film.h"
+#include "lib/dcp_text_track.h"
 #include "lib/image.h"
 #include "lib/job_manager.h"
+#include "lib/text_content.h"
 #include "lib/transcode_job.h"
 #include "lib/video_content.h"
 #include "test.h"
@@ -37,6 +39,10 @@
 #include <dcp/cpl.h>
 #include <dcp/dcp.h>
 #include <dcp/filesystem.h>
+#include <dcp/interop_text_asset.h>
+#include <dcp/reel_text_asset.h>
+#include <dcp/smpte_text_asset.h>
+#include <dcp/text_string.h>
 #include <dcp/reel.h>
 #include <dcp/reel_atmos_asset.h>
 #include <dcp/reel_sound_asset.h>
@@ -500,5 +506,192 @@ BOOST_AUTO_TEST_CASE(dcdm_no_atmos_test)
 	dcp::filesystem::remove_all(out);
 	run_export(film, out);
 	BOOST_CHECK(!dcp::filesystem::exists(out / "atmos.mxf"));
+	dcp::filesystem::remove_all(out);
+}
+
+
+/* --- Open subtitles and closed captions --- */
+
+
+struct SimpleText
+{
+	string text;
+	int64_t in_ms;
+	int64_t out_ms;
+
+	bool operator==(SimpleText const& other) const {
+		return text == other.text && in_ms == other.in_ms && out_ms == other.out_ms;
+	}
+
+	bool operator!=(SimpleText const& other) const {
+		return !(*this == other);
+	}
+};
+
+
+static
+std::ostream&
+operator<<(std::ostream& s, SimpleText const& t)
+{
+	return s << "\"" << t.text << "\" " << t.in_ms << "-" << t.out_ms;
+}
+
+
+static
+vector<SimpleText>
+simple_texts(shared_ptr<const dcp::TextAsset> asset)
+{
+	vector<SimpleText> out;
+	for (auto t: asset->texts()) {
+		auto s = std::dynamic_pointer_cast<const dcp::TextString>(t);
+		/* Skip the blank texts that DCP-o-matic puts in a DCP's otherwise-empty subtitle assets */
+		if (s && s->text().find_first_not_of(" \t") != string::npos) {
+			out.push_back({ s->text(), static_cast<int64_t>(llrint(s->in().as_seconds() * 1000)), static_cast<int64_t>(llrint(s->out().as_seconds() * 1000)) });
+		}
+	}
+	return out;
+}
+
+
+static
+shared_ptr<dcp::TextAsset>
+read_text_xml(shared_ptr<Film> film, boost::filesystem::path path)
+{
+	if (film->interop()) {
+		return make_shared<dcp::InteropTextAsset>(path);
+	}
+	return make_shared<dcp::SMPTETextAsset>(path);
+}
+
+
+/** Add subtitles at @param position, trimmed so that they end at @param end
+ *  (the file's subtitles run for nearly 6 seconds, and we want to keep the films short).
+ */
+static
+shared_ptr<Content>
+add_subtitles(shared_ptr<Film> film, string file, TextType type, dcpomatic::DCPTime position, dcpomatic::DCPTime end)
+{
+	auto subs = content_factory("test/data/" + file)[0];
+	film->examine_and_add_content({subs});
+	BOOST_REQUIRE(!wait_for_jobs());
+	subs->set_position(film, position);
+	subs->set_trim_end(dcpomatic::ContentTime::from_seconds(subs->full_length(film).seconds() - (end - position).seconds()));
+	BOOST_REQUIRE(subs->end(film) <= end);
+	subs->only_text()->set_use(true);
+	subs->only_text()->set_burn(false);
+	subs->only_text()->set_type(type);
+	if (type == TextType::CLOSED_CAPTION) {
+		subs->only_text()->set_dcp_track(DCPTextTrack("English", dcp::LanguageTag("en-GB")));
+	}
+	return subs;
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_open_subtitles_test)
+{
+	auto film = new_test_film("dcdm_open_subtitles_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_open_subtitles_test_src", 24));
+	add_subtitles(film, "dcp_sub3.xml", TextType::OPEN_SUBTITLE, dcpomatic::DCPTime(), dcpomatic::DCPTime::from_frames(24, 24));
+
+	auto const out = boost::filesystem::path("build/test/dcdm_open_subtitles_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA, dcp::VerificationNote::Code::INVALID_SUBTITLE_FIRST_TEXT_TIME, dcp::VerificationNote::Code::MISSING_SUBTITLE_LANGUAGE, dcp::VerificationNote::Code::INVALID_SUBTITLE_DURATION, dcp::VerificationNote::Code::INVALID_SUBTITLE_DURATION_BV21 });
+
+	auto const path = out / "subtitles" / "subtitles.xml";
+	BOOST_REQUIRE_MESSAGE(dcp::filesystem::exists(path), path.string());
+	auto const dcdm = simple_texts(read_text_xml(film, path));
+	auto const dcp = simple_texts(read_dcp(film)->reels()[0]->main_subtitle()->asset());
+	BOOST_REQUIRE(!dcp.empty());
+	BOOST_CHECK_EQUAL_COLLECTIONS(dcdm.begin(), dcdm.end(), dcp.begin(), dcp.end());
+	BOOST_CHECK(!dcp::filesystem::exists(out / "captions"));
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_closed_captions_test)
+{
+	auto film = new_test_film("dcdm_closed_captions_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_closed_captions_test_src", 24));
+	add_subtitles(film, "dcp_sub3.xml", TextType::CLOSED_CAPTION, dcpomatic::DCPTime(), dcpomatic::DCPTime::from_frames(24, 24));
+
+	auto const out = boost::filesystem::path("build/test/dcdm_closed_captions_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA, dcp::VerificationNote::Code::INVALID_SUBTITLE_FIRST_TEXT_TIME, dcp::VerificationNote::Code::MISSING_SUBTITLE_LANGUAGE, dcp::VerificationNote::Code::INVALID_SUBTITLE_DURATION, dcp::VerificationNote::Code::INVALID_SUBTITLE_DURATION_BV21 });
+
+	BOOST_REQUIRE_EQUAL(count_files(out / "captions", ".xml"), 1);
+	boost::filesystem::path path;
+	for (auto const& i: dcp::filesystem::directory_iterator(out / "captions")) {
+		if (i.path().extension() == ".xml") {
+			path = i.path();
+		}
+	}
+	auto const dcdm = simple_texts(read_text_xml(film, path));
+	auto const ccaps = read_dcp(film)->reels()[0]->closed_captions();
+	BOOST_REQUIRE_EQUAL(ccaps.size(), 1U);
+	auto const dcp = simple_texts(ccaps[0]->asset());
+	BOOST_REQUIRE(!dcp.empty());
+	BOOST_CHECK_EQUAL_COLLECTIONS(dcdm.begin(), dcdm.end(), dcp.begin(), dcp.end());
+	BOOST_CHECK(!dcp::filesystem::exists(out / "subtitles"));
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_text_reels_test)
+{
+	auto film = new_test_film("dcdm_text_reels_test");
+	/* Otherwise the playlist moves the subtitles back to the start */
+	film->set_sequence(false);
+	auto a = dpx_content(film, make_dpx_sequence("build/test/dcdm_text_reels_test_src_a", 24));
+	auto b = dpx_content(film, make_dpx_sequence("build/test/dcdm_text_reels_test_src_b", 24));
+	a->set_position(film, dcpomatic::DCPTime());
+	b->set_position(film, dcpomatic::DCPTime::from_frames(24, 24));
+	/* Subtitles only in reel 2, so their times must be relative to the reel */
+	add_subtitles(film, "dcp_sub3.xml", TextType::OPEN_SUBTITLE, dcpomatic::DCPTime::from_frames(24, 24), dcpomatic::DCPTime::from_frames(48, 24));
+	film->set_reel_type(ReelType::BY_VIDEO_CONTENT);
+	BOOST_REQUIRE_EQUAL(film->reels().size(), 2U);
+
+	auto const out = boost::filesystem::path("build/test/dcdm_text_reels_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA,
+			dcp::VerificationNote::Code::INVALID_SUBTITLE_FIRST_TEXT_TIME,
+			dcp::VerificationNote::Code::MISSING_SUBTITLE_START_TIME,
+			dcp::VerificationNote::Code::INVALID_SUBTITLE_SPACING,
+			dcp::VerificationNote::Code::INVALID_SUBTITLE_DURATION,
+			dcp::VerificationNote::Code::INVALID_SUBTITLE_DURATION_BV21,
+			dcp::VerificationNote::Code::MISSING_SUBTITLE_LANGUAGE
+		});
+
+	auto cpl = read_dcp(film);
+	for (int r = 0; r < 2; ++r) {
+		auto const path = out / fmt::format("reel_{:02d}", r + 1) / "subtitles" / "subtitles.xml";
+		auto dcp_sub = cpl->reels()[r]->main_subtitle();
+		auto const dcp = dcp_sub ? simple_texts(dcp_sub->asset()) : vector<SimpleText>();
+		auto const dcdm = dcp::filesystem::exists(path) ? simple_texts(read_text_xml(film, path)) : vector<SimpleText>();
+		BOOST_CHECK_EQUAL_COLLECTIONS(dcdm.begin(), dcdm.end(), dcp.begin(), dcp.end());
+	}
+	BOOST_CHECK(!dcp::filesystem::exists(out / "reel_01" / "subtitles"));
+	BOOST_CHECK(dcp::filesystem::exists(out / "reel_02" / "subtitles" / "subtitles.xml"));
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_no_text_test)
+{
+	auto film = new_test_film("dcdm_no_text_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_no_text_test_src", 2));
+	auto const out = boost::filesystem::path("build/test/dcdm_no_text_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	BOOST_CHECK(!dcp::filesystem::exists(out / "subtitles"));
+	BOOST_CHECK(!dcp::filesystem::exists(out / "captions"));
 	dcp::filesystem::remove_all(out);
 }
