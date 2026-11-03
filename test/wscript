@@ -178,6 +178,7 @@ def build(bld):
                  socket_test.cc
                  source_metadata_test.cc
                  smtp_server.cc
+                 sound_mxf_test.cc
                  srt_subtitle_test.cc
                  ssa_subtitle_test.cc
                  stream_test.cc
