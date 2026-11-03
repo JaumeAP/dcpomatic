@@ -134,7 +134,7 @@ check_rate(int rate, bool three_d)
 		film->examine_and_add_content({content});
 		BOOST_REQUIRE(!wait_for_jobs());
 		content->video->unset_colour_conversion();
-		content->set_video_frame_rate(film, rate);
+		content->set_video_frame_rate(rate);
 		content->set_position(film, DCPTime());
 		if (type != VideoFrameType::TWO_D) {
 			content->video->set_frame_type(type);
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(dcdm_formats_xyz_passthrough_test)
 	film->examine_and_add_content({content});
 	BOOST_REQUIRE(!wait_for_jobs());
 	content->video->unset_colour_conversion();
-	content->set_video_frame_rate(film, 24);
+	content->set_video_frame_rate(24);
 
 	auto const out = boost::filesystem::path("build/test/dcdm_formats_xyz_passthrough_test_out");
 	run_export(film, out);

@@ -161,7 +161,7 @@ reimport(string name, shared_ptr<Film> original, boost::filesystem::path dcdm)
 		auto const picture_dir = dcp::filesystem::is_directory(dir / "picture") ? dir / "picture" : dir;
 		auto picture = add(film, picture_dir, start);
 		picture->video->unset_colour_conversion();
-		picture->set_video_frame_rate(film, original->video_frame_rate());
+		picture->set_video_frame_rate(original->video_frame_rate());
 
 		vector<std::pair<string, dcp::Channel>> const channels = {
 			{ "L", dcp::Channel::LEFT }, { "R", dcp::Channel::RIGHT }, { "C", dcp::Channel::CENTRE },

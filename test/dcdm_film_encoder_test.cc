@@ -101,7 +101,7 @@ dpx_content(shared_ptr<Film> film, boost::filesystem::path dir)
 	auto content = content_factory(dir)[0];
 	film->examine_and_add_content({content});
 	BOOST_REQUIRE(!wait_for_jobs());
-	content->set_video_frame_rate(film, 24);
+	content->set_video_frame_rate(24);
 	return content;
 }
 
@@ -346,7 +346,7 @@ BOOST_AUTO_TEST_CASE(dcdm_audio_gain_trim_test)
 	sound->set_position(film, dcpomatic::DCPTime());
 	sound->audio->set_gain(-6);
 	sound->audio->set_delay(50);
-	sound->set_trim_start(film, dcpomatic::ContentTime::from_seconds(0.1));
+	sound->set_trim_start(dcpomatic::ContentTime::from_seconds(0.1));
 
 	auto const out = boost::filesystem::path("build/test/dcdm_audio_gain_trim_test_out");
 	dcp::filesystem::remove_all(out);
@@ -500,7 +500,7 @@ BOOST_AUTO_TEST_CASE(dcdm_atmos_trimmed_test)
 	film->examine_and_add_content({atmos});
 	BOOST_REQUIRE(!wait_for_jobs());
 	atmos->set_position(film, dcpomatic::DCPTime());
-	atmos->set_trim_start(film, dcpomatic::ContentTime::from_frames(5, 24));
+	atmos->set_trim_start(dcpomatic::ContentTime::from_frames(5, 24));
 
 	auto const out = boost::filesystem::path("build/test/dcdm_atmos_trimmed_test_out");
 	dcp::filesystem::remove_all(out);
