@@ -29,6 +29,7 @@
 #include "exceptions.h"
 #include "film.h"
 #include "image.h"
+#include "image_png.h"
 #include "job.h"
 #include "player.h"
 #include "player_text.h"
@@ -46,16 +47,21 @@
 #include <dcp/filesystem.h>
 #include <dcp/interop_text_asset.h>
 #include <dcp/smpte_text_asset.h>
+#include <dcp/text_image.h>
 #include <dcp/text_string.h>
 #include <dcp/openjpeg_image.h>
 #include <fmt/format.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <deque>
 #include <fstream>
+#include <future>
 #include <map>
 #include <memory>
 #include <set>
 #include <stdexcept>
 #include <vector>
+
+#include <boost/thread.hpp>
 
 #include "i18n.h"
 
@@ -85,10 +91,29 @@ check_film(std::shared_ptr<const Film> film)
 }
 
 
+/** Write a text file through dcp::File (Unicode-safe paths, checked writes) */
+static
+void
+write_file(boost::filesystem::path const& path, string const& text)
+{
+	dcp::File file(path, "wb");
+	if (!file) {
+		throw FileError("Could not open file for writing", path);
+	}
+	file.checked_write(text.data(), text.size());
+	file.close();
+}
+
+
 static
 boost::filesystem::path
 check_output(boost::filesystem::path output)
 {
+	if (dcp::filesystem::exists(output / "DCDM_INCOMPLETE.txt")) {
+		throw std::runtime_error(
+			fmt::format(_("The DCDM output folder {} holds an incomplete DCDM export (see DCDM_INCOMPLETE.txt).  Empty it before exporting again."), output.string())
+			);
+	}
 	if (dcp::filesystem::exists(output) && !dcp::filesystem::is_empty(output)) {
 		throw std::runtime_error(fmt::format(_("The DCDM output folder {} is not empty."), output.string()));
 	}
@@ -250,6 +275,44 @@ DCDMFilmEncoder::reel_directory(int reel) const
 void
 DCDMFilmEncoder::go()
 {
+	try {
+		do_go();
+	} catch (std::exception& e) {
+		mark_incomplete(e.what());
+		throw;
+	} catch (...) {
+		/* e.g. boost::thread_interrupted when the job is cancelled */
+		mark_incomplete(_("the export was stopped"));
+		throw;
+	}
+}
+
+
+/** Leave the output folder clearly marked as incomplete, with what could be closed properly closed */
+void
+DCDMFilmEncoder::mark_incomplete(string why)
+{
+	_atmos_connection.disconnect();
+	try {
+		finish_atmos();
+	} catch (...) {}
+
+	try {
+		write_file(
+			_output / "DCDM_INCOMPLETE.txt",
+			fmt::format(
+				"This DCDM export did not finish: {}\n"
+				"The files in this folder are incomplete and must not be used.\n",
+				why
+				)
+			);
+	} catch (...) {}
+}
+
+
+void
+DCDMFilmEncoder::do_go()
+{
 	if (auto job = _job.lock()) {
 		job->sub(_("Encoding"));
 	}
@@ -293,6 +356,18 @@ DCDMFilmEncoder::go()
 
 	open_reel(0);
 
+	/* Pictures are converted and encoded on several threads, as for a DCP; each frame's
+	 * file name is fixed, so the order they finish in does not matter.  At most one
+	 * frame per core is in flight; a failure comes back through get().
+	 */
+	std::deque<std::future<void>> pending;
+	auto const max_pending = std::max(1U, boost::thread::hardware_concurrency());
+	auto wait_for_one = [&pending]() {
+		auto next = std::move(pending.front());
+		pending.pop_front();
+		next.get();
+	};
+
 	for (DCPTime time; time < _film->length(); time += video_frame) {
 
 		while (reel_index + 1 < static_cast<int>(reels.size()) && !reels[reel_index].contains(time)) {
@@ -323,16 +398,25 @@ DCDMFilmEncoder::go()
 				path /= video.first->eyes() == Eyes::RIGHT ? "right" : "left";
 			}
 
-			auto const xyz = DCPVideo::convert_to_xyz(video.first);
-			switch (_picture_format) {
-			case DCDMPictureFormat::J2K_LOSSLESS:
-				/* SMPTE ST 428-24 file names: fixed-width, contiguous frame numbers and .pdc.j2c */
-				write_lossless_j2k(path / fmt::format("{:08d}.pdc.j2c", index), xyz);
-				break;
-			case DCDMPictureFormat::DPX:
-				write_dpx(path / fmt::format("frame_{:08d}.dpx", index), to_xyz12(xyz));
-				break;
+			/* SMPTE ST 428-24 file names: fixed-width, contiguous frame numbers and .pdc.j2c */
+			path /= _picture_format == DCDMPictureFormat::J2K_LOSSLESS ? fmt::format("{:08d}.pdc.j2c", index) : fmt::format("frame_{:08d}.dpx", index);
+
+			if (pending.size() >= max_pending) {
+				wait_for_one();
 			}
+			pending.push_back(
+				std::async(std::launch::async, [frame = video.first, path, format = _picture_format]() {
+					auto const xyz = DCPVideo::convert_to_xyz(frame);
+					switch (format) {
+					case DCDMPictureFormat::J2K_LOSSLESS:
+						write_lossless_j2k(path, xyz);
+						break;
+					case DCDMPictureFormat::DPX:
+						write_dpx(path, to_xyz12(xyz));
+						break;
+					}
+				})
+			);
 		}
 
 		_butler.get_audio(Butler::Behaviour::BLOCKING, interleaved.data(), audio_frames);
@@ -358,6 +442,10 @@ DCDMFilmEncoder::go()
 		}
 
 		waker.nudge();
+	}
+
+	while (!pending.empty()) {
+		wait_for_one();
 	}
 
 	for (auto& wav: wavs) {
@@ -461,7 +549,7 @@ DCDMFilmEncoder::write_text()
 
 	boost::signals2::scoped_connection connection = player.Text.connect(
 		[&](PlayerText subs, TextType type, boost::optional<DCPTextTrack> track, DCPTimePeriod period) {
-			if (subs.string.empty()) {
+			if (subs.string.empty() && subs.bitmap.empty()) {
 				return;
 			}
 
@@ -476,29 +564,67 @@ DCDMFilmEncoder::write_text()
 				return;
 			}
 
+			/* As ReelWriter: times relative to the reel, to the millisecond */
+			int const tcr = 1000;
+
+			auto add_to_reel = [&](int reel, DCPTimePeriod part) {
+				auto const reel_period = _reel_periods[reel];
+				auto& asset = assets[std::make_pair(reel, key_track)];
+				if (!asset) {
+					asset = make_asset(reel, key_track);
+				}
+
+				for (auto i: subs.string) {
+					i.set_in(dcp::Time(part.from.seconds() - reel_period.from.seconds(), tcr));
+					i.set_out(dcp::Time(part.to.seconds() - reel_period.from.seconds(), tcr));
+					i.set_v_position(vertical_position(i, standard, metrics));
+					auto text = make_shared<dcp::TextString>(i);
+					auto const id = i.font ? i.font->id() : std::string("default");
+					text->set_font(id);
+					asset->add(text);
+					asset->ensure_font(id, i.font && i.font->data() ? *i.font->data() : default_font);
+				}
+
+				for (auto const& i: subs.bitmap) {
+					asset->add(
+						make_shared<dcp::TextImage>(
+							image_as_png(i.image),
+							dcp::Time(part.from.seconds() - reel_period.from.seconds(), tcr),
+							dcp::Time(part.to.seconds() - reel_period.from.seconds(), tcr),
+							i.rectangle.x, dcp::HAlign::LEFT, i.rectangle.y, dcp::VAlign::TOP, 0, vector<dcp::Text::VariableZPosition>(),
+							dcp::Time(), dcp::Time()
+							)
+						);
+				}
+			};
+
+			/* As Writer::write(PlayerText...): back off a couple of frames from reel boundaries */
+			auto const vfr = _film->video_frame_rate();
+			auto back_off = [vfr](DCPTimePeriod p) {
+				p.to -= DCPTime::from_frames(2, vfr);
+				if (p.duration().frames_floor(vfr) <= 0) {
+					p.to = p.from + DCPTime::from_frames(1, vfr);
+				}
+				return p;
+			};
+
 			int reel = 0;
 			while (reel + 1 < static_cast<int>(_reel_periods.size()) && _reel_periods[reel].to <= period.from) {
 				++reel;
 			}
-			auto const reel_period = _reel_periods[reel];
 
-			auto& asset = assets[std::make_pair(reel, key_track)];
-			if (!asset) {
-				asset = make_asset(reel, key_track);
+			if (period.to > _reel_periods[reel].to) {
+				/* This text goes off the end of the reel: the parts in later reels go there */
+				for (int later = reel + 1; later < static_cast<int>(_reel_periods.size()); ++later) {
+					if (auto overlap = _reel_periods[later].overlap(period)) {
+						add_to_reel(later, back_off(*overlap));
+					}
+				}
+				period.to = _reel_periods[reel].to;
+				period = back_off(period);
 			}
 
-			/* As ReelWriter: times relative to the reel, to the millisecond */
-			int const tcr = 1000;
-			for (auto i: subs.string) {
-				i.set_in(dcp::Time(period.from.seconds() - reel_period.from.seconds(), tcr));
-				i.set_out(dcp::Time(period.to.seconds() - reel_period.from.seconds(), tcr));
-				i.set_v_position(vertical_position(i, standard, metrics));
-				auto text = make_shared<dcp::TextString>(i);
-				auto const id = i.font ? i.font->id() : std::string("default");
-				text->set_font(id);
-				asset->add(text);
-				asset->ensure_font(id, i.font && i.font->data() ? *i.font->data() : default_font);
-			}
+			add_to_reel(reel, period);
 		});
 
 	while (!player.pass()) {}
@@ -519,14 +645,27 @@ DCDMFilmEncoder::write_text()
 
 		dcp::filesystem::create_directories(dir);
 		if (interop) {
-			/* This writes the fonts alongside the XML */
+			/* This writes the fonts and subtitle images alongside the XML */
 			i.second->write(dir / name);
 		} else {
-			std::ofstream xml((dir / name).string());
-			xml << i.second->xml_as_string();
+			write_file(dir / name, i.second->xml_as_string());
 			for (auto const& font: i.second->font_data()) {
 				font.second.write(dir / (safe_name(font.first) + ".ttf"));
 			}
+			/* SMPTE XML refers to subtitle images by ID; put them beside it */
+			for (auto text: i.second->texts()) {
+				if (auto image = std::dynamic_pointer_cast<const dcp::TextImage>(text)) {
+					image->png_image().write(dir / (image->id() + ".png"));
+				}
+			}
+		}
+
+		if (track) {
+			if (std::find(_caption_tracks_written.begin(), _caption_tracks_written.end(), track->name) == _caption_tracks_written.end()) {
+				_caption_tracks_written.push_back(track->name);
+			}
+		} else {
+			_open_subtitles_written = true;
 		}
 	}
 }
@@ -556,22 +695,9 @@ DCDMFilmEncoder::write_info() const
 	auto const size = _film->frame_size();
 	auto const j2k = _picture_format == DCDMPictureFormat::J2K_LOSSLESS;
 
-	bool open_subtitles = false;
-	vector<string> caption_tracks;
-	for (auto content: _film->content()) {
-		for (auto text: content->text) {
-			if (!text->use() || text->burn()) {
-				continue;
-			}
-			if (text->type() == TextType::OPEN_SUBTITLE || text->type() == TextType::OPEN_CAPTION) {
-				open_subtitles = true;
-			} else if (auto track = text->dcp_track()) {
-				if (std::find(caption_tracks.begin(), caption_tracks.end(), track->name) == caption_tracks.end()) {
-					caption_tracks.push_back(track->name);
-				}
-			}
-		}
-	}
+	/* Report what was actually written */
+	auto const open_subtitles = _open_subtitles_written;
+	auto const& caption_tracks = _caption_tracks_written;
 
 	string labels;
 	bool seven_one = false;
@@ -580,8 +706,8 @@ DCDMFilmEncoder::write_info() const
 		seven_one = seven_one || channel.first == dcp::Channel::BSL || channel.first == dcp::Channel::BSR;
 	}
 
-	std::ofstream f((_output / "DCDM_INFO.txt").string());
-	auto line = [&f](string const& s) { f << s << "\n"; };
+	string f;
+	auto line = [&f](string const& s) { f += s + "\n"; };
 
 	line("D-CINEMA DISTRIBUTION MASTER (DCDM)");
 	line("===================================");
@@ -643,4 +769,6 @@ DCDMFilmEncoder::write_info() const
 	if (_film->contains_atmos_content()) {
 		line("SMPTE ST 429-18  D-Cinema Packaging - Immersive Audio Track File");
 	}
+
+	write_file(_output / "DCDM_INFO.txt", f);
 }

@@ -139,3 +139,19 @@ BOOST_AUTO_TEST_CASE(dcdm_j2k_codestream_test)
 	/* TLM is present, as in the standard's example encodings */
 	BOOST_CHECK(find_marker(d, 0xff55) > 0);
 }
+
+
+/** Paths with non-ASCII characters are written through dcp::File (this matters on Windows) */
+BOOST_AUTO_TEST_CASE(dcdm_j2k_unicode_path_test)
+{
+	boost::filesystem::path const dir = boost::filesystem::path("build/test") / boost::filesystem::path(u8"dcdm_j2k_unicode_éèç");
+	dcp::filesystem::remove_all(dir);
+	dcp::filesystem::create_directories(dir);
+	auto const path = dir / "00000000.pdc.j2c";
+	write_lossless_j2k(path, make_xyz(64, 32));
+	BOOST_CHECK(dcp::filesystem::exists(path));
+	auto const data = read_all(path);
+	auto const decoded = dcp::decompress_j2k(data.data(), static_cast<int64_t>(data.size()), 0);
+	BOOST_CHECK(decoded->size() == dcp::Size(64, 32));
+	dcp::filesystem::remove_all(dir);
+}

@@ -90,6 +90,8 @@ public:
 	}
 
 private:
+	void do_go();
+	void mark_incomplete(std::string why);
 	boost::filesystem::path reel_directory(int reel) const;
 	boost::filesystem::path picture_directory(boost::filesystem::path reel_directory) const;
 	void atmos(std::shared_ptr<const dcp::AtmosFrame> frame, dcpomatic::DCPTime time, AtmosMetadata metadata);
@@ -114,6 +116,10 @@ private:
 	std::shared_ptr<dcp::AtmosAsset> _atmos_asset;
 	std::shared_ptr<dcp::AtmosAssetWriter> _atmos_writer;
 	boost::signals2::scoped_connection _atmos_connection;
+
+	/** What write_text() actually wrote, for DCDM_INFO.txt */
+	bool _open_subtitles_written = false;
+	std::vector<std::string> _caption_tracks_written;
 
 	Butler _butler;
 };

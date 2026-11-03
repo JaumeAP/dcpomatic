@@ -44,6 +44,7 @@
 #include <dcp/openjpeg_image.h>
 #include <dcp/reel_text_asset.h>
 #include <dcp/smpte_text_asset.h>
+#include <dcp/text_image.h>
 #include <dcp/text_string.h>
 #include <dcp/reel.h>
 #include <dcp/reel_atmos_asset.h>
@@ -953,5 +954,141 @@ BOOST_AUTO_TEST_CASE(dcdm_info_file_dpx_test)
 	BOOST_CHECK(text.find("SMPTE ST 268") != string::npos);
 	BOOST_CHECK(text.find("SMPTE ST 428-24") == string::npos);
 
+	dcp::filesystem::remove_all(out);
+}
+
+
+/* --- Review fixes --- */
+
+
+/** A subtitle that crosses a reel boundary is split exactly as the DCP splits it */
+BOOST_AUTO_TEST_CASE(dcdm_subtitle_across_reels_test)
+{
+	auto film = new_test_film("dcdm_subtitle_across_reels_test");
+	film->set_sequence(false);
+	auto a = dpx_content(film, make_dpx_sequence("build/test/dcdm_subtitle_across_reels_test_src_a", 24));
+	auto b = dpx_content(film, make_dpx_sequence("build/test/dcdm_subtitle_across_reels_test_src_b", 24));
+	a->set_position(film, dcpomatic::DCPTime());
+	b->set_position(film, dcpomatic::DCPTime::from_frames(24, 24));
+	/* The first subtitle starts at 20 frames and runs past the boundary at 24 */
+	add_subtitles(film, "dcp_sub3.xml", TextType::OPEN_SUBTITLE, dcpomatic::DCPTime(), dcpomatic::DCPTime::from_frames(48, 24));
+	film->set_reel_type(ReelType::BY_VIDEO_CONTENT);
+	BOOST_REQUIRE_EQUAL(film->reels().size(), 2U);
+
+	auto const out = boost::filesystem::path("build/test/dcdm_subtitle_across_reels_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA,
+			dcp::VerificationNote::Code::INVALID_SUBTITLE_FIRST_TEXT_TIME,
+			dcp::VerificationNote::Code::MISSING_SUBTITLE_START_TIME,
+			dcp::VerificationNote::Code::INVALID_SUBTITLE_SPACING,
+			dcp::VerificationNote::Code::INVALID_SUBTITLE_DURATION,
+			dcp::VerificationNote::Code::INVALID_SUBTITLE_DURATION_BV21,
+			dcp::VerificationNote::Code::MISSING_SUBTITLE_LANGUAGE
+		});
+
+	auto cpl = read_dcp(film);
+	for (int r = 0; r < 2; ++r) {
+		auto const path = out / fmt::format("reel_{:02d}", r + 1) / "subtitles" / "subtitles.xml";
+		auto dcp_sub = cpl->reels()[r]->main_subtitle();
+		auto const dcp = dcp_sub ? simple_texts(dcp_sub->asset()) : vector<SimpleText>();
+		auto const dcdm = dcp::filesystem::exists(path) ? simple_texts(read_text_xml(film, path)) : vector<SimpleText>();
+		BOOST_REQUIRE_MESSAGE(!dcp.empty(), "reel " << r << " of the DCP has no subtitles");
+		BOOST_CHECK_EQUAL_COLLECTIONS(dcdm.begin(), dcdm.end(), dcp.begin(), dcp.end());
+	}
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+/** An export that fails part-way marks the folder as incomplete, finalises what it can,
+ *  and a later export to the same folder says why it is refused.
+ */
+BOOST_AUTO_TEST_CASE(dcdm_failed_export_marked_incomplete_test)
+{
+	auto film = new_test_film("dcdm_failed_export_marked_incomplete_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_failed_export_marked_incomplete_test_src", 2));
+
+	auto const out = boost::filesystem::path("build/test/dcdm_failed_export_marked_incomplete_test_out");
+	dcp::filesystem::remove_all(out);
+
+	auto job = make_shared<TranscodeJob>(film, TranscodeJob::ChangedBehaviour::IGNORE);
+	auto encoder = make_shared<DCDMFilmEncoder>(film, job, out, DCDMPictureFormat::DPX);
+	/* Put a directory where frame 5 should go so that writing it fails */
+	dcp::filesystem::create_directories(out / "frame_00000005.dpx");
+	BOOST_CHECK_THROW(encoder->go(), std::exception);
+	encoder.reset();
+
+	BOOST_CHECK(dcp::filesystem::exists(out / "DCDM_INCOMPLETE.txt"));
+	BOOST_CHECK(!dcp::filesystem::exists(out / "DCDM_INFO.txt"));
+	/* The WAVs that were started have valid headers covering what was written */
+	auto const size = dcp::filesystem::file_size(out / "audio" / "L.wav");
+	BOOST_CHECK_EQUAL((size - 44) % 3, 0U);
+	std::ifstream wav((out / "audio" / "L.wav").string(), std::ios::binary);
+	vector<uint8_t> header(44);
+	wav.read(reinterpret_cast<char*>(header.data()), 44);
+	uint32_t const data_size = header[40] | (header[41] << 8) | (header[42] << 16) | (header[43] << 24);
+	BOOST_CHECK_EQUAL(data_size, size - 44);
+
+	auto job2 = make_shared<TranscodeJob>(film, TranscodeJob::ChangedBehaviour::IGNORE);
+	try {
+		make_shared<DCDMFilmEncoder>(film, job2, out);
+		BOOST_CHECK_MESSAGE(false, "no exception thrown");
+	} catch (std::runtime_error& e) {
+		BOOST_CHECK_MESSAGE(string(e.what()).find("incomplete DCDM export") != string::npos, e.what());
+	}
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+/** Bitmap (image) subtitles are exported as in the DCP, and DCDM_INFO.txt reports them */
+BOOST_AUTO_TEST_CASE(dcdm_bitmap_subtitles_test)
+{
+	auto film = new_test_film("dcdm_bitmap_subtitles_test");
+	film->set_interop(true);
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_bitmap_subtitles_test_src", 24 * 6));
+	auto subs = content_factory("test/data/png_subs/subs.xml")[0];
+	film->examine_and_add_content({subs});
+	BOOST_REQUIRE(!wait_for_jobs());
+	subs->only_text()->set_use(true);
+	subs->only_text()->set_burn(false);
+
+	auto const out = boost::filesystem::path("build/test/dcdm_bitmap_subtitles_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+
+	auto const path = out / "subtitles" / "subtitles.xml";
+	BOOST_REQUIRE_MESSAGE(dcp::filesystem::exists(path), path.string());
+	auto asset = make_shared<dcp::InteropTextAsset>(path);
+	int images = 0;
+	for (auto t: asset->texts()) {
+		if (std::dynamic_pointer_cast<const dcp::TextImage>(t)) {
+			++images;
+		}
+	}
+	BOOST_CHECK_EQUAL(images, 1);
+	BOOST_CHECK_EQUAL(count_files(out / "subtitles", ".png"), 1);
+	auto const info = read_text(out / "DCDM_INFO.txt");
+	BOOST_CHECK(info.find("Open subtitles: yes") != string::npos);
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+/** DCDM_INFO.txt only claims subtitles that were actually written */
+BOOST_AUTO_TEST_CASE(dcdm_info_reports_written_text_test)
+{
+	auto film = new_test_film("dcdm_info_reports_written_text_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_info_reports_written_text_test_src", 2));
+	auto const out = boost::filesystem::path("build/test/dcdm_info_reports_written_text_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	auto const info = read_text(out / "DCDM_INFO.txt");
+	BOOST_CHECK(info.find("Open subtitles: no") != string::npos);
+	BOOST_CHECK(info.find("Closed captions: no") != string::npos);
 	dcp::filesystem::remove_all(out);
 }
