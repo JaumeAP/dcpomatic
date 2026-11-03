@@ -21,7 +21,7 @@
 - Films with no stored codec/pixel-format metadata do not qualify until re-examined.
 - GUI: DCDM menu item disabled with a tooltip/message naming the first failing content. CLI: error naming content and reason, non-zero exit.
 - Reels: one reel writes the flat layout; several reels write `reel_01/`, `reel_02/`, ... each with the full layout, frame numbering restarting at 0, WAVs covering exactly the reel period.
-- Atmos: copy each reel's `AtmosMXFContent` unchanged to `atmos.mxf` in that reel's folder (the output root for one reel). The content must start at the reel start, have no trim and end at the reel end; otherwise (including one Atmos content spanning several reels) export fails with a clear error.
+- Atmos: write each reel's `atmos.mxf` from `Player::Atmos` frames (as `ReelWriter::write(atmos, metadata)` does), cut at reel boundaries, in that reel's folder (the output root for one reel). Respects trim and position.
 - Open subtitles and closed captions: separate XML files (film's Interop/SMPTE format) with fonts, in `subtitles/` and `captions/`; not burnt into DPX.
 - Existing exports must not change behaviour.
 - Never include model identifiers in commits or code.
@@ -33,7 +33,7 @@
 - Output directory already contains files: export errors out instead of silently overwriting.
 - Odd frame rate or film length not a whole number of frames: frame count and audio length stay consistent, audio WAV lengths equal across channels.
 - Multi-reel film: DPX counts per reel sum to the film length, every reel's WAVs have equal length, and no frame is dropped or duplicated at reel boundaries.
-- Multi-reel film with one Atmos content spanning reels: fails before any file is written. Multi-reel film with one Atmos per reel: each reel folder gets its own `atmos.mxf`.
+- One Atmos content spanning two reels: each reel's `atmos.mxf` holds only its own frames and the frame counts add up to the source's frames in the film period; a trimmed Atmos writes only the used frames.
 - Film with Atmos content that is trimmed or offset: export fails with a clear message instead of writing an out-of-sync MXF.
 - Film with closed captions only, or open subtitles only: only the matching folder is created.
 - Film with more audio channels than the WAV naming scheme expects (e.g. 16): all channels written, names unique and sortable.
@@ -170,14 +170,14 @@
 - Test: `test/dcdm_film_encoder_test.cc`
 
 **Interfaces:**
-- Consumes: `AtmosMXFContent` (`path(0)`, `position()`, `trim_start()`, `trim_end()`, `end(film)`) and `film->reels()`.
-- Produces: in each reel's output folder, `atmos.mxf` byte-identical to that reel's Atmos source. Encoder throws with a clear message naming the file when an Atmos content does not line up with exactly one reel (offset, trim, or spanning several reels).
+- Consumes: `Player::Atmos` signal `(std::shared_ptr<const dcp::AtmosFrame>, dcpomatic::DCPTime, AtmosMetadata)`, `film->reels()`, `AtmosMetadata::create(dcp::Fraction)`, `dcp::AtmosAsset::start_write`.
+- Produces: in each reel's output folder (output root for one reel), `atmos.mxf` containing only the Atmos frames whose time falls in that reel, written in order. No file for a reel with no Atmos frames.
 
-- [ ] **Step 1: Write failing tests**: `dcdm_atmos_copy_test` (single-reel film with an Atmos MXF from `test/data`; `atmos.mxf` exists and is byte-identical); `dcdm_atmos_trimmed_test` (trimmed Atmos: throws, message names the file); `dcdm_atmos_multi_reel_test` (2 reels, one Atmos per reel: each `reel_NN/atmos.mxf` is byte-identical to its source); `dcdm_atmos_spanning_reels_test` (one Atmos across 2 reels: throws before any file is written); `dcdm_no_atmos_test` (no `atmos.mxf` created).
+- [ ] **Step 1: Write failing tests**: `dcdm_atmos_single_reel_test` (film with an Atmos MXF from `test/data`; `atmos.mxf` exists, frame count equals the source's frame count in the film period); `dcdm_atmos_spanning_reels_test` (one Atmos across 2 reels: each `reel_NN/atmos.mxf` holds its own frames, counts sum to the total, no frame in both); `dcdm_atmos_trimmed_test` (trimmed Atmos: only used frames written); `dcdm_no_atmos_test` (no `atmos.mxf` anywhere).
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_atmos_*`. Expected: FAIL.
-- [ ] **Step 3: Implement** validation of all Atmos contents against `film->reels()` before any file is written, then the copy at the start of each reel in `go()` using `boost::filesystem::copy_file`.
+- [ ] **Step 3: Implement** a signal handler like `DCPFilmEncoder::atmos` (src/lib/dcp_film_encoder.cc:179) that picks the reel by time and writes through a per-reel asset writer, finalized when the reel ends. Frame rate is `film->video_frame_rate()`.
 - [ ] **Step 4: Run** same command. Expected: PASS.
-- [ ] **Step 5: Commit** `git commit -m "Copy Atmos MXF in DCDM export"`
+- [ ] **Step 5: Commit** `git commit -m "Write per-reel Atmos in DCDM export"`
 
 ### Task 9: Open subtitles and closed captions
 
