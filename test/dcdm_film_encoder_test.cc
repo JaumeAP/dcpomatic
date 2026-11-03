@@ -27,6 +27,7 @@
 #include "lib/dcdm_quality.h"
 #include "lib/wav_writer.h"
 #include "lib/cross.h"
+#include "lib/ffmpeg_film_encoder.h"
 #include "lib/atmos_metadata.h"
 #include "lib/dpx_writer.h"
 #include "lib/film.h"
@@ -1208,5 +1209,59 @@ BOOST_AUTO_TEST_CASE(dcdm_cancelled_export_marked_incomplete_test)
 	BOOST_CHECK(job->finished_cancelled());
 	BOOST_CHECK(dcp::filesystem::exists(out / "DCDM_INCOMPLETE.txt"));
 	BOOST_CHECK(!dcp::filesystem::exists(out / "DCDM_INFO.txt"));
+	dcp::filesystem::remove_all(out);
+}
+
+
+/** Standalone WAV and audio embedded in a ProRes video file both end up in the DCDM,
+ *  with the same samples as the DCP made from the same film.
+ */
+BOOST_AUTO_TEST_CASE(dcdm_wav_and_embedded_audio_test)
+{
+	/* A ProRes HQ MOV with its own audio, made by DCP-o-matic itself */
+	auto const mov = boost::filesystem::path("build/test/dcdm_wav_and_embedded_audio_test_source.mov");
+	{
+		auto source = new_test_film("dcdm_wav_and_embedded_audio_test_source");
+		dpx_content(source, make_dpx_sequence("build/test/dcdm_wav_and_embedded_audio_test_src", 24));
+		auto tone = content_factory("test/data/L.wav")[0];
+		source->examine_and_add_content({tone});
+		BOOST_REQUIRE(!wait_for_jobs());
+		tone->set_position(source, dcpomatic::DCPTime());
+		dcp::filesystem::remove(mov);
+		auto job = make_shared<TranscodeJob>(source, TranscodeJob::ChangedBehaviour::IGNORE);
+		job->set_encoder(make_shared<FFmpegFilmEncoder>(source, job, mov, ExportFormat::PRORES_HQ, false, false, false, 23));
+		JobManager::instance()->add(job);
+		BOOST_REQUIRE(!wait_for_jobs());
+	}
+
+	auto film = new_test_film("dcdm_wav_and_embedded_audio_test");
+	film->set_sequence(false);
+	auto picture = dpx_content(film, make_dpx_sequence("build/test/dcdm_wav_and_embedded_audio_test_pic", 24));
+	auto video = content_factory(mov)[0];
+	film->examine_and_add_content({video});
+	BOOST_REQUIRE(!wait_for_jobs());
+	video->set_position(film, dcpomatic::DCPTime());
+	/* A standalone WAV on the right channel, and the embedded audio on the left */
+	auto wav = content_factory("test/data/R.wav")[0];
+	film->examine_and_add_content({wav});
+	BOOST_REQUIRE(!wait_for_jobs());
+	wav->set_position(film, dcpomatic::DCPTime());
+	(void) picture;
+
+	auto const out = boost::filesystem::path("build/test/dcdm_wav_and_embedded_audio_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA,
+			dcp::VerificationNote::Code::INVALID_DURATION,
+			dcp::VerificationNote::Code::INVALID_INTRINSIC_DURATION,
+			dcp::VerificationNote::Code::MISMATCHED_ASSET_DURATION
+		});
+
+	check_audio(out, five_one, film->length().frames_round(24));
+	check_audio_matches_dcp(film, out);
+
 	dcp::filesystem::remove_all(out);
 }
