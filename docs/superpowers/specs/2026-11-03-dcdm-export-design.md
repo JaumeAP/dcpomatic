@@ -109,3 +109,11 @@ Consequences:
 - CLI flag names and docs.
 - Whether to also require source resolution of at least the film container size (not decided; no resolution check in this pass).
 - Tests: gate unit tests for each accepted and rejected codec/format; unit test for the DPX writer header and pixel packing; an end-to-end test exporting a short film.
+
+
+## Later decisions (user)
+
+- Picture format: lossless JPEG 2000 following SMPTE ST 428-24 (DCDM packed images) is the default, written to picture/NNNNNNNN.pdc.j2c (picture/left and picture/right for 3D); 12-bit DPX stays available (CLI `dcdm-dpx`, GUI format choice). Coding: reversible 5/3, 5 levels, RPCL, 128x32 code-blocks, 256/128 precincts, tile-parts by resolution, TLM, COM "SMPTE DCDM X'Y'Z' image as defined in SMPTE ST 428-1". The HT block coder that ST 428-24 recommends is not used: OpenJPEG 2.5 cannot encode it. The 8-second digital head leader of ST 428-24 clause 7 is not written (round-trip principle; not decided by the user yet).
+- DCDM_INFO.txt in the output folder describes the export (format, coding, size, rate, 3D, reels, sound, Atmos, text) and lists the standards followed, plus the note that re-importing J2K needs "Re-encode JPEG2000 data".
+- Verified: 24, 25, 30, 48, 50, 60, 96, 100, 120 fps in 2D and 3D; 4K; already-X'Y'Z' (e.g. PQ-coded HDR) masters pass through unchanged. DCP-o-matic has no PQ (ST 2084) transfer function, so HDR sources in other colour spaces cannot be converted to HDR X'Y'Z'.
+- Next, as a separate PR: importing DCDMs (lossless J2K packed images, DPX unpacked or 12-bit packed).
