@@ -28,6 +28,8 @@
 #include "dpx_writer.h"
 #include "exceptions.h"
 #include "film.h"
+#include "font.h"
+#include "font_id_map.h"
 #include "image.h"
 #include "image_png.h"
 #include "job.h"
@@ -555,84 +557,21 @@ DCDMFilmEncoder::write_text()
 	player.set_ignore_video();
 	player.set_ignore_audio();
 
+	/* Collect the texts first: the font IDs come from every font in the film, as Writer does */
+	struct PendingText {
+		PlayerText subs;
+		TextType type;
+		boost::optional<DCPTextTrack> track;
+		DCPTimePeriod period;
+	};
+	vector<PendingText> pending_texts;
+
 	boost::signals2::scoped_connection connection = player.Text.connect(
 		[&](PlayerText subs, TextType type, boost::optional<DCPTextTrack> track, DCPTimePeriod period) {
 			if (subs.string.empty() && subs.bitmap.empty()) {
 				return;
 			}
-
-			boost::optional<DCPTextTrack> key_track;
-			if (type == TextType::CLOSED_CAPTION || type == TextType::CLOSED_SUBTITLE) {
-				DCPOMATIC_ASSERT(track);
-				key_track = track;
-				if (std::find(tracks.begin(), tracks.end(), *track) == tracks.end()) {
-					tracks.push_back(*track);
-				}
-			} else if (type != TextType::OPEN_SUBTITLE && type != TextType::OPEN_CAPTION) {
-				return;
-			}
-
-			/* As ReelWriter: times relative to the reel, to the millisecond */
-			int const tcr = 1000;
-
-			auto add_to_reel = [&](int reel, DCPTimePeriod part) {
-				auto const reel_period = _reel_periods[reel];
-				auto& asset = assets[std::make_pair(reel, key_track)];
-				if (!asset) {
-					asset = make_asset(reel, key_track);
-				}
-
-				for (auto i: subs.string) {
-					i.set_in(dcp::Time(part.from.seconds() - reel_period.from.seconds(), tcr));
-					i.set_out(dcp::Time(part.to.seconds() - reel_period.from.seconds(), tcr));
-					i.set_v_position(vertical_position(i, standard, metrics));
-					auto text = make_shared<dcp::TextString>(i);
-					auto const id = i.font ? i.font->id() : std::string("default");
-					text->set_font(id);
-					asset->add(text);
-					asset->ensure_font(id, i.font && i.font->data() ? *i.font->data() : default_font);
-				}
-
-				for (auto const& i: subs.bitmap) {
-					asset->add(
-						make_shared<dcp::TextImage>(
-							image_as_png(i.image),
-							dcp::Time(part.from.seconds() - reel_period.from.seconds(), tcr),
-							dcp::Time(part.to.seconds() - reel_period.from.seconds(), tcr),
-							i.rectangle.x, dcp::HAlign::LEFT, i.rectangle.y, dcp::VAlign::TOP, 0, vector<dcp::Text::VariableZPosition>(),
-							dcp::Time(), dcp::Time()
-							)
-						);
-				}
-			};
-
-			/* As Writer::write(PlayerText...): back off a couple of frames from reel boundaries */
-			auto const vfr = _film->video_frame_rate();
-			auto back_off = [vfr](DCPTimePeriod p) {
-				p.to -= DCPTime::from_frames(2, vfr);
-				if (p.duration().frames_floor(vfr) <= 0) {
-					p.to = p.from + DCPTime::from_frames(1, vfr);
-				}
-				return p;
-			};
-
-			int reel = 0;
-			while (reel + 1 < static_cast<int>(_reel_periods.size()) && _reel_periods[reel].to <= period.from) {
-				++reel;
-			}
-
-			if (period.to > _reel_periods[reel].to) {
-				/* This text goes off the end of the reel: the parts in later reels go there */
-				for (int later = reel + 1; later < static_cast<int>(_reel_periods.size()); ++later) {
-					if (auto overlap = _reel_periods[later].overlap(period)) {
-						add_to_reel(later, back_off(*overlap));
-					}
-				}
-				period.to = _reel_periods[reel].to;
-				period = back_off(period);
-			}
-
-			add_to_reel(reel, period);
+			pending_texts.push_back({ subs, type, track, period });
 		});
 
 	if (auto job = _job.lock()) {
@@ -645,6 +584,111 @@ DCDMFilmEncoder::write_text()
 			job->set_progress_unknown();
 		}
 	}
+
+	/* Font IDs as Writer makes them: Interop has one font for all subtitles, SMPTE one ID per font */
+	FontIdMap fonts;
+	auto fix_id = [](string id) {
+		return id.empty() ? string("font") : id;
+	};
+	auto const all_fonts = player.get_subtitle_fonts();
+	shared_ptr<dcpomatic::Font> chosen_interop_font;
+	if (!all_fonts.empty()) {
+		if (interop) {
+			for (auto font: all_fonts) {
+				fonts.put(font, fix_id(all_fonts[0]->id()));
+			}
+			chosen_interop_font = all_fonts[0];
+		} else {
+			for (auto font: all_fonts) {
+				fonts.put(font, fix_id(font->id()));
+			}
+		}
+	}
+
+	for (auto const& pending: pending_texts) {
+		auto const& subs = pending.subs;
+		auto const& type = pending.type;
+		auto const& track = pending.track;
+		auto const& period = pending.period;
+
+		boost::optional<DCPTextTrack> key_track;
+		if (type == TextType::CLOSED_CAPTION || type == TextType::CLOSED_SUBTITLE) {
+			DCPOMATIC_ASSERT(track);
+			key_track = track;
+			if (std::find(tracks.begin(), tracks.end(), *track) == tracks.end()) {
+				tracks.push_back(*track);
+			}
+		} else if (type != TextType::OPEN_SUBTITLE && type != TextType::OPEN_CAPTION) {
+			continue;
+		}
+
+		/* As ReelWriter: times relative to the reel, to the millisecond */
+		int const tcr = 1000;
+
+		auto add_to_reel = [&](int reel, DCPTimePeriod part) {
+			auto const reel_period = _reel_periods[reel];
+			auto& asset = assets[std::make_pair(reel, key_track)];
+			if (!asset) {
+				asset = make_asset(reel, key_track);
+			}
+
+			for (auto i: subs.string) {
+				i.set_in(dcp::Time(part.from.seconds() - reel_period.from.seconds(), tcr));
+				i.set_out(dcp::Time(part.to.seconds() - reel_period.from.seconds(), tcr));
+				i.set_v_position(vertical_position(i, standard, metrics));
+				auto text = make_shared<dcp::TextString>(i);
+				/* The font the DCP would use: Interop always uses the chosen one */
+				auto const font = interop ? chosen_interop_font : i.font;
+				auto const id = (font && fonts.map().count(font)) ? fonts.get(font) : string("default");
+				text->set_font(id);
+				asset->add(text);
+				asset->ensure_font(id, font && font->data() ? *font->data() : default_font);
+			}
+
+			for (auto const& i: subs.bitmap) {
+				asset->add(
+					make_shared<dcp::TextImage>(
+						image_as_png(i.image),
+						dcp::Time(part.from.seconds() - reel_period.from.seconds(), tcr),
+						dcp::Time(part.to.seconds() - reel_period.from.seconds(), tcr),
+						i.rectangle.x, dcp::HAlign::LEFT, i.rectangle.y, dcp::VAlign::TOP, 0, vector<dcp::Text::VariableZPosition>(),
+						dcp::Time(), dcp::Time()
+						)
+					);
+			}
+		};
+
+		/* As Writer::write(PlayerText...): back off a couple of frames from reel boundaries */
+		auto const vfr = _film->video_frame_rate();
+		auto back_off = [vfr](DCPTimePeriod p) {
+			p.to -= DCPTime::from_frames(2, vfr);
+			if (p.duration().frames_floor(vfr) <= 0) {
+				p.to = p.from + DCPTime::from_frames(1, vfr);
+			}
+			return p;
+		};
+
+		int reel = 0;
+		while (reel + 1 < static_cast<int>(_reel_periods.size()) && _reel_periods[reel].to <= period.from) {
+			++reel;
+		}
+
+		auto part = period;
+		if (period.to > _reel_periods[reel].to) {
+			/* This text goes off the end of the reel: the parts in later reels go there */
+			for (int later = reel + 1; later < static_cast<int>(_reel_periods.size()); ++later) {
+				if (auto overlap = _reel_periods[later].overlap(period)) {
+					add_to_reel(later, back_off(*overlap));
+				}
+			}
+			part.to = _reel_periods[reel].to;
+			part = back_off(part);
+		}
+
+		add_to_reel(reel, part);
+	}
+
+
 
 	for (auto const& i: assets) {
 		auto const reel = i.first.first;
