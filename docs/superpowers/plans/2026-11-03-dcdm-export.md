@@ -20,6 +20,8 @@
 - Gate FFmpeg: intraframe/lossless codec AND 10+ bits AND chroma 4:2:2 or better. Accept ProRes 422 HQ, 4444, 4444 XQ; DNxHR HQX and 444; FFV1; v210; rawvideo. Fail everything else.
 - Films with no stored codec/pixel-format metadata do not qualify until re-examined.
 - GUI: DCDM menu item disabled with a tooltip/message naming the first failing content. CLI: error naming content and reason, non-zero exit.
+- Atmos: copy the MXF unchanged to `atmos.mxf`; single `AtmosMXFContent` starting at 0 with no trim, else error.
+- Open subtitles and closed captions: separate XML files (film's Interop/SMPTE format) with fonts, in `subtitles/` and `captions/`; not burnt into DPX.
 - Existing exports must not change behaviour.
 - Never include model identifiers in commits or code.
 
@@ -29,6 +31,8 @@
 - Mixed film (one ProRes 4444 + one H.264 clip): gate fails and names the H.264 clip.
 - Output directory already contains files: export errors out instead of silently overwriting.
 - Odd frame rate or film length not a whole number of frames: frame count and audio length stay consistent, audio WAV lengths equal across channels.
+- Film with Atmos content that is trimmed or offset: export fails with a clear message instead of writing an out-of-sync MXF.
+- Film with closed captions only, or open subtitles only: only the matching folder is created.
 - Film with more audio channels than the WAV naming scheme expects (e.g. 16): all channels written, names unique and sortable.
 
 ---
@@ -121,7 +125,7 @@
 
 - [ ] **Step 1: Write failing tests**: `dcdm_encoder_2d_test` (short film from a qualifying test TIFF sequence; after the job: expected frame count of `.dpx` files, first file passes the Task 1 reader, one WAV per film audio channel, all WAVs same length); `dcdm_encoder_3d_test` (3D film: `left/` and `right/` each hold the frame count, one set of WAVs); `dcdm_encoder_rejects_low_quality_test` (H.264 content throws with the clip name in the message); `dcdm_encoder_nonempty_directory_test`.
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_encoder_*`. Expected: FAIL.
-- [ ] **Step 3: Implement** the encoder: `Butler` with pixel format `AV_PIX_FMT_XYZ12LE`, `VideoRange::FULL`, audio enabled with a channel mapping of one input per output channel; loop structure copied from `FFmpegFilmEncoder::go` (`gets_per_frame` = 2 for 3D); call `_player.set_always_burn_open_subtitles()`.
+- [ ] **Step 3: Implement** the encoder: `Butler` with pixel format `AV_PIX_FMT_XYZ12LE`, `VideoRange::FULL`, audio enabled with a channel mapping of one input per output channel; loop structure copied from `FFmpegFilmEncoder::go` (`gets_per_frame` = 2 for 3D); do NOT burn open subtitles (text goes to Task 9 outputs).
 - [ ] **Step 4: Run** same command. Expected: PASS.
 - [ ] **Step 5: Commit** `git commit -m "Add DCDM film encoder"`
 
@@ -156,9 +160,41 @@
 - [ ] **Step 3: Build and check**: `./waf build`. Expected: build succeeds. Launch `run/dcpomatic` against a qualifying project and a low-quality project; confirm enabled/disabled state and a successful export on the qualifying one (use the `run` skill).
 - [ ] **Step 4: Commit** `git commit -m "Add Export DCDM to the GUI"`
 
+### Task 8: Atmos track
+
+**Files:**
+- Modify: `src/lib/dcdm_film_encoder.h/.cc`
+- Test: `test/dcdm_film_encoder_test.cc`
+
+**Interfaces:**
+- Consumes: `AtmosMXFContent` (`path(0)`, `position()`, `trim_start()`, `trim_end()`).
+- Produces: `atmos.mxf` byte-identical to the source in the output directory. Encoder throws with a clear message for more than one Atmos content, non-zero position, or non-zero trim.
+
+- [ ] **Step 1: Write failing tests**: `dcdm_atmos_copy_test` (film with an Atmos MXF from `test/data`; `atmos.mxf` exists and is byte-identical); `dcdm_atmos_trimmed_test` (trimmed Atmos: throws, message names the file); `dcdm_no_atmos_test` (no `atmos.mxf` created).
+- [ ] **Step 2: Run** `./run/tests --run_test=dcdm_atmos_*`. Expected: FAIL.
+- [ ] **Step 3: Implement** the copy at the start of `go()` using `boost::filesystem::copy_file`.
+- [ ] **Step 4: Run** same command. Expected: PASS.
+- [ ] **Step 5: Commit** `git commit -m "Copy Atmos MXF in DCDM export"`
+
+### Task 9: Open subtitles and closed captions
+
+**Files:**
+- Modify: `src/lib/subtitle_film_encoder.h/.cc` (accept `TextType::CLOSED_CAPTION`, expose it per type), `src/lib/dcdm_film_encoder.h/.cc`
+- Test: `test/dcdm_film_encoder_test.cc`, `test/export_subtitles_test.cc`
+
+**Interfaces:**
+- Consumes: `SubtitleFilmEncoder` output logic; film `interop()` selects XML flavour.
+- Produces: `subtitles/` with the open subtitle XML and fonts, `captions/` with the closed caption XML; each only if the film has that kind. Existing subtitle export behaviour unchanged by default (closed captions only included when explicitly enabled by a new constructor argument `bool include_closed_captions = false`).
+
+- [ ] **Step 1: Write failing tests**: `dcdm_open_subtitles_test` (film with `test/data/dcp_sub3.xml`: `subtitles/` holds a parsable subtitle XML, DPX frames unchanged by subtitles); `dcdm_closed_captions_test` (film with closed captions: `captions/` holds XML); `dcdm_no_text_test` (neither folder exists); in `export_subtitles_test.cc` a regression test that the default export still ignores closed captions.
+- [ ] **Step 2: Run** `./run/tests --run_test=dcdm_*text*,dcdm_open_subtitles_test,dcdm_closed_captions_test`. Expected: FAIL.
+- [ ] **Step 3: Implement**: extend `SubtitleFilmEncoder::text` filter at line ~126 behind the new constructor flag; run it inside the DCDM export into the two folders.
+- [ ] **Step 4: Run** same command plus `export_srt_test`. Expected: PASS.
+- [ ] **Step 5: Commit** `git commit -m "Export open subtitles and closed captions with DCDM"`
+
 ---
 
 ## Self-review notes
 
-- Spec coverage: DPX (T1), per-channel WAV (T2), metadata prerequisite for the gate (T3), gate incl. DCP-fails and legacy-fails (T4), encoder incl. 3D layout (T5), CLI (T6), GUI with disabled state and reason (T7).
+- Spec coverage: Atmos (T8), text (T9), DPX (T1), per-channel WAV (T2), metadata prerequisite for the gate (T3), gate incl. DCP-fails and legacy-fails (T4), encoder incl. 3D layout (T5), CLI (T6), GUI with disabled state and reason (T7).
 - Open risk for the user: DPX has no XYZ colorimetric code; XYZ is a convention, not a header flag. The design said "XYZ colorimetric set in the header"; T1 step 3 handles this by documenting the choice.

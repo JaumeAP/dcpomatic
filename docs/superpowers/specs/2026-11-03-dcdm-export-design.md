@@ -67,6 +67,13 @@ Consequences:
 - Existing films without the new fields are treated as not qualifying until the content is re-examined. This is my call; it avoids false passes.
 - The gate is a pure function of content properties, placed in lib so GUI and CLI share it.
 
+## Atmos and text (user decision: include them)
+
+- Dolby Atmos: if the film has Atmos content, copy its MXF unchanged to `atmos.mxf` in the output directory. No re-encode. My call: only a single `AtmosMXFContent` that starts at 0 with no trim is supported; anything else fails the export with a clear error, because a plain copy would be out of sync.
+- Open subtitles and closed captions: written as separate files, not burnt into the DPX frames (my call; the user did not choose between this and burning). Format follows the film (Interop or SMPTE XML), with fonts. Files go in `subtitles/` (open) and `captions/` (closed). Nothing is written if the film has none.
+- Consequence: the DCDM encoder must not call `set_always_burn_open_subtitles()`.
+- `SubtitleFilmEncoder::text` currently drops everything but `TextType::OPEN_SUBTITLE`; closed captions need support there or in a shared helper.
+
 ## Left to the builder (flagged as my calls)
 
 - Exact DPX header field values (descriptor, transfer, colorimetric, packing/method bits). Validate against a reference DPX reader.
