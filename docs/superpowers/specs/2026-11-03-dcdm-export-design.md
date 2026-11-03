@@ -117,3 +117,10 @@ Consequences:
 - DCDM_INFO.txt in the output folder describes the export (format, coding, size, rate, 3D, reels, sound, Atmos, text) and lists the standards followed, plus the note that re-importing J2K needs "Re-encode JPEG2000 data".
 - Verified: 24, 25, 30, 48, 50, 60, 96, 100, 120 fps in 2D and 3D; 4K; already-X'Y'Z' (e.g. PQ-coded HDR) masters pass through unchanged. DCP-o-matic has no PQ (ST 2084) transfer function, so HDR sources in other colour spaces cannot be converted to HDR X'Y'Z'.
 - Next, as a separate PR: importing DCDMs (lossless J2K packed images, DPX unpacked or 12-bit packed).
+
+## Pending: second PR, DCDM importer (noted by user, not started)
+
+- Import a DCDM folder back into DCP-o-matic to regenerate the DCP. Not implemented in this PR.
+- Needs: detect layout (reel_NN/, picture/ or DPX, audio/ per label, atmos.mxf, subtitles/, captions/, DCDM_INFO.txt); reencode_j2k for .pdc.j2c; colour conversion None for DPX; WAV mapped to channel labels (L..Rs, Lrs, Rrs, HI, VI, SL); 3D left/right; reels; subtitle XML.
+- Scope to decide later: lib function + CLI first, GUI after (user's previous choice: lib + CLI first).
+
