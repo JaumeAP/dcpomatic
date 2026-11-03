@@ -126,20 +126,29 @@ check_rate(int rate, bool three_d)
 	auto film = new_test_film(name);
 	film->set_video_frame_rate(rate);
 
-	/* For 3D, source frames alternate left/right, so one second needs 2 * rate frames */
-	int const source_frames = three_d ? rate * 2 : rate;
-	auto src = make_sequence("build/test/" + name + "_src", source_frames, dcp::Size(64, 48), [](int f) { return 100 + f * 7; });
-	auto content = content_factory(src)[0];
-	film->examine_and_add_content({content});
-	BOOST_REQUIRE(!wait_for_jobs());
-	content->video->unset_colour_conversion();
+	/* One second of frames; for 3D a separate left-eye and right-eye source, with different values */
+	auto add_eye = [&](string eye, int offset, VideoFrameType type) {
+		auto src = make_sequence("build/test/" + name + "_src_" + eye, rate, dcp::Size(64, 48), [offset](int f) { return 100 + offset + f * 7; });
+		auto content = content_factory(src)[0];
+		film->examine_and_add_content({content});
+		BOOST_REQUIRE(!wait_for_jobs());
+		content->video->unset_colour_conversion();
+		content->set_video_frame_rate(film, rate);
+		content->set_position(film, DCPTime());
+		if (type != VideoFrameType::TWO_D) {
+			content->video->set_frame_type(type);
+		}
+		return src;
+	};
+
+	vector<boost::filesystem::path> sources;
 	if (three_d) {
-		content->video->set_frame_type(VideoFrameType::THREE_D_ALTERNATE);
+		film->set_sequence(false);
+		sources.push_back(add_eye("left", 0, VideoFrameType::THREE_D_LEFT));
+		sources.push_back(add_eye("right", 3, VideoFrameType::THREE_D_RIGHT));
 		film->set_three_d(true);
-		/* For alternate-frame 3D the content rate is in left/right pairs per second */
-		content->set_video_frame_rate(film, rate);
 	} else {
-		content->set_video_frame_rate(film, rate);
+		sources.push_back(add_eye("mono", 0, VideoFrameType::TWO_D));
 	}
 	BOOST_REQUIRE(!wait_for_jobs());
 	BOOST_REQUIRE_EQUAL(film->video_frame_rate(), rate);
@@ -159,14 +168,15 @@ check_rate(int rate, bool three_d)
 		/* Check the first, a middle and the last frame hold the source frame they should */
 		for (int f: { 0, rate / 2, rate - 1 }) {
 			auto const image = decode(eyes[e] / fmt::format("{:08d}.pdc.j2c", f));
-			int const source = three_d ? f * 2 + static_cast<int>(e) : f;
+			/* Right-eye values are 3 higher than left-eye ones */
+			int const expected = 100 + f * 7 + (e == 1 ? 3 : 0);
 			/* The small source is scaled into the middle of the container, so look at the centre pixel.
 			 * Scaling may move a value by one code value (as it does for the DCP); exactness of
 			 * unscaled pictures is checked by dcdm_formats_xyz_passthrough_test.
 			 */
 			auto const size = image->size();
 			auto const centre = (size.height / 2) * size.width + size.width / 2;
-			BOOST_CHECK_MESSAGE(std::abs(image->data(0)[centre] - (100 + source * 7)) <= 1, name << " frame " << f << " eye " << e << ": " << image->data(0)[centre] << " != " << 100 + source * 7);
+			BOOST_CHECK_MESSAGE(std::abs(image->data(0)[centre] - expected) <= 1, name << " frame " << f << " eye " << e << ": " << image->data(0)[centre] << " != " << expected);
 		}
 	}
 
@@ -176,7 +186,9 @@ check_rate(int rate, bool three_d)
 	}
 
 	dcp::filesystem::remove_all(out);
-	dcp::filesystem::remove_all(src);
+	for (auto const& src: sources) {
+		dcp::filesystem::remove_all(src);
+	}
 }
 
 
