@@ -61,6 +61,32 @@ using boost::optional;
 using namespace dcpomatic;
 
 
+/** Map a 7.1 file in the order of its channel mask, when there is no audio processor and the
+ *  mapping reaches the rear surrounds.
+ *
+ *  A 7.1 file has its channels in the order of the bits of its mask: the back pair on 5 and 6
+ *  and the side pair on 7 and 8.  The rear surrounds are the backs, not HI and VI.
+ */
+static
+void
+map_seven_one_by_mask(AudioMapping& mapping, bool seven_one, AudioProcessor const* processor)
+{
+	if (!seven_one || processor || mapping.output_channels() <= static_cast<int>(dcp::Channel::BSR)) {
+		return;
+	}
+
+	for (auto input: { 4, 5, 6, 7 }) {
+		for (int output = 0; output < mapping.output_channels(); ++output) {
+			mapping.set(input, output, 0);
+		}
+	}
+	mapping.set(4, dcp::Channel::BSL, 1);
+	mapping.set(5, dcp::Channel::BSR, 1);
+	mapping.set(6, dcp::Channel::LS, 1);
+	mapping.set(7, dcp::Channel::RS, 1);
+}
+
+
 FFmpegContent::FFmpegContent(boost::filesystem::path p)
 	: Content(p)
 {
@@ -339,6 +365,9 @@ FFmpegContent::prepare_for_add_to_film(shared_ptr<const Film> film)
 		auto as = audio->streams().front();
 		auto m = as->mapping();
 		m.make_default(film->audio_processor(), first_path);
+		if (auto ffmpeg_stream = dynamic_pointer_cast<FFmpegAudioStream>(as)) {
+			map_seven_one_by_mask(m, ffmpeg_stream->seven_one, film->audio_processor());
+		}
 		as->set_mapping(m);
 	}
 }
