@@ -13,6 +13,7 @@
 ## Global Constraints
 
 - Output video: DPX, CIE XYZ, 12 bits per component. No TIFF.
+- Audio layouts: only 5.1 (L R C LFE Ls Rs) or 7.1 (adds Lrs Rrs); a 7.1 programme writes both `audio_7.1/` and `audio_5.1/`; 5.1 from 7.1 downmixes Lrs/Rrs into Ls/Rs at -3 dB; fewer than 6 channels are padded with silence; more than 8 channels or HI/VI/Lc/Rc in use is an error.
 - Output audio: always one mono WAV per channel, never a multichannel WAV. All WAVs are 24-bit. All WAVs are at `film->audio_frame_rate()` (the final DCP's rate); standalone PCM at another rate is resampled (existing `Resampler`), no remix/gain; 16-bit sources are widened exactly (shift left 8), 32-bit int and float are rounded to 24 bits without dither. Embedded audio is rendered at 24-bit. Atmos is an untouched original.
 - 3D: both eyes, `left/` and `right/` subdirectories; 2D writes DPX files directly in the output directory; audio written once.
 - Gate: every video content must pass; DCP content fails; audio-only and text content ignored.
@@ -21,7 +22,7 @@
 - Films with no stored codec/pixel-format metadata do not qualify until re-examined.
 - GUI: DCDM menu item disabled with a tooltip/message naming the first failing content. CLI: error naming content and reason, non-zero exit.
 - Reels: one reel writes the flat layout; several reels write `reel_01/`, `reel_02/`, ... each with the full layout, frame numbering restarting at 0, WAVs covering exactly the reel period.
-- Originals: copy each `AtmosMXFContent` file byte-identical to `atmos/`; split each audio-only `FFmpegContent` file (no video) into mono WAVs in `audio/` (`<stem>_ch<NN>.wav`, 24-bit samples); in the output root, no cutting, no per-reel placement, no position/trim/gain applied; write `sources.txt` noting each original's position, trim and reel; name clash is an error.
+- Originals: copy each `AtmosMXFContent` file byte-identical to `atmos/`; split each audio-only `FFmpegContent` file (no video) into mono WAVs in `audio_5.1/` and `audio_7.1/` per the layout rule (`<stem>_<label>.wav`, 24-bit samples); in the output root, no cutting, no per-reel placement, no position/trim/gain applied; write `sources.txt` noting each original's position, trim and reel; name clash is an error.
 - Embedded audio (audio inside a video source): rendered to one 24-bit mono WAV per channel from the video-bearing contents only.
 - Open subtitles and closed captions: separate XML files (film's Interop/SMPTE format) with fonts, in `subtitles/` and `captions/`; not burnt into DPX.
 - Existing exports must not change behaviour.
@@ -34,12 +35,14 @@
 - Output directory already contains files: export errors out instead of silently overwriting.
 - Odd frame rate or film length not a whole number of frames: frame count and audio length stay consistent, audio WAV lengths equal across channels.
 - Multi-reel film: DPX counts per reel sum to the film length, every reel's WAVs have equal length, and no frame is dropped or duplicated at reel boundaries.
-- Film with a standalone WAV plus a ProRes MOV with embedded audio: the WAV is split per channel into `audio/` and the rendered per-channel WAVs contain only the MOV's audio (no double mix).
+- Film with a standalone WAV plus a ProRes MOV with embedded audio: the WAV is split per channel into the layout directories and the rendered per-channel WAVs contain only the MOV's audio (no double mix).
 - Two sources with the same file name or stem: export fails before any file is written.
 - Film with Atmos content that is trimmed or offset: export fails with a clear message instead of writing an out-of-sync MXF.
 - Film with closed captions only, or open subtitles only: only the matching folder is created.
 - Source PCM at a rate other than the film's (44.1 kHz, 96 kHz into 48 kHz film): output rate is the film's and duration is preserved.
-- Film with more audio channels than the WAV naming scheme expects (e.g. 16): all channels written, names unique and sortable.
+- Film using more than 8 audio channels (e.g. 16, or HI/VI): export fails before any file is written, message names the channels.
+- 7.1 downmix: a signal only in Lrs appears in Ls of the 5.1 set at -3 dB, and nothing is clipped on a full-scale input.
+- Stereo or mono film: `audio_5.1/` is complete (six files), the missing channels silent.
 
 ---
 
@@ -117,6 +120,27 @@
 - [ ] **Step 4: Run** same command. Expected: PASS.
 - [ ] **Step 5: Commit** `git commit -m "Add DCDM source quality gate"`
 
+### Task 5a: Audio layouts
+
+**Files:**
+- Create: `src/lib/dcdm_audio_layout.h`, `src/lib/dcdm_audio_layout.cc`
+- Modify: `src/lib/wscript`
+- Test: `test/dcdm_audio_layout_test.cc`, `test/wscript`
+
+**Interfaces:**
+- Produces:
+  - `enum class DCDMLayout { FIVE_ONE, SEVEN_ONE };`
+  - `std::vector<DCDMLayout> dcdm_layouts(std::set<dcp::Channel> used);` returns `{FIVE_ONE}` if only 5.1 channels (or fewer) are used, `{SEVEN_ONE, FIVE_ONE}` if BSL or BSR is used; throws `std::runtime_error` naming the channels if HI, VI, LC or RC is used.
+  - `std::vector<std::string> dcdm_channel_labels(DCDMLayout);` L R C LFE Ls Rs (and Lrs Rrs for 7.1).
+  - `std::shared_ptr<AudioBuffers> dcdm_downmix_71_to_51(std::shared_ptr<const AudioBuffers> eight_channels);` channel order L R C LFE Ls Rs Lrs Rrs in, L R C LFE Ls Rs out, Ls' = Ls + 0.7079 * Lrs, Rs' = Rs + 0.7079 * Rrs (-3 dB), clamped to ±1.0.
+  - `std::shared_ptr<AudioBuffers> dcdm_pad_to_layout(std::shared_ptr<const AudioBuffers>, DCDMLayout);` adds silent channels up to the layout's count.
+
+- [ ] **Step 1: Write failing tests**: `dcdm_layouts_51_test`, `dcdm_layouts_71_test` (BSL used gives `{SEVEN_ONE, FIVE_ONE}`), `dcdm_layouts_rejects_hi_vi_test` (error message contains "HI"), `dcdm_downmix_lrs_test` (Lrs = 0.5 only: Ls' = 0.5 * 0.7079 within 1e-4), `dcdm_downmix_clamps_test` (Ls = Lrs = 1.0: Ls' = 1.0), `dcdm_pad_stereo_test` (2 channels in, 6 out, channels 3-6 silent).
+- [ ] **Step 2: Run** `./waf build && ./run/tests --run_test=dcdm_layouts_*,dcdm_downmix_*,dcdm_pad_*`. Expected: FAIL.
+- [ ] **Step 3: Implement** the four functions as pure code over `AudioBuffers`.
+- [ ] **Step 4: Run** same command. Expected: PASS.
+- [ ] **Step 5: Commit** `git commit -m "Add DCDM 5.1 and 7.1 audio layout helpers"`
+
 ### Task 5: DCDMFilmEncoder
 
 **Files:**
@@ -125,9 +149,9 @@
 - Test: `test/dcdm_film_encoder_test.cc`, `test/wscript`
 
 **Interfaces:**
-- Consumes: `write_dpx` (Task 1), `WAVWriter` (Task 2), `dcdm_source_quality` (Task 4).
+- Consumes: `write_dpx` (Task 1), `WAVWriter` (Task 2), `dcdm_source_quality` (Task 4), layout helpers (Task 5a).
 - Produces: `DCDMFilmEncoder(std::shared_ptr<const Film> film, std::weak_ptr<Job> job, boost::filesystem::path output_directory);` implements `go()`, `current_rate()`, `frames_done()`, `finishing()` like `FFmpegFilmEncoder`. Constructor throws `std::runtime_error` carrying the gate reason if `!dcdm_source_quality(film).ok`. `go()` throws if `output_directory` exists and is not empty.
-- Layout (one reel; several reels repeat it inside `reel_<2-digit n>/`): 2D `frame_<8-digit index>.dpx`; 3D `left/` and `right/` with the same names; audio `audio_<2-digit channel>.wav` in the output directory root.
+- Layout (one reel; several reels repeat it inside `reel_<2-digit n>/`): 2D `frame_<8-digit index>.dpx`; 3D `left/` and `right/` with the same names; audio `audio_5.1/` and (7.1 only) `audio_7.1/` as set by Task 5a.
 
 - [ ] **Step 1: Write failing tests**: `dcdm_encoder_reels_test` (film with 2 reels from `film->reels()`: `reel_01/` and `reel_02/` each hold their frames numbered from 0 plus per-channel WAVs, counts sum to film length); `dcdm_encoder_2d_test` (short film from a qualifying test TIFF sequence; after the job: expected frame count of `.dpx` files, first file passes the Task 1 reader, one WAV per film audio channel, all WAVs same length); `dcdm_encoder_3d_test` (3D film: `left/` and `right/` each hold the frame count, one set of WAVs); `dcdm_encoder_rejects_low_quality_test` (H.264 content throws with the clip name in the message); `dcdm_encoder_nonempty_directory_test`.
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_encoder_*`. Expected: FAIL.
@@ -174,9 +198,9 @@
 
 **Interfaces:**
 - Consumes: `AtmosMXFContent::path(0)`, audio-only `FFmpegContent` (`video == nullptr`, `path(0)`), `Player(film, playlist, tolerant)`.
-- Produces: `atmos/<original name>` byte-identical to the source; `audio/<source stem>_ch<NN>.wav` mono per channel, 24-bit, at `film->audio_frame_rate()`, resampled if the source rate differs (via `WAVWriter::write_int` and `Resampler`); `sources.txt` listing each original with position, trim and reel; the rendered-WAV path from Task 5 uses a playlist that excludes these contents.
+- Produces: `atmos/<original name>` byte-identical to the source; `audio_5.1/<stem>_<label>.wav` and (7.1 only) `audio_7.1/<stem>_<label>.wav`, mono per channel, 24-bit, at `film->audio_frame_rate()`, resampled if the source rate differs (via `WAVWriter::write_int` and `Resampler`); `sources.txt` listing each original with position, trim and reel; the rendered-WAV path from Task 5 uses a playlist that excludes these contents.
 
-- [ ] **Step 1: Write failing tests**: `dcdm_atmos_copy_test` (Atmos MXF from `test/data`: `atmos/<name>` byte-identical; multi-reel film: still one copy at root, untouched); `dcdm_pcm_split_exact_test` (standalone 16-bit stereo WAV: `audio/<stem>_ch01.wav` and `_ch02.wav`, each 24-bit mono, samples equal to the source's channel shifted left by 8, film rate equals source rate); `dcdm_pcm_resample_test` (44.1 kHz source in a 48 kHz film: output WAV header says 48000, duration matches the source within one sample); `dcdm_pcm_32bit_to_24_test` (32-bit source writes 24-bit files); `dcdm_pcm_multichannel_split_test` (6-channel WAV gives 6 files); `dcdm_embedded_audio_render_test` (ProRes MOV with audio plus a standalone WAV: WAV split into `audio/`, rendered per-channel WAVs hold only the MOV's audio); `dcdm_original_name_clash_test` (two sources, same file name: throws before any file is written); `dcdm_sources_note_test` (`sources.txt` lists each original); `dcdm_no_originals_test` (no `atmos/`, `audio/` or `sources.txt`).
+- [ ] **Step 1: Write failing tests**: `dcdm_atmos_copy_test` (Atmos MXF from `test/data`: `atmos/<name>` byte-identical; multi-reel film: still one copy at root, untouched); `dcdm_pcm_split_exact_test` (standalone 16-bit stereo WAV: `audio_5.1/<stem>_L.wav` and `_R.wav`, each 24-bit mono, samples equal to the source's channel shifted left by 8, film rate equals source rate); `dcdm_pcm_resample_test` (44.1 kHz source in a 48 kHz film: output WAV header says 48000, duration matches the source within one sample); `dcdm_pcm_32bit_to_24_test` (32-bit source writes 24-bit files); `dcdm_pcm_multichannel_split_test` (6-channel WAV gives the 6 labelled 5.1 files, no `audio_7.1/`); `dcdm_pcm_71_test` (8-channel WAV gives 8 files in `audio_7.1/` plus 6 downmixed files in `audio_5.1/`); `dcdm_embedded_audio_render_test` (ProRes MOV with audio plus a standalone WAV: WAV split into `audio/`, rendered per-channel WAVs hold only the MOV's audio); `dcdm_original_name_clash_test` (two sources, same file name: throws before any file is written); `dcdm_sources_note_test` (`sources.txt` lists each original); `dcdm_no_originals_test` (no `atmos/`, `audio/` or `sources.txt`).
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_atmos_copy_test,dcdm_pcm_*,dcdm_embedded_*,dcdm_original_*,dcdm_sources_*,dcdm_no_originals_test`. Expected: FAIL.
 - [ ] **Step 3: Implement** validation (name clashes) before anything is written, then the Atmos copies with `boost::filesystem::copy_file`, the PCM splitting through an FFmpeg decode to 32-bit integers (float sources converted first), then the note. Build the Task 5 `Player` from a playlist of the video-bearing contents only.
 - [ ] **Step 4: Run** same command. Expected: PASS.

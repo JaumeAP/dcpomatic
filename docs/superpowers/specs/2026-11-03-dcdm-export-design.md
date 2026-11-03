@@ -79,6 +79,14 @@ Consequences:
 - Consequence: the DCDM encoder must not call `set_always_burn_open_subtitles()`.
 - `SubtitleFilmEncoder::text` currently drops everything but `TextType::OPEN_SUBTITLE`; closed captions need support there or in a shared helper.
 
+## Audio layouts: 5.1 and 7.1 only (user decision)
+
+- Exported audio is only ever 5.1 or 7.1. If the programme is 7.1 (rear surround channels in use), both a 7.1 set and a 5.1 set are written; if it is 5.1 or smaller, only the 5.1 set.
+- Sets are directories of mono 24-bit WAVs: `audio_5.1/` and `audio_7.1/`, files named by channel label: 5.1 = L, R, C, LFE, Ls, Rs; 7.1 adds Lrs, Rrs (`dcp::Channel` BSL, BSR). Rendered audio sets live in each reel folder (output root for one reel). PCM source splits live in the output root, prefixed with the source stem: `<stem>_<label>.wav`.
+- 5.1 from 7.1 is a downmix: Ls' = Ls + g*Lrs, Rs' = Rs + g*Rrs with g = -3 dB (my call), other channels unchanged. Rear channels are folded into the side surrounds, never dropped.
+- My calls: a programme with fewer than six channels is padded with silent channels so the 5.1 set is always complete; a programme using more than 8 channels (or HI/VI/Lc/Rc) fails the export with a clear error naming the channels.
+- Applies to rendered embedded audio and to PCM source splits alike.
+
 ## Reels (user decision: respect them)
 
 - The export follows `film->reels()`. One reel: flat layout as above. More than one reel: one subdirectory per reel, `reel_01/`, `reel_02/`, ..., each holding the per-reel layout (DPX frames or `left/` and `right/`, rendered audio WAVs, subtitles, captions). Frame numbering restarts at 0 in each reel; WAVs cover exactly the reel's period.
