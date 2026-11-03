@@ -26,6 +26,12 @@
 #include "film.h"
 #include "image_content.h"
 #include "video_content.h"
+#include <dcp/warnings.h>
+LIBDCP_DISABLE_WARNINGS
+extern "C" {
+#include <libavutil/pixdesc.h>
+}
+LIBDCP_ENABLE_WARNINGS
 #include <fmt/format.h>
 #include <boost/algorithm/string.hpp>
 
@@ -148,5 +154,5 @@ dcdm_source_quality(shared_ptr<const Film> film)
 		return { false, "the film has no video content" };
 	}
 
-	return { true, {} };
+	return { true, string() };
 }

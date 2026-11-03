@@ -40,7 +40,7 @@ class Film;
 /** Result of checking whether a film's sources are good enough for a DCDM export */
 struct DCDMQuality
 {
-	bool ok = false;
+	bool ok;
 	/** Empty if ok, otherwise names the first failing content and says why */
 	std::string reason;
 };
