@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2026 Jaume Puig <james.puig@elcine.com>
+    Copyright (C) 2026 Carl Hetherington <cth@carlh.net>
 
     This file is part of DCP-o-matic.
 
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(atmos_reference_test)
 		string why_not;
 		BOOST_CHECK(ov_content->can_reference_atmos(vf, why_not));
 		ov_content->set_reference_atmos(reference_atmos);
-		ov_content->set_trim_start(vf, trim_start);
+		ov_content->set_trim_start(trim_start);
 		ov_content->set_trim_end(trim_end);
 		make_and_verify_dcp(vf, { dcp::VerificationNote::Code::MISSING_CPL_METADATA, dcp::VerificationNote::Code::EXTERNAL_ASSET }, false);
 		return vf;
