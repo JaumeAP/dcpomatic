@@ -20,6 +20,8 @@
 - Gate FFmpeg: intraframe/lossless codec AND 10+ bits AND chroma 4:2:2 or better. Accept ProRes 422 HQ, 4444, 4444 XQ; DNxHR HQX and 444; FFV1; v210; rawvideo. Fail everything else.
 - Films with no stored codec/pixel-format metadata do not qualify until re-examined.
 - GUI: DCDM menu item disabled with a tooltip/message naming the first failing content. CLI: error naming content and reason, non-zero exit.
+- Reels: one reel writes the flat layout; several reels write `reel_01/`, `reel_02/`, ... each with the full layout, frame numbering restarting at 0, WAVs covering exactly the reel period.
+- Atmos with more than one reel: export fails with a clear error.
 - Atmos: copy the MXF unchanged to `atmos.mxf`; single `AtmosMXFContent` starting at 0 with no trim, else error.
 - Open subtitles and closed captions: separate XML files (film's Interop/SMPTE format) with fonts, in `subtitles/` and `captions/`; not burnt into DPX.
 - Existing exports must not change behaviour.
@@ -31,6 +33,8 @@
 - Mixed film (one ProRes 4444 + one H.264 clip): gate fails and names the H.264 clip.
 - Output directory already contains files: export errors out instead of silently overwriting.
 - Odd frame rate or film length not a whole number of frames: frame count and audio length stay consistent, audio WAV lengths equal across channels.
+- Multi-reel film: DPX counts per reel sum to the film length, every reel's WAVs have equal length, and no frame is dropped or duplicated at reel boundaries.
+- Multi-reel film with Atmos: fails before any file is written.
 - Film with Atmos content that is trimmed or offset: export fails with a clear message instead of writing an out-of-sync MXF.
 - Film with closed captions only, or open subtitles only: only the matching folder is created.
 - Film with more audio channels than the WAV naming scheme expects (e.g. 16): all channels written, names unique and sortable.
@@ -121,11 +125,11 @@
 **Interfaces:**
 - Consumes: `write_dpx` (Task 1), `WAVWriter` (Task 2), `dcdm_source_quality` (Task 4).
 - Produces: `DCDMFilmEncoder(std::shared_ptr<const Film> film, std::weak_ptr<Job> job, boost::filesystem::path output_directory);` implements `go()`, `current_rate()`, `frames_done()`, `finishing()` like `FFmpegFilmEncoder`. Constructor throws `std::runtime_error` carrying the gate reason if `!dcdm_source_quality(film).ok`. `go()` throws if `output_directory` exists and is not empty.
-- Layout: 2D `frame_<8-digit index>.dpx`; 3D `left/` and `right/` with the same names; audio `audio_<2-digit channel>.wav` in the output directory root.
+- Layout (one reel; several reels repeat it inside `reel_<2-digit n>/`): 2D `frame_<8-digit index>.dpx`; 3D `left/` and `right/` with the same names; audio `audio_<2-digit channel>.wav` in the output directory root.
 
-- [ ] **Step 1: Write failing tests**: `dcdm_encoder_2d_test` (short film from a qualifying test TIFF sequence; after the job: expected frame count of `.dpx` files, first file passes the Task 1 reader, one WAV per film audio channel, all WAVs same length); `dcdm_encoder_3d_test` (3D film: `left/` and `right/` each hold the frame count, one set of WAVs); `dcdm_encoder_rejects_low_quality_test` (H.264 content throws with the clip name in the message); `dcdm_encoder_nonempty_directory_test`.
+- [ ] **Step 1: Write failing tests**: `dcdm_encoder_reels_test` (film with 2 reels from `film->reels()`: `reel_01/` and `reel_02/` each hold their frames numbered from 0 plus per-channel WAVs, counts sum to film length); `dcdm_encoder_2d_test` (short film from a qualifying test TIFF sequence; after the job: expected frame count of `.dpx` files, first file passes the Task 1 reader, one WAV per film audio channel, all WAVs same length); `dcdm_encoder_3d_test` (3D film: `left/` and `right/` each hold the frame count, one set of WAVs); `dcdm_encoder_rejects_low_quality_test` (H.264 content throws with the clip name in the message); `dcdm_encoder_nonempty_directory_test`.
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_encoder_*`. Expected: FAIL.
-- [ ] **Step 3: Implement** the encoder: `Butler` with pixel format `AV_PIX_FMT_XYZ12LE`, `VideoRange::FULL`, audio enabled with a channel mapping of one input per output channel; loop structure copied from `FFmpegFilmEncoder::go` (`gets_per_frame` = 2 for 3D); do NOT burn open subtitles (text goes to Task 9 outputs).
+- [ ] **Step 3: Implement** the encoder: `Butler` with pixel format `AV_PIX_FMT_XYZ12LE`, `VideoRange::FULL`, audio enabled with a channel mapping of one input per output channel; loop structure and reel switching copied from `FFmpegFilmEncoder::go` (`reel_periods`, `file_encoders`) (`gets_per_frame` = 2 for 3D); do NOT burn open subtitles (text goes to Task 9 outputs).
 - [ ] **Step 4: Run** same command. Expected: PASS.
 - [ ] **Step 5: Commit** `git commit -m "Add DCDM film encoder"`
 
@@ -170,7 +174,7 @@
 - Consumes: `AtmosMXFContent` (`path(0)`, `position()`, `trim_start()`, `trim_end()`).
 - Produces: `atmos.mxf` byte-identical to the source in the output directory. Encoder throws with a clear message for more than one Atmos content, non-zero position, or non-zero trim.
 
-- [ ] **Step 1: Write failing tests**: `dcdm_atmos_copy_test` (film with an Atmos MXF from `test/data`; `atmos.mxf` exists and is byte-identical); `dcdm_atmos_trimmed_test` (trimmed Atmos: throws, message names the file); `dcdm_no_atmos_test` (no `atmos.mxf` created).
+- [ ] **Step 1: Write failing tests**: `dcdm_atmos_copy_test` (film with an Atmos MXF from `test/data`; `atmos.mxf` exists and is byte-identical); `dcdm_atmos_trimmed_test` (trimmed Atmos: throws, message names the file); `dcdm_atmos_multi_reel_test` (2 reels + Atmos: throws before any file is written); `dcdm_no_atmos_test` (no `atmos.mxf` created).
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_atmos_*`. Expected: FAIL.
 - [ ] **Step 3: Implement** the copy at the start of `go()` using `boost::filesystem::copy_file`.
 - [ ] **Step 4: Run** same command. Expected: PASS.
@@ -186,7 +190,7 @@
 - Consumes: `SubtitleFilmEncoder` output logic; film `interop()` selects XML flavour.
 - Produces: `subtitles/` with the open subtitle XML and fonts, `captions/` with the closed caption XML; each only if the film has that kind. Existing subtitle export behaviour unchanged by default (closed captions only included when explicitly enabled by a new constructor argument `bool include_closed_captions = false`).
 
-- [ ] **Step 1: Write failing tests**: `dcdm_open_subtitles_test` (film with `test/data/dcp_sub3.xml`: `subtitles/` holds a parsable subtitle XML, DPX frames unchanged by subtitles); `dcdm_closed_captions_test` (film with closed captions: `captions/` holds XML); `dcdm_no_text_test` (neither folder exists); in `export_subtitles_test.cc` a regression test that the default export still ignores closed captions.
+- [ ] **Step 1: Write failing tests**: `dcdm_open_subtitles_test` (film with `test/data/dcp_sub3.xml`: `subtitles/` holds a parsable subtitle XML, DPX frames unchanged by subtitles); `dcdm_closed_captions_test` (film with closed captions: `captions/` holds XML); `dcdm_text_reels_test` (2 reels: subtitles split per reel inside `reel_NN/`); `dcdm_no_text_test` (neither folder exists); in `export_subtitles_test.cc` a regression test that the default export still ignores closed captions.
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_*text*,dcdm_open_subtitles_test,dcdm_closed_captions_test`. Expected: FAIL.
 - [ ] **Step 3: Implement**: extend `SubtitleFilmEncoder::text` filter at line ~126 behind the new constructor flag; run it inside the DCDM export into the two folders.
 - [ ] **Step 4: Run** same command plus `export_srt_test`. Expected: PASS.

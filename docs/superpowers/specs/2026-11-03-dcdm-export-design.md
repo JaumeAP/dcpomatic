@@ -74,6 +74,12 @@ Consequences:
 - Consequence: the DCDM encoder must not call `set_always_burn_open_subtitles()`.
 - `SubtitleFilmEncoder::text` currently drops everything but `TextType::OPEN_SUBTITLE`; closed captions need support there or in a shared helper.
 
+## Reels (user decision: respect them)
+
+- The export follows `film->reels()`. One reel: flat layout as above. More than one reel: one subdirectory per reel, `reel_01/`, `reel_02/`, ..., each holding the full layout (DPX frames or `left/` and `right/`, audio WAVs, subtitles, captions). Frame numbering restarts at 0 in each reel; WAVs cover exactly the reel's period.
+- Atmos with more than one reel: the export fails with a clear error. My call: splitting an Atmos MXF per reel would need re-wrapping, which is out of scope, and copying it whole would silently break the reel structure.
+- Subtitles and captions are split per reel, like `SubtitleFilmEncoder`'s `split_reels`.
+
 ## Left to the builder (flagged as my calls)
 
 - Exact DPX header field values (descriptor, transfer, colorimetric, packing/method bits). Validate against a reference DPX reader.
