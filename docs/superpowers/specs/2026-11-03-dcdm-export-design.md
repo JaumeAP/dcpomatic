@@ -69,7 +69,7 @@ Consequences:
 
 ## Atmos and text (user decision: include them)
 
-- Dolby Atmos: if the film has Atmos content, copy its MXF unchanged to `atmos.mxf` in the output directory. No re-encode. My call: only a single `AtmosMXFContent` that starts at 0 with no trim is supported; anything else fails the export with a clear error, because a plain copy would be out of sync.
+- Dolby Atmos: if the film has Atmos content, copy its MXF unchanged to `atmos.mxf` in the output directory (or the reel folder, see Reels). No re-encode. My call: an `AtmosMXFContent` must line up exactly with its reel (starts at the reel start, no trim, ends at the reel end); anything else fails the export with a clear error, because a plain copy would be out of sync.
 - Open subtitles and closed captions: written as separate files, not burnt into the DPX frames (my call; the user did not choose between this and burning). Format follows the film (Interop or SMPTE XML), with fonts. Files go in `subtitles/` (open) and `captions/` (closed). Nothing is written if the film has none.
 - Consequence: the DCDM encoder must not call `set_always_burn_open_subtitles()`.
 - `SubtitleFilmEncoder::text` currently drops everything but `TextType::OPEN_SUBTITLE`; closed captions need support there or in a shared helper.
@@ -77,7 +77,7 @@ Consequences:
 ## Reels (user decision: respect them)
 
 - The export follows `film->reels()`. One reel: flat layout as above. More than one reel: one subdirectory per reel, `reel_01/`, `reel_02/`, ..., each holding the full layout (DPX frames or `left/` and `right/`, audio WAVs, subtitles, captions). Frame numbering restarts at 0 in each reel; WAVs cover exactly the reel's period.
-- Atmos with more than one reel: the export fails with a clear error. My call: splitting an Atmos MXF per reel would need re-wrapping, which is out of scope, and copying it whole would silently break the reel structure.
+- Atmos with several reels (user decision): each reel gets its own Atmos in its `reel_NN/` folder, copied unchanged as `atmos.mxf`. My call on the rule: the `AtmosMXFContent` for a reel must start at the reel start with no trim and end at the reel end. One Atmos content spanning several reels cannot be split without re-wrapping, so that case fails with a clear error.
 - Subtitles and captions are split per reel, like `SubtitleFilmEncoder`'s `split_reels`.
 
 ## Left to the builder (flagged as my calls)
