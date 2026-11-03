@@ -251,6 +251,7 @@ sources = """
           video_range.cc
           video_ring_buffers.cc
           wav_ends.cc
+          wav_writer.cc
           writer.cc
           zipper.cc
           """
