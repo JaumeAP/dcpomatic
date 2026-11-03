@@ -78,6 +78,7 @@ sources = """
           dcp_text_track.cc
           dcp_transcode_job.cc
           dcp_video.cc
+          dpx_writer.cc
           dcpomatic_log.cc
           dcpomatic_socket.cc
           dcpomatic_time.cc
