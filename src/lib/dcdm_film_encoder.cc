@@ -22,6 +22,7 @@
 #include "audio_buffers.h"
 #include "cross.h"
 #include "dcdm_film_encoder.h"
+#include "dcdm_j2k_writer.h"
 #include "dcdm_quality.h"
 #include "dcp_video.h"
 #include "dpx_writer.h"
@@ -158,9 +159,10 @@ to_xyz12(shared_ptr<const dcp::OpenJPEGImage> xyz)
 }
 
 
-DCDMFilmEncoder::DCDMFilmEncoder(shared_ptr<const Film> film, weak_ptr<Job> job, boost::filesystem::path output)
+DCDMFilmEncoder::DCDMFilmEncoder(shared_ptr<const Film> film, weak_ptr<Job> job, boost::filesystem::path output, DCDMPictureFormat picture_format)
 	: FilmEncoder(check_film(film), job)
 	, _output(check_output(output))
+	, _picture_format(picture_format)
 	, _channels(channels_of(film))
 	, _reels(static_cast<int>(film->reels().size()))
 	, _history(200)
@@ -224,6 +226,14 @@ DCDMFilmEncoder::finish_atmos()
 
 
 boost::filesystem::path
+DCDMFilmEncoder::picture_directory(boost::filesystem::path reel_directory) const
+{
+	/* ST 428-24 wants each packed image sequence in a directory of its own */
+	return _picture_format == DCDMPictureFormat::J2K_LOSSLESS ? reel_directory / "picture" : reel_directory;
+}
+
+
+boost::filesystem::path
 DCDMFilmEncoder::reel_directory(int reel) const
 {
 	if (_reels == 1) {
@@ -264,9 +274,12 @@ DCDMFilmEncoder::go()
 	auto open_reel = [&](int index) {
 		auto const dir = reel_directory(index);
 		dcp::filesystem::create_directories(dir / "audio");
+		auto const picture = picture_directory(dir);
 		if (three_d) {
-			dcp::filesystem::create_directories(dir / "left");
-			dcp::filesystem::create_directories(dir / "right");
+			dcp::filesystem::create_directories(picture / "left");
+			dcp::filesystem::create_directories(picture / "right");
+		} else {
+			dcp::filesystem::create_directories(picture);
 		}
 		wavs.clear();
 		for (auto const& label: labels) {
@@ -301,13 +314,21 @@ DCDMFilmEncoder::go()
 			}
 
 			auto const index = (video.second - reel.from).frames_round(video_frame_rate);
-			auto const name = fmt::format("frame_{:08d}.dpx", index);
-			auto path = dir / name;
+			auto path = picture_directory(dir);
 			if (three_d) {
-				path = dir / (video.first->eyes() == Eyes::RIGHT ? "right" : "left") / name;
+				path /= video.first->eyes() == Eyes::RIGHT ? "right" : "left";
 			}
 
-			write_dpx(path, to_xyz12(DCPVideo::convert_to_xyz(video.first)));
+			auto const xyz = DCPVideo::convert_to_xyz(video.first);
+			switch (_picture_format) {
+			case DCDMPictureFormat::J2K_LOSSLESS:
+				/* SMPTE ST 428-24 file names: fixed-width, contiguous frame numbers and .pdc.j2c */
+				write_lossless_j2k(path / fmt::format("{:08d}.pdc.j2c", index), xyz);
+				break;
+			case DCDMPictureFormat::DPX:
+				write_dpx(path / fmt::format("frame_{:08d}.dpx", index), to_xyz12(xyz));
+				break;
+			}
 		}
 
 		_butler.get_audio(Butler::Behaviour::BLOCKING, interleaved.data(), audio_frames);

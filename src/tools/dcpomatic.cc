@@ -107,6 +107,7 @@
 #include <dcp/scope_guard.h>
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
+#include <wx/choicdlg.h>
 #include <wx/cmdline.h>
 #include <wx/generic/aboutdlgg.h>
 #include <wx/preferences.h>
@@ -1106,6 +1107,16 @@ private:
 			return;
 		}
 
+		wxArrayString formats;
+		formats.Add(_("Lossless JPEG 2000 (SMPTE ST 428-24)"));
+		formats.Add(_("Uncompressed 12-bit DPX"));
+		wxSingleChoiceDialog format_dialog(this, _("Picture format for the DCDM"), _("Export DCDM"), formats);
+		format_dialog.SetSelection(0);
+		if (format_dialog.ShowModal() != wxID_OK) {
+			return;
+		}
+		auto const picture_format = format_dialog.GetSelection() == 1 ? DCDMPictureFormat::DPX : DCDMPictureFormat::J2K_LOSSLESS;
+
 		wxDirDialog dialog(
 			this,
 			_("Choose an empty folder for the DCDM"),
@@ -1119,7 +1130,7 @@ private:
 		auto const path = wx_to_std(dialog.GetPath());
 		auto job = make_shared<TranscodeJob>(_film, TranscodeJob::ChangedBehaviour::EXAMINE_THEN_STOP);
 		try {
-			job->set_encoder(make_shared<DCDMFilmEncoder>(_film, job, path));
+			job->set_encoder(make_shared<DCDMFilmEncoder>(_film, job, path, picture_format));
 		} catch (std::exception& e) {
 			error_dialog(this, _("Could not export DCDM."), std_to_wx(e.what()));
 			return;

@@ -194,11 +194,31 @@ BOOST_AUTO_TEST_CASE(encode_cli_export_dcdm_test)
 	auto error = run({ "cli", "--export-format", "dcdm", "--export-filename", out.string(), "build/test/encode_cli_export_dcdm_test" }, output);
 	BOOST_REQUIRE(!error);
 
-	BOOST_CHECK(dcp::filesystem::exists(out / "frame_00000000.dpx"));
-	BOOST_CHECK(dcp::filesystem::exists(out / "frame_00000023.dpx"));
+	/* Lossless JPEG 2000 is the default */
+	BOOST_CHECK(dcp::filesystem::exists(out / "picture" / "00000000.pdc.j2c"));
+	BOOST_CHECK(dcp::filesystem::exists(out / "picture" / "00000023.pdc.j2c"));
+	BOOST_CHECK(!dcp::filesystem::exists(out / "frame_00000000.dpx"));
 	for (auto label: { "L", "R", "C", "LFE", "Ls", "Rs" }) {
 		BOOST_CHECK(dcp::filesystem::exists(out / "audio" / (string(label) + ".wav")));
 	}
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(encode_cli_export_dcdm_dpx_test)
+{
+	make_dcdm_source_film("encode_cli_export_dcdm_dpx_test");
+	boost::filesystem::path const out = "build/test/encode_cli_export_dcdm_dpx_test_out";
+	dcp::filesystem::remove_all(out);
+
+	vector<string> output;
+	auto error = run({ "cli", "--export-format", "dcdm-dpx", "--export-filename", out.string(), "build/test/encode_cli_export_dcdm_dpx_test" }, output);
+	BOOST_REQUIRE(!error);
+
+	BOOST_CHECK(dcp::filesystem::exists(out / "frame_00000000.dpx"));
+	BOOST_CHECK(dcp::filesystem::exists(out / "frame_00000023.dpx"));
+	BOOST_CHECK(!dcp::filesystem::exists(out / "picture"));
 
 	dcp::filesystem::remove_all(out);
 }

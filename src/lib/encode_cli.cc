@@ -101,8 +101,8 @@ help(function <void (string)> out)
 	out("      --dump                        just dump a summary of the film's settings; don't encode\n");
 	out("                                      (deprecated - use the dump command instead)\n");
 	out("      --no-check                    don't check project's content files for changes before making the DCP\n");
-	out("      --export-format <format>      export project to a file, rather than making a DCP: specify mov, mp4 or dcdm\n");
-	out("      --export-filename <filename>  filename to export to with --export-format (a folder for dcdm)\n");
+	out("      --export-format <format>      export project to a file, rather than making a DCP: specify mov, mp4, dcdm (lossless JPEG 2000) or dcdm-dpx\n");
+	out("      --export-filename <filename>  filename to export to with --export-format (a folder for dcdm and dcdm-dpx)\n");
 	out("      --hints                       analyze film for hints before encoding and abort if any are found\n");
 	out("\ne.g.\n");
 	out(fmt::format("\n  {} -t 4 make-dcp my_great_movie\n", program_name));
@@ -505,8 +505,8 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 		return string{"Argument --export-format is required with --export-filename\n"};
 	}
 
-	if (export_format && *export_format != "mp4" && *export_format != "mov" && *export_format != "dcdm") {
-		return string{"Unrecognised export format: must be mp4, mov or dcdm\n"};
+	if (export_format && *export_format != "mp4" && *export_format != "mov" && *export_format != "dcdm" && *export_format != "dcdm-dpx") {
+		return string{"Unrecognised export format: must be mp4, mov, dcdm or dcdm-dpx\n"};
 	}
 
 	film_dir = argv[optind];
@@ -608,14 +608,18 @@ encode_cli(int argc, char* argv[], function<void (string)> out, function<void ()
 
 	TranscodeJob::ChangedBehaviour const behaviour = check ? TranscodeJob::ChangedBehaviour::STOP : TranscodeJob::ChangedBehaviour::IGNORE;
 
-	if (export_format && *export_format == "dcdm") {
+	if (export_format && (*export_format == "dcdm" || *export_format == "dcdm-dpx")) {
 		auto const quality = dcdm_source_quality(film);
 		if (!quality.ok) {
 			return fmt::format("Cannot export a DCDM: the source quality is not good enough. {}\n", quality.reason);
 		}
 		auto job = std::make_shared<TranscodeJob>(film, behaviour);
 		try {
-			job->set_encoder(std::make_shared<DCDMFilmEncoder>(film, job, *export_filename));
+			job->set_encoder(
+				std::make_shared<DCDMFilmEncoder>(
+					film, job, *export_filename, *export_format == "dcdm-dpx" ? DCDMPictureFormat::DPX : DCDMPictureFormat::J2K_LOSSLESS
+					)
+				);
 		} catch (runtime_error& e) {
 			return fmt::format("Cannot export a DCDM: {}\n", e.what());
 		}

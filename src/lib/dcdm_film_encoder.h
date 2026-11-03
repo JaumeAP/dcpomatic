@@ -42,6 +42,16 @@ namespace dcp {
 }
 
 
+/** How DCDM pictures are stored */
+enum class DCDMPictureFormat
+{
+	/** Mathematically lossless JPEG 2000 codestreams (SMPTE ST 428-24 packed images), in picture/ */
+	J2K_LOSSLESS,
+	/** Uncompressed 12-bit DPX */
+	DPX
+};
+
+
 /** @class DCDMFilmEncoder
  *  @brief Export a film as a DCDM: 12-bit XYZ DPX frames and 24-bit mono WAVs.
  *
@@ -50,7 +60,8 @@ namespace dcp {
  *  audio processor applied), so that importing the result gives the same DCP.
  *
  *  Layout, per reel (in reel_NN/ when the film has more than one reel):
- *  frame_NNNNNNNN.dpx (or left/ and right/ for 3D), audio/<label>.wav (the 5.1 or
+ *  picture/NNNNNNNN.pdc.j2c (lossless JPEG 2000, the default) or frame_NNNNNNNN.dpx
+ *  (with left/ and right/ for 3D), audio/<label>.wav (the 5.1 or
  *  7.1 layout plus HI, VI and SL when they are used) and,
  *  if the film has Atmos, atmos.mxf with the Atmos frames that fall in the reel.
  *  Open subtitles and closed captions that are not burnt in go to
@@ -63,7 +74,12 @@ public:
 	/** @throw std::runtime_error if the film's sources are not good enough for a DCDM,
 	 *  or the output folder exists and is not empty.
 	 */
-	DCDMFilmEncoder(std::shared_ptr<const Film> film, std::weak_ptr<Job> job, boost::filesystem::path output);
+	DCDMFilmEncoder(
+		std::shared_ptr<const Film> film,
+		std::weak_ptr<Job> job,
+		boost::filesystem::path output,
+		DCDMPictureFormat picture_format = DCDMPictureFormat::J2K_LOSSLESS
+		);
 
 	void go() override;
 
@@ -75,11 +91,13 @@ public:
 
 private:
 	boost::filesystem::path reel_directory(int reel) const;
+	boost::filesystem::path picture_directory(boost::filesystem::path reel_directory) const;
 	void atmos(std::shared_ptr<const dcp::AtmosFrame> frame, dcpomatic::DCPTime time, AtmosMetadata metadata);
 	void finish_atmos();
 	void write_text();
 
 	boost::filesystem::path _output;
+	DCDMPictureFormat _picture_format;
 	/** DCP channels to write, with their file labels */
 	std::vector<std::pair<dcp::Channel, std::string>> _channels;
 	int _reels;

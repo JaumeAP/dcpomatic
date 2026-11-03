@@ -40,6 +40,8 @@
 #include <dcp/dcp.h>
 #include <dcp/filesystem.h>
 #include <dcp/interop_text_asset.h>
+#include <dcp/j2k_transcode.h>
+#include <dcp/openjpeg_image.h>
 #include <dcp/reel_text_asset.h>
 #include <dcp/smpte_text_asset.h>
 #include <dcp/text_string.h>
@@ -110,10 +112,10 @@ count_files(boost::filesystem::path dir, string extension)
 
 static
 void
-run_export(shared_ptr<Film> film, boost::filesystem::path output)
+run_export(shared_ptr<Film> film, boost::filesystem::path output, DCDMPictureFormat format = DCDMPictureFormat::DPX)
 {
 	auto job = make_shared<TranscodeJob>(film, TranscodeJob::ChangedBehaviour::IGNORE);
-	job->set_encoder(make_shared<DCDMFilmEncoder>(film, job, output));
+	job->set_encoder(make_shared<DCDMFilmEncoder>(film, job, output, format));
 	JobManager::instance()->add(job);
 	BOOST_REQUIRE(!wait_for_jobs());
 }
@@ -763,5 +765,121 @@ BOOST_AUTO_TEST_CASE(dcdm_no_extra_channels_test)
 	dcp::filesystem::remove_all(out);
 	run_export(film, out);
 	check_audio(out, five_one, film->length().frames_round(24));
+	dcp::filesystem::remove_all(out);
+}
+
+
+/* --- Lossless JPEG 2000 (SMPTE ST 428-24 packed images), the default --- */
+
+
+static
+vector<boost::filesystem::path>
+files_with(boost::filesystem::path dir, string suffix)
+{
+	vector<boost::filesystem::path> out;
+	if (!dcp::filesystem::is_directory(dir)) {
+		return out;
+	}
+	for (auto const& i: dcp::filesystem::directory_iterator(dir)) {
+		auto const name = i.path().filename().string();
+		if (name.size() > suffix.size() && name.substr(name.size() - suffix.size()) == suffix) {
+			out.push_back(i.path());
+		}
+	}
+	std::sort(out.begin(), out.end());
+	return out;
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_encoder_j2k_is_default_test)
+{
+	auto film = new_test_film("dcdm_encoder_j2k_is_default_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_encoder_j2k_is_default_test_src", 2));
+	auto const out = boost::filesystem::path("build/test/dcdm_encoder_j2k_is_default_test_out");
+	dcp::filesystem::remove_all(out);
+
+	auto job = make_shared<TranscodeJob>(film, TranscodeJob::ChangedBehaviour::IGNORE);
+	job->set_encoder(make_shared<DCDMFilmEncoder>(film, job, out));
+	JobManager::instance()->add(job);
+	BOOST_REQUIRE(!wait_for_jobs());
+
+	BOOST_CHECK_EQUAL(files_with(out / "picture", ".pdc.j2c").size(), 24U);
+	BOOST_CHECK_EQUAL(count_files(out, ".dpx"), 0);
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_encoder_j2k_matches_dpx_test)
+{
+	auto film = new_test_film("dcdm_encoder_j2k_matches_dpx_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_encoder_j2k_matches_dpx_test_src", 3));
+
+	auto const j2k = boost::filesystem::path("build/test/dcdm_encoder_j2k_matches_dpx_test_j2k");
+	auto const dpx = boost::filesystem::path("build/test/dcdm_encoder_j2k_matches_dpx_test_dpx");
+	dcp::filesystem::remove_all(j2k);
+	dcp::filesystem::remove_all(dpx);
+	run_export(film, j2k, DCDMPictureFormat::J2K_LOSSLESS);
+	run_export(film, dpx, DCDMPictureFormat::DPX);
+
+	/* ST 428-24 names: contiguous, fixed-width frame numbers and the .pdc.j2c suffix */
+	auto const frames = files_with(j2k / "picture", ".pdc.j2c");
+	BOOST_REQUIRE_EQUAL(frames.size(), 24U);
+	BOOST_CHECK_EQUAL(frames[0].filename().string(), "00000000.pdc.j2c");
+	BOOST_CHECK_EQUAL(frames[23].filename().string(), "00000023.pdc.j2c");
+
+	/* Every pixel of every frame decodes to exactly the DPX's 12-bit values */
+	for (int f = 0; f < 24; ++f) {
+		std::ifstream in(frames[f].string(), std::ios::binary);
+		vector<uint8_t> data((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+		auto const decoded = dcp::decompress_j2k(data.data(), static_cast<int64_t>(data.size()), 0);
+
+		std::ifstream dpx_in((dpx / fmt::format("frame_{:08d}.dpx", f)).string(), std::ios::binary);
+		vector<uint8_t> d((std::istreambuf_iterator<char>(dpx_in)), std::istreambuf_iterator<char>());
+		auto const size = decoded->size();
+		BOOST_REQUIRE_EQUAL(d.size(), 2048U + size.width * size.height * 6U);
+		int64_t differences = 0;
+		for (int i = 0; i < size.width * size.height; ++i) {
+			for (int c = 0; c < 3; ++c) {
+				size_t const o = 2048 + (i * 3 + c) * 2;
+				int const value = ((d[o] << 8) | d[o + 1]) >> 4;
+				if (value != decoded->data(c)[i]) {
+					++differences;
+				}
+			}
+		}
+		BOOST_CHECK_MESSAGE(differences == 0, "frame " << f << ": " << differences << " values differ");
+	}
+
+	dcp::filesystem::remove_all(j2k);
+	dcp::filesystem::remove_all(dpx);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_encoder_j2k_3d_reels_test)
+{
+	auto film = new_test_film("dcdm_encoder_j2k_3d_reels_test");
+	film->set_sequence(false);
+	auto a = dpx_content(film, make_dpx_sequence("build/test/dcdm_encoder_j2k_3d_reels_test_src_a", 48));
+	auto b = dpx_content(film, make_dpx_sequence("build/test/dcdm_encoder_j2k_3d_reels_test_src_b", 48));
+	a->video->set_frame_type(VideoFrameType::THREE_D_ALTERNATE);
+	b->video->set_frame_type(VideoFrameType::THREE_D_ALTERNATE);
+	film->set_three_d(true);
+	BOOST_REQUIRE(!wait_for_jobs());
+	a->set_position(film, dcpomatic::DCPTime());
+	b->set_position(film, dcpomatic::DCPTime::from_frames(24, 24));
+	film->set_reel_type(ReelType::BY_VIDEO_CONTENT);
+	BOOST_REQUIRE_EQUAL(film->reels().size(), 2U);
+
+	auto const out = boost::filesystem::path("build/test/dcdm_encoder_j2k_3d_reels_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out, DCDMPictureFormat::J2K_LOSSLESS);
+
+	for (auto reel: { "reel_01", "reel_02" }) {
+		/* Each eye is its own sequence in its own directory */
+		BOOST_CHECK_EQUAL(files_with(out / reel / "picture" / "left", ".pdc.j2c").size(), 24U);
+		BOOST_CHECK_EQUAL(files_with(out / reel / "picture" / "right", ".pdc.j2c").size(), 24U);
+		BOOST_CHECK(dcp::filesystem::exists(out / reel / "picture" / "left" / "00000000.pdc.j2c"));
+	}
+
 	dcp::filesystem::remove_all(out);
 }
