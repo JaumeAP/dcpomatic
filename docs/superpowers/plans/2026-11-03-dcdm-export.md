@@ -21,7 +21,7 @@
 - Films with no stored codec/pixel-format metadata do not qualify until re-examined.
 - GUI: DCDM menu item disabled with a tooltip/message naming the first failing content. CLI: error naming content and reason, non-zero exit.
 - Reels: one reel writes the flat layout; several reels write `reel_01/`, `reel_02/`, ... each with the full layout, frame numbering restarting at 0, WAVs covering exactly the reel period.
-- Originals: copy each `AtmosMXFContent` file byte-identical to `atmos/`; split each audio-only `FFmpegContent` file (no video) into mono WAVs in `audio/` (`<stem>_ch<NN>.wav`, exact samples); in the output root, no cutting, no per-reel placement, no position/trim/gain applied; write `sources.txt` noting each original's position, trim and reel; name clash is an error.
+- Originals: copy each `AtmosMXFContent` file byte-identical to `atmos/`; split each audio-only `FFmpegContent` file (no video) into mono WAVs in `audio/` (`<stem>_ch<NN>.wav`, 24-bit samples); in the output root, no cutting, no per-reel placement, no position/trim/gain applied; write `sources.txt` noting each original's position, trim and reel; name clash is an error.
 - Embedded audio (audio inside a video source): rendered to one 24-bit mono WAV per channel from the video-bearing contents only.
 - Open subtitles and closed captions: separate XML files (film's Interop/SMPTE format) with fonts, in `subtitles/` and `captions/`; not burnt into DPX.
 - Existing exports must not change behaviour.
