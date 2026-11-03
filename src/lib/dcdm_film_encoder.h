@@ -50,7 +50,8 @@ namespace dcp {
  *  audio processor applied), so that importing the result gives the same DCP.
  *
  *  Layout, per reel (in reel_NN/ when the film has more than one reel):
- *  frame_NNNNNNNN.dpx (or left/ and right/ for 3D), audio/<label>.wav and,
+ *  frame_NNNNNNNN.dpx (or left/ and right/ for 3D), audio/<label>.wav (the 5.1 or
+ *  7.1 layout plus HI, VI and SL when they are used) and,
  *  if the film has Atmos, atmos.mxf with the Atmos frames that fall in the reel.
  *  Open subtitles and closed captions that are not burnt in go to
  *  subtitles/subtitles.xml and captions/NN_<track>.xml (Interop or SMPTE XML,
@@ -60,7 +61,7 @@ class DCDMFilmEncoder : public FilmEncoder
 {
 public:
 	/** @throw std::runtime_error if the film's sources are not good enough for a DCDM,
-	 *  it uses audio channels a DCDM cannot carry, or the output folder exists and is not empty.
+	 *  or the output folder exists and is not empty.
 	 */
 	DCDMFilmEncoder(std::shared_ptr<const Film> film, std::weak_ptr<Job> job, boost::filesystem::path output);
 
@@ -79,7 +80,8 @@ private:
 	void write_text();
 
 	boost::filesystem::path _output;
-	DCDMLayout _layout;
+	/** DCP channels to write, with their file labels */
+	std::vector<std::pair<dcp::Channel, std::string>> _channels;
 	int _reels;
 
 	mutable boost::mutex _mutex;

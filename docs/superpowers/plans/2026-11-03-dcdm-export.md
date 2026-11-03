@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Output video: DPX, CIE XYZ, 12 bits per component. No TIFF.
-- Audio layout: 5.1 (L R C LFE Ls Rs) or 7.1 (adds Lrs Rrs), one version only, chosen from the channels in use (BSL/BSR in use gives 7.1, else 5.1); directory `audio/`; fewer than 6 channels padded with silence; HI/VI/LC/RC in use is an error. No downmix.
+- Audio layout: 5.1 (L R C LFE Ls Rs) or 7.1 (adds Lrs Rrs), one version only, chosen from the channels in use (BSL/BSR in use gives 7.1, else 5.1); directory `audio/`; fewer than 6 channels padded with silence; HI, VI and SL are added when used; Lc/Rc never written (always silent in a DCP-o-matic DCP). No downmix.
 - Output audio: always one mono WAV per channel, never a multichannel WAV. All WAVs are 24-bit at `film->audio_frame_rate()`, rendered through the `Player` (no remix beyond what the film itself does). Atmos is an untouched original.
 - 3D: both eyes, `left/` and `right/` subdirectories; 2D writes DPX files directly in the output directory; audio written once.
 - Gate: every video content must pass; DCP content fails; audio-only and text content ignored.

@@ -92,14 +92,38 @@ check_output(boost::filesystem::path output)
 
 
 static
-DCDMLayout
-layout_of(std::shared_ptr<const Film> film)
+set<dcp::Channel>
+used_channels(std::shared_ptr<const Film> film)
 {
 	set<dcp::Channel> used;
 	for (auto channel: film->mapped_audio_channels()) {
 		used.insert(static_cast<dcp::Channel>(channel));
 	}
-	return dcdm_layout(used);
+
+	return used;
+}
+
+
+/** @return the channels to write and their labels: the 5.1 or 7.1 layout, then any
+ *  HI, VI and sign language channels that the film uses.
+ */
+static
+vector<std::pair<dcp::Channel, string>>
+channels_of(std::shared_ptr<const Film> film)
+{
+	auto const used = used_channels(film);
+	auto const layout = dcdm_layout(used);
+	auto const layout_channels = dcdm_channels(layout);
+	auto const layout_labels = dcdm_channel_labels(layout);
+
+	vector<std::pair<dcp::Channel, string>> out;
+	for (size_t i = 0; i < layout_channels.size(); ++i) {
+		out.push_back({ layout_channels[i], layout_labels[i] });
+	}
+	for (auto const& extra: dcdm_extra_channels(used)) {
+		out.push_back(extra);
+	}
+	return out;
 }
 
 
@@ -137,7 +161,7 @@ to_xyz12(shared_ptr<const dcp::OpenJPEGImage> xyz)
 DCDMFilmEncoder::DCDMFilmEncoder(shared_ptr<const Film> film, weak_ptr<Job> job, boost::filesystem::path output)
 	: FilmEncoder(check_film(film), job)
 	, _output(check_output(output))
-	, _layout(layout_of(film))
+	, _channels(channels_of(film))
 	, _reels(static_cast<int>(film->reels().size()))
 	, _history(200)
 	, _reel_periods(film->reels())
@@ -218,7 +242,12 @@ DCDMFilmEncoder::go()
 
 	Waker waker(Waker::Reason::ENCODING);
 
-	auto const labels = dcdm_channel_labels(_layout);
+	vector<string> labels;
+	vector<dcp::Channel> channels_to_write;
+	for (auto const& channel: _channels) {
+		channels_to_write.push_back(channel.first);
+		labels.push_back(channel.second);
+	}
 	auto const three_d = _film->three_d();
 	auto const video_frame_rate = _film->video_frame_rate();
 	auto const video_frame = DCPTime::from_frames(1, video_frame_rate);
@@ -288,7 +317,7 @@ DCDMFilmEncoder::go()
 				deinterleaved->data(k)[j] = *p++;
 			}
 		}
-		auto const layout = dcdm_layout_channels(deinterleaved, _layout);
+		auto const layout = dcdm_pick_channels(deinterleaved, channels_to_write);
 		for (size_t c = 0; c < wavs.size(); ++c) {
 			wavs[c]->write(layout->data(static_cast<int>(c)), audio_frames);
 		}

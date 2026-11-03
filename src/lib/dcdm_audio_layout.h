@@ -27,6 +27,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 
@@ -41,12 +42,18 @@ enum class DCDMLayout
 };
 
 
-/** @param used DCP channels that carry programme audio.
- *  @return SEVEN_ONE if BSL or BSR is used, otherwise FIVE_ONE.
- *  Channels that are not programme audio (motion data, sync signal, sign language) are ignored.
- *  @throw std::runtime_error naming the channels if HI, VI, LC or RC is used.
+/** @param used DCP channels that are in use.
+ *  @return SEVEN_ONE if BSL or BSR is used, otherwise FIVE_ONE.  Other channels do not affect the layout.
  */
 DCDMLayout dcdm_layout(std::set<dcp::Channel> used);
+
+/** @param used DCP channels that are in use.
+ *  @return the extra channels (beyond the 5.1 / 7.1 layout) that are in use and are written too,
+ *  with their file labels, in DCP channel order: HI, VI and sign language (SL).
+ *  Lc and Rc are never included, because DCP-o-matic always writes them silent in a DCP;
+ *  nor are motion data and the Atmos sync signal.
+ */
+std::vector<std::pair<dcp::Channel, std::string>> dcdm_extra_channels(std::set<dcp::Channel> used);
 
 /** @return file labels for a layout, in output order: L R C LFE Ls Rs, plus Lrs Rrs for 7.1 */
 std::vector<std::string> dcdm_channel_labels(DCDMLayout layout);
@@ -54,9 +61,12 @@ std::vector<std::string> dcdm_channel_labels(DCDMLayout layout);
 /** @return the DCP channels written for a layout, in the same order as dcdm_channel_labels() */
 std::vector<dcp::Channel> dcdm_channels(DCDMLayout layout);
 
-/** Pick the layout's channels out of buffers whose channel index is the DCP channel index.
+/** Pick @param channels out of buffers whose channel index is the DCP channel index, in that order.
  *  Channels that the input does not have are silent.
  */
+std::shared_ptr<AudioBuffers> dcdm_pick_channels(std::shared_ptr<const AudioBuffers> in, std::vector<dcp::Channel> const& channels);
+
+/** Pick the layout's channels; see dcdm_pick_channels() */
 std::shared_ptr<AudioBuffers> dcdm_layout_channels(std::shared_ptr<const AudioBuffers> in, DCDMLayout layout);
 
 

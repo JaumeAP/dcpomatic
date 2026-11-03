@@ -695,3 +695,73 @@ BOOST_AUTO_TEST_CASE(dcdm_no_text_test)
 	BOOST_CHECK(!dcp::filesystem::exists(out / "captions"));
 	dcp::filesystem::remove_all(out);
 }
+
+
+/* --- HI, VI and sign language are written when they are used --- */
+
+
+BOOST_AUTO_TEST_CASE(dcdm_extra_channels_written_test)
+{
+	auto film = new_test_film("dcdm_extra_channels_written_test");
+	film->set_audio_channels(16);
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_extra_channels_written_test_src", 24));
+
+	vector<std::pair<dcp::Channel, string>> const extras = {
+		{ dcp::Channel::HI, "HI" },
+		{ dcp::Channel::VI, "VI" },
+		{ dcp::Channel::SIGN_LANGUAGE, "SL" }
+	};
+	/* Lc and Rc are mapped too, but DCP-o-matic writes them silent in a DCP so they are not exported */
+	auto mapped = extras;
+	mapped.push_back({ dcp::Channel::LC, "Lc" });
+	mapped.push_back({ dcp::Channel::RC, "Rc" });
+	for (auto const& extra: mapped) {
+		auto sound = content_factory("test/data/L.wav")[0];
+		film->examine_and_add_content({sound});
+		BOOST_REQUIRE(!wait_for_jobs());
+		sound->set_position(film, dcpomatic::DCPTime());
+		auto mapping = sound->audio->mapping();
+		mapping.make_zero();
+		mapping.set(0, extra.first, 1);
+		sound->audio->set_mapping(mapping);
+	}
+
+	auto const out = boost::filesystem::path("build/test/dcdm_extra_channels_written_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
+
+	/* 5.1 is always there, plus one file for each extra channel in use */
+	vector<string> labels = five_one;
+	for (auto const& extra: extras) {
+		labels.push_back(extra.second);
+	}
+	check_audio(out, labels, 24);
+	BOOST_CHECK(!dcp::filesystem::exists(out / "audio" / "Lc.wav"));
+	BOOST_CHECK(!dcp::filesystem::exists(out / "audio" / "Rc.wav"));
+
+	/* The extras hold the DCP's samples for their channels */
+	auto cpl = read_dcp(film);
+	for (auto const& extra: extras) {
+		auto const dcdm = read_wav24(out / "audio" / (extra.second + ".wav"));
+		auto const dcp = dcp_sound(cpl, 0, static_cast<int>(extra.first));
+		BOOST_REQUIRE_EQUAL(dcdm.size(), dcp.size());
+		BOOST_CHECK_MESSAGE(dcdm == dcp, extra.second);
+		BOOST_CHECK_MESSAGE(std::any_of(dcdm.begin(), dcdm.end(), [](int32_t s) { return s != 0; }), extra.second << " is silent");
+	}
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_no_extra_channels_test)
+{
+	auto film = new_test_film("dcdm_no_extra_channels_test");
+	film->set_audio_channels(16);
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_no_extra_channels_test_src", 2));
+	auto const out = boost::filesystem::path("build/test/dcdm_no_extra_channels_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	check_audio(out, five_one, film->length().frames_round(24));
+	dcp::filesystem::remove_all(out);
+}

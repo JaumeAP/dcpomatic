@@ -21,7 +21,6 @@
 
 #include "audio_buffers.h"
 #include "dcdm_audio_layout.h"
-#include <stdexcept>
 
 
 using std::make_shared;
@@ -34,33 +33,30 @@ using std::vector;
 DCDMLayout
 dcdm_layout(set<dcp::Channel> used)
 {
-	std::pair<dcp::Channel, string> const not_allowed[] = {
-		{ dcp::Channel::HI, "HI" },
-		{ dcp::Channel::VI, "VI" },
-		{ dcp::Channel::LC, "Lc" },
-		{ dcp::Channel::RC, "Rc" }
-	};
-
-	vector<string> bad;
-	for (auto const& channel: not_allowed) {
-		if (used.count(channel.first)) {
-			bad.push_back(channel.second);
-		}
-	}
-
-	if (!bad.empty()) {
-		string names;
-		for (auto const& name: bad) {
-			names += (names.empty() ? "" : ", ") + name;
-		}
-		throw std::runtime_error("A DCDM can only carry 5.1 or 7.1 audio, but these channels are used: " + names);
-	}
-
 	if (used.count(dcp::Channel::BSL) || used.count(dcp::Channel::BSR)) {
 		return DCDMLayout::SEVEN_ONE;
 	}
 
 	return DCDMLayout::FIVE_ONE;
+}
+
+
+vector<std::pair<dcp::Channel, string>>
+dcdm_extra_channels(set<dcp::Channel> used)
+{
+	std::pair<dcp::Channel, string> const extras[] = {
+		{ dcp::Channel::HI, "HI" },
+		{ dcp::Channel::VI, "VI" },
+		{ dcp::Channel::SIGN_LANGUAGE, "SL" }
+	};
+
+	vector<std::pair<dcp::Channel, string>> out;
+	for (auto const& extra: extras) {
+		if (used.count(extra.first)) {
+			out.push_back(extra);
+		}
+	}
+	return out;
 }
 
 
@@ -91,9 +87,8 @@ dcdm_channels(DCDMLayout layout)
 
 
 shared_ptr<AudioBuffers>
-dcdm_layout_channels(shared_ptr<const AudioBuffers> in, DCDMLayout layout)
+dcdm_pick_channels(shared_ptr<const AudioBuffers> in, vector<dcp::Channel> const& channels)
 {
-	auto const channels = dcdm_channels(layout);
 	auto out = make_shared<AudioBuffers>(static_cast<int>(channels.size()), in->frames());
 	out->make_silent();
 	for (size_t i = 0; i < channels.size(); ++i) {
@@ -103,4 +98,11 @@ dcdm_layout_channels(shared_ptr<const AudioBuffers> in, DCDMLayout layout)
 		}
 	}
 	return out;
+}
+
+
+shared_ptr<AudioBuffers>
+dcdm_layout_channels(shared_ptr<const AudioBuffers> in, DCDMLayout layout)
+{
+	return dcdm_pick_channels(in, dcdm_channels(layout));
 }

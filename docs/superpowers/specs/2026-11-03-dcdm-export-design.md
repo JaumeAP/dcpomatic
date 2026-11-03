@@ -89,7 +89,8 @@ Consequences:
 
 - Exported audio is 5.1 or 7.1, chosen from the programme, and only that one version is written. 7.1 if the rear surround channels (BSL, BSR) are in use, otherwise 5.1. No downmix and no second set.
 - One directory `audio/` (per reel folder, or the output root for one reel) of mono 24-bit WAVs named by channel label: 5.1 = L, R, C, LFE, Ls, Rs; 7.1 adds Lrs, Rrs (`dcp::Channel` BSL, BSR).
-- My calls: a programme with fewer than six channels is padded with silent channels so the 5.1 set is complete; a programme using HI, VI, LC or RC fails the export with a clear error naming the channels.
+- My call: a programme with fewer than six channels is padded with silent channels so the 5.1 set is complete.
+- Extra channels (user decision): HI, VI and sign language (SL) are written as HI.wav, VI.wav and SL.wav when the film uses them. Lc and Rc are not written: DCP-o-matic always writes them silent in a DCP (dcp::used_audio_channels() leaves them out), so the user chose to leave them out of the DCDM too. Motion data and the Atmos sync signal are never written (the sync track is regenerated when a DCP is made).
 
 ## Reels (user decision: respect them)
 
