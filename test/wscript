@@ -78,6 +78,7 @@ def build(bld):
                  cpl_metadata_test.cc
                  dcdm_audio_layout_test.cc
                  dcdm_film_encoder_test.cc
+                 dcdm_j2k_writer_test.cc
                  dcdm_quality_test.cc
                  dcdm_round_trip_test.cc
                  create_cli_test.cc

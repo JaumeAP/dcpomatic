@@ -412,6 +412,8 @@ def configure(conf):
 
     conf.check_cfg(package="nettle", args='--cflags --libs', uselib_store='NETTLE', mandatory=True)
     conf.check_cfg(package='libpng', args='--cflags --libs', uselib_store='PNG', mandatory=True)
+    # For writing lossless JPEG 2000 DCDM images (libdcp only encodes DCI-profile lossy J2K)
+    conf.check_cfg(package='libopenjp2', args='--cflags --libs', uselib_store='OPENJPEG', mandatory=True)
     conf.check_cxx(fragment="""
                             #include <cstddef>
                             #include <cstdio>
