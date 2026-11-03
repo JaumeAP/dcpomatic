@@ -100,9 +100,13 @@ WAVWriter::write(float const* samples, int frames)
 
 	vector<uint8_t> out(frames * 3);
 	for (int i = 0; i < frames; ++i) {
-		auto const clipped = std::min(1.0f, std::max(-1.0f, samples[i]));
-		/* Scale so that +1.0 is 8388607 and -1.0 is -8388608 */
-		int32_t const v = static_cast<int32_t>(std::lround(clipped * (clipped < 0 ? 8388608.0 : 8388607.0)));
+		/* The same conversion as libdcp's SoundAssetWriter, so that these files hold
+		 * exactly the samples that a DCP made from the same film would.
+		 */
+		float constexpr clip = 1.0f - (1.0f / (1 << 23));
+		float constexpr scale = (1 << 23);
+		auto const clipped = std::max(-clip, std::min(clip, samples[i]));
+		int32_t const v = static_cast<int32_t>(std::lround(clipped * scale));
 		out[i * 3] = v & 0xff;
 		out[i * 3 + 1] = (v >> 8) & 0xff;
 		out[i * 3 + 2] = (v >> 16) & 0xff;

@@ -124,8 +124,9 @@ BOOST_AUTO_TEST_CASE(wav_writer_samples_test)
 	BOOST_CHECK_CLOSE(double(sample24(d, 0)), 0.0, 1.0);
 	BOOST_CHECK_EQUAL(sample24(d, 0), 0);
 	BOOST_CHECK_EQUAL(sample24(d, 1), 8388607);
-	BOOST_CHECK_EQUAL(sample24(d, 2), -8388608);
-	BOOST_CHECK(std::abs(sample24(d, 3) - 4194304) <= 1);
+	/* Same conversion as libdcp's SoundAssetWriter, so a DCDM WAV holds exactly the DCP's samples */
+	BOOST_CHECK_EQUAL(sample24(d, 2), -8388607);
+	BOOST_CHECK_EQUAL(sample24(d, 3), 4194304);
 }
 
 
@@ -143,7 +144,7 @@ BOOST_AUTO_TEST_CASE(wav_writer_clips_test)
 	auto const d = read_all(path);
 	BOOST_REQUIRE_EQUAL(d.size(), 44U + 9U);
 	BOOST_CHECK_EQUAL(sample24(d, 0), 8388607);
-	BOOST_CHECK_EQUAL(sample24(d, 1), -8388608);
+	BOOST_CHECK_EQUAL(sample24(d, 1), -8388607);
 	BOOST_CHECK_EQUAL(sample24(d, 2), 8388607);
 }
 

@@ -32,8 +32,8 @@
 /** @class WAVWriter
  *  @brief Writes a mono, 24-bit, little-endian PCM WAV file.
  *
- *  Float samples in [-1, 1] are converted to 24-bit integers; values outside
- *  that range are clipped.  The RIFF and data sizes are patched in close().
+ *  Float samples are converted to 24-bit integers exactly as libdcp's
+ *  SoundAssetWriter does (clip to +/-(1 - 2^-23), scale by 2^23, round).  The RIFF and data sizes are patched in close().
  */
 class WAVWriter
 {
