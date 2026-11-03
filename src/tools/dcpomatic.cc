@@ -69,6 +69,8 @@
 #include "lib/content_factory.h"
 #include "lib/cross.h"
 #include "lib/cross.h"
+#include "lib/dcdm_film_encoder.h"
+#include "lib/dcdm_quality.h"
 #include "lib/dcp_content.h"
 #include "lib/dcp_transcode_job.h"
 #include "lib/dcpomatic_log.h"
@@ -218,6 +220,7 @@ private:
 #define NEEDS_CLIPBOARD               0x40
 #define NEEDS_ENCRYPTION              0x80
 #define NEEDS_DCP_CONTENT             0x100
+#define NEEDS_DCDM_QUALITY            0x200
 
 
 map<wxMenuItem*, int> menu_items;
@@ -243,6 +246,7 @@ enum {
 	ID_jobs_export_video_file,
 	ID_jobs_export_audio_file,
 	ID_jobs_export_subtitles,
+	ID_jobs_export_dcdm,
 	ID_jobs_send_dcp_to_tms,
 	ID_jobs_show_dcp,
 	ID_jobs_open_dcp_in_player,
@@ -357,6 +361,7 @@ public:
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::jobs_export_video_file, this),  ID_jobs_export_video_file);
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::jobs_export_audio_file, this),  ID_jobs_export_audio_file);
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::jobs_export_subtitles, this),   ID_jobs_export_subtitles);
+		Bind(wxEVT_MENU, boost::bind(&DOMFrame::jobs_export_dcdm, this),        ID_jobs_export_dcdm);
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::jobs_send_dcp_to_tms, this),    ID_jobs_send_dcp_to_tms);
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::jobs_show_dcp, this),           ID_jobs_show_dcp);
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::jobs_open_dcp_in_player, this), ID_jobs_open_dcp_in_player);
@@ -1093,6 +1098,36 @@ private:
 	}
 
 
+	void jobs_export_dcdm()
+	{
+		auto const quality = dcdm_source_quality(_film);
+		if (!quality.ok) {
+			error_dialog(this, _("This project cannot be exported as a DCDM because the source quality is not good enough."), std_to_wx(quality.reason));
+			return;
+		}
+
+		wxDirDialog dialog(
+			this,
+			_("Choose an empty folder for the DCDM"),
+			std_to_wx(Config::instance()->default_directory_or(wx_to_std(wxStandardPaths::Get().GetDocumentsDir())).string()),
+			wxDEFAULT_DIALOG_STYLE
+			);
+		if (dialog.ShowModal() != wxID_OK) {
+			return;
+		}
+
+		auto const path = wx_to_std(dialog.GetPath());
+		auto job = make_shared<TranscodeJob>(_film, TranscodeJob::ChangedBehaviour::EXAMINE_THEN_STOP);
+		try {
+			job->set_encoder(make_shared<DCDMFilmEncoder>(_film, job, path));
+		} catch (std::exception& e) {
+			error_dialog(this, _("Could not export DCDM."), std_to_wx(e.what()));
+			return;
+		}
+		JobManager::instance()->add(job);
+	}
+
+
 	void jobs_export_subtitles()
 	{
 		int open_subs = 0;
@@ -1322,6 +1357,7 @@ private:
 		bool const have_dcp_content = std::find_if(content.begin(), content.end(), [](shared_ptr<const Content> content) {
 			return static_cast<bool>(dynamic_pointer_cast<const DCPContent>(content));
 		}) != content.end();
+		auto const dcdm_quality = _film ? dcdm_source_quality(_film) : DCDMQuality{false, {}};
 
 		for (auto j: menu_items) {
 
@@ -1361,6 +1397,14 @@ private:
 
 			if ((j.second & NEEDS_DCP_CONTENT) && !have_dcp_content) {
 				enabled = false;
+			}
+
+			if (j.second & NEEDS_DCDM_QUALITY) {
+				if (!dcdm_quality.ok) {
+					enabled = false;
+				}
+				/* Say why it is disabled in the status bar help */
+				j.first->SetHelp(dcdm_quality.ok ? wxString() : std_to_wx(dcdm_quality.reason));
 			}
 
 			j.first->Enable(enabled);
@@ -1479,6 +1523,7 @@ private:
 		add_item(jobs_menu, _("Export video file...\tCtrl-E"), ID_jobs_export_video_file, NEEDS_FILM);
 		add_item(jobs_menu, _("Export audio file..."), ID_jobs_export_audio_file, NEEDS_FILM);
 		add_item(jobs_menu, _("Export subtitles...\tShift-Ctrl-E"), ID_jobs_export_subtitles, NEEDS_FILM);
+		add_item(jobs_menu, _("Export DCDM..."), ID_jobs_export_dcdm, NEEDS_FILM | NEEDS_DCDM_QUALITY);
 		jobs_menu->AppendSeparator();
 		add_item(jobs_menu, _("&Send DCP to TMS"), ID_jobs_send_dcp_to_tms, NEEDS_FILM | NOT_DURING_DCP_CREATION | NEEDS_CPL);
 
