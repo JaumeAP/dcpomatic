@@ -26,6 +26,7 @@
 #include "lib/dcdm_film_encoder.h"
 #include "lib/dcdm_quality.h"
 #include "lib/wav_writer.h"
+#include "lib/cross.h"
 #include "lib/atmos_metadata.h"
 #include "lib/dpx_writer.h"
 #include "lib/film.h"
@@ -1179,5 +1180,33 @@ BOOST_AUTO_TEST_CASE(dcdm_pcm_resample_44k_test)
 	BOOST_CHECK_MESSAGE(std::abs(static_cast<long>(samples.size()) - 48000L) <= 96, samples.size());
 	BOOST_CHECK(std::any_of(samples.begin(), samples.end(), [](int32_t s) { return s != 0; }));
 
+	dcp::filesystem::remove_all(out);
+}
+
+
+/** A cancelled export is marked incomplete (DCDM_INCOMPLETE.txt) and has no DCDM_INFO.txt */
+BOOST_AUTO_TEST_CASE(dcdm_cancelled_export_marked_incomplete_test)
+{
+	auto film = new_test_film("dcdm_cancelled_export_marked_incomplete_test");
+	/* Long enough that the export is still running when it is cancelled */
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_cancelled_export_marked_incomplete_test_src", 24 * 20));
+
+	auto const out = boost::filesystem::path("build/test/dcdm_cancelled_export_marked_incomplete_test_out");
+	dcp::filesystem::remove_all(out);
+	auto job = make_shared<TranscodeJob>(film, TranscodeJob::ChangedBehaviour::IGNORE);
+	job->set_encoder(make_shared<DCDMFilmEncoder>(film, job, out, DCDMPictureFormat::DPX));
+	JobManager::instance()->add(job);
+
+	/* Wait until pictures are being written, then cancel */
+	for (int i = 0; i < 100 && count_files(out, ".dpx") < 3; ++i) {
+		dcpomatic_sleep_seconds(1);
+	}
+	BOOST_REQUIRE(count_files(out, ".dpx") >= 3);
+	job->cancel();
+	wait_for_jobs();
+
+	BOOST_CHECK(job->finished_cancelled());
+	BOOST_CHECK(dcp::filesystem::exists(out / "DCDM_INCOMPLETE.txt"));
+	BOOST_CHECK(!dcp::filesystem::exists(out / "DCDM_INFO.txt"));
 	dcp::filesystem::remove_all(out);
 }
