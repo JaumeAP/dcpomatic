@@ -4,7 +4,7 @@
 
 The DCDM must be a faithful master: importing it back into DCP-o-matic (DPX sequence, WAVs, Atmos, subtitles, same reels) and making a DCP gives the same DCP as the original film. This drives every choice above: picture, audio and Atmos are written exactly as the final DCP would contain them, with nothing applied twice.
 
-- Re-import must not double-process: the re-imported film uses no gain, trim, delay, audio processor or colour correction of its own, and one audio set only (the 7.1 set if present, otherwise the 5.1 set).
+- Re-import must not double-process: the re-imported film uses no gain, trim, delay, audio processor or colour correction of its own, and the single audio set.
 - Open risk (not decided, builder must verify): DPX files carry no XYZ flag, and DCP-o-matic normally converts imported RGB to XYZ. The re-import path needs a way to treat the DPX as already XYZ (no conversion). If that cannot be done, the round-trip test falls back to a stated tolerance and the user must be told.
 - JPEG 2000 encoding is lossy: "same DCP" means same decoded picture within what the encoder gives for identical input, not necessarily identical bytes.
 - Acceptance test: see Task 10 in the plan.
@@ -85,12 +85,11 @@ Consequences:
 - Consequence: the DCDM encoder must not call `set_always_burn_open_subtitles()`.
 - `SubtitleFilmEncoder::text` currently drops everything but `TextType::OPEN_SUBTITLE`; closed captions need support there or in a shared helper.
 
-## Audio layouts: 5.1 and 7.1 only (user decision)
+## Audio layout: 5.1 or 7.1, one version only (user decision)
 
-- Exported audio is only ever 5.1 or 7.1. If the programme is 7.1 (rear surround channels in use), both a 7.1 set and a 5.1 set are written; if it is 5.1 or smaller, only the 5.1 set.
-- Sets are directories of mono 24-bit WAVs: `audio_5.1/` and `audio_7.1/`, files named by channel label: 5.1 = L, R, C, LFE, Ls, Rs; 7.1 adds Lrs, Rrs (`dcp::Channel` BSL, BSR). Audio sets live in each reel folder (output root for one reel). 
-- 5.1 from 7.1 is a downmix: Ls' = Ls + g*Lrs, Rs' = Rs + g*Rrs with g = -3 dB (my call), other channels unchanged. Rear channels are folded into the side surrounds, never dropped.
-- My calls: a programme with fewer than six channels is padded with silent channels so the 5.1 set is always complete; a programme using more than 8 channels (or HI/VI/Lc/Rc) fails the export with a clear error naming the channels.
+- Exported audio is 5.1 or 7.1, chosen from the programme, and only that one version is written. 7.1 if the rear surround channels (BSL, BSR) are in use, otherwise 5.1. No downmix and no second set.
+- One directory `audio/` (per reel folder, or the output root for one reel) of mono 24-bit WAVs named by channel label: 5.1 = L, R, C, LFE, Ls, Rs; 7.1 adds Lrs, Rrs (`dcp::Channel` BSL, BSR).
+- My calls: a programme with fewer than six channels is padded with silent channels so the 5.1 set is complete; a programme using HI, VI, LC or RC fails the export with a clear error naming the channels.
 
 ## Reels (user decision: respect them)
 

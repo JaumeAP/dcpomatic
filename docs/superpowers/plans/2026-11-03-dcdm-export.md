@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Output video: DPX, CIE XYZ, 12 bits per component. No TIFF.
-- Audio layouts: only 5.1 (L R C LFE Ls Rs) or 7.1 (adds Lrs Rrs); a 7.1 programme writes both `audio_7.1/` and `audio_5.1/`; 5.1 from 7.1 downmixes Lrs/Rrs into Ls/Rs at -3 dB; fewer than 6 channels are padded with silence; more than 8 channels or HI/VI/Lc/Rc in use is an error.
+- Audio layout: 5.1 (L R C LFE Ls Rs) or 7.1 (adds Lrs Rrs), one version only, chosen from the channels in use (BSL/BSR in use gives 7.1, else 5.1); directory `audio/`; fewer than 6 channels padded with silence; HI/VI/LC/RC in use is an error. No downmix.
 - Output audio: always one mono WAV per channel, never a multichannel WAV. All WAVs are 24-bit at `film->audio_frame_rate()`, rendered through the `Player` (no remix beyond what the film itself does). Atmos is an untouched original.
 - 3D: both eyes, `left/` and `right/` subdirectories; 2D writes DPX files directly in the output directory; audio written once.
 - Gate: every video content must pass; DCP content fails; audio-only and text content ignored.
@@ -25,7 +25,7 @@
 - Audio as the final DCP: all PCM (standalone or embedded) rendered through `Player`/`Butler` so gain, delay, trim, fades, mapping and the audio processor (decoding matrix) are applied; audio is the post-matrix signal. 24-bit, film rate, mono per channel, per reel.
 - Atmos: written per reel from `Player::Atmos` frames (as `ReelWriter::write(atmos, metadata)` does) into `atmos.mxf`, trim and position applied, cut at reel boundaries; no file for a reel with no Atmos frames.
 - Open subtitles and closed captions: separate XML files (film's Interop/SMPTE format) with fonts, in `subtitles/` and `captions/`; not burnt into DPX.
-- Round trip: re-importing the DCDM into DCP-o-matic (same reels, no gain/trim/colour correction/audio processor, the 7.1 set if present else the 5.1 set) and making a DCP gives the same DCP as the original film (same decoded picture, same audio samples, same Atmos frames, same subtitles).
+- Round trip: re-importing the DCDM into DCP-o-matic (same reels, no gain/trim/colour correction/audio processor, the single audio set) and making a DCP gives the same DCP as the original film (same decoded picture, same audio samples, same Atmos frames, same subtitles).
 - Existing exports must not change behaviour.
 - Never include model identifiers in commits or code.
 
@@ -43,8 +43,8 @@
 - Film with closed captions only, or open subtitles only: only the matching folder is created.
 - Source PCM at a rate other than the film's (44.1 kHz, 96 kHz into 48 kHz film): output rate is the film's and duration is preserved.
 - Film using more than 8 audio channels (e.g. 16, or HI/VI): export fails before any file is written, message names the channels.
-- 7.1 downmix: a signal only in Lrs appears in Ls of the 5.1 set at -3 dB, and nothing is clipped on a full-scale input.
-- Stereo or mono film: `audio_5.1/` is complete (six files), the missing channels silent.
+- 7.1 film: eight labelled files in `audio/`, no 5.1 set written. 5.1 film: six files.
+- Stereo or mono film: `audio/` has six files, the missing channels silent.
 
 ---
 
@@ -122,7 +122,7 @@
 - [ ] **Step 4: Run** same command. Expected: PASS.
 - [ ] **Step 5: Commit** `git commit -m "Add DCDM source quality gate"`
 
-### Task 5a: Audio layouts
+### Task 5a: Audio layout
 
 **Files:**
 - Create: `src/lib/dcdm_audio_layout.h`, `src/lib/dcdm_audio_layout.cc`
@@ -132,16 +132,15 @@
 **Interfaces:**
 - Produces:
   - `enum class DCDMLayout { FIVE_ONE, SEVEN_ONE };`
-  - `std::vector<DCDMLayout> dcdm_layouts(std::set<dcp::Channel> used);` returns `{FIVE_ONE}` if only 5.1 channels (or fewer) are used, `{SEVEN_ONE, FIVE_ONE}` if BSL or BSR is used; throws `std::runtime_error` naming the channels if HI, VI, LC or RC is used.
+  - `DCDMLayout dcdm_layout(std::set<dcp::Channel> used);` returns `SEVEN_ONE` if BSL or BSR is used, else `FIVE_ONE`; throws `std::runtime_error` naming the channels if HI, VI, LC or RC is used.
   - `std::vector<std::string> dcdm_channel_labels(DCDMLayout);` L R C LFE Ls Rs (and Lrs Rrs for 7.1).
-  - `std::shared_ptr<AudioBuffers> dcdm_downmix_71_to_51(std::shared_ptr<const AudioBuffers> eight_channels);` channel order L R C LFE Ls Rs Lrs Rrs in, L R C LFE Ls Rs out, Ls' = Ls + 0.7079 * Lrs, Rs' = Rs + 0.7079 * Rrs (-3 dB), clamped to ±1.0.
   - `std::shared_ptr<AudioBuffers> dcdm_pad_to_layout(std::shared_ptr<const AudioBuffers>, DCDMLayout);` adds silent channels up to the layout's count.
 
-- [ ] **Step 1: Write failing tests**: `dcdm_layouts_51_test`, `dcdm_layouts_71_test` (BSL used gives `{SEVEN_ONE, FIVE_ONE}`), `dcdm_layouts_rejects_hi_vi_test` (error message contains "HI"), `dcdm_downmix_lrs_test` (Lrs = 0.5 only: Ls' = 0.5 * 0.7079 within 1e-4), `dcdm_downmix_clamps_test` (Ls = Lrs = 1.0: Ls' = 1.0), `dcdm_pad_stereo_test` (2 channels in, 6 out, channels 3-6 silent).
-- [ ] **Step 2: Run** `./waf build && ./run/tests --run_test=dcdm_layouts_*,dcdm_downmix_*,dcdm_pad_*`. Expected: FAIL.
-- [ ] **Step 3: Implement** the four functions as pure code over `AudioBuffers`.
+- [ ] **Step 1: Write failing tests**: `dcdm_layout_51_test`, `dcdm_layout_71_test` (BSL used gives `SEVEN_ONE`), `dcdm_layout_rejects_hi_vi_test` (error message contains "HI"), `dcdm_labels_test` (6 and 8 labels in order), `dcdm_pad_stereo_test` (2 channels in, 6 out, channels 3-6 silent).
+- [ ] **Step 2: Run** `./waf build && ./run/tests --run_test=dcdm_layout_*,dcdm_labels_test,dcdm_pad_*`. Expected: FAIL.
+- [ ] **Step 3: Implement** the three functions as pure code.
 - [ ] **Step 4: Run** same command. Expected: PASS.
-- [ ] **Step 5: Commit** `git commit -m "Add DCDM 5.1 and 7.1 audio layout helpers"`
+- [ ] **Step 5: Commit** `git commit -m "Add DCDM audio layout helpers"`
 
 ### Task 5: DCDMFilmEncoder
 
@@ -151,9 +150,9 @@
 - Test: `test/dcdm_film_encoder_test.cc`, `test/wscript`
 
 **Interfaces:**
-- Consumes: `write_dpx` (Task 1), `WAVWriter` (Task 2), `dcdm_source_quality` (Task 4), layout helpers (Task 5a).
+- Consumes: `write_dpx` (Task 1), `WAVWriter` (Task 2), `dcdm_source_quality` (Task 4), layout helper (Task 5a).
 - Produces: `DCDMFilmEncoder(std::shared_ptr<const Film> film, std::weak_ptr<Job> job, boost::filesystem::path output_directory);` implements `go()`, `current_rate()`, `frames_done()`, `finishing()` like `FFmpegFilmEncoder`. Constructor throws `std::runtime_error` carrying the gate reason if `!dcdm_source_quality(film).ok`. `go()` throws if `output_directory` exists and is not empty.
-- Layout (one reel; several reels repeat it inside `reel_<2-digit n>/`): 2D `frame_<8-digit index>.dpx`; 3D `left/` and `right/` with the same names; audio `audio_5.1/` and (7.1 only) `audio_7.1/` as set by Task 5a.
+- Layout (one reel; several reels repeat it inside `reel_<2-digit n>/`): 2D `frame_<8-digit index>.dpx`; 3D `left/` and `right/` with the same names; audio `audio/` as set by Task 5a.
 
 - [ ] **Step 1: Write failing tests**: `dcdm_encoder_reels_test` (film with 2 reels from `film->reels()`: `reel_01/` and `reel_02/` each hold their frames numbered from 0 plus per-channel WAVs, counts sum to film length); `dcdm_encoder_2d_test` (short film from a qualifying test TIFF sequence; after the job: expected frame count of `.dpx` files, first file passes the Task 1 reader, one WAV per film audio channel, all WAVs same length); `dcdm_encoder_3d_test` (3D film: `left/` and `right/` each hold the frame count, one set of WAVs); `dcdm_encoder_rejects_low_quality_test` (H.264 content throws with the clip name in the message); `dcdm_encoder_nonempty_directory_test`.
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_encoder_*`. Expected: FAIL.
@@ -199,12 +198,12 @@
 - Test: `test/dcdm_film_encoder_test.cc`
 
 **Interfaces:**
-- Consumes: `Butler` audio output (post gain, delay, trim, mapping and audio processor), `WAVWriter::write_int`/`write`, layout helpers (Task 5a), `Player::Atmos` signal `(std::shared_ptr<const dcp::AtmosFrame>, dcpomatic::DCPTime, AtmosMetadata)`, `film->reels()`, `AtmosMetadata::create(dcp::Fraction)`, `dcp::AtmosAsset::start_write`.
-- Produces: per reel, `audio_5.1/<label>.wav` (and `audio_7.1/<label>.wav` for 7.1) rendered through the player; `atmos.mxf` per reel from the Atmos frames in the reel, trimmed and positioned; none for a reel without Atmos frames.
+- Consumes: `Butler` audio output (post gain, delay, trim, mapping and audio processor), `WAVWriter::write_int`/`write`, layout helper (Task 5a), `Player::Atmos` signal `(std::shared_ptr<const dcp::AtmosFrame>, dcpomatic::DCPTime, AtmosMetadata)`, `film->reels()`, `AtmosMetadata::create(dcp::Fraction)`, `dcp::AtmosAsset::start_write`.
+- Produces: per reel, `audio/<label>.wav` rendered through the player; `atmos.mxf` per reel from the Atmos frames in the reel, trimmed and positioned; none for a reel without Atmos frames.
 
 - [ ] **Step 1: Write failing tests**: `dcdm_audio_gain_trim_test` (standalone WAV, gain -6 dB, trim start, delay: output samples equal the Butler's output for the same film, and the first non-silent sample sits at the delayed position); `dcdm_audio_processor_test` (film with `MidSideDecoder`: output equals the post-processor signal, not the raw source); `dcdm_audio_standalone_and_embedded_test` (WAV + MOV with audio: one mixed set, as the DCP would have); `dcdm_atmos_single_reel_test` (frame count equals the source's frames in the film period); `dcdm_atmos_spanning_reels_test` (one Atmos across 2 reels: each `reel_NN/atmos.mxf` holds its own frames, counts sum to the total, no frame in both); `dcdm_atmos_trimmed_test` (only used frames written); `dcdm_no_atmos_test` (no `atmos.mxf` anywhere).
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_audio_*,dcdm_atmos_*,dcdm_no_atmos_test`. Expected: FAIL.
-- [ ] **Step 3: Implement** the audio path by reading Butler audio per frame as `FFmpegFilmEncoder::go` does, converting through Task 5a helpers and writing per channel; and a signal handler like `DCPFilmEncoder::atmos` (src/lib/dcp_film_encoder.cc:179) that picks the reel by time and writes through a per-reel asset writer, finalized when the reel ends. Atmos frame rate is `film->video_frame_rate()`.
+- [ ] **Step 3: Implement** the audio path by reading Butler audio per frame as `FFmpegFilmEncoder::go` does, converting through the Task 5a helpers and writing per channel; and a signal handler like `DCPFilmEncoder::atmos` (src/lib/dcp_film_encoder.cc:179) that picks the reel by time and writes through a per-reel asset writer, finalized when the reel ends. Atmos frame rate is `film->video_frame_rate()`.
 - [ ] **Step 4: Run** same command. Expected: PASS.
 - [ ] **Step 5: Commit** `git commit -m "Render DCDM audio as the final DCP and write per-reel Atmos"`
 
@@ -232,7 +231,7 @@
 **Interfaces:**
 - Consumes: `DCDMFilmEncoder` (Tasks 5, 8, 9), `content_factory`, `new_test_film`, the existing DCP test helpers (`check_dcp`, `check_mxf_audio_file` or equivalents in `test/test.h`).
 
-- [ ] **Step 1: Write failing tests**: `dcdm_round_trip_picture_audio_test` (film: qualifying TIFF sequence + WAV with gain, trim and delay; make DCP A; export DCDM; build film B from the DPX sequence, the 5.1 WAV set mapped to L R C LFE Ls Rs, no gain/trim, same reels and container; make DCP B; assert decoded picture frames equal within the tolerance documented below, and audio samples equal); `dcdm_round_trip_71_test` (7.1 film: re-import from `audio_7.1/` gives audio equal to A's); `dcdm_round_trip_atmos_subtitles_test` (Atmos and open subtitles survive: B's Atmos frames equal A's, subtitle XML text equal); `dcdm_round_trip_reels_test` (two reels: B has the same reel durations as A).
+- [ ] **Step 1: Write failing tests**: `dcdm_round_trip_picture_audio_test` (film: qualifying TIFF sequence + WAV with gain, trim and delay; make DCP A; export DCDM; build film B from the DPX sequence, the 5.1 WAV set mapped to L R C LFE Ls Rs, no gain/trim, same reels and container; make DCP B; assert decoded picture frames equal within the tolerance documented below, and audio samples equal); `dcdm_round_trip_71_test` (7.1 film: re-import from `audio/` gives audio equal to A's); `dcdm_round_trip_atmos_subtitles_test` (Atmos and open subtitles survive: B's Atmos frames equal A's, subtitle XML text equal); `dcdm_round_trip_reels_test` (two reels: B has the same reel durations as A).
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_round_trip_*`. Expected: FAIL.
 - [ ] **Step 3: Fix whatever the tests expose** in the encoder, writers and re-import setup. For the DPX-as-XYZ question, use a colour conversion that makes import a no-op if one exists; else document the gap and tolerance in the test and in the commit message. Do not loosen the tolerance silently: state the measured maximum error per component in a comment.
 - [ ] **Step 4: Run** same command. Expected: PASS.
