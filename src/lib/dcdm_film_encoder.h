@@ -95,6 +95,7 @@ private:
 	void atmos(std::shared_ptr<const dcp::AtmosFrame> frame, dcpomatic::DCPTime time, AtmosMetadata metadata);
 	void finish_atmos();
 	void write_text();
+	void write_info() const;
 
 	boost::filesystem::path _output;
 	DCDMPictureFormat _picture_format;

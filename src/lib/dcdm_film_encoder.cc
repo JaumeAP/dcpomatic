@@ -35,8 +35,11 @@
 #include "player_video.h"
 #include "render_text.h"
 #include "string_text.h"
+#include "dcp_text_track.h"
+#include "text_content.h"
 #include "text_type.h"
 #include "util.h"
+#include "version.h"
 #include "wav_writer.h"
 #include <dcp/atmos_asset.h>
 #include <dcp/atmos_asset_writer.h>
@@ -46,6 +49,7 @@
 #include <dcp/text_string.h>
 #include <dcp/openjpeg_image.h>
 #include <fmt/format.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <fstream>
 #include <map>
 #include <memory>
@@ -365,6 +369,7 @@ DCDMFilmEncoder::go()
 	finish_atmos();
 
 	write_text();
+	write_info();
 }
 
 
@@ -539,4 +544,101 @@ DCDMFilmEncoder::frames_done() const
 {
 	boost::mutex::scoped_lock lm(_mutex);
 	return _last_time.frames_round(_film->video_frame_rate());
+}
+
+
+/** Write DCDM_INFO.txt in the output folder, describing what was written and the standards it follows */
+void
+DCDMFilmEncoder::write_info() const
+{
+	auto const reels = _film->reels();
+	auto const rate = _film->video_frame_rate();
+	auto const size = _film->frame_size();
+	auto const j2k = _picture_format == DCDMPictureFormat::J2K_LOSSLESS;
+
+	bool open_subtitles = false;
+	vector<string> caption_tracks;
+	for (auto content: _film->content()) {
+		for (auto text: content->text) {
+			if (!text->use() || text->burn()) {
+				continue;
+			}
+			if (text->type() == TextType::OPEN_SUBTITLE || text->type() == TextType::OPEN_CAPTION) {
+				open_subtitles = true;
+			} else if (auto track = text->dcp_track()) {
+				if (std::find(caption_tracks.begin(), caption_tracks.end(), track->name) == caption_tracks.end()) {
+					caption_tracks.push_back(track->name);
+				}
+			}
+		}
+	}
+
+	string labels;
+	bool seven_one = false;
+	for (auto const& channel: _channels) {
+		labels += (labels.empty() ? "" : ", ") + channel.second;
+		seven_one = seven_one || channel.first == dcp::Channel::BSL || channel.first == dcp::Channel::BSR;
+	}
+
+	std::ofstream f((_output / "DCDM_INFO.txt").string());
+	auto line = [&f](string const& s) { f << s << "\n"; };
+
+	line("D-CINEMA DISTRIBUTION MASTER (DCDM)");
+	line("===================================");
+	line("");
+	line(fmt::format("Title: {}", _film->name()));
+	line(fmt::format("Written by: DCP-o-matic {} ({})", dcpomatic_version, dcpomatic_git_commit));
+	line(fmt::format("Written on: {}", boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time())));
+	line("");
+	line("PICTURE");
+	if (j2k) {
+		line("Format: Lossless JPEG 2000 codestreams (DCDM packed images), one file per frame: picture/NNNNNNNN.pdc.j2c");
+		line("Coding: reversible 5/3 wavelet (mathematically lossless), 5 decomposition levels, RPCL progression,");
+		line("        code-blocks 128x32, precincts 256x256 (128x128 at the lowest resolution), tile-parts by resolution, TLM");
+		line("        COM marker: SMPTE DCDM X'Y'Z' image as defined in SMPTE ST 428-1");
+		line("        The High-Throughput (HT) block coder recommended by ST 428-24 is not used (encoder limitation).");
+	} else {
+		line("Format: Uncompressed DPX, one file per frame: frame_NNNNNNNN.dpx");
+		line("Coding: 3 components, 12 bits each, in big-endian 16-bit words, left-justified (packing method A).");
+		line("        DPX has no X'Y'Z' colorimetric code: components are X', Y', Z' by convention (descriptor 50).");
+	}
+	line(fmt::format("Size: {}x{}", size.width, size.height));
+	line("Colour: X'Y'Z', 12 bits per component, as SMPTE ST 428-1 (converted exactly as for the DCP)");
+	line(fmt::format("Frame rate: {} fps", rate));
+	line(fmt::format("Stereoscopy: {}", _film->three_d() ? "3D (left/ and right/ hold each eye)" : "2D"));
+	line(fmt::format("Duration: {} frames", _film->length().frames_round(rate)));
+	line("");
+	line(fmt::format("Reels: {}", reels.size()));
+	for (size_t i = 0; i < reels.size(); ++i) {
+		line(fmt::format("  {}: {} frames, starts at frame {}{}", i + 1, reels[i].duration().frames_round(rate), reels[i].from.frames_round(rate), reels.size() > 1 ? fmt::format(" (folder reel_{:02d})", i + 1) : string()));
+	}
+	line("");
+	line("SOUND");
+	line(fmt::format("Layout: {}", seven_one ? "7.1" : "5.1"));
+	line(fmt::format("Channels: {} (one mono file per channel in audio/)", labels));
+	line(fmt::format("Format: WAV, linear PCM, 24-bit, {} Hz, the same samples as the DCP (gain, delay, trim and processing applied)", _film->audio_frame_rate()));
+	line(fmt::format("Atmos: {}", _film->contains_atmos_content() ? "yes (atmos.mxf in each reel that has Atmos)" : "no"));
+	line("");
+	line("TEXT");
+	line(fmt::format("Open subtitles: {}", open_subtitles ? "yes (subtitles/subtitles.xml)" : "no"));
+	line(fmt::format("Closed captions: {}", caption_tracks.empty() ? string("no") : fmt::format("{} track(s) in captions/", caption_tracks.size())));
+	line(fmt::format("Text format: {} XML, timed relative to each reel, fonts alongside", _film->interop() ? "Interop" : "SMPTE"));
+	line("");
+	line("STANDARDS");
+	line("SMPTE ST 428-1   D-Cinema Distribution Master - Image Characteristics");
+	if (j2k) {
+		line("SMPTE ST 428-24  D-Cinema Distribution Master - Packed Image");
+		line("SMPTE ST 2067-40 Interoperable Master Format - Application #4 Cinema Mezzanine (encoding constraints)");
+		line("ISO/IEC 15444-1  JPEG 2000 image coding system - Core coding system");
+	} else {
+		line("SMPTE ST 268     File Format for Digital Moving-Picture Exchange (DPX)");
+	}
+	line("SMPTE ST 428-2   D-Cinema Distribution Master - Audio Characteristics");
+	line("SMPTE ST 428-3   D-Cinema Distribution Master - Audio Channel Mapping and Channel Labeling");
+	if (open_subtitles || !caption_tracks.empty()) {
+		line("SMPTE ST 428-7   D-Cinema Distribution Master - Subtitle");
+	}
+	if (_film->contains_atmos_content()) {
+		line("SMPTE ST 429-18  D-Cinema Packaging - Immersive Audio Track File");
+	}
 }

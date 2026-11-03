@@ -883,3 +883,74 @@ BOOST_AUTO_TEST_CASE(dcdm_encoder_j2k_3d_reels_test)
 
 	dcp::filesystem::remove_all(out);
 }
+
+
+/* --- DCDM_INFO.txt describes the export and the standards it follows --- */
+
+
+static
+string
+read_text(boost::filesystem::path path)
+{
+	std::ifstream in(path.string());
+	return string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_info_file_j2k_test)
+{
+	auto film = new_test_film("dcdm_info_file_j2k_test");
+	film->set_name("My Film");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_info_file_j2k_test_src", 2));
+	add_subtitles(film, "dcp_sub3.xml", TextType::OPEN_SUBTITLE, dcpomatic::DCPTime(), dcpomatic::DCPTime::from_frames(24, 24));
+
+	auto const out = boost::filesystem::path("build/test/dcdm_info_file_j2k_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out, DCDMPictureFormat::J2K_LOSSLESS);
+
+	auto const path = out / "DCDM_INFO.txt";
+	BOOST_REQUIRE(dcp::filesystem::exists(path));
+	auto const text = read_text(path);
+	for (auto expected: {
+		"My Film",
+		"Lossless JPEG 2000",
+		"SMPTE ST 428-24",
+		"SMPTE ST 428-1",
+		"SMPTE ST 2067-40",
+		"ISO/IEC 15444-1",
+		"1998x1080",
+		"24 fps",
+		"2D",
+		"Reels: 1",
+		"5.1",
+		"L, R, C, LFE, Ls, Rs",
+		"24-bit",
+		"48000 Hz",
+		"SMPTE ST 428-2",
+		"SMPTE ST 428-3",
+		"Open subtitles: yes",
+		"SMPTE ST 428-7",
+		"Atmos: no"
+		}) {
+		BOOST_CHECK_MESSAGE(text.find(expected) != string::npos, "missing: " << expected);
+	}
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_info_file_dpx_test)
+{
+	auto film = new_test_film("dcdm_info_file_dpx_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_info_file_dpx_test_src", 2));
+	auto const out = boost::filesystem::path("build/test/dcdm_info_file_dpx_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out, DCDMPictureFormat::DPX);
+
+	auto const text = read_text(out / "DCDM_INFO.txt");
+	BOOST_CHECK(text.find("DPX") != string::npos);
+	BOOST_CHECK(text.find("SMPTE ST 268") != string::npos);
+	BOOST_CHECK(text.find("SMPTE ST 428-24") == string::npos);
+
+	dcp::filesystem::remove_all(out);
+}
