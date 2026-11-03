@@ -25,6 +25,7 @@
 #include "lib/content_factory.h"
 #include "lib/dcdm_film_encoder.h"
 #include "lib/dcdm_quality.h"
+#include "lib/wav_writer.h"
 #include "lib/atmos_metadata.h"
 #include "lib/dpx_writer.h"
 #include "lib/film.h"
@@ -57,6 +58,7 @@
 #include <fmt/format.h>
 #include <boost/test/unit_test.hpp>
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 
 
@@ -931,7 +933,7 @@ BOOST_AUTO_TEST_CASE(dcdm_info_file_j2k_test)
 		"24-bit",
 		"48000 Hz",
 		"SMPTE ST 428-2",
-		"SMPTE ST 428-3",
+		"SMPTE ST 428-12",
 		"Open subtitles: yes",
 		"SMPTE ST 428-7",
 		"Atmos: no"
@@ -1142,5 +1144,40 @@ BOOST_AUTO_TEST_CASE(dcdm_atmos_after_finish_is_ignored_test)
 	encoder->go();
 	/* Finished: a stray frame must now be a no-op, not a null dereference */
 	BOOST_CHECK_NO_THROW(encoder->atmos(nullptr, dcpomatic::DCPTime(), AtmosMetadata(make_shared<dcp::AtmosAsset>(boost::filesystem::path("test/data/atmos_0.mxf")))));
+	dcp::filesystem::remove_all(out);
+}
+
+
+/** Source PCM at 44.1 kHz comes out at the film's 48 kHz, with its duration kept */
+BOOST_AUTO_TEST_CASE(dcdm_pcm_resample_44k_test)
+{
+	auto film = new_test_film("dcdm_pcm_resample_44k_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_pcm_resample_44k_test_src", 24));
+
+	auto const wav = boost::filesystem::path("build/test/dcdm_pcm_resample_44k_test.wav");
+	{
+		WAVWriter writer(wav, 44100);
+		vector<float> tone(44100);
+		for (size_t i = 0; i < tone.size(); ++i) {
+			tone[i] = 0.5f * std::sin(2 * M_PI * 1000 * i / 44100.0);
+		}
+		writer.write(tone.data(), tone.size());
+		writer.close();
+	}
+	auto sound = content_factory(wav)[0];
+	film->examine_and_add_content({sound});
+	BOOST_REQUIRE(!wait_for_jobs());
+	sound->set_position(film, dcpomatic::DCPTime());
+
+	auto const out = boost::filesystem::path("build/test/dcdm_pcm_resample_44k_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+
+	/* A mono file goes to the centre channel */
+	auto const samples = read_wav24(out / "audio" / "C.wav");
+	/* One second in, one second out: 48000 samples, within a few samples of resampler delay */
+	BOOST_CHECK_MESSAGE(std::abs(static_cast<long>(samples.size()) - 48000L) <= 96, samples.size());
+	BOOST_CHECK(std::any_of(samples.begin(), samples.end(), [](int32_t s) { return s != 0; }));
+
 	dcp::filesystem::remove_all(out);
 }

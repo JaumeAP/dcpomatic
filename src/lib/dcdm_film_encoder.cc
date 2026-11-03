@@ -825,7 +825,9 @@ DCDMFilmEncoder::write_info() const
 		line("SMPTE ST 268     File Format for Digital Moving-Picture Exchange (DPX)");
 	}
 	line("SMPTE ST 428-2   D-Cinema Distribution Master - Audio Characteristics");
-	line("SMPTE ST 428-3   D-Cinema Distribution Master - Audio Channel Mapping and Channel Labeling");
+	line("SMPTE ST 428-12  D-Cinema Distribution Master - Audio Channel Mapping and Channel Labeling");
+	line("RP 428-4         Audio file format for a DCDM (BWF, ITU-R BR.1352): NOT followed; the WAV files are plain");
+	line("                 RIFF PCM without the bext chunk"); 
 	if (open_subtitles || !caption_tracks.empty()) {
 		line("SMPTE ST 428-7   D-Cinema Distribution Master - Subtitle");
 	}
