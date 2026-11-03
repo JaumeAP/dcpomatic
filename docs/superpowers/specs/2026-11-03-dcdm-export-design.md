@@ -51,8 +51,8 @@ The export is only available when every video content in the film is high enough
 A video content passes if it is one of:
 
 - Image sequence/still: TIFF, DPX or EXR, at 10 bits per component or more. JPEG and 8-bit PNG fail.
-- FFmpeg file: intraframe or lossless codec AND bit depth of 10 or more AND chroma 4:2:2 or better. Accepted codecs: ProRes 422 HQ, 4444, 4444 XQ (not Proxy, LT, 422); DNxHR HQX and 444 (not LB, SQ, HQ 8-bit); FFV1; v210; rawvideo. Everything else fails (H.264, HEVC, MPEG-2, XDCAM, plain ProRes 422).
-- DCP content: pass (already 12-bit XYZ JPEG2000), my call.
+- FFmpeg file: intraframe or lossless codec AND bit depth of 10 or more AND chroma 4:2:2 or better. Accepted codecs: ProRes 422 HQ, 4444, 4444 XQ (not Proxy, LT, 422); DNxHR HQX and 444 (not LB, SQ, HQ 8-bit); FFV1; v210; rawvideo. Everything else fails, including DCP content (H.264, HEVC, MPEG-2, XDCAM, plain ProRes 422).
+- DCP content: fails. User decision. A DCP is already the final deliverable, and turning a DCDM back into a DCP would re-encode JPEG 2000 (generation loss).
 
 Rationale: DCDM is a master; exporting 8-bit or heavily compressed sources into 12-bit XYZ would pretend quality that does not exist.
 
