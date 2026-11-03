@@ -53,7 +53,7 @@ enum class DCDMPictureFormat
 
 
 /** @class DCDMFilmEncoder
- *  @brief Export a film as a DCDM: 12-bit XYZ DPX frames and 24-bit mono WAVs.
+ *  @brief Export a film as a DCDM: 12-bit X'Y'Z' pictures (lossless JPEG 2000 by default, or DPX) and 24-bit mono WAVs.
  *
  *  Picture is converted to XYZ exactly as for a DCP (DCPVideo::convert_to_xyz)
  *  and audio is what the player gives a DCP (gain, delay, trim, mapping and the
@@ -96,6 +96,8 @@ private:
 	boost::filesystem::path picture_directory(boost::filesystem::path reel_directory) const;
 	void atmos(std::shared_ptr<const dcp::AtmosFrame> frame, dcpomatic::DCPTime time, AtmosMetadata metadata);
 	void finish_atmos();
+
+	friend struct dcdm_atmos_after_finish_is_ignored_test;
 	void write_text();
 	void write_info() const;
 
@@ -119,6 +121,7 @@ private:
 
 	/** What write_text() actually wrote, for DCDM_INFO.txt */
 	bool _open_subtitles_written = false;
+	bool _atmos_finished = false;
 	std::vector<std::string> _caption_tracks_written;
 
 	Butler _butler;

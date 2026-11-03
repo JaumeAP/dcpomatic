@@ -24,6 +24,8 @@
 #include "lib/content.h"
 #include "lib/content_factory.h"
 #include "lib/dcdm_film_encoder.h"
+#include "lib/dcdm_quality.h"
+#include "lib/atmos_metadata.h"
 #include "lib/dpx_writer.h"
 #include "lib/film.h"
 #include "lib/dcp_text_track.h"
@@ -1090,5 +1092,55 @@ BOOST_AUTO_TEST_CASE(dcdm_info_reports_written_text_test)
 	auto const info = read_text(out / "DCDM_INFO.txt");
 	BOOST_CHECK(info.find("Open subtitles: no") != string::npos);
 	BOOST_CHECK(info.find("Closed captions: no") != string::npos);
+	dcp::filesystem::remove_all(out);
+}
+
+
+/* --- Minor review fixes --- */
+
+
+/** DCPB: a DPX DCDM says how to import it (no colour conversion) */
+BOOST_AUTO_TEST_CASE(dcdm_info_dpx_import_note_test)
+{
+	auto film = new_test_film("dcdm_info_dpx_import_note_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_info_dpx_import_note_test_src", 2));
+	auto const out = boost::filesystem::path("build/test/dcdm_info_dpx_import_note_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out, DCDMPictureFormat::DPX);
+	auto const text = read_text(out / "DCDM_INFO.txt");
+	BOOST_CHECK(text.find("colour conversion") != string::npos);
+	BOOST_CHECK(text.find("None") != string::npos);
+	dcp::filesystem::remove_all(out);
+}
+
+
+/** M6: content whose video is not used does not block the export */
+BOOST_AUTO_TEST_CASE(dcdm_gate_ignores_unused_video_test)
+{
+	auto film = new_test_film("dcdm_gate_ignores_unused_video_test");
+	auto good = dpx_content(film, make_dpx_sequence("build/test/dcdm_gate_ignores_unused_video_test_src", 2));
+	auto bad = content_factory("test/data/10bit_video_422.mp4")[0];
+	film->examine_and_add_content({bad});
+	BOOST_REQUIRE(!wait_for_jobs());
+	bad->video->set_use(false);
+	auto const result = dcdm_source_quality(film);
+	BOOST_CHECK_MESSAGE(result.ok, result.reason);
+	(void) good;
+}
+
+
+/** M2: a late Atmos frame after the export has finished is ignored, not a crash */
+struct dcdm_atmos_after_finish_is_ignored_test;
+BOOST_AUTO_TEST_CASE(dcdm_atmos_after_finish_is_ignored_test)
+{
+	auto film = new_test_film("dcdm_atmos_after_finish_is_ignored_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_atmos_after_finish_is_ignored_test_src", 2));
+	auto const out = boost::filesystem::path("build/test/dcdm_atmos_after_finish_is_ignored_test_out");
+	dcp::filesystem::remove_all(out);
+	auto job = make_shared<TranscodeJob>(film, TranscodeJob::ChangedBehaviour::IGNORE);
+	auto encoder = make_shared<DCDMFilmEncoder>(film, job, out, DCDMPictureFormat::DPX);
+	encoder->go();
+	/* Finished: a stray frame must now be a no-op, not a null dereference */
+	BOOST_CHECK_NO_THROW(encoder->atmos(nullptr, dcpomatic::DCPTime(), AtmosMetadata(make_shared<dcp::AtmosAsset>(boost::filesystem::path("test/data/atmos_0.mxf")))));
 	dcp::filesystem::remove_all(out);
 }

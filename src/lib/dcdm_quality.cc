@@ -120,7 +120,8 @@ dcdm_source_quality(shared_ptr<const Film> film)
 	bool any_video = false;
 
 	for (auto content: film->content()) {
-		if (!content->video) {
+		/* Video that is switched off does not go into the DCP, so it does not matter here */
+		if (!content->video || !content->video->use()) {
 			continue;
 		}
 		any_video = true;

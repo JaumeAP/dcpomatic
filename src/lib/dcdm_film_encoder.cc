@@ -221,6 +221,11 @@ DCDMFilmEncoder::atmos(shared_ptr<const dcp::AtmosFrame> frame, DCPTime time, At
 {
 	boost::mutex::scoped_lock lm(_atmos_mutex);
 
+	/* Once finished, a late frame (signals2 does not wait for a running slot) is dropped */
+	if (_atmos_finished) {
+		return;
+	}
+
 	int reel = 0;
 	while (reel + 1 < static_cast<int>(_reel_periods.size()) && _reel_periods[reel].to <= time) {
 		++reel;
@@ -247,6 +252,7 @@ void
 DCDMFilmEncoder::finish_atmos()
 {
 	boost::mutex::scoped_lock lm(_atmos_mutex);
+	_atmos_finished = true;
 	if (_atmos_writer) {
 		_atmos_writer->finalize();
 		_atmos_writer.reset();
@@ -627,7 +633,16 @@ DCDMFilmEncoder::write_text()
 			add_to_reel(reel, period);
 		});
 
-	while (!player.pass()) {}
+	if (auto job = _job.lock()) {
+		job->sub(_("Subtitles"));
+		job->set_progress_unknown();
+	}
+	/* set_progress() is an interruption point, so a cancelled job stops here */
+	while (!player.pass()) {
+		if (auto job = _job.lock()) {
+			job->set_progress_unknown();
+		}
+	}
 
 	for (auto const& i: assets) {
 		auto const reel = i.first.first;
@@ -729,6 +744,8 @@ DCDMFilmEncoder::write_info() const
 		line("Format: Uncompressed DPX, one file per frame: frame_NNNNNNNN.dpx");
 		line("Coding: 3 components, 12 bits each, in big-endian 16-bit words, left-justified (packing method A).");
 		line("        DPX has no X'Y'Z' colorimetric code: components are X', Y', Z' by convention (descriptor 50).");
+		line("Import:  to make a DCP from these files in DCP-o-matic, set the colour conversion of the picture");
+		line("         content to None; the default conversion would convert X'Y'Z' to XYZ a second time.");
 	}
 	line(fmt::format("Size: {}x{}", size.width, size.height));
 	line("Colour: X'Y'Z', 12 bits per component, as SMPTE ST 428-1 (converted exactly as for the DCP)");
