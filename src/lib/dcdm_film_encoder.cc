@@ -597,6 +597,8 @@ DCDMFilmEncoder::write_info() const
 		line("        code-blocks 128x32, precincts 256x256 (128x128 at the lowest resolution), tile-parts by resolution, TLM");
 		line("        COM marker: SMPTE DCDM X'Y'Z' image as defined in SMPTE ST 428-1");
 		line("        The High-Throughput (HT) block coder recommended by ST 428-24 is not used (encoder limitation).");
+		line("Import:  to make a DCP from these files in DCP-o-matic, turn on \"Re-encode JPEG2000 data\" in the DCP");
+		line("         settings; otherwise the lossless codestreams would be copied into the DCP unchanged.");
 	} else {
 		line("Format: Uncompressed DPX, one file per frame: frame_NNNNNNNN.dpx");
 		line("Coding: 3 components, 12 bits each, in big-endian 16-bit words, left-justified (packing method A).");

@@ -917,6 +917,7 @@ BOOST_AUTO_TEST_CASE(dcdm_info_file_j2k_test)
 		"SMPTE ST 428-24",
 		"SMPTE ST 428-1",
 		"SMPTE ST 2067-40",
+		"Re-encode JPEG2000 data",
 		"ISO/IEC 15444-1",
 		"1998x1080",
 		"24 fps",

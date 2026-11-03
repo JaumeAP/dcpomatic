@@ -106,11 +106,11 @@ add(shared_ptr<Film> film, boost::filesystem::path path, DCPTime position)
 
 static
 void
-export_dcdm(shared_ptr<Film> film, boost::filesystem::path out)
+export_dcdm(shared_ptr<Film> film, boost::filesystem::path out, DCDMPictureFormat format = DCDMPictureFormat::DPX)
 {
 	dcp::filesystem::remove_all(out);
 	auto job = make_shared<TranscodeJob>(film, TranscodeJob::ChangedBehaviour::IGNORE);
-	job->set_encoder(make_shared<DCDMFilmEncoder>(film, job, out));
+	job->set_encoder(make_shared<DCDMFilmEncoder>(film, job, out, format));
 	JobManager::instance()->add(job);
 	BOOST_REQUIRE(!wait_for_jobs());
 }
@@ -148,13 +148,17 @@ reimport(string name, shared_ptr<Film> original, boost::filesystem::path dcdm)
 	film->set_video_frame_rate(original->video_frame_rate());
 	film->set_audio_channels(original->audio_channels());
 	film->set_interop(original->interop());
+	/* Lossless JPEG 2000 DCDM pictures must be re-encoded, not copied into the DCP as they are */
+	film->set_reencode_j2k(true);
 
 	auto const reels = original->reels();
 	for (size_t r = 0; r < reels.size(); ++r) {
 		auto const dir = reels.size() == 1 ? dcdm : dcdm / fmt::format("reel_{:02d}", r + 1);
 		auto const start = reels[r].from;
 
-		auto picture = add(film, dir, start);
+		/* Lossless JPEG 2000 pictures are in picture/, DPX in the reel folder itself */
+		auto const picture_dir = dcp::filesystem::is_directory(dir / "picture") ? dir / "picture" : dir;
+		auto picture = add(film, picture_dir, start);
 		picture->video->unset_colour_conversion();
 		picture->set_video_frame_rate(film, original->video_frame_rate());
 
@@ -388,6 +392,31 @@ BOOST_AUTO_TEST_CASE(dcdm_round_trip_atmos_subtitles_test)
 	export_dcdm(a, out);
 
 	auto b = reimport("dcdm_round_trip_atmos_subtitles_test_b", a, out);
+	make_and_verify_dcp(b, ignore());
+	check_same_dcp(a, b);
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_round_trip_j2k_test)
+{
+	auto a = new_test_film("dcdm_round_trip_j2k_test_a");
+	a->set_sequence(false);
+	add(a, make_dpx_sequence("build/test/dcdm_round_trip_j2k_test_src_a", 24), DCPTime());
+	add(a, make_dpx_sequence("build/test/dcdm_round_trip_j2k_test_src_b", 30), DCPTime::from_frames(24, 24));
+	auto sound = add(a, "test/data/L.wav", DCPTime());
+	sound->audio->set_gain(-3);
+	a->set_reel_type(ReelType::BY_VIDEO_CONTENT);
+	BOOST_REQUIRE_EQUAL(a->reels().size(), 2U);
+	make_and_verify_dcp(a, ignore());
+
+	auto const out = boost::filesystem::path("build/test/dcdm_round_trip_j2k_test_dcdm");
+	export_dcdm(a, out, DCDMPictureFormat::J2K_LOSSLESS);
+	BOOST_REQUIRE(dcp::filesystem::exists(out / "reel_01" / "picture" / "00000000.pdc.j2c"));
+
+	auto b = reimport("dcdm_round_trip_j2k_test_b", a, out);
+	BOOST_REQUIRE_EQUAL(b->reels().size(), 2U);
 	make_and_verify_dcp(b, ignore());
 	check_same_dcp(a, b);
 
