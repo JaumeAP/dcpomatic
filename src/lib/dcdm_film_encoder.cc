@@ -523,7 +523,14 @@ DCDMFilmEncoder::write_text()
 	auto const interop = _film->interop();
 	auto const standard = interop ? dcp::SubtitleStandard::INTEROP : dcp::SubtitleStandard::SMPTE_2014;
 	FontMetrics metrics(_film->frame_size().height);
-	dcp::ArrayData const default_font(default_font_file());
+	/* Only needed when a subtitle has no font of its own; a film with no text must not need it */
+	boost::optional<dcp::ArrayData> default_font_data;
+	auto default_font = [&default_font_data]() {
+		if (!default_font_data) {
+			default_font_data = dcp::ArrayData(default_font_file());
+		}
+		return *default_font_data;
+	};
 	auto const languages = _film->open_text_languages();
 
 	auto make_asset = [&](int reel, boost::optional<DCPTextTrack> track) -> shared_ptr<dcp::TextAsset> {
@@ -642,7 +649,7 @@ DCDMFilmEncoder::write_text()
 				auto const id = (font && fonts.map().count(font)) ? fonts.get(font) : string("default");
 				text->set_font(id);
 				asset->add(text);
-				asset->ensure_font(id, font && font->data() ? *font->data() : default_font);
+				asset->ensure_font(id, font && font->data() ? *font->data() : default_font());
 			}
 
 			for (auto const& i: subs.bitmap) {
