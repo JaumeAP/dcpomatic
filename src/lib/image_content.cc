@@ -29,6 +29,7 @@
 #include "job.h"
 #include "util.h"
 #include "video_content.h"
+#include <fmt/format.h>
 #include <libcxml/cxml.h>
 #include <dcp/filesystem.h>
 #include <libxml++/libxml++.h>
@@ -65,6 +66,9 @@ ImageContent::ImageContent(cxml::ConstNodePtr node, boost::optional<boost::files
 	: Content(node, film_directory)
 {
 	video = VideoContent::from_xml(this, node, version, VideoRange::FULL);
+	if (auto const pixel_format = node->optional_number_child<int>("PixelFormat")) {
+		_pixel_format = static_cast<AVPixelFormat>(*pixel_format);
+	}
 }
 
 
@@ -108,6 +112,9 @@ ImageContent::as_xml(xmlpp::Element* element, bool with_paths, PathBehaviour pat
 	if (video) {
 		video->as_xml(element);
 	}
+	if (_pixel_format) {
+		cxml::add_text_child(element, "PixelFormat", fmt::to_string(static_cast<int>(*_pixel_format)));
+	}
 }
 
 
@@ -140,6 +147,10 @@ ImageContent::examine(shared_ptr<Job> job, bool tolerant)
 
 	auto examiner = make_shared<ImageExaminer>(shared_from_this(), job);
 	video->take_from_examiner(examiner);
+	{
+		boost::mutex::scoped_lock lm(_mutex);
+		_pixel_format = examiner->pixel_format();
+	}
 	set_default_colour_conversion();
 }
 
