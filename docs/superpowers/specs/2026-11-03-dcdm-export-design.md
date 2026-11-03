@@ -15,7 +15,7 @@ Add an export that writes a Digital Cinema Distribution Master from a film: one 
 
 - TIFF output.
 - Single multichannel WAV.
-- Cutting, re-wrapping, remixing or re-rendering Atmos or standalone PCM sources.
+- Cutting, re-wrapping, remixing, resampling or applying gain to Atmos or standalone PCM sources.
 - Editing or overwriting existing DCDMs.
 - DCP creation changes.
 
@@ -72,9 +72,9 @@ Consequences:
 
 - Original sources are left untouched (user decision, replaces the earlier per-reel Atmos cut and the all-audio WAV render).
   - Dolby Atmos: every `AtmosMXFContent` source file is copied byte-identical to `atmos/` in the output root, original file name.
-  - Standalone PCM: every audio-only source file (an `FFmpegContent` with no video, e.g. a WAV) is copied byte-identical to `audio/` in the output root, original file name.
+  - Standalone PCM (user decision: PCMs are always delivered split per channel): every audio-only source file (an `FFmpegContent` with no video, e.g. a WAV) is split into one mono WAV per channel in `audio/`, named `<source stem>_ch<NN>.wav`. Samples are copied exactly: same sample rate and bit depth as the source, no resampling, remix or gain. My call: the 24-bit rule applies only to rendered embedded audio.
   - Audio embedded in a video source (e.g. a ProRes MOV): rendered the normal way into standard PCM: one 24-bit mono WAV per channel (the earlier decision), from those contents only.
-  - My calls: originals are not split per reel and are not placed in `reel_NN/`; position, trim and gain are not applied to them, so their sync information is lost in the output; a short note about this is written next to them (see builder items). Name clashes between originals are an error.
+  - My calls: originals are not split per reel and are not placed in `reel_NN/`; position, trim and gain are not applied to them, so their sync information is lost (for PCM as well as Atmos) in the output; a short note about this is written next to them (see builder items). Name clashes between Atmos originals, or between PCM stems, are an error.
 - Open subtitles and closed captions: written as separate files, not burnt into the DPX frames (my call; the user did not choose between this and burning). Format follows the film (Interop or SMPTE XML), with fonts. Files go in `subtitles/` (open) and `captions/` (closed). Nothing is written if the film has none.
 - Consequence: the DCDM encoder must not call `set_always_burn_open_subtitles()`.
 - `SubtitleFilmEncoder::text` currently drops everything but `TextType::OPEN_SUBTITLE`; closed captions need support there or in a shared helper.

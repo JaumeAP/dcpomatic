@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Output video: DPX, CIE XYZ, 12 bits per component. No TIFF.
-- Output audio: for embedded audio, one WAV per channel, never a multichannel WAV. Standalone PCM and Atmos are untouched originals.
+- Output audio: always one mono WAV per channel, never a multichannel WAV. Standalone PCM is split per channel with samples copied exactly (source sample rate and bit depth, no resample/remix/gain). Embedded audio is rendered to 24-bit. Atmos is an untouched original.
 - 3D: both eyes, `left/` and `right/` subdirectories; 2D writes DPX files directly in the output directory; audio written once.
 - Gate: every video content must pass; DCP content fails; audio-only and text content ignored.
 - Gate image formats: TIFF, DPX, EXR at 10 bits per component or more. JPEG and 8-bit PNG fail.
@@ -21,7 +21,7 @@
 - Films with no stored codec/pixel-format metadata do not qualify until re-examined.
 - GUI: DCDM menu item disabled with a tooltip/message naming the first failing content. CLI: error naming content and reason, non-zero exit.
 - Reels: one reel writes the flat layout; several reels write `reel_01/`, `reel_02/`, ... each with the full layout, frame numbering restarting at 0, WAVs covering exactly the reel period.
-- Originals untouched: copy each `AtmosMXFContent` file byte-identical to `atmos/` and each audio-only `FFmpegContent` file (no video) byte-identical to `audio/`, in the output root, original names; no cutting, no per-reel placement, no position/trim/gain applied; write `sources.txt` noting each original's position, trim and reel; name clash is an error.
+- Originals: copy each `AtmosMXFContent` file byte-identical to `atmos/`; split each audio-only `FFmpegContent` file (no video) into mono WAVs in `audio/` (`<stem>_ch<NN>.wav`, exact samples); in the output root, no cutting, no per-reel placement, no position/trim/gain applied; write `sources.txt` noting each original's position, trim and reel; name clash is an error.
 - Embedded audio (audio inside a video source): rendered to one 24-bit mono WAV per channel from the video-bearing contents only.
 - Open subtitles and closed captions: separate XML files (film's Interop/SMPTE format) with fonts, in `subtitles/` and `captions/`; not burnt into DPX.
 - Existing exports must not change behaviour.
@@ -34,8 +34,8 @@
 - Output directory already contains files: export errors out instead of silently overwriting.
 - Odd frame rate or film length not a whole number of frames: frame count and audio length stay consistent, audio WAV lengths equal across channels.
 - Multi-reel film: DPX counts per reel sum to the film length, every reel's WAVs have equal length, and no frame is dropped or duplicated at reel boundaries.
-- Film with a standalone WAV plus a ProRes MOV with embedded audio: the WAV is copied untouched to `audio/` and the rendered per-channel WAVs contain only the MOV's audio (no double mix).
-- Two originals with the same file name: export fails before any file is written.
+- Film with a standalone WAV plus a ProRes MOV with embedded audio: the WAV is split per channel into `audio/` and the rendered per-channel WAVs contain only the MOV's audio (no double mix).
+- Two sources with the same file name or stem: export fails before any file is written.
 - Film with Atmos content that is trimmed or offset: export fails with a clear message instead of writing an out-of-sync MXF.
 - Film with closed captions only, or open subtitles only: only the matching folder is created.
 - Film with more audio channels than the WAV naming scheme expects (e.g. 16): all channels written, names unique and sortable.
@@ -69,9 +69,9 @@
 - Test: `test/wav_writer_test.cc`, `test/wscript`
 
 **Interfaces:**
-- Produces: `class WAVWriter { public: WAVWriter(boost::filesystem::path path, int sample_rate); void write(float const* samples, int frames); void close(); };` Mono, 24-bit PCM little-endian, header patched with final sizes on `close()`. Destructor calls `close()` if still open.
+- Produces: `class WAVWriter { public: WAVWriter(boost::filesystem::path path, int sample_rate, int bits_per_sample = 24); void write(float const* samples, int frames); void write_int32(int32_t const* samples, int frames); void close(); };` Mono, PCM at `bits_per_sample` (16, 24 or 32) little-endian, header patched with final sizes on `close()`. Destructor calls `close()` if still open.
 
-- [ ] **Step 1: Write failing tests**: `wav_writer_header_test` (write 100 frames at 48000; assert "RIFF"/"WAVE"/"fmt ", channels 1, sample rate 48000, 24 bits, data size 300); `wav_writer_samples_test` (write {0.0f, 1.0f, -1.0f, 0.5f}; assert decoded 24-bit values 0, 8388607, -8388608, 4194304 within ±1); `wav_writer_clips_test` (values beyond ±1.0 clamp, no wraparound).
+- [ ] **Step 1: Write failing tests**: `wav_writer_header_test` (write 100 frames at 48000; assert "RIFF"/"WAVE"/"fmt ", channels 1, sample rate 48000, 24 bits, data size 300); `wav_writer_samples_test` (write {0.0f, 1.0f, -1.0f, 0.5f}; assert decoded 24-bit values 0, 8388607, -8388608, 4194304 within ±1); `wav_writer_clips_test` (values beyond ±1.0 clamp, no wraparound); `wav_writer_16bit_exact_test` (16-bit writer fed `write_int32` values writes them bit-exact).
 - [ ] **Step 2: Run** `./waf build && ./run/tests --run_test=wav_writer_header_test,wav_writer_samples_test,wav_writer_clips_test`. Expected: FAIL.
 - [ ] **Step 3: Implement `WAVWriter`** with a raw RIFF writer (no libsndfile in the repo). Use `dcp::File`/`Boost.Filesystem` consistent with neighbouring code.
 - [ ] **Step 4: Run** same command. Expected: PASS.
@@ -173,11 +173,11 @@
 
 **Interfaces:**
 - Consumes: `AtmosMXFContent::path(0)`, audio-only `FFmpegContent` (`video == nullptr`, `path(0)`), `Player(film, playlist, tolerant)`.
-- Produces: `atmos/<original name>` and `audio/<original name>` byte-identical to the sources; `sources.txt` listing each original with position, trim and reel; the rendered-WAV path from Task 5 uses a playlist that excludes these contents.
+- Produces: `atmos/<original name>` byte-identical to the source; `audio/<source stem>_ch<NN>.wav` mono per channel with exact samples at the source sample rate and bit depth (via `WAVWriter::write_int32`); `sources.txt` listing each original with position, trim and reel; the rendered-WAV path from Task 5 uses a playlist that excludes these contents.
 
-- [ ] **Step 1: Write failing tests**: `dcdm_atmos_copy_test` (Atmos MXF from `test/data`: `atmos/<name>` byte-identical; multi-reel film: still one copy at root, untouched); `dcdm_pcm_original_copy_test` (standalone WAV: `audio/<name>` byte-identical); `dcdm_embedded_audio_render_test` (ProRes MOV with audio plus a standalone WAV: WAV copied, per-channel WAVs hold only the MOV's audio); `dcdm_original_name_clash_test` (two sources, same file name: throws before any file is written); `dcdm_sources_note_test` (`sources.txt` lists each original); `dcdm_no_originals_test` (no `atmos/`, `audio/` or `sources.txt`).
+- [ ] **Step 1: Write failing tests**: `dcdm_atmos_copy_test` (Atmos MXF from `test/data`: `atmos/<name>` byte-identical; multi-reel film: still one copy at root, untouched); `dcdm_pcm_split_exact_test` (standalone 16-bit stereo WAV: `audio/<stem>_ch01.wav` and `_ch02.wav`, each 16-bit mono, samples equal to the source's channel, same sample rate); `dcdm_pcm_multichannel_split_test` (6-channel WAV gives 6 files); `dcdm_embedded_audio_render_test` (ProRes MOV with audio plus a standalone WAV: WAV split into `audio/`, rendered per-channel WAVs hold only the MOV's audio); `dcdm_original_name_clash_test` (two sources, same file name: throws before any file is written); `dcdm_sources_note_test` (`sources.txt` lists each original); `dcdm_no_originals_test` (no `atmos/`, `audio/` or `sources.txt`).
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_atmos_copy_test,dcdm_pcm_*,dcdm_embedded_*,dcdm_original_*,dcdm_sources_*,dcdm_no_originals_test`. Expected: FAIL.
-- [ ] **Step 3: Implement** validation (name clashes) before anything is written, then the copies with `boost::filesystem::copy_file`, then the note. Build the Task 5 `Player` from a playlist of the video-bearing contents only.
+- [ ] **Step 3: Implement** validation (name clashes) before anything is written, then the Atmos copies with `boost::filesystem::copy_file`, the PCM splitting through an FFmpeg decode to 32-bit integers, then the note. Build the Task 5 `Player` from a playlist of the video-bearing contents only.
 - [ ] **Step 4: Run** same command. Expected: PASS.
 - [ ] **Step 5: Commit** `git commit -m "Keep original Atmos and PCM sources untouched in DCDM export"`
 
