@@ -44,6 +44,29 @@ The user chose A and asked for GUI plus CLI.
 - Audio: one WAV per channel, named by channel, at the film's audio rate.
 - 3D: export both eyes. User decision. Layout is my call: `left/` and `right/` subdirectories, each with its own DPX sequence. Audio is written once, not per eye. 2D films write DPX files directly in the output directory.
 
+## Quality gate (user decision, thresholds are my calls)
+
+The export is only available when every video content in the film is high enough quality. One failing video content disables it. Audio-only and text content are ignored.
+
+A video content passes if it is one of:
+
+- Image sequence/still: TIFF, DPX or EXR, at 10 bits per component or more. JPEG and 8-bit PNG fail.
+- FFmpeg file: intraframe or lossless codec AND bit depth of 10 or more AND chroma 4:2:2 or better. Accepted codecs: ProRes 422 HQ, 4444, 4444 XQ (not Proxy, LT, 422); DNxHR HQX and 444 (not LB, SQ, HQ 8-bit); FFV1; v210; rawvideo. Everything else fails (H.264, HEVC, MPEG-2, XDCAM, plain ProRes 422).
+- DCP content: pass (already 12-bit XYZ JPEG2000), my call.
+
+Rationale: DCDM is a master; exporting 8-bit or heavily compressed sources into 12-bit XYZ would pretend quality that does not exist.
+
+Behaviour when the gate fails:
+
+- GUI: DCDM entry disabled, tooltip names the first failing content and why.
+- CLI: refuse with an error naming the content and reason, non-zero exit.
+
+Consequences:
+
+- Content metadata does not currently record codec, pixel format or bit depth. `FFmpegExaminer` and `ImageExaminer` must be extended to store them, and `FFmpegContent`/`ImageContent` must persist them in metadata.xml.
+- Existing films without the new fields are treated as not qualifying until the content is re-examined. This is my call; it avoids false passes.
+- The gate is a pure function of content properties, placed in lib so GUI and CLI share it.
+
 ## Left to the builder (flagged as my calls)
 
 - Exact DPX header field values (descriptor, transfer, colorimetric, packing/method bits). Validate against a reference DPX reader.
@@ -51,4 +74,5 @@ The user chose A and asked for GUI plus CLI.
 - File naming inside the layout above.
 - GUI: new dialog modelled on `export_video_file_dialog`, or a new format entry in it.
 - CLI flag names and docs.
-- Tests: unit test for the DPX writer header and pixel packing; an end-to-end test exporting a short film.
+- Whether to also require source resolution of at least the film container size (not decided; no resolution check in this pass).
+- Tests: gate unit tests for each accepted and rejected codec/format; unit test for the DPX writer header and pixel packing; an end-to-end test exporting a short film.
