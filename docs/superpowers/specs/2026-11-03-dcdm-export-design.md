@@ -7,7 +7,7 @@ Add an export that writes a Digital Cinema Distribution Master from a film: one 
 ## Goals
 
 - Export a film as a DPX frame sequence, CIE XYZ, 12 bits per component.
-- Export audio as one WAV file per channel.
+- Original Atmos and PCM source files are kept untouched (user decision, see below). Audio that has no standalone original file (embedded in a video file) is exported as one WAV file per channel.
 - Available in the GUI (export dialog) and the CLI (`encode_cli`).
 - Fits the existing `FilmEncoder` pattern, so progress, cancel and job handling work as for the other exports.
 
@@ -15,6 +15,7 @@ Add an export that writes a Digital Cinema Distribution Master from a film: one 
 
 - TIFF output.
 - Single multichannel WAV.
+- Cutting, re-wrapping, remixing or re-rendering Atmos or standalone PCM sources.
 - Editing or overwriting existing DCDMs.
 - DCP creation changes.
 
@@ -69,18 +70,25 @@ Consequences:
 
 ## Atmos and text (user decision: include them)
 
-- Dolby Atmos: written per reel through `Player::Atmos` (frames with time and `AtmosMetadata`) into a new `atmos.mxf`, using `AtmosMetadata::create` and `dcp::AtmosAsset::start_write` exactly as `ReelWriter::write(atmos, metadata)` does. This follows trim and position, and an Atmos content that spans several reels is cut at the reel boundaries (user decision). Not a byte copy of the source: frame payloads are preserved, the MXF is re-wrapped.
+- Original sources are left untouched (user decision, replaces the earlier per-reel Atmos cut and the all-audio WAV render).
+  - Dolby Atmos: every `AtmosMXFContent` source file is copied byte-identical to `atmos/` in the output root, original file name.
+  - Standalone PCM: every audio-only source file (an `FFmpegContent` with no video, e.g. a WAV) is copied byte-identical to `audio/` in the output root, original file name.
+  - Audio embedded in a video source (e.g. a ProRes MOV): rendered the normal way into standard PCM: one 24-bit mono WAV per channel (the earlier decision), from those contents only.
+  - My calls: originals are not split per reel and are not placed in `reel_NN/`; position, trim and gain are not applied to them, so their sync information is lost in the output; a short note about this is written next to them (see builder items). Name clashes between originals are an error.
 - Open subtitles and closed captions: written as separate files, not burnt into the DPX frames (my call; the user did not choose between this and burning). Format follows the film (Interop or SMPTE XML), with fonts. Files go in `subtitles/` (open) and `captions/` (closed). Nothing is written if the film has none.
 - Consequence: the DCDM encoder must not call `set_always_burn_open_subtitles()`.
 - `SubtitleFilmEncoder::text` currently drops everything but `TextType::OPEN_SUBTITLE`; closed captions need support there or in a shared helper.
 
 ## Reels (user decision: respect them)
 
-- The export follows `film->reels()`. One reel: flat layout as above. More than one reel: one subdirectory per reel, `reel_01/`, `reel_02/`, ..., each holding the full layout (DPX frames or `left/` and `right/`, audio WAVs, subtitles, captions). Frame numbering restarts at 0 in each reel; WAVs cover exactly the reel's period.
-- Atmos with several reels (user decision): each reel gets its own `atmos.mxf` in its `reel_NN/` folder, cut at the reel boundaries, including when one Atmos content spans several reels.
+- The export follows `film->reels()`. One reel: flat layout as above. More than one reel: one subdirectory per reel, `reel_01/`, `reel_02/`, ..., each holding the per-reel layout (DPX frames or `left/` and `right/`, rendered audio WAVs, subtitles, captions). Frame numbering restarts at 0 in each reel; WAVs cover exactly the reel's period.
+- Atmos and standalone PCM originals are not per reel (see above). Rendered WAVs for embedded audio, DPX, subtitles and captions are per reel.
 - Subtitles and captions are split per reel, like `SubtitleFilmEncoder`'s `split_reels`.
 
 ## Left to the builder (flagged as my calls)
+
+- How to render embedded audio only: a `Player` built with a playlist (`Player(film, playlist, tolerant)`) that contains just the video-bearing contents.
+- Format of the note about lost sync (`sources.txt` listing each original with its position, trim and reel).
 
 - Exact DPX header field values (descriptor, transfer, colorimetric, packing/method bits). Validate against a reference DPX reader.
 - WAV writer: reuse libsndfile if the repo already links it, else a minimal writer.

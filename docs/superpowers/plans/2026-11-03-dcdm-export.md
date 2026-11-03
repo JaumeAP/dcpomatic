@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Output video: DPX, CIE XYZ, 12 bits per component. No TIFF.
-- Output audio: one WAV per channel, never a multichannel WAV.
+- Output audio: for embedded audio, one WAV per channel, never a multichannel WAV. Standalone PCM and Atmos are untouched originals.
 - 3D: both eyes, `left/` and `right/` subdirectories; 2D writes DPX files directly in the output directory; audio written once.
 - Gate: every video content must pass; DCP content fails; audio-only and text content ignored.
 - Gate image formats: TIFF, DPX, EXR at 10 bits per component or more. JPEG and 8-bit PNG fail.
@@ -21,7 +21,8 @@
 - Films with no stored codec/pixel-format metadata do not qualify until re-examined.
 - GUI: DCDM menu item disabled with a tooltip/message naming the first failing content. CLI: error naming content and reason, non-zero exit.
 - Reels: one reel writes the flat layout; several reels write `reel_01/`, `reel_02/`, ... each with the full layout, frame numbering restarting at 0, WAVs covering exactly the reel period.
-- Atmos: write each reel's `atmos.mxf` from `Player::Atmos` frames (as `ReelWriter::write(atmos, metadata)` does), cut at reel boundaries, in that reel's folder (the output root for one reel). Respects trim and position.
+- Originals untouched: copy each `AtmosMXFContent` file byte-identical to `atmos/` and each audio-only `FFmpegContent` file (no video) byte-identical to `audio/`, in the output root, original names; no cutting, no per-reel placement, no position/trim/gain applied; write `sources.txt` noting each original's position, trim and reel; name clash is an error.
+- Embedded audio (audio inside a video source): rendered to one 24-bit mono WAV per channel from the video-bearing contents only.
 - Open subtitles and closed captions: separate XML files (film's Interop/SMPTE format) with fonts, in `subtitles/` and `captions/`; not burnt into DPX.
 - Existing exports must not change behaviour.
 - Never include model identifiers in commits or code.
@@ -33,7 +34,8 @@
 - Output directory already contains files: export errors out instead of silently overwriting.
 - Odd frame rate or film length not a whole number of frames: frame count and audio length stay consistent, audio WAV lengths equal across channels.
 - Multi-reel film: DPX counts per reel sum to the film length, every reel's WAVs have equal length, and no frame is dropped or duplicated at reel boundaries.
-- One Atmos content spanning two reels: each reel's `atmos.mxf` holds only its own frames and the frame counts add up to the source's frames in the film period; a trimmed Atmos writes only the used frames.
+- Film with a standalone WAV plus a ProRes MOV with embedded audio: the WAV is copied untouched to `audio/` and the rendered per-channel WAVs contain only the MOV's audio (no double mix).
+- Two originals with the same file name: export fails before any file is written.
 - Film with Atmos content that is trimmed or offset: export fails with a clear message instead of writing an out-of-sync MXF.
 - Film with closed captions only, or open subtitles only: only the matching folder is created.
 - Film with more audio channels than the WAV naming scheme expects (e.g. 16): all channels written, names unique and sortable.
@@ -163,21 +165,21 @@
 - [ ] **Step 3: Build and check**: `./waf build`. Expected: build succeeds. Launch `run/dcpomatic` against a qualifying project and a low-quality project; confirm enabled/disabled state and a successful export on the qualifying one (use the `run` skill).
 - [ ] **Step 4: Commit** `git commit -m "Add Export DCDM to the GUI"`
 
-### Task 8: Atmos track
+### Task 8: Original Atmos and PCM sources
 
 **Files:**
 - Modify: `src/lib/dcdm_film_encoder.h/.cc`
 - Test: `test/dcdm_film_encoder_test.cc`
 
 **Interfaces:**
-- Consumes: `Player::Atmos` signal `(std::shared_ptr<const dcp::AtmosFrame>, dcpomatic::DCPTime, AtmosMetadata)`, `film->reels()`, `AtmosMetadata::create(dcp::Fraction)`, `dcp::AtmosAsset::start_write`.
-- Produces: in each reel's output folder (output root for one reel), `atmos.mxf` containing only the Atmos frames whose time falls in that reel, written in order. No file for a reel with no Atmos frames.
+- Consumes: `AtmosMXFContent::path(0)`, audio-only `FFmpegContent` (`video == nullptr`, `path(0)`), `Player(film, playlist, tolerant)`.
+- Produces: `atmos/<original name>` and `audio/<original name>` byte-identical to the sources; `sources.txt` listing each original with position, trim and reel; the rendered-WAV path from Task 5 uses a playlist that excludes these contents.
 
-- [ ] **Step 1: Write failing tests**: `dcdm_atmos_single_reel_test` (film with an Atmos MXF from `test/data`; `atmos.mxf` exists, frame count equals the source's frame count in the film period); `dcdm_atmos_spanning_reels_test` (one Atmos across 2 reels: each `reel_NN/atmos.mxf` holds its own frames, counts sum to the total, no frame in both); `dcdm_atmos_trimmed_test` (trimmed Atmos: only used frames written); `dcdm_no_atmos_test` (no `atmos.mxf` anywhere).
-- [ ] **Step 2: Run** `./run/tests --run_test=dcdm_atmos_*`. Expected: FAIL.
-- [ ] **Step 3: Implement** a signal handler like `DCPFilmEncoder::atmos` (src/lib/dcp_film_encoder.cc:179) that picks the reel by time and writes through a per-reel asset writer, finalized when the reel ends. Frame rate is `film->video_frame_rate()`.
+- [ ] **Step 1: Write failing tests**: `dcdm_atmos_copy_test` (Atmos MXF from `test/data`: `atmos/<name>` byte-identical; multi-reel film: still one copy at root, untouched); `dcdm_pcm_original_copy_test` (standalone WAV: `audio/<name>` byte-identical); `dcdm_embedded_audio_render_test` (ProRes MOV with audio plus a standalone WAV: WAV copied, per-channel WAVs hold only the MOV's audio); `dcdm_original_name_clash_test` (two sources, same file name: throws before any file is written); `dcdm_sources_note_test` (`sources.txt` lists each original); `dcdm_no_originals_test` (no `atmos/`, `audio/` or `sources.txt`).
+- [ ] **Step 2: Run** `./run/tests --run_test=dcdm_atmos_copy_test,dcdm_pcm_*,dcdm_embedded_*,dcdm_original_*,dcdm_sources_*,dcdm_no_originals_test`. Expected: FAIL.
+- [ ] **Step 3: Implement** validation (name clashes) before anything is written, then the copies with `boost::filesystem::copy_file`, then the note. Build the Task 5 `Player` from a playlist of the video-bearing contents only.
 - [ ] **Step 4: Run** same command. Expected: PASS.
-- [ ] **Step 5: Commit** `git commit -m "Write per-reel Atmos in DCDM export"`
+- [ ] **Step 5: Commit** `git commit -m "Keep original Atmos and PCM sources untouched in DCDM export"`
 
 ### Task 9: Open subtitles and closed captions
 
@@ -199,5 +201,5 @@
 
 ## Self-review notes
 
-- Spec coverage: Atmos (T8), text (T9), DPX (T1), per-channel WAV (T2), metadata prerequisite for the gate (T3), gate incl. DCP-fails and legacy-fails (T4), encoder incl. 3D layout (T5), CLI (T6), GUI with disabled state and reason (T7).
+- Spec coverage: original Atmos and PCM (T8), text (T9), DPX (T1), per-channel WAV (T2), metadata prerequisite for the gate (T3), gate incl. DCP-fails and legacy-fails (T4), encoder incl. 3D layout (T5), CLI (T6), GUI with disabled state and reason (T7).
 - Open risk for the user: DPX has no XYZ colorimetric code; XYZ is a convention, not a header flag. The design said "XYZ colorimetric set in the header"; T1 step 3 handles this by documenting the choice.
