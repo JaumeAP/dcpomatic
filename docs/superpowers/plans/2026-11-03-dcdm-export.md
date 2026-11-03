@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Output video: DPX, CIE XYZ, 12 bits per component. No TIFF.
-- Output audio: always one mono WAV per channel, never a multichannel WAV. All WAVs are 24-bit. Standalone PCM is split per channel at the source sample rate (no resample/remix/gain); 16-bit sources are widened exactly (shift left 8), 32-bit int and float are rounded to 24 bits without dither. Embedded audio is rendered at 24-bit. Atmos is an untouched original.
+- Output audio: always one mono WAV per channel, never a multichannel WAV. All WAVs are 24-bit. All WAVs are at `film->audio_frame_rate()` (the final DCP's rate); standalone PCM at another rate is resampled (existing `Resampler`), no remix/gain; 16-bit sources are widened exactly (shift left 8), 32-bit int and float are rounded to 24 bits without dither. Embedded audio is rendered at 24-bit. Atmos is an untouched original.
 - 3D: both eyes, `left/` and `right/` subdirectories; 2D writes DPX files directly in the output directory; audio written once.
 - Gate: every video content must pass; DCP content fails; audio-only and text content ignored.
 - Gate image formats: TIFF, DPX, EXR at 10 bits per component or more. JPEG and 8-bit PNG fail.
@@ -38,6 +38,7 @@
 - Two sources with the same file name or stem: export fails before any file is written.
 - Film with Atmos content that is trimmed or offset: export fails with a clear message instead of writing an out-of-sync MXF.
 - Film with closed captions only, or open subtitles only: only the matching folder is created.
+- Source PCM at a rate other than the film's (44.1 kHz, 96 kHz into 48 kHz film): output rate is the film's and duration is preserved.
 - Film with more audio channels than the WAV naming scheme expects (e.g. 16): all channels written, names unique and sortable.
 
 ---
@@ -173,9 +174,9 @@
 
 **Interfaces:**
 - Consumes: `AtmosMXFContent::path(0)`, audio-only `FFmpegContent` (`video == nullptr`, `path(0)`), `Player(film, playlist, tolerant)`.
-- Produces: `atmos/<original name>` byte-identical to the source; `audio/<source stem>_ch<NN>.wav` mono per channel, 24-bit, at the source sample rate (via `WAVWriter::write_int`); `sources.txt` listing each original with position, trim and reel; the rendered-WAV path from Task 5 uses a playlist that excludes these contents.
+- Produces: `atmos/<original name>` byte-identical to the source; `audio/<source stem>_ch<NN>.wav` mono per channel, 24-bit, at `film->audio_frame_rate()`, resampled if the source rate differs (via `WAVWriter::write_int` and `Resampler`); `sources.txt` listing each original with position, trim and reel; the rendered-WAV path from Task 5 uses a playlist that excludes these contents.
 
-- [ ] **Step 1: Write failing tests**: `dcdm_atmos_copy_test` (Atmos MXF from `test/data`: `atmos/<name>` byte-identical; multi-reel film: still one copy at root, untouched); `dcdm_pcm_split_exact_test` (standalone 16-bit stereo WAV: `audio/<stem>_ch01.wav` and `_ch02.wav`, each 24-bit mono, samples equal to the source's channel shifted left by 8, same sample rate); `dcdm_pcm_32bit_to_24_test` (32-bit source writes 24-bit files); `dcdm_pcm_multichannel_split_test` (6-channel WAV gives 6 files); `dcdm_embedded_audio_render_test` (ProRes MOV with audio plus a standalone WAV: WAV split into `audio/`, rendered per-channel WAVs hold only the MOV's audio); `dcdm_original_name_clash_test` (two sources, same file name: throws before any file is written); `dcdm_sources_note_test` (`sources.txt` lists each original); `dcdm_no_originals_test` (no `atmos/`, `audio/` or `sources.txt`).
+- [ ] **Step 1: Write failing tests**: `dcdm_atmos_copy_test` (Atmos MXF from `test/data`: `atmos/<name>` byte-identical; multi-reel film: still one copy at root, untouched); `dcdm_pcm_split_exact_test` (standalone 16-bit stereo WAV: `audio/<stem>_ch01.wav` and `_ch02.wav`, each 24-bit mono, samples equal to the source's channel shifted left by 8, film rate equals source rate); `dcdm_pcm_resample_test` (44.1 kHz source in a 48 kHz film: output WAV header says 48000, duration matches the source within one sample); `dcdm_pcm_32bit_to_24_test` (32-bit source writes 24-bit files); `dcdm_pcm_multichannel_split_test` (6-channel WAV gives 6 files); `dcdm_embedded_audio_render_test` (ProRes MOV with audio plus a standalone WAV: WAV split into `audio/`, rendered per-channel WAVs hold only the MOV's audio); `dcdm_original_name_clash_test` (two sources, same file name: throws before any file is written); `dcdm_sources_note_test` (`sources.txt` lists each original); `dcdm_no_originals_test` (no `atmos/`, `audio/` or `sources.txt`).
 - [ ] **Step 2: Run** `./run/tests --run_test=dcdm_atmos_copy_test,dcdm_pcm_*,dcdm_embedded_*,dcdm_original_*,dcdm_sources_*,dcdm_no_originals_test`. Expected: FAIL.
 - [ ] **Step 3: Implement** validation (name clashes) before anything is written, then the Atmos copies with `boost::filesystem::copy_file`, the PCM splitting through an FFmpeg decode to 32-bit integers (float sources converted first), then the note. Build the Task 5 `Player` from a playlist of the video-bearing contents only.
 - [ ] **Step 4: Run** same command. Expected: PASS.

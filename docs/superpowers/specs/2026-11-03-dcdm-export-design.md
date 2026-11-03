@@ -15,7 +15,7 @@ Add an export that writes a Digital Cinema Distribution Master from a film: one 
 
 - TIFF output.
 - Single multichannel WAV.
-- Cutting, re-wrapping, remixing, resampling or applying gain to Atmos or standalone PCM sources.
+- Cutting, re-wrapping, remixing or applying gain to Atmos or standalone PCM sources. (Resampling is done only when a PCM source rate differs from the film's audio frame rate.)
 - Editing or overwriting existing DCDMs.
 - DCP creation changes.
 
@@ -72,8 +72,8 @@ Consequences:
 
 - Original sources are left untouched (user decision, replaces the earlier per-reel Atmos cut and the all-audio WAV render).
   - Dolby Atmos: every `AtmosMXFContent` source file is copied byte-identical to `atmos/` in the output root, original file name.
-  - Standalone PCM (user decision: PCMs are always delivered split per channel): every audio-only source file (an `FFmpegContent` with no video, e.g. a WAV) is split into one mono WAV per channel in `audio/`, named `<source stem>_ch<NN>.wav`. All WAVs are 24-bit (user decision: audio is converted to 24 bits whenever the source is not). 16-bit sources are widened exactly (sample value shifted left by 8, no loss); 32-bit integer and float sources are rounded to 24 bits, no dither (my call). Same sample rate as the source, no resampling, remix or gain.
-  - Audio embedded in a video source (e.g. a ProRes MOV): rendered the normal way into standard PCM: one 24-bit mono WAV per channel, from those contents only.
+  - Standalone PCM (user decision: PCMs are always delivered split per channel): every audio-only source file (an `FFmpegContent` with no video, e.g. a WAV) is split into one mono WAV per channel in `audio/`, named `<source stem>_ch<NN>.wav`. All WAVs are 24-bit (user decision: audio is converted to 24 bits whenever the source is not). 16-bit sources are widened exactly (sample value shifted left by 8, no loss); 32-bit integer and float sources are rounded to 24 bits, no dither (my call). Sample rate (user decision): always the film's audio frame rate, i.e. the rate the final DCP will have (`film->audio_frame_rate()`); sources at another rate are resampled. No remix or gain.
+  - Audio embedded in a video source (e.g. a ProRes MOV): rendered the normal way into standard PCM: one 24-bit mono WAV per channel at the film's audio frame rate, from those contents only.
   - My calls: originals are not split per reel and are not placed in `reel_NN/`; position, trim and gain are not applied to them, so their sync information is lost (for PCM as well as Atmos) in the output; a short note about this is written next to them (see builder items). Name clashes between Atmos originals, or between PCM stems, are an error.
 - Open subtitles and closed captions: written as separate files, not burnt into the DPX frames (my call; the user did not choose between this and burning). Format follows the film (Interop or SMPTE XML), with fonts. Files go in `subtitles/` (open) and `captions/` (closed). Nothing is written if the film has none.
 - Consequence: the DCDM encoder must not call `set_always_burn_open_subtitles()`.
