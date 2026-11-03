@@ -19,6 +19,8 @@
 */
 
 
+#include "lib/audio_content.h"
+#include "lib/audio_processor.h"
 #include "lib/content.h"
 #include "lib/content_factory.h"
 #include "lib/dcdm_film_encoder.h"
@@ -29,8 +31,21 @@
 #include "lib/transcode_job.h"
 #include "lib/video_content.h"
 #include "test.h"
+#include <dcp/atmos_asset.h>
+#include <dcp/atmos_asset_reader.h>
+#include <dcp/atmos_frame.h>
+#include <dcp/cpl.h>
+#include <dcp/dcp.h>
 #include <dcp/filesystem.h>
+#include <dcp/reel.h>
+#include <dcp/reel_atmos_asset.h>
+#include <dcp/reel_sound_asset.h>
+#include <dcp/sound_asset.h>
+#include <dcp/sound_asset_reader.h>
+#include <dcp/sound_frame.h>
+#include <fmt/format.h>
 #include <boost/test/unit_test.hpp>
+#include <algorithm>
 #include <fstream>
 
 
@@ -213,10 +228,277 @@ BOOST_AUTO_TEST_CASE(dcdm_encoder_nonempty_directory_test)
 		f << "x";
 	}
 
+	/* Refused when the encoder is made, before the player starts writing anything */
 	auto job = make_shared<TranscodeJob>(film, TranscodeJob::ChangedBehaviour::IGNORE);
-	auto encoder = make_shared<DCDMFilmEncoder>(film, job, out);
-	BOOST_CHECK_THROW(encoder->go(), std::runtime_error);
+	BOOST_CHECK_THROW(make_shared<DCDMFilmEncoder>(film, job, out), std::runtime_error);
 	BOOST_CHECK_EQUAL(count_files(out, ".dpx"), 0);
 
+	dcp::filesystem::remove_all(out);
+}
+
+
+/* --- Audio exactly as in the DCP, and Atmos --- */
+
+
+static
+vector<int32_t>
+read_wav24(boost::filesystem::path path)
+{
+	std::ifstream in(path.string(), std::ios::binary);
+	vector<uint8_t> d((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+	vector<int32_t> samples;
+	for (size_t i = 44; i + 2 < d.size(); i += 3) {
+		int32_t v = int32_t(d[i]) | (int32_t(d[i + 1]) << 8) | (int32_t(d[i + 2]) << 16);
+		if (v & 0x800000) {
+			v -= 0x1000000;
+		}
+		samples.push_back(v);
+	}
+	return samples;
+}
+
+
+static
+shared_ptr<dcp::CPL>
+read_dcp(shared_ptr<Film> film)
+{
+	auto dcp = make_shared<dcp::DCP>(film->dir(film->dcp_name()));
+	dcp->read();
+	BOOST_REQUIRE_EQUAL(dcp->cpls().size(), 1U);
+	return dcp->cpls()[0];
+}
+
+
+/** @return samples of one channel of one reel of a DCP's sound */
+static
+vector<int32_t>
+dcp_sound(shared_ptr<dcp::CPL> cpl, int reel, int channel)
+{
+	auto sound = cpl->reels()[reel]->main_sound()->asset();
+	auto reader = sound->start_read();
+	vector<int32_t> samples;
+	for (int64_t f = 0; f < sound->intrinsic_duration(); ++f) {
+		auto frame = reader->get_frame(f);
+		for (int s = 0; s < frame->samples(); ++s) {
+			samples.push_back(frame->get(channel, s));
+		}
+	}
+	return samples;
+}
+
+
+static
+void
+check_audio_matches_dcp(shared_ptr<Film> film, boost::filesystem::path out)
+{
+	auto cpl = read_dcp(film);
+	int const reels = static_cast<int>(cpl->reels().size());
+	for (int r = 0; r < reels; ++r) {
+		auto const dir = reels == 1 ? out : out / fmt::format("reel_{:02d}", r + 1);
+		int c = 0;
+		for (auto const& label: five_one) {
+			auto const dcdm = read_wav24(dir / "audio" / (label + ".wav"));
+			auto const dcp = dcp_sound(cpl, r, c);
+			BOOST_REQUIRE_EQUAL(dcdm.size(), dcp.size());
+			bool same = true;
+			for (size_t i = 0; i < dcp.size(); ++i) {
+				if (dcdm[i] != dcp[i]) {
+					BOOST_CHECK_MESSAGE(false, label << " sample " << i << ": " << dcdm[i] << " != " << dcp[i]);
+					same = false;
+					break;
+				}
+			}
+			BOOST_CHECK_MESSAGE(same, "reel " << r << " channel " << label);
+			++c;
+		}
+	}
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_audio_gain_trim_test)
+{
+	auto film = new_test_film("dcdm_audio_gain_trim_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_audio_gain_trim_test_src", 24));
+	auto sound = content_factory("test/data/L.wav")[0];
+	film->examine_and_add_content({sound});
+	BOOST_REQUIRE(!wait_for_jobs());
+	sound->set_position(film, dcpomatic::DCPTime());
+	sound->audio->set_gain(-6);
+	sound->audio->set_delay(50);
+	sound->set_trim_start(film, dcpomatic::ContentTime::from_seconds(0.1));
+
+	auto const out = boost::filesystem::path("build/test/dcdm_audio_gain_trim_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
+
+	/* The source is not silent, so this would catch a lost signal too (a mono file goes to centre) */
+	bool any_signal = false;
+	for (auto const& label: five_one) {
+		auto const samples = read_wav24(out / "audio" / (label + ".wav"));
+		any_signal = any_signal || std::any_of(samples.begin(), samples.end(), [](int32_t s) { return s != 0; });
+	}
+	BOOST_CHECK(any_signal);
+	check_audio_matches_dcp(film, out);
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_audio_processor_test)
+{
+	auto film = new_test_film("dcdm_audio_processor_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_audio_processor_test_src", 24));
+	auto left = content_factory("test/data/L.wav")[0];
+	auto right = content_factory("test/data/R.wav")[0];
+	film->examine_and_add_content({left, right});
+	BOOST_REQUIRE(!wait_for_jobs());
+	left->set_position(film, dcpomatic::DCPTime());
+	right->set_position(film, dcpomatic::DCPTime());
+	film->set_audio_processor(AudioProcessor::from_id("mid-side-decoder"));
+
+	auto const out = boost::filesystem::path("build/test/dcdm_audio_processor_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
+
+	check_audio_matches_dcp(film, out);
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+/** @return the frames of an Atmos asset */
+static
+vector<vector<uint8_t>>
+atmos_frames(shared_ptr<dcp::AtmosAsset> asset)
+{
+	vector<vector<uint8_t>> frames;
+	auto reader = asset->start_read();
+	for (int64_t f = 0; f < asset->intrinsic_duration(); ++f) {
+		auto frame = reader->get_frame(f);
+		frames.push_back(vector<uint8_t>(frame->data(), frame->data() + frame->size()));
+	}
+	return frames;
+}
+
+
+static
+void
+check_atmos_matches_dcp(shared_ptr<Film> film, boost::filesystem::path out)
+{
+	auto cpl = read_dcp(film);
+	int const reels = static_cast<int>(cpl->reels().size());
+	for (int r = 0; r < reels; ++r) {
+		auto const path = (reels == 1 ? out : out / fmt::format("reel_{:02d}", r + 1)) / "atmos.mxf";
+		auto dcp_atmos = cpl->reels()[r]->atmos();
+		if (!dcp_atmos) {
+			BOOST_CHECK_MESSAGE(!dcp::filesystem::exists(path), path.string());
+			continue;
+		}
+		BOOST_REQUIRE_MESSAGE(dcp::filesystem::exists(path), path.string());
+		auto const dcdm = atmos_frames(make_shared<dcp::AtmosAsset>(path));
+		auto const dcp = atmos_frames(dcp_atmos->asset());
+		BOOST_CHECK_EQUAL(dcdm.size(), dcp.size());
+		BOOST_CHECK_MESSAGE(dcdm == dcp, "Atmos frames differ in reel " << r);
+	}
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_atmos_single_reel_test)
+{
+	auto film = new_test_film("dcdm_atmos_single_reel_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_atmos_single_reel_test_src", 24));
+	auto atmos = content_factory("test/data/atmos_0.mxf")[0];
+	film->examine_and_add_content({atmos});
+	BOOST_REQUIRE(!wait_for_jobs());
+	atmos->set_position(film, dcpomatic::DCPTime());
+
+	auto const out = boost::filesystem::path("build/test/dcdm_atmos_single_reel_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
+
+	BOOST_CHECK(dcp::filesystem::exists(out / "atmos.mxf"));
+	check_atmos_matches_dcp(film, out);
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_atmos_spanning_reels_test)
+{
+	auto film = new_test_film("dcdm_atmos_spanning_reels_test");
+	auto a = dpx_content(film, make_dpx_sequence("build/test/dcdm_atmos_spanning_reels_test_src_a", 24));
+	auto b = dpx_content(film, make_dpx_sequence("build/test/dcdm_atmos_spanning_reels_test_src_b", 24));
+	a->set_position(film, dcpomatic::DCPTime());
+	b->set_position(film, dcpomatic::DCPTime::from_frames(24, 24));
+	auto atmos = content_factory("test/data/atmos_0.mxf")[0];
+	film->examine_and_add_content({atmos});
+	BOOST_REQUIRE(!wait_for_jobs());
+	/* Start the Atmos half way through reel 1 so that it runs into reel 2 */
+	atmos->set_position(film, dcpomatic::DCPTime::from_frames(12, 24));
+	BOOST_REQUIRE(atmos->end(film) > dcpomatic::DCPTime::from_frames(24, 24));
+	/* ...but not past the end of the picture */
+	auto const end = dcpomatic::DCPTime::from_frames(48, 24);
+	if (atmos->end(film) > end) {
+		atmos->set_trim_end(dcpomatic::ContentTime::from_frames((atmos->end(film) - end).frames_round(24), 24));
+	}
+	BOOST_REQUIRE(atmos->end(film) <= end);
+	film->set_reel_type(ReelType::BY_VIDEO_CONTENT);
+	BOOST_REQUIRE_EQUAL(film->reels().size(), 2U);
+
+	auto const out = boost::filesystem::path("build/test/dcdm_atmos_spanning_reels_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	/* An Atmos asset that covers only part of a reel is short and differs in length from the
+	 * picture; that is how DCP-o-matic makes such a DCP, and it is what we compare against.
+	 */
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA,
+			dcp::VerificationNote::Code::INVALID_DURATION,
+			dcp::VerificationNote::Code::INVALID_INTRINSIC_DURATION,
+			dcp::VerificationNote::Code::MISMATCHED_ASSET_DURATION
+		});
+
+	BOOST_CHECK(dcp::filesystem::exists(out / "reel_01" / "atmos.mxf"));
+	BOOST_CHECK(dcp::filesystem::exists(out / "reel_02" / "atmos.mxf"));
+	check_atmos_matches_dcp(film, out);
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_atmos_trimmed_test)
+{
+	auto film = new_test_film("dcdm_atmos_trimmed_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_atmos_trimmed_test_src", 24));
+	auto atmos = content_factory("test/data/atmos_0.mxf")[0];
+	film->examine_and_add_content({atmos});
+	BOOST_REQUIRE(!wait_for_jobs());
+	atmos->set_position(film, dcpomatic::DCPTime());
+	atmos->set_trim_start(film, dcpomatic::ContentTime::from_frames(5, 24));
+
+	auto const out = boost::filesystem::path("build/test/dcdm_atmos_trimmed_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
+
+	check_atmos_matches_dcp(film, out);
+
+	dcp::filesystem::remove_all(out);
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_no_atmos_test)
+{
+	auto film = new_test_film("dcdm_no_atmos_test");
+	dpx_content(film, make_dpx_sequence("build/test/dcdm_no_atmos_test_src", 2));
+	auto const out = boost::filesystem::path("build/test/dcdm_no_atmos_test_out");
+	dcp::filesystem::remove_all(out);
+	run_export(film, out);
+	BOOST_CHECK(!dcp::filesystem::exists(out / "atmos.mxf"));
 	dcp::filesystem::remove_all(out);
 }

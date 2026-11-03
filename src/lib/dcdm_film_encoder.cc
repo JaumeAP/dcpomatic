@@ -31,6 +31,8 @@
 #include "job.h"
 #include "player_video.h"
 #include "wav_writer.h"
+#include <dcp/atmos_asset.h>
+#include <dcp/atmos_asset_writer.h>
 #include <dcp/filesystem.h>
 #include <dcp/openjpeg_image.h>
 #include <fmt/format.h>
@@ -50,6 +52,9 @@ using std::unique_ptr;
 using std::vector;
 using std::weak_ptr;
 using namespace dcpomatic;
+#if BOOST_VERSION >= 106100
+using namespace boost::placeholders;
+#endif
 
 
 static
@@ -61,6 +66,17 @@ check_film(std::shared_ptr<const Film> film)
 		throw std::runtime_error(quality.reason);
 	}
 	return film;
+}
+
+
+static
+boost::filesystem::path
+check_output(boost::filesystem::path output)
+{
+	if (dcp::filesystem::exists(output) && !dcp::filesystem::is_empty(output)) {
+		throw std::runtime_error(fmt::format(_("The DCDM output folder {} is not empty."), output.string()));
+	}
+	return output;
 }
 
 
@@ -109,10 +125,13 @@ to_xyz12(shared_ptr<const dcp::OpenJPEGImage> xyz)
 
 DCDMFilmEncoder::DCDMFilmEncoder(shared_ptr<const Film> film, weak_ptr<Job> job, boost::filesystem::path output)
 	: FilmEncoder(check_film(film), job)
-	, _output(output)
+	, _output(check_output(output))
 	, _layout(layout_of(film))
 	, _reels(static_cast<int>(film->reels().size()))
 	, _history(200)
+	, _reel_periods(film->reels())
+	/* Connect before the butler starts the player, so that no Atmos is missed */
+	, _atmos_connection(_player.Atmos.connect(boost::bind(&DCDMFilmEncoder::atmos, this, _1, _2, _3)))
 	, _butler(
 		_film,
 		_player,
@@ -131,6 +150,44 @@ DCDMFilmEncoder::DCDMFilmEncoder(shared_ptr<const Film> film, weak_ptr<Job> job,
 }
 
 
+void
+DCDMFilmEncoder::atmos(shared_ptr<const dcp::AtmosFrame> frame, DCPTime time, AtmosMetadata metadata)
+{
+	boost::mutex::scoped_lock lm(_atmos_mutex);
+
+	int reel = 0;
+	while (reel + 1 < static_cast<int>(_reel_periods.size()) && _reel_periods[reel].to <= time) {
+		++reel;
+	}
+
+	if (reel != _atmos_reel) {
+		if (_atmos_writer) {
+			_atmos_writer->finalize();
+			_atmos_writer.reset();
+		}
+		auto const dir = reel_directory(reel);
+		dcp::filesystem::create_directories(dir);
+		_atmos_asset = metadata.create(dcp::Fraction(_film->video_frame_rate(), 1));
+		_atmos_writer = _atmos_asset->start_write(dir / "atmos.mxf");
+		_atmos_reel = reel;
+	}
+
+	/* We get one video frame's worth of Atmos at a time, as the DCP writer does */
+	_atmos_writer->write(frame);
+}
+
+
+void
+DCDMFilmEncoder::finish_atmos()
+{
+	boost::mutex::scoped_lock lm(_atmos_mutex);
+	if (_atmos_writer) {
+		_atmos_writer->finalize();
+		_atmos_writer.reset();
+	}
+}
+
+
 boost::filesystem::path
 DCDMFilmEncoder::reel_directory(int reel) const
 {
@@ -144,10 +201,6 @@ DCDMFilmEncoder::reel_directory(int reel) const
 void
 DCDMFilmEncoder::go()
 {
-	if (dcp::filesystem::exists(_output) && !dcp::filesystem::is_empty(_output)) {
-		throw std::runtime_error(fmt::format(_("The DCDM output folder {} is not empty."), _output.string()));
-	}
-
 	if (auto job = _job.lock()) {
 		job->sub(_("Encoding"));
 	}
@@ -245,6 +298,10 @@ DCDMFilmEncoder::go()
 	for (auto& wav: wavs) {
 		wav->close();
 	}
+
+	/* Stop the player sending more Atmos and close the last asset */
+	_atmos_connection.disconnect();
+	finish_atmos();
 }
 
 

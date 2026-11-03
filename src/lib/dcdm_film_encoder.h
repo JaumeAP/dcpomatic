@@ -23,13 +23,23 @@
 #define DCPOMATIC_DCDM_FILM_ENCODER_H
 
 
+#include "atmos_metadata.h"
 #include "audio_mapping.h"
 #include "butler.h"
 #include "dcdm_audio_layout.h"
 #include "event_history.h"
 #include "film_encoder.h"
 #include <boost/filesystem.hpp>
+#include <boost/signals2.hpp>
 #include <boost/thread/mutex.hpp>
+
+#include <dcp/atmos_frame.h>
+
+
+namespace dcp {
+	class AtmosAsset;
+	class AtmosAssetWriter;
+}
 
 
 /** @class DCDMFilmEncoder
@@ -40,17 +50,17 @@
  *  audio processor applied), so that importing the result gives the same DCP.
  *
  *  Layout, per reel (in reel_NN/ when the film has more than one reel):
- *  frame_NNNNNNNN.dpx (or left/ and right/ for 3D) and audio/<label>.wav.
+ *  frame_NNNNNNNN.dpx (or left/ and right/ for 3D), audio/<label>.wav and,
+ *  if the film has Atmos, atmos.mxf with the Atmos frames that fall in the reel.
  */
 class DCDMFilmEncoder : public FilmEncoder
 {
 public:
 	/** @throw std::runtime_error if the film's sources are not good enough for a DCDM,
-	 *  or it uses audio channels a DCDM cannot carry.
+	 *  it uses audio channels a DCDM cannot carry, or the output folder exists and is not empty.
 	 */
 	DCDMFilmEncoder(std::shared_ptr<const Film> film, std::weak_ptr<Job> job, boost::filesystem::path output);
 
-	/** @throw std::runtime_error if the output directory exists and is not empty */
 	void go() override;
 
 	boost::optional<float> current_rate() const override;
@@ -61,6 +71,8 @@ public:
 
 private:
 	boost::filesystem::path reel_directory(int reel) const;
+	void atmos(std::shared_ptr<const dcp::AtmosFrame> frame, dcpomatic::DCPTime time, AtmosMetadata metadata);
+	void finish_atmos();
 
 	boost::filesystem::path _output;
 	DCDMLayout _layout;
@@ -69,6 +81,14 @@ private:
 	mutable boost::mutex _mutex;
 	dcpomatic::DCPTime _last_time;
 	EventHistory _history;
+
+	/** Protects the Atmos state, which is written from the player's thread */
+	boost::mutex _atmos_mutex;
+	std::vector<dcpomatic::DCPTimePeriod> _reel_periods;
+	int _atmos_reel = -1;
+	std::shared_ptr<dcp::AtmosAsset> _atmos_asset;
+	std::shared_ptr<dcp::AtmosAssetWriter> _atmos_writer;
+	boost::signals2::scoped_connection _atmos_connection;
 
 	Butler _butler;
 };
