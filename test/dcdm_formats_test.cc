@@ -136,7 +136,8 @@ check_rate(int rate, bool three_d)
 	if (three_d) {
 		content->video->set_frame_type(VideoFrameType::THREE_D_ALTERNATE);
 		film->set_three_d(true);
-		content->set_video_frame_rate(film, rate * 2);
+		/* For alternate-frame 3D the content rate is in left/right pairs per second */
+		content->set_video_frame_rate(film, rate);
 	} else {
 		content->set_video_frame_rate(film, rate);
 	}
@@ -159,10 +160,13 @@ check_rate(int rate, bool three_d)
 		for (int f: { 0, rate / 2, rate - 1 }) {
 			auto const image = decode(eyes[e] / fmt::format("{:08d}.pdc.j2c", f));
 			int const source = three_d ? f * 2 + static_cast<int>(e) : f;
-			/* The small source is scaled into the middle of the container, so look at the centre pixel */
+			/* The small source is scaled into the middle of the container, so look at the centre pixel.
+			 * Scaling may move a value by one code value (as it does for the DCP); exactness of
+			 * unscaled pictures is checked by dcdm_formats_xyz_passthrough_test.
+			 */
 			auto const size = image->size();
 			auto const centre = (size.height / 2) * size.width + size.width / 2;
-			BOOST_CHECK_MESSAGE(image->data(0)[centre] == 100 + source * 7, name << " frame " << f << " eye " << e << ": " << image->data(0)[centre] << " != " << 100 + source * 7);
+			BOOST_CHECK_MESSAGE(std::abs(image->data(0)[centre] - (100 + source * 7)) <= 1, name << " frame " << f << " eye " << e << ": " << image->data(0)[centre] << " != " << 100 + source * 7);
 		}
 	}
 
@@ -200,6 +204,16 @@ BOOST_AUTO_TEST_CASE(dcdm_formats_3d_test)
 	for (auto rate: { 24, 25, 30, 48, 50, 60 }) {
 		check_rate(rate, true);
 	}
+}
+
+
+BOOST_AUTO_TEST_CASE(dcdm_formats_hfr_3d_test)
+{
+	Config::instance()->set_allow_any_dcp_frame_rate(true);
+	for (auto rate: { 96, 100, 120 }) {
+		check_rate(rate, true);
+	}
+	Config::instance()->set_allow_any_dcp_frame_rate(false);
 }
 
 
