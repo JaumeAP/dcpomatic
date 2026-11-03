@@ -398,6 +398,8 @@ DCDMFilmEncoder::do_go()
 				continue;
 			}
 
+			/* The butler's frame must be the one for this loop time, or frames would be renamed over each other */
+			DCPOMATIC_ASSERT(video.second.frames_round(video_frame_rate) == time.frames_round(video_frame_rate));
 			auto const index = (video.second - reel.from).frames_round(video_frame_rate);
 			auto path = picture_directory(dir);
 			if (three_d) {

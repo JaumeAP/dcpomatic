@@ -25,6 +25,7 @@
 #include "ffmpeg_content.h"
 #include "film.h"
 #include "image_content.h"
+#include "i18n.h"
 #include "video_content.h"
 #include <dcp/warnings.h>
 LIBDCP_DISABLE_WARNINGS
@@ -131,28 +132,28 @@ dcdm_source_quality(shared_ptr<const Film> film)
 			auto const profile = ffmpeg->video_profile();
 			auto const pix_fmt = ffmpeg->video_pixel_format();
 			if (!codec || !profile || !pix_fmt) {
-				return fail(content, "codec and pixel format are not recorded; examine this content again");
+				return fail(content, _("codec and pixel format are not recorded; examine this content again"));
 			}
 			if (!dcdm_ffmpeg_ok(*codec, *profile, *pix_fmt)) {
-				return fail(content, "video quality is too low for a DCDM (needs an intraframe or lossless codec such as ProRes HQ/4444/4444 XQ, DNxHR HQX/444, FFV1, v210 or uncompressed, at 10 bits or more and 4:2:2 or better)");
+				return fail(content, _("video quality is too low for a DCDM (needs an intraframe or lossless codec such as ProRes HQ/4444/4444 XQ, DNxHR HQX/444, FFV1, v210 or uncompressed, at 10 bits or more and 4:2:2 or better)"));
 			}
 		} else if (auto image = std::dynamic_pointer_cast<const ImageContent>(content)) {
 			auto const pix_fmt = image->pixel_format();
 			if (!pix_fmt) {
-				return fail(content, "pixel format is not recorded; examine this content again");
+				return fail(content, _("pixel format is not recorded; examine this content again"));
 			}
 			if (!dcdm_image_ok(content->path(0), *pix_fmt)) {
-				return fail(content, "images must be TIFF, DPX or EXR at 10 bits per component or more");
+				return fail(content, _("images must be TIFF, DPX or EXR at 10 bits per component or more"));
 			}
 		} else if (std::dynamic_pointer_cast<const DCPContent>(content)) {
-			return fail(content, "DCP content is not accepted: re-encoding a DCDM to a DCP would add a JPEG 2000 generation");
+			return fail(content, _("DCP content is not accepted: re-encoding a DCDM to a DCP would add a JPEG 2000 generation"));
 		} else {
-			return fail(content, "this type of video content is not supported for a DCDM");
+			return fail(content, _("this type of video content is not supported for a DCDM"));
 		}
 	}
 
 	if (!any_video) {
-		return { false, "the film has no video content" };
+		return { false, _("the film has no video content") };
 	}
 
 	return { true, string() };
