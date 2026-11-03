@@ -1,5 +1,14 @@
 # DCDM export: design
 
+## Governing principle: round trip (user decision)
+
+The DCDM must be a faithful master: importing it back into DCP-o-matic (DPX sequence, WAVs, Atmos, subtitles, same reels) and making a DCP gives the same DCP as the original film. This drives every choice above: picture, audio and Atmos are written exactly as the final DCP would contain them, with nothing applied twice.
+
+- Re-import must not double-process: the re-imported film uses no gain, trim, delay, audio processor or colour correction of its own, and one audio set only (the 7.1 set if present, otherwise the 5.1 set).
+- Open risk (not decided, builder must verify): DPX files carry no XYZ flag, and DCP-o-matic normally converts imported RGB to XYZ. The re-import path needs a way to treat the DPX as already XYZ (no conversion). If that cannot be done, the round-trip test falls back to a stated tolerance and the user must be told.
+- JPEG 2000 encoding is lossy: "same DCP" means same decoded picture within what the encoder gives for identical input, not necessarily identical bytes.
+- Acceptance test: see Task 10 in the plan.
+
 ## Intent
 
 Add an export that writes a Digital Cinema Distribution Master from a film: one 12-bit XYZ DPX file per frame, plus audio as one WAV file per channel. Users need an uncompressed, colour-space-correct master that other cinema tools can ingest.
@@ -7,7 +16,7 @@ Add an export that writes a Digital Cinema Distribution Master from a film: one 
 ## Goals
 
 - Export a film as a DPX frame sequence, CIE XYZ, 12 bits per component.
-- Original Atmos and PCM source files are kept untouched (user decision, see below). Audio that has no standalone original file (embedded in a video file) is exported as one WAV file per channel.
+- Audio exactly as the final DCP will sound (user decision): all PCM is rendered through the `Player`, so gain, delay, trim, fades, channel mapping and the audio processor (decoding matrix) are applied. One mono 24-bit WAV per channel. Atmos is trimmed and aligned to the picture.
 - Available in the GUI (export dialog) and the CLI (`encode_cli`).
 - Fits the existing `FilmEncoder` pattern, so progress, cancel and job handling work as for the other exports.
 
@@ -15,7 +24,6 @@ Add an export that writes a Digital Cinema Distribution Master from a film: one 
 
 - TIFF output.
 - Single multichannel WAV.
-- Cutting, re-wrapping, remixing or applying gain to Atmos or standalone PCM sources. (Resampling is done only when a PCM source rate differs from the film's audio frame rate.)
 - Editing or overwriting existing DCDMs.
 - DCP creation changes.
 
@@ -70,11 +78,9 @@ Consequences:
 
 ## Atmos and text (user decision: include them)
 
-- Original sources are left untouched (user decision, replaces the earlier per-reel Atmos cut and the all-audio WAV render).
-  - Dolby Atmos: every `AtmosMXFContent` source file is copied byte-identical to `atmos/` in the output root, original file name.
-  - Standalone PCM (user decision: PCMs are always delivered split per channel): every audio-only source file (an `FFmpegContent` with no video, e.g. a WAV) is split into one mono WAV per channel in `audio/`, named `<source stem>_ch<NN>.wav`. All WAVs are 24-bit (user decision: audio is converted to 24 bits whenever the source is not). 16-bit sources are widened exactly (sample value shifted left by 8, no loss); 32-bit integer and float sources are rounded to 24 bits, no dither (my call). Sample rate (user decision): always the film's audio frame rate, i.e. the rate the final DCP will have (`film->audio_frame_rate()`); sources at another rate are resampled. No remix or gain.
-  - Audio embedded in a video source (e.g. a ProRes MOV): rendered the normal way into standard PCM: one 24-bit mono WAV per channel at the film's audio frame rate, from those contents only.
-  - My calls: originals are not split per reel and are not placed in `reel_NN/`; position, trim and gain are not applied to them, so their sync information is lost (for PCM as well as Atmos) in the output; a short note about this is written next to them (see builder items). Name clashes between Atmos originals, or between PCM stems, are an error.
+- Audio and Atmos follow the picture (user decision, replaces earlier "originals untouched"): trim, position, gain and delay are applied so the result is exactly what the final DCP will contain.
+  - PCM, standalone or embedded in a video file alike: rendered through the `Player` and the `Butler`. This applies gain, delay, trim, fades, the film's channel mapping and, when the film uses an audio processor (decoding matrix such as mid-side decoder or upmixer), the audio after that processor (user decision). Sample rate is `film->audio_frame_rate()`, resampled where needed (the `Player` already does this). 24-bit, one mono WAV per channel, per reel.
+  - Dolby Atmos: written per reel through `Player::Atmos` (frames with time and `AtmosMetadata`) into a new `atmos.mxf`, using `AtmosMetadata::create` and `dcp::AtmosAsset::start_write` as `ReelWriter::write(atmos, metadata)` does. Trim and position are applied, and an Atmos content spanning several reels is cut at the reel boundaries. The MXF is re-wrapped; frame payloads are preserved. In a reel with no Atmos frames no file is written.
 - Open subtitles and closed captions: written as separate files, not burnt into the DPX frames (my call; the user did not choose between this and burning). Format follows the film (Interop or SMPTE XML), with fonts. Files go in `subtitles/` (open) and `captions/` (closed). Nothing is written if the film has none.
 - Consequence: the DCDM encoder must not call `set_always_burn_open_subtitles()`.
 - `SubtitleFilmEncoder::text` currently drops everything but `TextType::OPEN_SUBTITLE`; closed captions need support there or in a shared helper.
@@ -82,21 +88,19 @@ Consequences:
 ## Audio layouts: 5.1 and 7.1 only (user decision)
 
 - Exported audio is only ever 5.1 or 7.1. If the programme is 7.1 (rear surround channels in use), both a 7.1 set and a 5.1 set are written; if it is 5.1 or smaller, only the 5.1 set.
-- Sets are directories of mono 24-bit WAVs: `audio_5.1/` and `audio_7.1/`, files named by channel label: 5.1 = L, R, C, LFE, Ls, Rs; 7.1 adds Lrs, Rrs (`dcp::Channel` BSL, BSR). Rendered audio sets live in each reel folder (output root for one reel). PCM source splits live in the output root, prefixed with the source stem: `<stem>_<label>.wav`.
+- Sets are directories of mono 24-bit WAVs: `audio_5.1/` and `audio_7.1/`, files named by channel label: 5.1 = L, R, C, LFE, Ls, Rs; 7.1 adds Lrs, Rrs (`dcp::Channel` BSL, BSR). Audio sets live in each reel folder (output root for one reel). 
 - 5.1 from 7.1 is a downmix: Ls' = Ls + g*Lrs, Rs' = Rs + g*Rrs with g = -3 dB (my call), other channels unchanged. Rear channels are folded into the side surrounds, never dropped.
 - My calls: a programme with fewer than six channels is padded with silent channels so the 5.1 set is always complete; a programme using more than 8 channels (or HI/VI/Lc/Rc) fails the export with a clear error naming the channels.
-- Applies to rendered embedded audio and to PCM source splits alike.
 
 ## Reels (user decision: respect them)
 
-- The export follows `film->reels()`. One reel: flat layout as above. More than one reel: one subdirectory per reel, `reel_01/`, `reel_02/`, ..., each holding the per-reel layout (DPX frames or `left/` and `right/`, rendered audio WAVs, subtitles, captions). Frame numbering restarts at 0 in each reel; WAVs cover exactly the reel's period.
-- Atmos and standalone PCM originals are not per reel (see above). Rendered WAVs for embedded audio, DPX, subtitles and captions are per reel.
+- The export follows `film->reels()`. One reel: flat layout as above. More than one reel: one subdirectory per reel, `reel_01/`, `reel_02/`, ..., each holding the full layout (DPX frames or `left/` and `right/`, audio sets, `atmos.mxf` if any, subtitles, captions). Frame numbering restarts at 0 in each reel; WAVs cover exactly the reel's period.
+- Audio sets, `atmos.mxf`, DPX, subtitles and captions are all per reel.
 - Subtitles and captions are split per reel, like `SubtitleFilmEncoder`'s `split_reels`.
 
 ## Left to the builder (flagged as my calls)
 
-- How to render embedded audio only: a `Player` built with a playlist (`Player(film, playlist, tolerant)`) that contains just the video-bearing contents.
-- Format of the note about lost sync (`sources.txt` listing each original with its position, trim and reel).
+- Check where the `Player` applies the audio processor (player.cc ~1246) so the rendered audio is post-matrix, and that gain, delay and trim are in the Butler output; add tests that prove it.
 
 - Exact DPX header field values (descriptor, transfer, colorimetric, packing/method bits). Validate against a reference DPX reader.
 - WAV writer: reuse libsndfile if the repo already links it, else a minimal writer.
