@@ -293,6 +293,7 @@ VideoMXFContent::encode_frames(
 	auto const rate = film->video_frame_rate();
 	auto const bit_rate = film->video_bit_rate(VideoEncoding::JPEG2000);
 	auto const resolution = film->resolution();
+	auto const keep_j2k = film->reuse_behaviour() != Film::ReuseBehaviour::RE_ENCODE;
 
 	Frame next = from;
 	player.Video.connect([&](shared_ptr<PlayerVideo> frame, DCPTime time) {
@@ -301,7 +302,7 @@ VideoMXFContent::encode_frames(
 			return;
 		}
 		/* shortcut: encoded one at a time on this thread, which is slow for a long trim; send them to the J2KEncoder if that matters */
-		if (frame->has_j2k()) {
+		if (keep_j2k && frame->has_j2k()) {
 			write(frame->j2k());
 		} else {
 			write(make_shared<dcp::ArrayData>(DCPVideo(frame, index, rate, bit_rate, resolution).encode_locally()));
@@ -356,7 +357,7 @@ VideoMXFContent::can_reference_video(shared_ptr<const Film> film, string& why_no
 		return false;
 	}
 
-	if (film->video_encoding() != VideoEncoding::JPEG2000) {
+	if (film->video_encoding() != VideoEncoding::JPEG2000 || film->reuse_behaviour() == Film::ReuseBehaviour::RE_ENCODE) {
 		why_not = "the film encodes its picture again";
 		return false;
 	}
