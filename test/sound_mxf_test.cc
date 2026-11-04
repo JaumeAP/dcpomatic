@@ -327,7 +327,7 @@ BOOST_AUTO_TEST_CASE(sound_mxf_trim_test)
 
 	auto content = content_factory(mxf);
 	auto film = new_test_film("sound_mxf_trim_test", content);
-	content[0]->set_trim_start(film, dcpomatic::ContentTime::from_seconds(1));
+	content[0]->set_trim_start(dcpomatic::ContentTime::from_seconds(1));
 	content[0]->set_trim_end(dcpomatic::ContentTime::from_seconds(2));
 	auto sound = make_and_find_sound(film);
 	BOOST_CHECK_EQUAL(sound->asset_ref().id(), source.id());
@@ -466,7 +466,7 @@ trimmed_wav_sound(string name, double trim, std::function<void (std::shared_ptr<
 {
 	auto content = content_factory("test/data/sine_16_48_220_10.wav")[0];
 	auto film = new_test_film(name, { content });
-	content->set_trim_start(film, dcpomatic::ContentTime::from_seconds(trim));
+	content->set_trim_start(dcpomatic::ContentTime::from_seconds(trim));
 	content->set_trim_end(dcpomatic::ContentTime::from_seconds(trim));
 	change(film, content);
 	return make_and_find_sound(film);
@@ -520,7 +520,7 @@ BOOST_AUTO_TEST_CASE(wav_with_other_sound_is_cut_test)
 	auto other = content_factory("test/data/sine_16_48_440_10.wav")[0];
 	auto film = new_test_film("wav_with_other_sound_is_cut_test", { content, other });
 	film->set_sequence(false);
-	content->set_trim_start(film, dcpomatic::ContentTime::from_seconds(1));
+	content->set_trim_start(dcpomatic::ContentTime::from_seconds(1));
 	other->set_position(film, dcpomatic::DCPTime());
 	auto const sound = make_and_find_sound(film);
 	BOOST_CHECK_EQUAL(sound->entry_point().get_value_or(0), 0);
@@ -612,7 +612,7 @@ BOOST_AUTO_TEST_CASE(sound_mxf_gain_with_trim_keeps_length_test)
 
 	auto content = content_factory(mxf);
 	auto film = new_test_film("sound_mxf_gain_with_trim_keeps_length_test", content);
-	content[0]->set_trim_start(film, dcpomatic::ContentTime::from_seconds(1));
+	content[0]->set_trim_start(dcpomatic::ContentTime::from_seconds(1));
 	content[0]->set_trim_end(dcpomatic::ContentTime::from_seconds(2));
 	content[0]->audio->set_gain(3);
 	auto sound = make_and_find_sound(film);
@@ -669,7 +669,7 @@ BOOST_AUTO_TEST_CASE(sound_mxf_fade_with_trim_test)
 
 	auto content = content_factory(mxf);
 	auto film = new_test_film("sound_mxf_fade_with_trim_test", content);
-	content[0]->set_trim_start(film, dcpomatic::ContentTime::from_seconds(1));
+	content[0]->set_trim_start(dcpomatic::ContentTime::from_seconds(1));
 	content[0]->audio->set_fade_in(dcpomatic::ContentTime::from_seconds(0.5));
 	auto sound = make_and_find_sound(film);
 	auto asset = sound_asset_of(sound);
@@ -833,7 +833,7 @@ BOOST_AUTO_TEST_CASE(sound_mxf_head_kept_test)
 
 	auto content = content_factory(mxf);
 	auto film = new_test_film("sound_mxf_head_kept_test", content);
-	content[0]->set_trim_start(film, dcpomatic::ContentTime::from_seconds(1));
+	content[0]->set_trim_start(dcpomatic::ContentTime::from_seconds(1));
 	auto wav = content_factory("test/data/sine_16_48_220_10.wav");
 	film->examine_and_add_content(wav);
 	BOOST_REQUIRE(!wait_for_jobs());
@@ -888,7 +888,7 @@ BOOST_AUTO_TEST_CASE(sound_mxf_middle_keeps_nothing_test)
 	film->examine_and_add_content(last);
 	BOOST_REQUIRE(!wait_for_jobs());
 	content[0]->set_position(film, first[0]->end(film));
-	content[0]->set_trim_start(film, dcpomatic::ContentTime::from_seconds(0.5));
+	content[0]->set_trim_start(dcpomatic::ContentTime::from_seconds(0.5));
 	content[0]->set_trim_end(dcpomatic::ContentTime::from_seconds(0.5));
 	last[0]->set_position(film, content[0]->end(film));
 
@@ -1004,7 +1004,7 @@ BOOST_AUTO_TEST_CASE(sound_mxf_re_examine_test)
 	BOOST_REQUIRE(sound_mxf);
 	auto const with_sound = sound_mxf->channels_with_sound();
 
-	JobManager::instance()->add(std::make_shared<ExamineContentJob>(film, std::vector<std::shared_ptr<Content>>{sound_mxf}, false));
+	JobManager::instance()->add(std::make_shared<ExamineContentJob>(std::vector<std::shared_ptr<Content>>{sound_mxf}, false));
 	BOOST_REQUIRE(!wait_for_jobs());
 
 	BOOST_CHECK(sound_mxf->channels_with_sound() == with_sound);
@@ -1039,7 +1039,7 @@ BOOST_AUTO_TEST_CASE(sound_mxf_part_frame_trim_test)
 		);
 	auto sound_mxf = dynamic_pointer_cast<SoundMXFContent>(film->content()[0]);
 	BOOST_REQUIRE(sound_mxf);
-	sound_mxf->set_trim_start(film, dcpomatic::ContentTime::from_seconds(0.01));
+	sound_mxf->set_trim_start(dcpomatic::ContentTime::from_seconds(0.01));
 
 	string why_not;
 	BOOST_CHECK(!sound_mxf->can_reference_audio(film, why_not));
@@ -1187,7 +1187,7 @@ BOOST_AUTO_TEST_CASE(sound_mxf_repeated_reels_that_differ_are_not_shared_test)
 	first->audio->set_delay(0);
 	sound->audio->set_delay(0);
 
-	sound->set_video_frame_rate(film, 25);
+	sound->set_video_frame_rate(25);
 	BOOST_CHECK(!sound->shared_sound_source(film));
 }
 
@@ -1202,7 +1202,7 @@ BOOST_AUTO_TEST_CASE(sound_mxf_with_atmos_keeps_no_head_test)
 	content.push_back(content_factory("test/data/atmos_0.mxf")[0]);
 	film->examine_and_add_content(content);
 	BOOST_REQUIRE(!wait_for_jobs());
-	content[0]->set_trim_start(film, dcpomatic::ContentTime::from_frames(12, 24));
+	content[0]->set_trim_start(dcpomatic::ContentTime::from_frames(12, 24));
 	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
 
 	dcp::DCP dcp(film->dir(film->dcp_name()));
@@ -1221,7 +1221,7 @@ BOOST_AUTO_TEST_CASE(sound_mxf_gain_reaches_the_head_test)
 	auto const mxf = make_sound_mxf("sound_mxf_gain_reaches_the_head_test_source");
 	auto content = content_factory(mxf)[0];
 	auto film = new_test_film("sound_mxf_gain_reaches_the_head_test", { content });
-	content->set_trim_start(film, dcpomatic::ContentTime::from_frames(12, 24));
+	content->set_trim_start(dcpomatic::ContentTime::from_frames(12, 24));
 	content->audio->set_gain(-6);
 	auto const sound = make_and_find_sound(film);
 	BOOST_REQUIRE_EQUAL(sound->entry_point().get_value_or(0), 12);

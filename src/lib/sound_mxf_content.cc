@@ -21,6 +21,7 @@
 
 #include "audio_buffers.h"
 #include "audio_content.h"
+#include "audio_processor.h"
 #include "audio_stream.h"
 #include "film.h"
 #include "film_util.h"
@@ -103,12 +104,30 @@ SoundMXFContent::valid_mxf(boost::filesystem::path path)
 }
 
 
+/** Give a sound MXF's stream the default mapping, leaving the channels that have no sound unmapped */
+static
 void
-SoundMXFContent::examine(shared_ptr<const Film> film, shared_ptr<Job> job, bool tolerant)
+set_default_mapping(shared_ptr<AudioStream> stream, vector<bool> const& with_sound, AudioProcessor const* processor)
+{
+	auto mapping = stream->mapping();
+	mapping.make_default(processor);
+	for (size_t input = 0; input < with_sound.size(); ++input) {
+		if (!with_sound[input]) {
+			for (int output = 0; output < mapping.output_channels(); ++output) {
+				mapping.set(input, output, 0);
+			}
+		}
+	}
+	stream->set_mapping(mapping);
+}
+
+
+void
+SoundMXFContent::examine(shared_ptr<Job> job, bool tolerant)
 {
 	job->set_progress_unknown();
 
-	Content::examine(film, job, tolerant);
+	Content::examine(job, tolerant);
 
 	dcp::SoundAsset asset(path(0));
 	if (asset.encrypted()) {
@@ -133,17 +152,21 @@ SoundMXFContent::examine(shared_ptr<const Film> film, shared_ptr<Job> job, bool 
 
 	auto stream = make_shared<AudioStream>(examiner.audio_frame_rate(), examiner.audio_length(), examiner.audio_channels(), 24);
 	audio->set_stream(stream);
-	auto mapping = stream->mapping();
-	mapping.make_default(film ? film->audio_processor() : nullptr);
-	/* Channels with no sound are left unmapped */
-	for (size_t input = 0; input < with_sound.size(); ++input) {
-		if (!with_sound[input]) {
-			for (int output = 0; output < mapping.output_channels(); ++output) {
-				mapping.set(input, output, 0);
-			}
-		}
+	/* There is no film to ask for an audio processor here; prepare_for_add_to_film() maps it again with the film's */
+	set_default_mapping(stream, with_sound, nullptr);
+}
+
+
+void
+SoundMXFContent::prepare_for_add_to_film(shared_ptr<const Film> film)
+{
+	auto with_sound = channels_with_sound();
+
+	boost::mutex::scoped_lock lm(_mutex);
+
+	if (audio) {
+		set_default_mapping(audio->stream(), with_sound, film->audio_processor());
 	}
-	stream->set_mapping(mapping);
 }
 
 
@@ -237,12 +260,6 @@ SoundMXFContent::can_reference_audio(shared_ptr<const Film> film, string& why_no
 	auto const rate = static_cast<double>(edit_rate.numerator);
 	if (trim_start() != trim_start().round(rate) || trim_end() != trim_end().round(rate)) {
 		why_not = "its trims are not whole frames";
-		return false;
-	}
-
-	if (film->limit_to_smpte_bv20()) {
-		/* Bv2.0 forbids the MCA sub-descriptors that the file may have */
-		why_not = "the film is limited to SMPTE Bv2.0";
 		return false;
 	}
 
