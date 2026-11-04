@@ -680,6 +680,7 @@ BOOST_AUTO_TEST_CASE(picture_mxf_changed_is_rewritten_test)
 	std::vector<std::pair<string, std::function<void (std::shared_ptr<Film>, std::shared_ptr<Content>)>>> const changes = {
 		{ "crop", [](std::shared_ptr<Film>, std::shared_ptr<Content> c) { c->video->set_left_crop(8); } },
 		{ "fade", [](std::shared_ptr<Film>, std::shared_ptr<Content> c) { c->video->set_fade_in(4); } },
+		{ "reencode", [](std::shared_ptr<Film> f, std::shared_ptr<Content>) { f->set_reuse_behaviour(Film::ReuseBehaviour::RE_ENCODE); } },
 		{ "subtitle", [](std::shared_ptr<Film> f, std::shared_ptr<Content>) {
 			auto text = content_factory("test/data/subrip4.srt")[0];
 			f->examine_and_add_content({ text });
@@ -718,6 +719,21 @@ BOOST_AUTO_TEST_CASE(picture_mxf_changed_keeps_whole_length_test)
 	BOOST_CHECK_EQUAL(picture->entry_point().get_value_or(0), 6);
 	BOOST_CHECK_EQUAL(picture->actual_duration(), 30);
 	BOOST_CHECK_EQUAL(picture->intrinsic_duration(), 48);
+}
+
+
+/** The same with the film only re-encoding: the file's frames are written again too */
+BOOST_AUTO_TEST_CASE(picture_mxf_reencoded_keeps_whole_length_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_reencoded_keeps_whole_length_test_source");
+	auto content = content_factory(mxf)[0];
+	auto film = new_test_film("picture_mxf_reencoded_keeps_whole_length_test", { content });
+	film->set_reuse_behaviour(Film::ReuseBehaviour::RE_ENCODE);
+	content->set_trim_start(dcpomatic::ContentTime::from_frames(12, 24));
+	auto const reels = make_and_find_reels(film);
+	BOOST_REQUIRE_EQUAL(reels.size(), 1U);
+	BOOST_CHECK_EQUAL(reels[0]->main_picture()->entry_point().get_value_or(0), 12);
+	BOOST_CHECK_EQUAL(reels[0]->main_picture()->intrinsic_duration(), 48);
 }
 
 
