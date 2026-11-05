@@ -1,25 +1,67 @@
-# DCP-o-matic public tree: branches, builds and runbook
+# DCP-o-matic public tree: branches, builds, rules and runbook
 
 Status as of 2026-11-05. Public repository only: `~/projects/dcpomatic`, origin `JaumeAP/dcpomatic`,
-upstream `git.carlh.net/git/dcpomatic.git` (Carl). This file is not committed; commit it only when asked.
+upstream `git.carlh.net/git/dcpomatic.git` (Carl). Do not mention or touch the private repository here.
+This file is committed on branch `claude-runbook` (commit `e0f1618fe`); later edits are not committed unless asked.
 
-## 1. The three lines
+## 0. Rules (apply always)
 
-1. **Standard** = Carl's `upstream/main`. Fork branch `carl`, must equal `upstream/main`.
+1. Four lines, and only these four: Standard (`carl`), Plus (`main`), Beta (`beta`), Beta plus (`beta-plus`).
+2. `carl` equals `upstream/main` and `beta` equals `upstream/v2.19.x`. They are only updated by fast-forward from
+   upstream, never edited. `carl` and `beta` have their own rulesets (§1).
+3. `main` (Plus) is updated whenever we say "plus": `carl` plus our open PRs, with its README list kept right.
+4. `beta-plus` is `beta` plus our open PRs, taken from their Beta versions (`beta-compat/*`).
+5. The undeletable ruleset `26609507` protects `main`, `carl`, `beta` and `beta-plus` against deletion. It does not
+   stop force pushes on `main` or `beta-plus`.
+6. Nothing is pushed to a PR head, to `main` or to `beta-plus` without explicit approval. Descriptions of PRs are not
+   edited unless asked.
+7. Every test of a PR to Carl runs on that PR's own Standard branch: `carl` plus only that PR's commits. A result for a
+   PR is never taken from a combined branch (`plus-check`, `beta-plus`, `dcdm-series-7-on-carl`).
+8. Commits: English; subject in the imperative or a noun phrase; end with the `Claude-Session` line only (no model names).
+   Commits of unbuilt work start with `WIP:`.
+9. `gh` works only with the sandbox off (it reads `~/.config/gh`); rulesets are created with `gh api -X POST
+   repos/JaumeAP/dcpomatic/rulesets --input <json>`.
+10. Build output goes to a log file in the build directory's parent; show only the last lines.
+
+## 1. The four lines
+
+1. **Standard** = Carl's `upstream/main`. Fork branch `carl`.
    - `carl` = `f6daea8d1` = `upstream/main` (checked 2026-11-05).
-   - Ruleset `26591009` ("carl: fast-forward only, no delete"): no deletion, no non-fast-forward, no bypass.
-     It cannot check that commits come from `upstream/main`.
+   - Ruleset `26591009` ("carl: fast-forward only, no delete"): no deletion, no non-fast-forward, no bypass. It cannot
+     check that commits come from `upstream/main`.
+   - Local worktree `~/projects/dcpomatic-std-build`, detached at `f6daea8d1`, with `test/data` at `3ca0f15` (the gitlink).
+     Its DCDM series and the test correction are kept on the local branch `dcdm-series-7-on-carl` and the stash
+     `dcdm-test-fix` (the stash can be dropped).
 2. **Plus** = Standard + our open PRs. Fork branch `main`. Updated whenever we say "plus".
    - `origin/main` = `0b40358f5` (checked 2026-11-05): `carl` (`f6daea8d1`) plus 44 commits: the PR commits, the test
      correction for `dcdm_atmos_trimmed_test` (`b23e726ac`) and the README (`0b40358f5`).
    - The README (`README.md`) lists the pending PRs in plain words, 32 items, no #63. Keep it right when a PR is added,
      changed or taken by Carl.
    - Local worktree `~/projects/dcpomatic-plus-check`, branch `plus-check` (same commit as `origin/main`).
-   - `origin/main` was force-pushed on 2026-11-05 from `737ad5618` (old Plus) with a lease.
-3. **Beta** = Carl's `upstream/v2.19.x`. Fork branch `beta`, must equal `upstream/v2.19.x`.
+   - `origin/main` was force-pushed on 2026-11-05 from `737ad5618` (old Plus) with a lease. Its README was re-added in
+     `0b40358f5` after the force push had dropped it.
+   - The 256 unit-test cases of the 20 test files touched by the PRs pass on the Plus (2026-11-05, `b23e726ac`; the
+     README commit changes no code).
+3. **Beta** = Carl's `upstream/v2.19.x`. Fork branch `beta`.
    - `beta` = `14724280e` = `upstream/v2.19.x` (checked 2026-11-05), created on the fork that day.
    - Ruleset `26608646` ("beta: fast-forward only, no delete"): no deletion, no non-fast-forward, no bypass.
-   - Local worktree `~/projects/dcpomatic-2.19`, detached at `14724280e`.
+   - Local worktree `~/projects/dcpomatic-2.19`, detached at `14724280e`, `test/data` = `dbead97`
+     (`/Volumes/INATECK 1TB/builds/test-data-2.19`) when tests run.
+4. **Beta plus** = Beta + our open PRs, in their Beta versions. Fork branch `beta-plus`: NOT on the fork yet.
+   - Local branch `beta-plus` in worktree `~/projects/dcpomatic-beta-plus`, from `14724280e`, 43 commits (2026-11-05).
+   - Built: `beta-plus: build OK` (`scratchpad/build_beta_plus.sh`, output `/Volumes/INATECK 1TB/builds/dcpomatic-beta-plus/build`).
+   - Every PR commit of the 12 `beta-compat/*` branches has its subject in `beta-plus`. Some commits are in it under
+     another hash (the same content), and the duplicates were skipped.
+   - Not yet run: the tests of `beta-plus`. The DCDM test correction (`b23e726ac`, Plus) is not in `beta-plus`; the
+     Beta's own `dcdm` test is used.
+   - How it was built, in this order (commit origin in brackets): the `atmos-mxf` stack (25 commits, covers PRs
+     #60, #65, #66, #67, #68 to #86); `dkdm` (#61, 3 commits); `empty-subtitle` (#62, 2); `seven-one` (#70, 1);
+     `atmos-hints` (#71 and #73, 2); `layout-hint` (#72, 2, except `75d5471e6`, the same content as the `seven-one`
+     commit); `dcdm` (#87 to #95, 9). Commits with `cherry-pick -x`.
+   - Rule for the pick list: `git rev-list --no-merges origin/beta-compat/<branch> --not 14724280e`. Without `--not`
+     the whole history of the base comes in (this happened once: a junk commit `a12412b33` was picked and then reset).
+   - `beta-compat/atmos-mxf` and `beta-compat/atmos-reference` hold different hashes for the same PR #60 commits. Use
+     the `atmos-mxf` stack; do not mix both.
 
 ## 2. Open PRs and their Beta versions
 
@@ -57,7 +99,8 @@ fork PR #16 for the same branch closed by us on 2026-11-05).
 - 50 remote branches (counted 2026-11-05): `main`, `carl`, `beta`, the PR heads (§2), and 13 `beta-compat/*`:
   atmos-decoder-ignore, atmos-hints, atmos-mxf, atmos-reference, dcdm, dkdm, empty-subtitle, hi-vi, layout-hint, seven-one,
   sound-mxf, untrimmed-clone, video-mxf-ignore.
-- Local branches: 51 (2026-11-05), including `plus-check` and the `dcdm-*` branches.
+- `beta-plus` is not on the fork yet (§1.4).
+- Local branches: 51 (2026-11-05), including `plus-check`, `beta-plus`, `dcdm-*`, `claude-runbook`.
 
 ## 4. libdcp: three lines
 
@@ -73,32 +116,36 @@ fork PR #16 for the same branch closed by us on 2026-11-05).
 ## 5. Builds (4 cores, arm64 macOS)
 
 - Standard: needs libdcp `277f5ff2`, so `bash ~/projects/build_carl_like.sh std` does not build (it uses the 1.10.66 of
-  `cdist-work-std-main`: `dcp_examiner.cc:199` fails). Use the same script as the Plus (`build_plus_check.sh`) with
-  `tree=~/projects/dcpomatic-std-build` and `out=/Volumes/INATECK 1TB/builds/dcpomatic-std-build/build`: that is
-  `scratchpad/build_std_libdcp277.sh` in the session scratchpad (not in the repository).
+  `cdist-work-std-main`: `dcp_examiner.cc:199` fails). Use `scratchpad/build_std_libdcp277.sh` (session scratchpad, not in
+  the repository): tree `~/projects/dcpomatic-std-build`, output `/Volumes/INATECK 1TB/builds/dcpomatic-std-build/build`.
 - Plus: `bash scratchpad/build_plus_check.sh` — tree `~/projects/dcpomatic-plus-check`, output
   `/Volumes/INATECK 1TB/builds/dcpomatic-plus-check/build`, libdcp prefix first in PKG_CONFIG_PATH, CXXFLAGS, LINKFLAGS,
   DYLD_LIBRARY_PATH. Logs: `carl_like_configure.log`, `carl_like_build.log` in the build directory's parent.
+- Beta plus: `bash scratchpad/build_beta_plus.sh` — tree `~/projects/dcpomatic-beta-plus`, output
+  `/Volumes/INATECK 1TB/builds/dcpomatic-beta-plus/build`, Beta libdcp `cdist-work-std-219`.
 - Beta: `zsh scratchpad/beta_check.sh <beta-compat/branch>` — builds `~/projects/dcpomatic-2.19`, runs the tests of the
   files that the branch changes, returns to detached `upstream/v2.19.x`.
 - Tests of the Plus: `zsh scratchpad/test_plus_check.sh <cases>`. The 256 cases of the 20 test files touched by the PRs
-  pass on the Plus (2026-11-05, before the README commit, which changes no code).
+  pass on the Plus. The case list is built from the files of `f6daea8d1..HEAD`.
+- Scratchpad scripts are in `/private/tmp/claude-501/-Users-jap-projects-dcpomatic-pro/24cfa4e7-5afa-4484-8bee-a54a381a6290/scratchpad/`.
 
 ## 6. Tooling notes (this machine)
 
 - zsh: `"${b}:refs"` not `$b:refs`; `$TMPDIR` for temp files; no `sed -i`; reading files with Read, not Bash.
-- `git cherry` output with one commit is not a per-commit test; use `--no-merges` ranges and `git cherry-pick` with
-  empty-skip (`git status --porcelain` empty) and stop at a real conflict.
-- rerere replays old resolutions: review every staged result (`git diff --cached`) before `cherry-pick --continue`.
-- `gh` works only with the sandbox off (it reads `~/.config/gh`). Rulesets are created with `gh api -X POST
-  repos/JaumeAP/dcpomatic/rulesets --input <json>`; the JSON of the `carl` ruleset and the `beta` one are in the session
-  scratchpad.
+- `git cherry` and patch-id comparisons are not reliable when the commits were picked on different bases. Use hashes
+  from the `(cherry picked from commit …)` trailers, and `--no-merges` ranges with `--not <base>`.
+- Cherry-pick loop: on a failure, if `git status --porcelain` is empty, the commit is empty: `git cherry-pick --skip`.
+  If a conflict is resolved by rerere ("all conflicts fixed"), compare the staged blobs or the patch with the commit
+  before `GIT_EDITOR=true git cherry-pick --continue`. Stop at a real conflict.
+- rerere replays old resolutions: review every staged result (`git diff --cached`) before continuing.
+- `git push --force-with-lease=<ref>:<sha>` is the only force push used; `main` was force-pushed once (§1.2).
 
 ## 7. Open decisions (not done)
 
-1. Plus libdcp separate prefix (item 4.2).
-2. Dual-version PR text (done as comments, see §2). Descriptions not edited.
-3. Push of the `dcdm-7-film-encoder` correction to the Carl PR: done (§2). Carl has not taken it.
+1. Create `beta-plus` on the fork (push) and its ruleset: waiting for approval.
+2. Run the tests of `beta-plus`: pending.
+3. Plus libdcp separate prefix (§4.2).
+4. Dual-version PR text (done as comments, see §2). Descriptions not edited.
 
 ## 8. Test-data collections (`test/data`)
 
