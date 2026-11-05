@@ -1,0 +1,42 @@
+#
+#    Copyright (C) 2026 Carl Hetherington <cth@carlh.net>
+#
+#    This file is part of DCP-o-matic.
+#
+#    DCP-o-matic is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    DCP-o-matic is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with DCP-o-matic.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+sources = """
+          content_binding.cc
+          content_properties.cc
+          film_binding.cc
+          film_properties.cc
+          lua_state.cc
+          mapping_binding.cc
+          units.cc
+          warnings.cc
+          """
+
+def build(bld):
+    if bld.env.STATIC_DCPOMATIC:
+        obj = bld(features='cxx cxxstlib')
+    else:
+        obj = bld(features='cxx cxxshlib')
+
+    obj.name   = 'libdcpomatic2-lua'
+    obj.export_includes = ['..']
+    obj.uselib = 'LUA BOOST_FILESYSTEM BOOST_THREAD BOOST_REGEX DCP SUB ZIP CXML ICU AVUTIL TTF '
+    obj.source = sources
+    obj.use    = 'libdcpomatic2'
+    obj.target = 'dcpomatic2-lua'

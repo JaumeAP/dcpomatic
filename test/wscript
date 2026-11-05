@@ -37,12 +37,12 @@ def build(bld):
     obj.name   = 'unit-tests'
     obj.uselib =  'BOOST_TEST BOOST_THREAD BOOST_FILESYSTEM BOOST_DATETIME SNDFILE SAMPLERATE DCP FONTCONFIG CAIROMM PANGOMM XMLPP '
     obj.uselib += 'AVFORMAT AVFILTER AVCODEC AVUTIL SWSCALE SWRESAMPLE POSTPROC CXML SUB GLIB CURL SSH XMLSEC BOOST_REGEX ICU NETTLE PNG JPEG '
-    obj.uselib += 'LEQM_NRT ZIP SQLITE3 BOOST_PROCESS TTF '
+    obj.uselib += 'LEQM_NRT ZIP SQLITE3 BOOST_PROCESS TTF LUA '
     if bld.env.TARGET_WINDOWS_64 or bld.env.TARGET_WINDOWS_32:
         obj.uselib += 'WINSOCK2 DBGHELP SHLWAPI MSWSOCK BOOST_LOCALE SETUPAPI OLE32 UUID '
     if bld.env.TARGET_LINUX:
         obj.uselib += 'DL '
-    obj.use    = 'libdcpomatic2'
+    obj.use    = 'libdcpomatic2 libdcpomatic2-lua'
     obj.source = """
                  2536_regression_test.cc
                  2986_regression_test.cc
@@ -141,6 +141,12 @@ def build(bld):
                  kdm_util_test.cc
                  layout_markers_test.cc
                  low_bitrate_test.cc
+                 lua_audio_test.cc
+                 lua_dcp_test.cc
+                 lua_export_test.cc
+                 lua_film_test.cc
+                 lua_gui_rules_test.cc
+                 lua_test.cc
                  make_dcp_with_reused_assets_test.cc
                  markers_test.cc
                  map_cli_test.cc
