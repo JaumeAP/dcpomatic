@@ -34,7 +34,8 @@ public:
 	enum class Type {
 		VIDEO,
 		AUDIO,
-		TEXT
+		TEXT,
+		ATMOS
 	};
 
 	/** @param entry_point first frame of the asset to be played, if it is not the first
