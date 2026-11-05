@@ -688,6 +688,15 @@ def configure(conf):
                    uselib='JSON',
                    mandatory=True)
 
+    conf.check_cxx(fragment="""
+                       #include <lua.hpp>
+                       int main() { lua_State* state = luaL_newstate(); lua_close(state); return 0; }
+                       """,
+                   msg='Checking for Lua',
+                   lib='lua',
+                   uselib_store='LUA',
+                   mandatory=True)
+
 
     # Other stuff
 
