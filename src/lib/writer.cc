@@ -94,6 +94,16 @@ Writer::Writer(weak_ptr<const Film> weak_film, weak_ptr<Job> weak_job, boost::fi
 		shared_ptr<SharedSound> shared_sound;
 		if (!text_only) {
 			for (auto content: film()->content()) {
+				/* A WAV, say, that is the same as one of an earlier reel; it can end inside the last frame of its reel */
+				if (content->position() == p.from) {
+					if (auto source = shared_audio_source(film(), content)) {
+						for (auto& other: _reels) {
+							if (other.period().from == source->position()) {
+								shared_sound = other.own_sound();
+							}
+						}
+					}
+				}
 				if (DCPTimePeriod(content->position(), content->end(film())) != p) {
 					continue;
 				}

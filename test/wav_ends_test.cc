@@ -29,6 +29,8 @@
 #include "lib/audio_content.h"
 #include "lib/content_factory.h"
 #include "lib/film.h"
+#include "lib/hints.h"
+#include "lib/signal_manager.h"
 #include "lib/sound_mxf_content.h"
 #include "test.h"
 #include <dcp/cpl.h>
@@ -330,6 +332,136 @@ BOOST_AUTO_TEST_CASE(wav_ends_of_wavs_that_play_together_are_kept_test)
 	BOOST_CHECK_CLOSE(frame_peak(*file, 0), 0.8, 5);
 	BOOST_CHECK_CLOSE(frame_peak(*file, 6), 0.5, 5);
 	BOOST_CHECK_CLOSE(frame_peak(*file, 71), 0.2, 5);
+}
+
+
+/** @return the number of sound MXFs in the DCP that @param film made */
+static int
+sound_files_in_dcp(std::shared_ptr<Film> film)
+{
+	int count = 0;
+	for (auto i: boost::filesystem::directory_iterator(film->dir(film->dcp_name()))) {
+		if (i.path().filename().string().substr(0, 4) == "pcm_") {
+			++count;
+		}
+	}
+	return count;
+}
+
+
+/** @return a film with the WAV @param wav twice, one after the other, each one a whole reel */
+static std::shared_ptr<Film>
+film_with_wav_twice(std::string name, boost::filesystem::path wav)
+{
+	auto film = film_for_wav(name, wav);
+	film->examine_and_add_content(content_factory(wav));
+	BOOST_REQUIRE(!wait_for_jobs());
+	BOOST_REQUIRE_EQUAL(film->content().size(), 2U);
+	film->content()[1]->set_position(film, film->content()[0]->end(film));
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ film->content()[0]->end(film) });
+	return film;
+}
+
+
+/** The same WAV as two whole reels, changed in the same way, is written once: both reels refer to the one asset */
+BOOST_AUTO_TEST_CASE(wav_repeated_is_written_once_test)
+{
+	auto film = film_with_wav_twice("wav_repeated_is_written_once_test", write_marker_wav("wav_repeated_is_written_once_test_source", 3));
+	for (auto content: film->content()) {
+		content->audio->set_gain(-3);
+	}
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), assets[1]->asset_ref().id());
+	BOOST_CHECK_EQUAL(sound_files_in_dcp(film), 1);
+}
+
+
+/** When the head and tail are kept, both reels refer to the one asset with the same entry point and duration */
+BOOST_AUTO_TEST_CASE(wav_repeated_with_head_and_tail_is_written_once_test)
+{
+	auto film = film_with_wav_twice("wav_repeated_with_head_and_tail_is_written_once_test", write_marker_wav("wav_repeated_with_head_and_tail_is_written_once_test_source", 3));
+	for (auto content: film->content()) {
+		content->set_trim_start(dcpomatic::ContentTime::from_frames(6, 24));
+		content->set_trim_end(dcpomatic::ContentTime::from_frames(3, 24));
+	}
+	film->content()[1]->set_position(film, film->content()[0]->end(film));
+	film->set_custom_reel_boundaries({ film->content()[0]->end(film) });
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), assets[1]->asset_ref().id());
+	for (auto asset: assets) {
+		BOOST_CHECK_EQUAL(asset->entry_point().get_value_or(0), 6);
+		BOOST_CHECK_EQUAL(asset->actual_duration(), 63);
+		BOOST_CHECK_EQUAL(asset->intrinsic_duration(), 72);
+	}
+	BOOST_CHECK_EQUAL(sound_files_in_dcp(film), 1);
+}
+
+
+/** The same WAV as two whole reels, changed in different ways, is written for each reel */
+BOOST_AUTO_TEST_CASE(wav_repeated_with_different_gains_is_written_twice_test)
+{
+	auto film = film_with_wav_twice("wav_repeated_with_different_gains_is_written_twice_test", write_marker_wav("wav_repeated_with_different_gains_is_written_twice_test_source", 3));
+	film->content()[0]->audio->set_gain(-3);
+	film->content()[1]->audio->set_gain(-6);
+	make_sound_only_dcp(film);
+
+	BOOST_CHECK_EQUAL(sound_files_in_dcp(film), 2);
+}
+
+
+/** An encrypted film does not share a sound asset between reels: every KDM would list its key twice */
+BOOST_AUTO_TEST_CASE(wav_repeated_in_an_encrypted_film_is_written_twice_test)
+{
+	auto film = film_with_wav_twice("wav_repeated_in_an_encrypted_film_is_written_twice_test", write_marker_wav("wav_repeated_in_an_encrypted_film_is_written_twice_test_source", 3));
+	film->set_encrypt_sound(true);
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA,
+			dcp::VerificationNote::Code::PARTIALLY_ENCRYPTED
+		});
+
+	BOOST_CHECK_EQUAL(sound_files_in_dcp(film), 2);
+}
+
+
+/** Two WAVs that end inside a frame (71.25 frames here) fill reels of the same length, so they are written once */
+BOOST_AUTO_TEST_CASE(wav_repeated_ending_inside_a_frame_is_written_once_test)
+{
+	auto film = film_with_wav_twice(
+		"wav_repeated_ending_inside_a_frame_is_written_once_test",
+		write_marker_wav("wav_repeated_ending_inside_a_frame_is_written_once_test_source", 3, -1500)
+		);
+	film->content()[1]->set_position(film, dcpomatic::DCPTime::from_frames(72, 24));
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_frames(72, 24) });
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 72);
+	BOOST_CHECK_EQUAL(assets[1]->actual_duration(), 72);
+	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), assets[1]->asset_ref().id());
+	BOOST_CHECK_EQUAL(sound_files_in_dcp(film), 1);
+}
+
+
+/** The hints, which use a writer that makes only text, can be made for a film that shares a sound asset */
+BOOST_AUTO_TEST_CASE(wav_repeated_hints_test)
+{
+	auto film = film_with_wav_twice("wav_repeated_hints_test", write_marker_wav("wav_repeated_hints_test_source", 3));
+
+	Hints hints(film);
+	hints.start();
+	hints.join();
+	while (signal_manager->ui_idle()) {}
+	hints.rethrow();
 }
 
 

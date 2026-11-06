@@ -26,15 +26,18 @@
 #include "dcp_content.h"
 #include "film.h"
 #include "frame_rate_change.h"
+#include "overlaps.h"
 #include "player.h"
 #include "playlist.h"
 #include "sound_mxf_content.h"
+#include <fmt/format.h>
 #include <algorithm>
 
 
 using std::dynamic_pointer_cast;
 using std::make_shared;
 using std::shared_ptr;
+using std::string;
 using std::vector;
 using namespace dcpomatic;
 
@@ -82,6 +85,92 @@ read_audio(shared_ptr<const Film> film, vector<shared_ptr<const Content>> const&
 	player.seek(from, true);
 	while (covered < start + frames - slack && !player.pass()) {}
 	return result;
+}
+
+
+/** @return true if the film writes @param content's sound on its own, as a function of the file and the settings of this
+ *  content only, and it fills one reel of the film (to within the last frame, when the sound is not a whole number of
+ *  frames long)
+ */
+static bool
+written_alone_as_a_reel(shared_ptr<const Film> film, shared_ptr<const Content> content)
+{
+	if (!content->audio || content->video || dynamic_pointer_cast<const SoundMXFContent>(content) || dynamic_pointer_cast<const DCPContent>(content)) {
+		return false;
+	}
+
+	/* The Atmos sync signal changes from frame to frame, an audio processor has state, and every KDM of an encrypted film
+	 * would list the key of a shared sound asset once for each reel that refers to it.  A delay moves sound across the
+	 * reels' boundaries and a speed change makes the sound another length.
+	 */
+	if (film->contains_atmos_content() || film->audio_processor() || film->encrypt_sound() || content->audio->streams().size() != 1) {
+		return false;
+	}
+	if (content->audio->delay() != 0 || FrameRateChange(film, content).change_speed()) {
+		return false;
+	}
+
+	auto const frame_rate = static_cast<double>(film->video_frame_rate());
+	if (content->trim_start() != content->trim_start().round(frame_rate) || content->trim_end() != content->trim_end().round(frame_rate)) {
+		return false;
+	}
+
+	auto const one_frame = DCPTime::from_frames(1, film->video_frame_rate());
+	auto const reels = film->reels();
+	auto const reel = std::find_if(reels.begin(), reels.end(), [content, film, one_frame](DCPTimePeriod const& r) {
+		return r.from == content->position() && DCPTime(content->end(film) - r.to).abs() < one_frame;
+	});
+	if (reel == reels.end()) {
+		return false;
+	}
+
+	auto has_audio = [](shared_ptr<const Content> c) {
+		return static_cast<bool>(c->audio);
+	};
+	return dcpomatic::overlaps(film, film->content(), has_audio, content->position(), content->end(film)).size() == 1;
+}
+
+
+/** @return something that is the same for two contents if and only if the film writes the same sound for them */
+static string
+sound_digest(shared_ptr<const Film> film, shared_ptr<const Content> content)
+{
+	return fmt::format(
+		"{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}",
+		content->digest(),
+		content->trim_start().get(),
+		content->trim_end().get(),
+		content->audio->gain(),
+		content->audio->fade_in().get(),
+		content->audio->fade_out().get(),
+		content->audio->mapping().digest(),
+		film->audio_channels(),
+		film->audio_frame_rate(),
+		film->video_frame_rate(),
+		film->interop()
+		);
+}
+
+
+shared_ptr<const Content>
+shared_audio_source(shared_ptr<const Film> film, shared_ptr<const Content> content)
+{
+	if (!written_alone_as_a_reel(film, content)) {
+		return {};
+	}
+
+	auto const ours = sound_digest(film, content);
+	shared_ptr<const Content> found;
+	for (auto other: film->content()) {
+		if (other == content || other->position() >= content->position() || !written_alone_as_a_reel(film, other)) {
+			continue;
+		}
+		if (sound_digest(film, other) == ours && (!found || other->position() < found->position())) {
+			found = other;
+		}
+	}
+
+	return found;
 }
 
 

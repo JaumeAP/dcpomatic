@@ -45,6 +45,15 @@ struct AudioEnds
 };
 
 
+/** @return an earlier content of the film that is a sound with no picture (a WAV, say) filling one reel, and that the film
+ *  writes exactly as it writes @param content, which fills one reel too, so that the reel of @param content can refer to
+ *  the sound asset of that reel instead of writing its own.  Null if there is none.  There is none with Atmos, an audio
+ *  processor or an encrypted sound (a KDM would list the key of a shared asset once for each reel that refers to it), or
+ *  with a delay or a speed change.
+ */
+std::shared_ptr<const Content> shared_audio_source(std::shared_ptr<const Film> film, std::shared_ptr<const Content> content);
+
+
 /** @param film Film that the content is in.
  *  @param group Contents with sound and no picture (WAVs, say) that play together: they have the same position, length and
  *  trims.  A sound MXF or a DCP is never one of them.
