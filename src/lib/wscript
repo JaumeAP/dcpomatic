@@ -36,6 +36,7 @@ sources = """
           audio_content.cc
           audio_decoder.cc
           audio_delay.cc
+          audio_ends.cc
           audio_filter.cc
           audio_filter_graph.cc
           audio_mapping.cc

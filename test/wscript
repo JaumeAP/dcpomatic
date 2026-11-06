@@ -173,6 +173,7 @@ def build(bld):
                  smtp_server.cc
                  sound_mxf_test.cc
                  srt_subtitle_test.cc
+                 wav_ends_test.cc
                  ssa_subtitle_test.cc
                  stream_test.cc
                  subtitle_charset_test.cc

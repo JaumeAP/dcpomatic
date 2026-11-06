@@ -20,6 +20,7 @@
 
 
 #include "audio_buffers.h"
+#include "audio_ends.h"
 #include "config.h"
 #include "cover_sheet.h"
 #include "cross.h"
@@ -130,22 +131,43 @@ Writer::Writer(weak_ptr<const Film> weak_film, weak_ptr<Job> weak_job, boost::fi
 		for (auto& reel: _reels) {
 			for (auto content: film()->content()) {
 				auto sound_mxf = dynamic_pointer_cast<const SoundMXFContent>(content);
-				if (!sound_mxf || !sound_mxf->frames_align_with(film())) {
+				if (!content->audio) {
 					continue;
 				}
-				if (dcpomatic::overlaps(film(), film()->content(), has_audio, content->position(), content->end(film())).size() != 1) {
+				auto const starts_reel = content->position() == reel.period().from;
+				/* A sound that is not a whole number of frames long ends inside the last frame of its reel */
+				auto const ends_reel = DCPTime(content->end(film()) - reel.period().to).abs() < DCPTime::from_frames(1, film()->video_frame_rate());
+				if (!starts_reel && !ends_reel) {
 					continue;
 				}
+				auto const group = dcpomatic::overlaps(film(), film()->content(), has_audio, content->position(), content->end(film()));
 				shared_ptr<const AudioBuffers> head;
 				shared_ptr<const AudioBuffers> tail;
-				if (sound_mxf->position() == reel.period().from) {
-					head = sound_mxf->head_audio(film());
-				}
-				if (sound_mxf->end(film()) == reel.period().to) {
-					tail = sound_mxf->tail_audio(film());
+				Frame head_frames = 0;
+				if (sound_mxf) {
+					if (group.size() != 1 || !sound_mxf->frames_align_with(film())) {
+						continue;
+					}
+					if (starts_reel) {
+						head = sound_mxf->head_audio(film());
+					}
+					if (ends_reel && sound_mxf->end(film()) == reel.period().to) {
+						tail = sound_mxf->tail_audio(film());
+					}
+					head_frames = sound_mxf->head_frames();
+				} else if (!group.empty() && group.front() == content) {
+					/* WAVs, say: sound with no picture, which the film writes itself.  Those that play together are
+					 * looked at once, from the first of them.
+					 */
+					auto const ends = audio_ends(
+						film(), vector<shared_ptr<const Content>>(group.begin(), group.end()), starts_reel, ends_reel, reel.period().to
+						);
+					head = ends.head;
+					tail = ends.tail;
+					head_frames = ends.head_frames;
 				}
 				if (head || tail) {
-					reel.set_sound_ends(head, sound_mxf->head_frames(), tail);
+					reel.set_sound_ends(head, head_frames, tail);
 				}
 			}
 		}
