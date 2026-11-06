@@ -34,6 +34,7 @@
 #include "text_content.h"
 #include "util.h"
 #include "version.h"
+#include "video_mxf_content.h"
 #include "writer.h"
 #include <dcp/cpl.h>
 #include <dcp/mono_mpeg2_picture_frame.h>
@@ -83,7 +84,26 @@ Writer::Writer(weak_ptr<const Film> weak_film, weak_ptr<Job> weak_job, boost::fi
 	auto const reels = film()->reels();
 	LOG_GENERAL("Reels to make:")
 	for (auto p: reels) {
-		_reels.emplace_back(weak_film, p, job, reel_index++, reels.size(), text_only, _output_dir);
+		/* A picture MXF that is the same as one of an earlier reel is written once: the first reel writes it and the
+		 * others refer to it.  The earlier reel has been made already, so its picture asset is there to refer to.
+		 */
+		shared_ptr<dcp::J2KPictureAsset> shared_picture;
+		if (!text_only) {
+			for (auto content: film()->content()) {
+				auto video_mxf = dynamic_pointer_cast<const VideoMXFContent>(content);
+				if (!video_mxf || DCPTimePeriod(video_mxf->position(), video_mxf->end(film())) != p) {
+					continue;
+				}
+				if (auto source = video_mxf->shared_picture_source(film())) {
+					for (auto& other: _reels) {
+						if (other.period() == DCPTimePeriod(source->position(), source->end(film()))) {
+							shared_picture = other.picture_asset();
+						}
+					}
+				}
+			}
+		}
+		_reels.emplace_back(weak_film, p, job, reel_index++, reels.size(), text_only, _output_dir, shared_picture);
 		LOG_GENERAL("  {} --> {}", to_string(p.from), to_string(p.to));
 	}
 

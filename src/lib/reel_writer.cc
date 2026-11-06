@@ -285,7 +285,14 @@ ReelWriter::setup_audio(vector<DCPAsset> const& reusable_assets, shared_ptr<Job>
  *  subtitle / closed caption files.
  */
 ReelWriter::ReelWriter(
-	weak_ptr<const Film> weak_film, DCPTimePeriod period, shared_ptr<Job> job, int reel_index, int reel_count, bool text_only, boost::filesystem::path output_dir
+	weak_ptr<const Film> weak_film,
+	DCPTimePeriod period,
+	shared_ptr<Job> job,
+	int reel_index,
+	int reel_count,
+	bool text_only,
+	boost::filesystem::path output_dir,
+	shared_ptr<dcp::J2KPictureAsset> shared_picture
 	)
 	: WeakConstFilm(weak_film)
 	, _output_dir(std::move(output_dir))
@@ -312,7 +319,12 @@ ReelWriter::ReelWriter(
 	auto const standard = film()->interop() ? dcp::Standard::INTEROP : dcp::Standard::SMPTE;
 
 	auto reusable_assets = film()->reusable_dcp_assets();
-	setup_video(reusable_assets, job, period, standard);
+	if (shared_picture) {
+		/* Another reel writes our picture, so we write none and do not look for an old asset of our own */
+		_shared_picture = shared_picture;
+	} else {
+		setup_video(reusable_assets, job, period, standard);
+	}
 	setup_audio(reusable_assets, job, period, standard);
 }
 
@@ -574,13 +586,14 @@ ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReferencedReelA
 {
 	shared_ptr<dcp::ReelPictureAsset> reel_asset;
 
-	if (_j2k_picture_asset) {
-		/* We have made a picture asset of our own.  Put it into the reel */
-		if (auto mono = dynamic_pointer_cast<dcp::MonoJ2KPictureAsset>(_j2k_picture_asset)) {
+	auto const own_or_shared = _j2k_picture_asset ? _j2k_picture_asset : _shared_picture;
+	if (own_or_shared) {
+		/* We have a picture asset of our own, or one written by another reel.  Put it into the reel */
+		if (auto mono = dynamic_pointer_cast<dcp::MonoJ2KPictureAsset>(own_or_shared)) {
 			reel_asset = make_shared<dcp::ReelMonoPictureAsset>(mono, _picture_entry_point);
 		}
 
-		if (auto stereo = dynamic_pointer_cast<dcp::StereoJ2KPictureAsset>(_j2k_picture_asset)) {
+		if (auto stereo = dynamic_pointer_cast<dcp::StereoJ2KPictureAsset>(own_or_shared)) {
 			reel_asset = make_shared<dcp::ReelStereoPictureAsset>(stereo, _picture_entry_point);
 		}
 	} else if (_mpeg2_picture_asset) {

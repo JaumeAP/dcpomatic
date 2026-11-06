@@ -31,7 +31,10 @@
 #include "lib/decoder.h"
 #include "lib/decoder_factory.h"
 #include "lib/film.h"
+#include "lib/hints.h"
 #include "lib/ratio.h"
+#include "lib/signal_manager.h"
+#include "lib/text_content.h"
 #include "lib/video_content.h"
 #include "lib/video_decoder.h"
 #include "lib/video_mxf_content.h"
@@ -208,6 +211,160 @@ BOOST_AUTO_TEST_CASE(picture_mxf_dcpasset_not_on_reel_edges_is_not_reused_test)
 	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
 	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::MonoJ2KPictureAsset(mxf).id());
 	BOOST_CHECK(assets[1]->asset_ref().id() != dcp::MonoJ2KPictureAsset(mxf).id());
+}
+
+
+/** @return the number of picture MXFs in the DCP that @param film made */
+static int
+picture_files_in_dcp(std::shared_ptr<Film> film)
+{
+	int count = 0;
+	for (auto i: boost::filesystem::directory_iterator(film->dir(film->dcp_name()))) {
+		if (i.path().filename().string().substr(0, 4) == "j2c_") {
+			++count;
+		}
+	}
+	return count;
+}
+
+
+/** @return a film with the picture MXF @param mxf twice, one after the other, each one a whole reel, with the
+ *  re-use behaviour @param behaviour
+ */
+static std::shared_ptr<Film>
+film_with_picture_mxf_twice(std::string name, boost::filesystem::path mxf, Film::ReuseBehaviour behaviour)
+{
+	auto film = film_for_picture_mxf(name, mxf, behaviour);
+	film->examine_and_add_content(content_factory(mxf));
+	BOOST_REQUIRE(!wait_for_jobs());
+	BOOST_REQUIRE_EQUAL(film->content().size(), 2U);
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ film->content()[0]->end(film) });
+	return film;
+}
+
+
+/** The same picture MXF as two whole reels, changed in the same way, is written once: both reels refer to the one asset */
+BOOST_AUTO_TEST_CASE(picture_mxf_repeated_is_written_once_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_repeated_is_written_once_test_source", "test/data/flat_red.png");
+	auto film = film_with_picture_mxf_twice("picture_mxf_repeated_is_written_once_test", mxf, Film::ReuseBehaviour::RE_WRAP);
+	for (auto content: film->content()) {
+		content->video->set_left_crop(10);
+	}
+	make_picture_only_dcp(film);
+
+	auto const assets = dcp_picture_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), assets[1]->asset_ref().id());
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::MonoJ2KPictureAsset(mxf).id());
+	BOOST_CHECK_EQUAL(picture_files_in_dcp(film), 1);
+}
+
+
+/** The same picture MXF as two whole reels, changed in different ways, is written for each reel */
+BOOST_AUTO_TEST_CASE(picture_mxf_repeated_with_different_crops_is_written_twice_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_repeated_with_different_crops_is_written_twice_test_source", "test/data/flat_red.png");
+	auto film = film_with_picture_mxf_twice(
+		"picture_mxf_repeated_with_different_crops_is_written_twice_test", mxf, Film::ReuseBehaviour::RE_WRAP
+		);
+	film->content()[0]->video->set_left_crop(10);
+	film->content()[1]->video->set_left_crop(20);
+	make_picture_only_dcp(film);
+
+	auto const assets = dcp_picture_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != assets[1]->asset_ref().id());
+	BOOST_CHECK_EQUAL(picture_files_in_dcp(film), 2);
+}
+
+
+/** A copy that is set to a 3D layout in a 2D film is not the same image, so each reel is written */
+BOOST_AUTO_TEST_CASE(picture_mxf_repeated_with_different_frame_types_is_written_twice_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_repeated_with_different_frame_types_is_written_twice_test_source", "test/data/flat_red.png");
+	auto film = film_with_picture_mxf_twice(
+		"picture_mxf_repeated_with_different_frame_types_is_written_twice_test", mxf, Film::ReuseBehaviour::RE_WRAP
+		);
+	for (auto content: film->content()) {
+		content->video->set_left_crop(10);
+	}
+	film->content()[1]->video->set_frame_type(VideoFrameType::THREE_D_LEFT_RIGHT);
+	make_picture_only_dcp(film);
+
+	BOOST_CHECK_EQUAL(picture_files_in_dcp(film), 2);
+}
+
+
+/** An encrypted film does not share a picture asset between reels: every KDM would list its key twice */
+BOOST_AUTO_TEST_CASE(picture_mxf_repeated_in_an_encrypted_film_is_written_twice_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_repeated_in_an_encrypted_film_is_written_twice_test_source", "test/data/flat_red.png");
+	auto film = film_with_picture_mxf_twice(
+		"picture_mxf_repeated_in_an_encrypted_film_is_written_twice_test", mxf, Film::ReuseBehaviour::RE_WRAP
+		);
+	for (auto content: film->content()) {
+		content->video->set_left_crop(10);
+	}
+	film->set_encrypt_picture(true);
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::MISSING_FFEC_IN_FEATURE,
+			dcp::VerificationNote::Code::MISSING_FFMC_IN_FEATURE,
+			dcp::VerificationNote::Code::INVALID_JPEG2000_GUARD_BITS_FOR_2K,
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA,
+			dcp::VerificationNote::Code::PARTIALLY_ENCRYPTED
+		});
+
+	BOOST_CHECK_EQUAL(picture_files_in_dcp(film), 2);
+}
+
+
+/** The hints, which use a writer that makes only text, can be made for a film that shares a picture asset */
+BOOST_AUTO_TEST_CASE(picture_mxf_repeated_hints_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_repeated_hints_test_source", "test/data/flat_red.png");
+	auto film = film_with_picture_mxf_twice("picture_mxf_repeated_hints_test", mxf, Film::ReuseBehaviour::RE_WRAP);
+	for (auto content: film->content()) {
+		content->video->set_left_crop(10);
+	}
+
+	Hints hints(film);
+	hints.start();
+	hints.join();
+	while (signal_manager->ui_idle()) {}
+	hints.rethrow();
+}
+
+
+/** Burnt-in text over one of the reels makes the reels differ, so each is written */
+BOOST_AUTO_TEST_CASE(picture_mxf_repeated_with_burnt_text_is_written_twice_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_repeated_with_burnt_text_is_written_twice_test_source", "test/data/flat_red.png");
+	auto film = film_with_picture_mxf_twice(
+		"picture_mxf_repeated_with_burnt_text_is_written_twice_test", mxf, Film::ReuseBehaviour::RE_WRAP
+		);
+	for (auto content: film->content()) {
+		content->video->set_left_crop(10);
+	}
+	auto subtitles = content_factory("test/data/15s.srt");
+	film->examine_and_add_content(subtitles);
+	BOOST_REQUIRE(!wait_for_jobs());
+	subtitles[0]->text[0]->set_burn(true);
+	subtitles[0]->set_position(film, dcpomatic::DCPTime());
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::MISSING_FFEC_IN_FEATURE,
+			dcp::VerificationNote::Code::MISSING_FFMC_IN_FEATURE,
+			dcp::VerificationNote::Code::INVALID_JPEG2000_GUARD_BITS_FOR_2K,
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA,
+			dcp::VerificationNote::Code::MISSING_SUBTITLE_LANGUAGE
+		});
+
+	BOOST_CHECK_EQUAL(picture_files_in_dcp(film), 2);
 }
 
 

@@ -71,7 +71,8 @@ public:
 		int reel_index,
 		int reel_count,
 		bool text_only,
-		boost::filesystem::path output_dir
+		boost::filesystem::path output_dir,
+		std::shared_ptr<dcp::J2KPictureAsset> shared_picture = {}
 		);
 
 	void write(std::shared_ptr<const dcp::Data> encoded, Frame frame, Eyes eyes);
@@ -81,6 +82,11 @@ public:
 	void write(PlayerText text, TextType type, boost::optional<DCPTextTrack> track, dcpomatic::DCPTimePeriod period, FontIdMap const& fonts, std::shared_ptr<dcpomatic::Font> chosen_interop_font);
 	void write(std::shared_ptr<const dcp::AtmosFrame> atmos, AtmosMetadata metadata);
 	void write(std::shared_ptr<dcp::MonoMPEG2PictureFrame> image);
+
+	/** The J2K picture asset of this reel, or null if it has none */
+	std::shared_ptr<dcp::J2KPictureAsset> picture_asset() const {
+		return _j2k_picture_asset;
+	}
 
 	void finish(boost::filesystem::path output_dcp);
 	std::shared_ptr<dcp::Reel> create_reel(
@@ -148,6 +154,8 @@ private:
 	/** picture asset writer, or 0 if we are not writing any picture because we already have one */
 	std::shared_ptr<dcp::J2KPictureAssetWriter> _j2k_picture_asset_writer;
 	std::shared_ptr<dcp::MPEG2PictureAssetWriter> _mpeg2_picture_asset_writer;
+	/** a picture asset written by another reel of this DCP, which this reel refers to, or null */
+	std::shared_ptr<dcp::J2KPictureAsset> _shared_picture;
 	/** entry point and duration to use in the CPL for a picture asset that we re-used, if they are not 0 and the asset's length */
 	Frame _picture_entry_point = 0;
 	boost::optional<Frame> _picture_duration;

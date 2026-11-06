@@ -24,6 +24,7 @@
 #include "frame_rate_change.h"
 #include "job.h"
 #include "overlaps.h"
+#include "text_content.h"
 #include "video_content.h"
 #include "video_mxf_content.h"
 #include "video_mxf_examiner.h"
@@ -153,6 +154,92 @@ VideoMXFContent::add_properties(shared_ptr<const Film> film, list<UserProperty>&
 {
 	Content::add_properties(film, p);
 	video->add_properties(p);
+}
+
+
+bool
+VideoMXFContent::written_alone_as_a_reel(shared_ptr<const Film> film) const
+{
+	if (!video || !video->use() || video->frame_type() != VideoFrameType::TWO_D || film->three_d() || film->video_encoding() != VideoEncoding::JPEG2000) {
+		return false;
+	}
+
+	/* Every KDM of an encrypted film would list the key of a shared picture asset once for each reel that refers to it */
+	if (film->encrypt_picture()) {
+		return false;
+	}
+
+	/* If the file goes into the DCP as it is, every reel that has it refers to the file */
+	if (film->reuse_behaviour() == Film::ReuseBehaviour::COPY && !assets(film).empty()) {
+		return false;
+	}
+
+	FrameRateChange const frc(film, shared_from_this());
+	if (frc.change_speed() || frc.skip() || frc.repeat() != 1) {
+		return false;
+	}
+
+	auto const frame_rate = static_cast<double>(film->video_frame_rate());
+	if (trim_start() != trim_start().round(frame_rate) || trim_end() != trim_end().round(frame_rate)) {
+		return false;
+	}
+
+	DCPTimePeriod const period(position(), end(film));
+	auto const reels = film->reels();
+	if (std::find(reels.begin(), reels.end(), period) == reels.end()) {
+		return false;
+	}
+
+	auto part = [](shared_ptr<const Content> c) {
+		return static_cast<bool>(c->video) && c->video->use();
+	};
+	auto const others = dcpomatic::overlaps(film, film->content(), part, period.from, period.to);
+	if (others.size() != 1 || others.front().get() != this) {
+		return false;
+	}
+
+	auto burnt = [](shared_ptr<const Content> c) {
+		return std::any_of(c->text.begin(), c->text.end(), [](shared_ptr<TextContent> t) { return t->use() && t->burn(); });
+	};
+	return dcpomatic::overlaps(film, film->content(), burnt, period.from, period.to).empty();
+}
+
+
+string
+VideoMXFContent::picture_digest(shared_ptr<const Film> film) const
+{
+	return fmt::format(
+		"{}|{}|{}|{}|{}|{}",
+		digest(),
+		trim_start().get(),
+		trim_end().get(),
+		video->identifier(),
+		film->video_frame_rate(),
+		film->video_bit_rate(VideoEncoding::JPEG2000)
+		);
+}
+
+
+shared_ptr<const VideoMXFContent>
+VideoMXFContent::shared_picture_source(shared_ptr<const Film> film) const
+{
+	if (!written_alone_as_a_reel(film)) {
+		return {};
+	}
+
+	auto const ours = picture_digest(film);
+	shared_ptr<const VideoMXFContent> found;
+	for (auto content: film->content()) {
+		auto other = std::dynamic_pointer_cast<const VideoMXFContent>(content);
+		if (!other || other.get() == this || other->position() >= position() || !other->written_alone_as_a_reel(film)) {
+			continue;
+		}
+		if (other->picture_digest(film) == ours && (!found || other->position() < found->position())) {
+			found = other;
+		}
+	}
+
+	return found;
 }
 
 

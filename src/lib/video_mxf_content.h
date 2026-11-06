@@ -57,5 +57,21 @@ public:
 	 */
 	std::vector<DCPAsset> assets(std::shared_ptr<const Film> film) const override;
 
+	/** @return an earlier content of the film that is a whole reel and whose image, as the film writes it, is exactly
+	 *  the same as this one's, so that this reel can refer to the picture asset of that reel instead of writing its
+	 *  own.  Null if there is none, or if this content's image is not written alone as a whole reel, or if the file
+	 *  goes into the DCP as it is.
+	 */
+	std::shared_ptr<const VideoMXFContent> shared_picture_source(std::shared_ptr<const Film> film) const;
+
 	static bool valid_mxf(boost::filesystem::path path);
+
+private:
+	/** @return true if the film writes this content's image on its own, as a function of the file and the settings of
+	 *  this content only, and it fills one reel of the film
+	 */
+	bool written_alone_as_a_reel(std::shared_ptr<const Film> film) const;
+
+	/** @return something that is the same for two contents if and only if the film writes the same image for them */
+	std::string picture_digest(std::shared_ptr<const Film> film) const;
 };
