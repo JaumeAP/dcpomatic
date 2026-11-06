@@ -83,6 +83,11 @@ public:
 	void write(std::shared_ptr<const dcp::AtmosFrame> atmos, AtmosMetadata metadata);
 	void write(std::shared_ptr<dcp::MonoMPEG2PictureFrame> image);
 
+	/** Write @param head (which is @param head_frames video frames long) before the reel's sound and @param tail after
+	 *  it, and have the CPL play only the reel's part.  Either may be null.
+	 */
+	void set_sound_ends(std::shared_ptr<const AudioBuffers> head, Frame head_frames, std::shared_ptr<const AudioBuffers> tail);
+
 	/** The J2K picture asset of this reel, or null if it has none */
 	std::shared_ptr<dcp::J2KPictureAsset> picture_asset() const {
 		return _j2k_picture_asset;
@@ -164,6 +169,12 @@ private:
 	/** entry point and duration to use in the CPL for a sound asset that we re-used, if they are not 0 and the asset's length */
 	Frame _sound_entry_point = 0;
 	boost::optional<Frame> _sound_duration;
+	/** sound to write before the reel's own sound (the head of a sound MXF before its trim), if any */
+	std::shared_ptr<const AudioBuffers> _sound_head;
+	/** sound to write after the reel's own sound (the tail of a sound MXF after its trim), if any */
+	std::shared_ptr<const AudioBuffers> _sound_tail;
+	/** true once some of the reel's own sound has been written */
+	bool _sound_written = false;
 	std::shared_ptr<dcp::TextAsset> _subtitle_asset;
 	std::map<DCPTextTrack, std::shared_ptr<dcp::TextAsset>> _closed_caption_assets;
 	std::shared_ptr<dcp::AtmosAsset> _atmos_asset;

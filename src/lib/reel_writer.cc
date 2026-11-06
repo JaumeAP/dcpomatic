@@ -513,6 +513,11 @@ ReelWriter::finish(boost::filesystem::path output_dcp)
 		_mpeg2_picture_asset.reset();
 	}
 
+	if (_sound_asset_writer && _sound_written && _sound_tail) {
+		/* The tail of a sound MXF that ends this reel goes after the reel's sound; the CPL's duration stops before it */
+		_sound_asset_writer->write(_sound_tail->data(), _sound_tail->channels(), _sound_tail->frames());
+	}
+
 	if (_sound_asset_writer && !_sound_asset_writer->finalize()) {
 		/* Nothing was written to the sound asset */
 		_sound_asset.reset();
@@ -711,8 +716,8 @@ ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReferencedReelAss
 		/* We have made a sound asset of our own.  Put it into the reel */
 		reel_asset = make_shared<dcp::ReelSoundAsset>(_sound_asset, _sound_entry_point);
 		if (_sound_duration) {
-			reel_asset->set_duration(*_sound_duration);
-			DCPOMATIC_ASSERT(_sound_entry_point + *_sound_duration <= reel_asset->intrinsic_duration());
+			/* If the reel got less sound than its length the check below says so, rather than an assert here */
+			reel_asset->set_duration(std::min<int64_t>(*_sound_duration, reel_asset->intrinsic_duration() - _sound_entry_point));
 		}
 		if (auto lang = film()->audio_language()) {
 			reel_asset->set_language(*lang);
@@ -968,7 +973,36 @@ ReelWriter::write(shared_ptr<const AudioBuffers> audio)
 	}
 
 	DCPOMATIC_ASSERT(audio);
+
+	if (!_sound_written && _sound_head) {
+		/* The head of a sound MXF that starts this reel goes before the reel's sound; the CPL's entry point skips it */
+		_sound_asset_writer->write(_sound_head->data(), _sound_head->channels(), _sound_head->frames());
+	}
+	_sound_written = true;
+
 	_sound_asset_writer->write(audio->data(), audio->channels(), audio->frames());
+}
+
+
+void
+ReelWriter::set_sound_ends(shared_ptr<const AudioBuffers> head, Frame head_frames, shared_ptr<const AudioBuffers> tail)
+{
+	if (!_sound_asset_writer) {
+		/* We write no sound of our own (it is re-used, or text-only), so there is nowhere to put a head or a tail */
+		return;
+	}
+
+	if (head) {
+		_sound_head = head;
+		_sound_entry_point = head_frames;
+	}
+	if (tail) {
+		_sound_tail = tail;
+	}
+	if (head || tail) {
+		/* The asset is longer than the reel: the CPL starts after the head and plays the reel's length */
+		_sound_duration = _period.duration().frames_round(film()->video_frame_rate());
+	}
 }
 
 

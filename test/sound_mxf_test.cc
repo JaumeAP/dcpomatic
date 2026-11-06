@@ -26,6 +26,7 @@
 
 
 #include "lib/audio_analysis.h"
+#include "lib/audio_buffers.h"
 #include "lib/audio_content.h"
 #include "lib/content_factory.h"
 #include "lib/film.h"
@@ -108,7 +109,8 @@ BOOST_AUTO_TEST_CASE(sound_mxf_makes_a_dcp_test)
 static boost::filesystem::path
 write_sound_mxf(
 	string name, int channels, bool labels, std::vector<int> silent, int sampling_rate = 48000, int edit_rate = 24, boost::optional<dcp::Key> key = {},
-	int seconds = 2
+	int seconds = 2,
+	bool markers = false
 	)
 {
 	auto const path = boost::filesystem::path("build") / "test" / (name + ".mxf");
@@ -124,18 +126,34 @@ write_sound_mxf(
 		);
 
 	int const block = sampling_rate / edit_rate;
-	std::vector<float> tone(block);
-	for (int i = 0; i < block; ++i) {
-		tone[i] = 0.5 * sin(2 * M_PI * 440 * i / static_cast<double>(sampling_rate));
-	}
+	auto make_tone = [block, sampling_rate](float level) {
+		std::vector<float> tone(block);
+		for (int i = 0; i < block; ++i) {
+			tone[i] = level * sin(2 * M_PI * 440 * i / static_cast<double>(sampling_rate));
+		}
+		return tone;
+	};
+	auto const tone = make_tone(0.5);
+	/* With markers, the first frame of the file is louder and the last quieter than the others */
+	auto const first_tone = make_tone(markers ? 0.8 : 0.5);
+	auto const last_tone = make_tone(markers ? 0.2 : 0.5);
 	std::vector<float> quiet(block, 0.0F);
 
-	std::vector<float const*> data(channels);
-	for (int c = 0; c < channels; ++c) {
-		data[c] = std::find(silent.begin(), silent.end(), c) == silent.end() ? tone.data() : quiet.data();
-	}
+	auto data_for = [&](std::vector<float> const& tone_to_use) {
+		std::vector<float const*> data(channels);
+		for (int c = 0; c < channels; ++c) {
+			data[c] = std::find(silent.begin(), silent.end(), c) == silent.end() ? tone_to_use.data() : quiet.data();
+		}
+		return data;
+	};
 
-	for (int i = 0; i < seconds * edit_rate; ++i) {
+	auto const normal_data = data_for(tone);
+	auto const first_data = data_for(first_tone);
+	auto const last_data = data_for(last_tone);
+
+	int const frames = seconds * edit_rate;
+	for (int i = 0; i < frames; ++i) {
+		auto const& data = i == 0 ? first_data : (i == frames - 1 ? last_data : normal_data);
 		writer->write(data.data(), channels, block);
 	}
 	writer->finalize();
@@ -352,6 +370,179 @@ BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_reused_test)
 	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), dcp::SoundAsset(mxf).id());
 	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 12);
 	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 30);
+}
+
+
+/** @return the largest absolute sample in channel 0 of frame @param frame of the sound MXF at @param file */
+static float
+frame_peak(boost::filesystem::path file, int frame)
+{
+	dcp::SoundAsset asset(file);
+	auto reader = asset.start_read();
+	reader->set_check_hmac(false);
+	auto const buffers = sound_mxf_frame_audio(reader->get_frame(frame), asset.channels());
+	float peak = 0;
+	for (int i = 0; i < buffers->frames(); ++i) {
+		peak = std::max(peak, std::abs(buffers->data(0)[i]));
+	}
+	return peak;
+}
+
+
+/** When a trimmed sound MXF has to be written again, the part that the trims cut off is kept in the sound asset and the
+ *  CPL cuts it: its entry point is the head and its duration is the reel's
+ */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_rewritten_keeps_head_and_tail_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_rewritten_keeps_head_and_tail_test_source", 6, true, {}, 48000, 24, {}, 3, true);
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_rewritten_keeps_head_and_tail_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->content()[0]->audio->set_gain(-3);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(6, 24));
+	film->content()[0]->set_trim_end(dcpomatic::ContentTime::from_frames(3, 24));
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::SoundAsset(mxf).id());
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), 72);
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 6);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 63);
+
+	/* The first frame of the file is first, the last is last, and the gain is on the head and the tail too */
+	auto const file = assets[0]->asset_ref()->file();
+	BOOST_REQUIRE(file);
+	auto const linear = pow(10.0, -3.0 / 20.0);
+	BOOST_CHECK_CLOSE(frame_peak(*file, 0), 0.8 * linear, 5);
+	BOOST_CHECK_CLOSE(frame_peak(*file, 5), 0.5 * linear, 5);
+	BOOST_CHECK_CLOSE(frame_peak(*file, 6), 0.5 * linear, 5);
+	BOOST_CHECK_CLOSE(frame_peak(*file, 71), 0.2 * linear, 5);
+}
+
+
+/** The head goes in the first reel that a sound MXF is in and the tail in the last */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_rewritten_head_and_tail_in_two_reels_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_rewritten_head_and_tail_in_two_reels_test_source", 6, true, {}, 48000, 24, {}, 3, true);
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_rewritten_head_and_tail_in_two_reels_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->content()[0]->audio->set_gain(-3);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(6, 24));
+	film->content()[0]->set_trim_end(dcpomatic::ContentTime::from_frames(3, 24));
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_seconds(1) });
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), 30);
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 6);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 24);
+	BOOST_CHECK_EQUAL(assets[1]->intrinsic_duration(), 42);
+	BOOST_CHECK_EQUAL(assets[1]->entry_point().get_value_or(0), 0);
+	BOOST_CHECK_EQUAL(assets[1]->actual_duration(), 39);
+
+	auto const linear = pow(10.0, -3.0 / 20.0);
+	auto const first = assets[0]->asset_ref()->file();
+	auto const second = assets[1]->asset_ref()->file();
+	BOOST_REQUIRE(first);
+	BOOST_REQUIRE(second);
+	BOOST_CHECK_CLOSE(frame_peak(*first, 0), 0.8 * linear, 5);
+	BOOST_CHECK_CLOSE(frame_peak(*second, 41), 0.2 * linear, 5);
+}
+
+
+/** Only as much of the head and tail as is useful is kept, however long the part cut off is */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_rewritten_head_is_limited_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_rewritten_head_is_limited_test_source", 6, true, {}, 48000, 24, {}, 30);
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_rewritten_head_is_limited_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->content()[0]->audio->set_gain(-3);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_seconds(29));
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 24);
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 240);
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), 264);
+}
+
+
+/** With a delay the head and tail would not join the reel's sound, so nothing is kept */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_rewritten_with_delay_keeps_nothing_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_rewritten_with_delay_keeps_nothing_test_source", 6, true, {}, 48000, 24, {}, 3);
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_rewritten_with_delay_keeps_nothing_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->content()[0]->audio->set_delay(40);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(6, 24));
+	film->content()[0]->set_trim_end(dcpomatic::ContentTime::from_frames(3, 24));
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 0);
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), assets[0]->actual_duration());
+}
+
+
+/** A trim that is not a whole number of frames keeps no head and tail */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_rewritten_with_part_frame_trim_keeps_nothing_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_rewritten_with_part_frame_trim_keeps_nothing_test_source", 6, true, {}, 48000, 24, {}, 3);
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_rewritten_with_part_frame_trim_keeps_nothing_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->content()[0]->audio->set_gain(-3);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(6, 24) + dcpomatic::ContentTime::from_seconds(0.5 / 24));
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 0);
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), assets[0]->actual_duration());
+}
+
+
+/** Only a start trim keeps only a head */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_rewritten_keeps_head_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_rewritten_keeps_head_test_source", 6, true, {}, 48000, 24, {}, 3);
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_rewritten_keeps_head_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->content()[0]->audio->set_gain(-3);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(6, 24));
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), 72);
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 6);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 66);
+}
+
+
+/** With other sound over the file nothing is kept: the asset is the reel's sound and no more */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_rewritten_with_other_sound_keeps_nothing_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_rewritten_with_other_sound_keeps_nothing_test_source", 6, true, {}, 48000, 24, {}, 3);
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_rewritten_with_other_sound_keeps_nothing_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->content()[0]->audio->set_gain(-3);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(6, 24));
+	film->content()[0]->set_trim_end(dcpomatic::ContentTime::from_frames(3, 24));
+	auto other = content_factory("test/data/white.wav");
+	film->examine_and_add_content(other);
+	BOOST_REQUIRE(!wait_for_jobs());
+	other[0]->set_position(film, dcpomatic::DCPTime());
+	other[0]->set_trim_end(dcpomatic::ContentTime(other[0]->full_length(film).get()) - dcpomatic::ContentTime::from_frames(63, 24));
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), 63);
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 0);
 }
 
 

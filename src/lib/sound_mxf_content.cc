@@ -28,6 +28,7 @@
 #include "job.h"
 #include "sound_mxf_content.h"
 #include "sound_mxf_examiner.h"
+#include "util.h"
 #include <asdcp/KM_log.h>
 #include <dcp/exceptions.h>
 #include <dcp/sound_asset.h>
@@ -204,6 +205,92 @@ DCPTime
 SoundMXFContent::approximate_length() const
 {
 	return DCPTime::from_frames(audio->stream()->length(), audio->stream()->frame_rate());
+}
+
+
+/** The most that is kept of the part of a file that a trim cuts off, at each end, in seconds.  The sync pips are a few seconds
+ *  long, and a file can be much longer than the part of it that is used.
+ */
+static int const max_kept_seconds = 10;
+
+
+bool
+SoundMXFContent::frames_align_with(shared_ptr<const Film> film) const
+{
+	dcp::SoundAsset const asset(path(0));
+	auto const edit_rate = asset.edit_rate();
+	if (edit_rate.denominator != 1 || edit_rate.numerator != film->video_frame_rate() || FrameRateChange(film, shared_from_this()).change_speed()) {
+		return false;
+	}
+
+	/* A delay moves the sound against the head and tail, and a trim that is not a whole number of frames leaves the joint
+	 * between the head and the reel's sound off by part of a frame.
+	 */
+	auto const rate = static_cast<double>(edit_rate.numerator);
+	return audio->delay() == 0 && trim_start() == trim_start().round(rate) && trim_end() == trim_end().round(rate);
+}
+
+
+Frame
+SoundMXFContent::head_frames() const
+{
+	dcp::SoundAsset const asset(path(0));
+	auto const edit_rate = asset.edit_rate();
+	auto const rate = static_cast<double>(edit_rate.numerator) / edit_rate.denominator;
+	return std::min(trim_start().frames_round(rate), static_cast<Frame>(max_kept_seconds * rate));
+}
+
+
+shared_ptr<const AudioBuffers>
+SoundMXFContent::head_audio(shared_ptr<const Film> film) const
+{
+	auto const frames = head_frames();
+	if (frames == 0 || audio->stream()->frame_rate() != film->audio_frame_rate()) {
+		return {};
+	}
+
+	/* The part of the head that is next to the reel's sound */
+	dcp::SoundAsset const asset(path(0));
+	auto const edit_rate = asset.edit_rate();
+	auto const trim = trim_start().frames_round(static_cast<double>(edit_rate.numerator) / edit_rate.denominator);
+	return frames_audio(film, trim - frames, trim);
+}
+
+
+shared_ptr<const AudioBuffers>
+SoundMXFContent::tail_audio(shared_ptr<const Film> film) const
+{
+	dcp::SoundAsset const asset(path(0));
+	auto const edit_rate = asset.edit_rate();
+	auto const rate = static_cast<double>(edit_rate.numerator) / edit_rate.denominator;
+	auto const trim = trim_end().frames_round(rate);
+	auto const frames = std::min(trim, static_cast<Frame>(max_kept_seconds * rate));
+	if (frames == 0 || audio->stream()->frame_rate() != film->audio_frame_rate()) {
+		return {};
+	}
+
+	/* The part of the tail that is next to the reel's sound */
+	auto const from = asset.intrinsic_duration() - trim;
+	return frames_audio(film, from, from + frames);
+}
+
+
+shared_ptr<const AudioBuffers>
+SoundMXFContent::frames_audio(shared_ptr<const Film> film, Frame from, Frame to) const
+{
+	dcp::SoundAsset asset(path(0));
+	auto reader = asset.start_read();
+	reader->set_check_hmac(false);
+
+	auto const mapping = audio->stream()->mapping();
+	auto result = make_shared<AudioBuffers>(film->audio_channels(), 0);
+	for (auto frame = from; frame < to; ++frame) {
+		result->append(remap(sound_mxf_frame_audio(reader->get_frame(frame), asset.channels()), film->audio_channels(), mapping));
+	}
+
+	/* A change is made on the whole of the file, so the gain goes on these frames too */
+	result->apply_gain(audio->gain());
+	return result;
 }
 
 

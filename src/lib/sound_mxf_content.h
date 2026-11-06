@@ -73,6 +73,21 @@ public:
 	 */
 	std::vector<DCPAsset> assets(std::shared_ptr<const Film> film) const override;
 
+	/** @return true if the frames of the file line up with the film's: its edit rate is the film's frame rate and the
+	 *  picture it plays with does not change its speed.  Then a trim in frames of the file is a trim in frames of the DCP.
+	 */
+	bool frames_align_with(std::shared_ptr<const Film> film) const;
+
+	/** @return the frames of the file before the start trim, through the audio mapping to the film's channels and with the
+	 *  content's gain, or nothing if there is no start trim or the file's sampling rate is not the film's (a head resampled
+	 *  on its own would not be a whole number of frames).  These are the sync pips at the head of the file.
+	 */
+	std::shared_ptr<const AudioBuffers> head_audio(std::shared_ptr<const Film> film) const;
+	/** @return the length of head_audio() in frames of the file */
+	Frame head_frames() const;
+	/** @return the frames of the file after the end trim, as head_audio(), or nothing if there is no end trim */
+	std::shared_ptr<const AudioBuffers> tail_audio(std::shared_ptr<const Film> film) const;
+
 	/** @return one entry for each channel of the file: true if the channel has sound (see SoundMXFExaminer) */
 	std::vector<bool> channels_with_sound() const {
 		boost::mutex::scoped_lock lm(_mutex);
@@ -82,5 +97,8 @@ public:
 	static bool valid_mxf(boost::filesystem::path path);
 
 private:
+	/** @return the sound of frames [from, to) of the file, mapped for the film and with the content's gain */
+	std::shared_ptr<const AudioBuffers> frames_audio(std::shared_ptr<const Film> film, Frame from, Frame to) const;
+
 	std::vector<bool> _channels_with_sound;
 };

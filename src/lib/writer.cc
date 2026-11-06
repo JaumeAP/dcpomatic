@@ -30,7 +30,9 @@
 #include "film_util.h"
 #include "frame_info.h"
 #include "job.h"
+#include "overlaps.h"
 #include "reel_writer.h"
+#include "sound_mxf_content.h"
 #include "text_content.h"
 #include "util.h"
 #include "version.h"
@@ -105,6 +107,37 @@ Writer::Writer(weak_ptr<const Film> weak_film, weak_ptr<Job> weak_job, boost::fi
 		}
 		_reels.emplace_back(weak_film, p, job, reel_index++, reels.size(), text_only, _output_dir, shared_picture);
 		LOG_GENERAL("  {} --> {}", to_string(p.from), to_string(p.to));
+	}
+
+	/* A sound MXF that starts or ends a reel, with no other sound over it, keeps the part of its file that the trim cuts
+	 * off, so that the sync pips at its head and tail stay in the DCP's sound asset; the CPL plays only the part inside
+	 * the trim.  With Atmos the sync signal must start with the reel, and an audio processor would not process a head
+	 * or tail, so then nothing is kept.
+	 */
+	auto const has_audio = [](shared_ptr<const Content> c) { return static_cast<bool>(c->audio); };
+	if (!text_only && !film()->contains_atmos_content() && !film()->audio_processor()) {
+		for (auto& reel: _reels) {
+			for (auto content: film()->content()) {
+				auto sound_mxf = dynamic_pointer_cast<const SoundMXFContent>(content);
+				if (!sound_mxf || !sound_mxf->frames_align_with(film())) {
+					continue;
+				}
+				if (dcpomatic::overlaps(film(), film()->content(), has_audio, content->position(), content->end(film())).size() != 1) {
+					continue;
+				}
+				shared_ptr<const AudioBuffers> head;
+				shared_ptr<const AudioBuffers> tail;
+				if (sound_mxf->position() == reel.period().from) {
+					head = sound_mxf->head_audio(film());
+				}
+				if (sound_mxf->end(film()) == reel.period().to) {
+					tail = sound_mxf->tail_audio(film());
+				}
+				if (head || tail) {
+					reel.set_sound_ends(head, sound_mxf->head_frames(), tail);
+				}
+			}
+		}
 	}
 
 	_last_written.resize(reels.size());
