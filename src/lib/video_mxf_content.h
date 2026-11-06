@@ -52,5 +52,10 @@ public:
 	dcpomatic::DCPTime approximate_length() const override;
 	void add_properties(std::shared_ptr<const Film> film, std::list<UserProperty>& p) const override;
 
+	/** @return the file as an asset that can go into the DCP as it is, with any trim as its entry point and duration, or
+	 *  nothing if the film would not write the file's own image
+	 */
+	std::vector<DCPAsset> assets(std::shared_ptr<const Film> film) const override;
+
 	static bool valid_mxf(boost::filesystem::path path);
 };

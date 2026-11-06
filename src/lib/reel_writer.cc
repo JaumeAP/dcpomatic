@@ -98,7 +98,7 @@ ReelWriter::reuse_existing_asset(DCPAsset const& existing_asset, shared_ptr<Job>
 	LOG_GENERAL("Re-using complete asset {}", existing_asset.file().string());
 	/* We already have a complete picture asset that we can just re-use */
 	/* XXX: what about if the encryption key changes? */
-	auto new_asset_filename = _output_dir / existing_asset.file().filename();
+	auto new_asset_filename = _output_dir / existing_asset.name_in_dcp();
 	if (new_asset_filename != existing_asset.file()) {
 		if (job) {
 			job->sub(_("Copying existing asset"));
@@ -119,9 +119,13 @@ ReelWriter::reuse_existing_asset(DCPAsset const& existing_asset, shared_ptr<Job>
 		} else {
 			_mpeg2_picture_asset = make_shared<dcp::MonoMPEG2PictureAsset>(new_asset_filename);
 		}
+		_picture_entry_point = existing_asset.entry_point();
+		_picture_duration = existing_asset.duration();
 		break;
 	case DCPAsset::Type::AUDIO:
 		_sound_asset = make_shared<dcp::SoundAsset>(new_asset_filename);
+		_sound_entry_point = existing_asset.entry_point();
+		_sound_duration = existing_asset.duration();
 		break;
 	default:
 		break;
@@ -556,14 +560,14 @@ ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReferencedReelA
 	if (_j2k_picture_asset) {
 		/* We have made a picture asset of our own.  Put it into the reel */
 		if (auto mono = dynamic_pointer_cast<dcp::MonoJ2KPictureAsset>(_j2k_picture_asset)) {
-			reel_asset = make_shared<dcp::ReelMonoPictureAsset>(mono, 0);
+			reel_asset = make_shared<dcp::ReelMonoPictureAsset>(mono, _picture_entry_point);
 		}
 
 		if (auto stereo = dynamic_pointer_cast<dcp::StereoJ2KPictureAsset>(_j2k_picture_asset)) {
-			reel_asset = make_shared<dcp::ReelStereoPictureAsset>(stereo, 0);
+			reel_asset = make_shared<dcp::ReelStereoPictureAsset>(stereo, _picture_entry_point);
 		}
 	} else if (_mpeg2_picture_asset) {
-		reel_asset = make_shared<dcp::ReelMonoPictureAsset>(_mpeg2_picture_asset, 0);
+		reel_asset = make_shared<dcp::ReelMonoPictureAsset>(_mpeg2_picture_asset, _picture_entry_point);
 	} else {
 		LOG_GENERAL("no picture asset of our own; look through {}", refs.size());
 		/* We don't have a picture asset of our own; hopefully we have one to reference */
@@ -585,6 +589,10 @@ ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReferencedReelA
 	Frame const period_duration = _period.duration().frames_round(film()->video_frame_rate());
 
 	DCPOMATIC_ASSERT(reel_asset);
+	if (_picture_duration && (_j2k_picture_asset || _mpeg2_picture_asset)) {
+		reel_asset->set_duration(*_picture_duration);
+		DCPOMATIC_ASSERT(reel_asset->entry_point().get_value_or(0) + *_picture_duration <= reel_asset->intrinsic_duration());
+	}
 	if (reel_asset->duration() != period_duration) {
 		throw ProgrammingError(
 			__FILE__, __LINE__,
@@ -609,7 +617,11 @@ ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReferencedReelAss
 
 	if (_sound_asset) {
 		/* We have made a sound asset of our own.  Put it into the reel */
-		reel_asset = make_shared<dcp::ReelSoundAsset>(_sound_asset, 0);
+		reel_asset = make_shared<dcp::ReelSoundAsset>(_sound_asset, _sound_entry_point);
+		if (_sound_duration) {
+			reel_asset->set_duration(*_sound_duration);
+			DCPOMATIC_ASSERT(_sound_entry_point + *_sound_duration <= reel_asset->intrinsic_duration());
+		}
 		if (auto lang = film()->audio_language()) {
 			reel_asset->set_language(*lang);
 		}

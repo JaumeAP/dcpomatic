@@ -29,6 +29,7 @@
 
 
 #include "change_signaller.h"
+#include "dcp_asset.h"
 #include "dcpomatic_time.h"
 #include "path_behaviour.h"
 #include "signaller.h"
@@ -122,6 +123,11 @@ public:
 	 *  REELTYPE_BY_VIDEO_CONTENT is in use.
 	 */
 	virtual std::list<dcpomatic::DCPTime> reel_split_points(std::shared_ptr<const Film>) const;
+
+	/** @return the assets of this content that could be put into a DCP as they are */
+	virtual std::vector<DCPAsset> assets(std::shared_ptr<const Film>) const {
+		return {};
+	}
 
 	std::shared_ptr<Content> clone() const;
 	/** @return a clone at position 0 with no trims and no fades.  Setting those through the setters would queue change signals for the

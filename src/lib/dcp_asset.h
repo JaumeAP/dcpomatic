@@ -19,8 +19,13 @@
 */
 
 
+#pragma once
+
+
 #include "dcpomatic_time.h"
+#include "types.h"
 #include <boost/filesystem.hpp>
+#include <boost/optional.hpp>
 
 
 class DCPAsset
@@ -32,10 +37,24 @@ public:
 		TEXT
 	};
 
-	DCPAsset(Type type, boost::filesystem::path file, dcpomatic::DCPTimePeriod period)
+	/** @param entry_point first frame of the asset to be played, if it is not the first
+	 *  @param duration number of frames of the asset to be played, if it is not all that is after the entry point
+	 *  @param name_in_dcp name for the file in the DCP's folder, if it is not to be the file's own name
+	 */
+	DCPAsset(
+		Type type,
+		boost::filesystem::path file,
+		dcpomatic::DCPTimePeriod period,
+		Frame entry_point = 0,
+		boost::optional<Frame> duration = {},
+		boost::optional<boost::filesystem::path> name_in_dcp = {}
+		)
 		: _type(type)
 		, _file(file)
 		, _period(period)
+		, _entry_point(entry_point)
+		, _duration(duration)
+		, _name_in_dcp(name_in_dcp)
 	{}
 
 	Type type() const {
@@ -47,10 +66,23 @@ public:
 	dcpomatic::DCPTimePeriod period() const {
 		return _period;
 	}
+	Frame entry_point() const {
+		return _entry_point;
+	}
+	boost::optional<Frame> duration() const {
+		return _duration;
+	}
+	/** @return the name for the file in the DCP's folder: the file's own name unless another was given */
+	boost::filesystem::path name_in_dcp() const {
+		return _name_in_dcp.get_value_or(_file.filename());
+	}
 
 private:
 	Type _type;
 	boost::filesystem::path _file;
 	dcpomatic::DCPTimePeriod _period;
+	Frame _entry_point = 0;
+	boost::optional<Frame> _duration;
+	boost::optional<boost::filesystem::path> _name_in_dcp;
 };
 

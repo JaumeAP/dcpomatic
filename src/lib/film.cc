@@ -54,6 +54,7 @@
 #include "playlist.h"
 #include "ratio.h"
 #include "screen.h"
+#include "sound_mxf_content.h"
 #include "text_content.h"
 #include "transcode_job.h"
 #include "upload_job.h"
@@ -2807,7 +2808,7 @@ Film::reusable_dcp_assets() const
 		return overlaps;
 	};
 
-	auto video_is_reusable = [](shared_ptr<const DCPContent> dcp, vector<shared_ptr<const Content>> const& overlaps) {
+	auto video_is_reusable = [](shared_ptr<const Content> dcp, vector<shared_ptr<const Content>> const& overlaps) {
 		/* Check that none of the texts in any of the overlaps are burnt-in */
 		return std::none_of(overlaps.begin(), overlaps.end(), [dcp](shared_ptr<const Content> c) {
 			return c != dcp && std::any_of(c->text.begin(), c->text.end(), [](shared_ptr<const TextContent> tc) {
@@ -2816,11 +2817,12 @@ Film::reusable_dcp_assets() const
 		});
 	};
 
-	auto audio_is_reusable = [this](shared_ptr<const DCPContent> dcp, vector<shared_ptr<const Content>> const& overlaps) {
+	auto audio_is_reusable = [this](shared_ptr<const Content> dcp, vector<shared_ptr<const Content>> const& overlaps) {
 		if (dcp->audio->mapping().input_channels() != audio_channels()) {
 			return false;
 		}
-		if (!dcp->audio->mapping().mapped_one_to_one()) {
+		/* A sound MXF has checked its own mapping, which may leave its silent channels out */
+		if (!dynamic_pointer_cast<const SoundMXFContent>(dcp) && !dcp->audio->mapping().mapped_one_to_one()) {
 			return false;
 		}
 		return std::none_of(overlaps.begin(), overlaps.end(), [dcp](shared_ptr<const Content> c) {
@@ -2828,7 +2830,7 @@ Film::reusable_dcp_assets() const
 		});
 	};
 
-	auto text_is_reusable = [](shared_ptr<const DCPContent> dcp, vector<shared_ptr<const Content>> const& overlaps) {
+	auto text_is_reusable = [](shared_ptr<const Content> dcp, vector<shared_ptr<const Content>> const& overlaps) {
 		return std::none_of(overlaps.begin(), overlaps.end(), [dcp](shared_ptr<const Content> c) {
 			return c != dcp && std::any_of(c->text.begin(), c->text.end(), [](shared_ptr<const TextContent> tc) {
 				return tc->use() && !tc->burn();
@@ -2841,29 +2843,29 @@ Film::reusable_dcp_assets() const
 			if ((dcp->standard() == dcp::Standard::INTEROP) != interop()) {
 				continue;
 			}
-			for (auto asset: dcp->assets(shared_from_this())) {
-				if (std::find(film_reels.begin(), film_reels.end(), asset.period()) == film_reels.end()) {
-					/* The asset's period does not match any reel in the DCP we will make */
-					continue;
+		}
+		for (auto asset: i->assets(shared_from_this())) {
+			if (std::find(film_reels.begin(), film_reels.end(), asset.period()) == film_reels.end()) {
+				/* The asset's period does not match any reel in the DCP we will make */
+				continue;
+			}
+			auto overlaps = overlapping_content(asset.period());
+			switch (asset.type()) {
+			case DCPAsset::Type::VIDEO:
+				if (video_is_reusable(i, overlaps)) {
+					reusable.push_back(asset);
 				}
-				auto overlaps = overlapping_content(asset.period());
-				switch (asset.type()) {
-				case DCPAsset::Type::VIDEO:
-					if (video_is_reusable(dcp, overlaps)) {
-						reusable.push_back(asset);
-					}
-					break;
-				case DCPAsset::Type::AUDIO:
-					if (audio_is_reusable(dcp, overlaps)) {
-						reusable.push_back(asset);
-					}
-					break;
-				case DCPAsset::Type::TEXT:
-					if (text_is_reusable(dcp, overlaps)) {
-						reusable.push_back(asset);
-					}
-					break;
+				break;
+			case DCPAsset::Type::AUDIO:
+				if (audio_is_reusable(i, overlaps)) {
+					reusable.push_back(asset);
 				}
+				break;
+			case DCPAsset::Type::TEXT:
+				if (text_is_reusable(i, overlaps)) {
+					reusable.push_back(asset);
+				}
+				break;
 			}
 		}
 	}

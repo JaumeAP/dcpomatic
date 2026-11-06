@@ -148,8 +148,14 @@ private:
 	/** picture asset writer, or 0 if we are not writing any picture because we already have one */
 	std::shared_ptr<dcp::J2KPictureAssetWriter> _j2k_picture_asset_writer;
 	std::shared_ptr<dcp::MPEG2PictureAssetWriter> _mpeg2_picture_asset_writer;
+	/** entry point and duration to use in the CPL for a picture asset that we re-used, if they are not 0 and the asset's length */
+	Frame _picture_entry_point = 0;
+	boost::optional<Frame> _picture_duration;
 	std::shared_ptr<dcp::SoundAsset> _sound_asset;
 	std::shared_ptr<dcp::SoundAssetWriter> _sound_asset_writer;
+	/** entry point and duration to use in the CPL for a sound asset that we re-used, if they are not 0 and the asset's length */
+	Frame _sound_entry_point = 0;
+	boost::optional<Frame> _sound_duration;
 	std::shared_ptr<dcp::TextAsset> _subtitle_asset;
 	std::map<DCPTextTrack, std::shared_ptr<dcp::TextAsset>> _closed_caption_assets;
 	std::shared_ptr<dcp::AtmosAsset> _atmos_asset;

@@ -310,3 +310,166 @@ BOOST_AUTO_TEST_CASE(sound_mxf_properties_test)
 }
 
 
+/** @return the sound reel assets of the first CPL of the DCP that @param film made, one for each reel */
+static std::vector<std::shared_ptr<dcp::ReelSoundAsset>>
+dcp_sound_assets(std::shared_ptr<Film> film)
+{
+	dcp::DCP dcp(film->dir(film->dcp_name()));
+	dcp.read();
+	BOOST_REQUIRE_EQUAL(dcp.cpls().size(), 1U);
+	std::vector<std::shared_ptr<dcp::ReelSoundAsset>> assets;
+	for (auto reel: dcp.cpls()[0]->reels()) {
+		BOOST_REQUIRE(reel->main_sound());
+		assets.push_back(reel->main_sound());
+	}
+	return assets;
+}
+
+
+/** Make a DCP of @param film, ignoring the notes that a film of only sound brings */
+static void
+make_sound_only_dcp(std::shared_ptr<Film> film)
+{
+	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
+}
+
+
+/** With ReuseBehaviour::COPY a sound MXF that only a trim changes goes into the DCP as it is, and the CPL makes the trim */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_reused_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_reused_test_source", 6, true, {});
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_reused_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(12, 24));
+	film->content()[0]->set_trim_end(dcpomatic::ContentTime::from_frames(6, 24));
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), dcp::SoundAsset(mxf).id());
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 12);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 30);
+}
+
+
+/** A sound MXF with silent channels that are not mapped is still reused: the silence is in the file */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_silent_channels_are_reused_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_silent_channels_are_reused_test_source", 8, true, { 6, 7 });
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_silent_channels_are_reused_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), dcp::SoundAsset(mxf).id());
+}
+
+
+/** A sound MXF whose channels that have sound are not mapped one to one is written again */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_swapped_channels_are_not_reused_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_swapped_channels_are_not_reused_test_source", 6, true, {});
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_swapped_channels_are_not_reused_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	auto mapping = film->content()[0]->audio->stream()->mapping();
+	mapping.set(0, 0, 0);
+	mapping.set(0, 1, 1);
+	mapping.set(1, 1, 0);
+	mapping.set(1, 0, 1);
+	film->content()[0]->audio->stream()->set_mapping(mapping);
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::SoundAsset(mxf).id());
+}
+
+
+/** A sound MXF with a gain is written again */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_gain_is_not_reused_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_gain_is_not_reused_test_source", 6, true, {});
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_gain_is_not_reused_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->content()[0]->audio->set_gain(-3);
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::SoundAsset(mxf).id());
+}
+
+
+/** A sound MXF is written again when the film does not copy */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_re_wrap_is_not_reused_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_re_wrap_is_not_reused_test_source", 6, true, {});
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_re_wrap_is_not_reused_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::RE_WRAP);
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::SoundAsset(mxf).id());
+}
+
+
+/** A sound MXF with other sound over it is written again */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_other_sound_is_not_reused_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_other_sound_is_not_reused_test_source", 6, true, {});
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_other_sound_is_not_reused_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	/* The WAV is cut to 1 second and starts with the MXF, so the reel is still the MXF's period and only the other
+	 * sound can stop the MXF being re-used.
+	 */
+	auto other = content_factory("test/data/white.wav");
+	film->examine_and_add_content(other);
+	BOOST_REQUIRE(!wait_for_jobs());
+	other[0]->set_position(film, dcpomatic::DCPTime());
+	other[0]->set_trim_end(dcpomatic::ContentTime(other[0]->full_length(film).get()) - dcpomatic::ContentTime::from_seconds(1));
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::SoundAsset(mxf).id());
+}
+
+
+/** Two different sound MXFs with the same file name, one in each of two reels, are both in the DCP */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_same_file_name_test)
+{
+	auto copy_as_sound_mxf = [](boost::filesystem::path from, string directory) {
+		auto const dir = boost::filesystem::path("build") / "test" / directory;
+		boost::filesystem::remove_all(dir);
+		boost::filesystem::create_directories(dir);
+		boost::filesystem::copy_file(from, dir / "sound.mxf");
+		return dir / "sound.mxf";
+	};
+
+	auto const first = copy_as_sound_mxf(
+		write_sound_mxf("sound_mxf_dcpasset_same_file_name_test_source1", 6, true, {}), "sound_mxf_dcpasset_same_file_name_test_dir1"
+		);
+	auto const second = copy_as_sound_mxf(
+		write_sound_mxf("sound_mxf_dcpasset_same_file_name_test_source2", 6, true, {}), "sound_mxf_dcpasset_same_file_name_test_dir2"
+		);
+
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_same_file_name_test", first);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	auto content = content_factory(second);
+	film->examine_and_add_content(content);
+	BOOST_REQUIRE(!wait_for_jobs());
+	content[0]->set_position(film, dcpomatic::DCPTime::from_seconds(2));
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_seconds(2) });
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), dcp::SoundAsset(first).id());
+	BOOST_CHECK_EQUAL(assets[1]->asset_ref().id(), dcp::SoundAsset(second).id());
+	BOOST_CHECK(assets[0]->asset_ref().id() != assets[1]->asset_ref().id());
+}
+
+

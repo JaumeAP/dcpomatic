@@ -267,7 +267,7 @@ public:
 
 	std::list<dcpomatic::DCPTimePeriod> reels(std::shared_ptr<const Film> film) const;
 
-	std::vector<DCPAsset> assets(std::shared_ptr<const Film> film) const;
+	std::vector<DCPAsset> assets(std::shared_ptr<const Film> film) const override;
 
 private:
 	friend struct reels_test5;

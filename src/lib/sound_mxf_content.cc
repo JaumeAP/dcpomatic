@@ -35,6 +35,7 @@
 #include <dcp/sound_frame.h>
 #include <libxml++/libxml++.h>
 #include <climits>
+#include <cmath>
 
 #include "i18n.h"
 
@@ -203,6 +204,84 @@ DCPTime
 SoundMXFContent::approximate_length() const
 {
 	return DCPTime::from_frames(audio->stream()->length(), audio->stream()->frame_rate());
+}
+
+
+vector<DCPAsset>
+SoundMXFContent::assets(shared_ptr<const Film> film) const
+{
+	if (!audio || !audio->stream()) {
+		return {};
+	}
+
+	dcp::SoundAsset const asset(path(0));
+	auto const rate = film->video_frame_rate();
+
+	if (asset.edit_rate().numerator != rate || asset.edit_rate().denominator != 1) {
+		return {};
+	}
+
+	if ((asset.standard() == dcp::Standard::INTEROP) != film->interop()) {
+		return {};
+	}
+
+	if (asset.sampling_rate() != film->audio_frame_rate() || asset.channels() != film->audio_channels()) {
+		return {};
+	}
+
+	/* The film would write sound that is not the file's: the key of an encrypted sound is the film's,
+	 * a processor changes the sound, and the sound of a film with Atmos has the Atmos sync signal in it.
+	 */
+	if (film->encrypt_sound() || film->audio_processor() || film->contains_atmos_content()) {
+		return {};
+	}
+
+	if (audio->gain() != 0 || audio->delay() != 0 || audio->fade_in() != ContentTime() || audio->fade_out() != ContentTime()) {
+		return {};
+	}
+
+	if (FrameRateChange(film, shared_from_this()).change_speed()) {
+		return {};
+	}
+
+	/* The channels that have sound must go one to one to the DCP; the others are silent, so they may be mapped or not */
+	auto const mapping = audio->stream()->mapping();
+	auto const with_sound = channels_with_sound();
+	for (int input = 0; input < audio->stream()->channels(); ++input) {
+		auto const has_sound = static_cast<size_t>(input) >= with_sound.size() || with_sound[input];
+		bool one_to_one = true;
+		bool none = true;
+		for (int output = 0; output < mapping.output_channels(); ++output) {
+			auto const gain = mapping.get(input, output);
+			if (std::abs(gain - (input == output ? 1.0F : 0.0F)) > 1e-6) {
+				one_to_one = false;
+			}
+			if (std::abs(gain) > 1e-6) {
+				none = false;
+			}
+		}
+		if (!one_to_one && (has_sound || !none)) {
+			return {};
+		}
+	}
+
+	/* A trim of audio can be any number of samples, but an entry point and a duration are whole frames */
+	auto const frame_rate = static_cast<double>(rate);
+	if (trim_start() != trim_start().round(frame_rate) || trim_end() != trim_end().round(frame_rate)) {
+		return {};
+	}
+
+	DCPTimePeriod const period(position(), end(film));
+	return {
+		DCPAsset(
+			DCPAsset::Type::AUDIO,
+			path(0),
+			period,
+			trim_start().frames_round(frame_rate),
+			period.duration().frames_round(rate),
+			boost::filesystem::path(fmt::format("pcm_{}.mxf", asset.id()))
+			)
+	};
 }
 
 

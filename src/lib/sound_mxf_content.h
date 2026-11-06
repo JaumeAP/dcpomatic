@@ -68,6 +68,11 @@ public:
 	dcpomatic::DCPTime approximate_length() const override;
 	void add_properties(std::shared_ptr<const Film> film, std::list<UserProperty>& p) const override;
 
+	/** @return the file as an asset that can go into the DCP as it is, with any trim as its entry point and duration, or
+	 *  nothing if the film would not write the file's own sound
+	 */
+	std::vector<DCPAsset> assets(std::shared_ptr<const Film> film) const override;
+
 	/** @return one entry for each channel of the file: true if the channel has sound (see SoundMXFExaminer) */
 	std::vector<bool> channels_with_sound() const {
 		boost::mutex::scoped_lock lm(_mutex);
