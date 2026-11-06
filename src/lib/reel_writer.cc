@@ -53,6 +53,9 @@
 #include <dcp/stereo_j2k_picture_asset.h>
 #include <dcp/text_image.h>
 #include <fmt/format.h>
+#ifdef __APPLE__
+#include <sys/clonefile.h>
+#endif
 
 #include "i18n.h"
 
@@ -92,6 +95,34 @@ mxf_metadata()
 }
 
 
+/** @return the ID of the asset in @param file, which is an asset of type @param type, or nothing if it cannot be read as one */
+static optional<string>
+asset_id(DCPAsset::Type type, boost::filesystem::path file)
+{
+	try {
+		switch (type) {
+		case DCPAsset::Type::VIDEO:
+			try {
+				return dcp::MonoJ2KPictureAsset(file).id();
+			} catch (std::exception&) {
+				try {
+					return dcp::StereoJ2KPictureAsset(file).id();
+				} catch (std::exception&) {
+					return dcp::MonoMPEG2PictureAsset(file).id();
+				}
+			}
+		case DCPAsset::Type::AUDIO:
+			return dcp::SoundAsset(file).id();
+		default:
+			break;
+		}
+	} catch (std::exception&) {
+	}
+
+	return {};
+}
+
+
 /** @return @param asset as it is played in the @param reel that it covers: for an asset that is made of several reels,
  *  the asset with the entry point and duration of that reel's part of it.
  */
@@ -104,7 +135,7 @@ asset_in_reel(DCPAsset const& asset, DCPTimePeriod reel, int frame_rate)
 
 	auto const offset = DCPTime(reel.from - asset.period().from).frames_round(frame_rate);
 	return DCPAsset(
-		asset.type(), asset.file(), reel, asset.entry_point() + offset, reel.duration().frames_round(frame_rate), asset.name_in_dcp()
+		asset.type(), asset.file(), reel, asset.entry_point() + offset, reel.duration().frames_round(frame_rate), asset.name_given()
 		);
 }
 
@@ -117,11 +148,42 @@ ReelWriter::reuse_existing_asset(DCPAsset const& existing_asset, shared_ptr<Job>
 	/* XXX: what about if the encryption key changes? */
 	auto new_asset_filename = _output_dir / existing_asset.name_in_dcp();
 	if (new_asset_filename != existing_asset.file()) {
-		if (job) {
-			job->sub(_("Copying existing asset"));
-			copy_in_bits(existing_asset.file(), new_asset_filename, boost::bind(&Job::set_progress, job.get(), _1, false));
-		} else {
-			dcp::filesystem::copy(existing_asset.file(), new_asset_filename);
+		boost::system::error_code ec;
+		auto const there = dcp::filesystem::exists(new_asset_filename, ec);
+		/* The file is there already if it is the same file (the input is in the DCP's folder, under another spelling of its path),
+		 * or if it is an asset with the same ID and the same size, which another reel of this DCP put there.  A different file
+		 * with the same ID and size would not be told apart from it.
+		 */
+		boost::system::error_code existing_size_ec;
+		boost::system::error_code new_size_ec;
+		auto const same_file = there && boost::filesystem::equivalent(existing_asset.file(), new_asset_filename, ec);
+		auto const same_asset = there && !same_file &&
+			boost::filesystem::file_size(existing_asset.file(), existing_size_ec) == boost::filesystem::file_size(new_asset_filename, new_size_ec) &&
+			!existing_size_ec && !new_size_ec &&
+			asset_id(existing_asset.type(), existing_asset.file()) && asset_id(existing_asset.type(), existing_asset.file()) == asset_id(existing_asset.type(), new_asset_filename);
+		if (!same_file && !same_asset) {
+			if (there) {
+				boost::system::error_code remove_ec;
+				dcp::filesystem::remove(new_asset_filename, remove_ec);
+				if (remove_ec) {
+					throw FileError(fmt::format("Could not remove {} to put a re-used asset there", new_asset_filename.string()), new_asset_filename);
+				}
+			}
+			bool cloned = false;
+#ifdef __APPLE__
+			/* A clone shares the file's blocks until one of them is changed, so it costs no time nor space, and changing
+			 * the original later does not change the DCP, as it would for a hard link.
+			 */
+			cloned = clonefile(existing_asset.file().string().c_str(), new_asset_filename.string().c_str(), 0) == 0;
+#endif
+			if (!cloned) {
+				if (job) {
+					job->sub(_("Copying existing asset"));
+					copy_in_bits(existing_asset.file(), new_asset_filename, boost::bind(&Job::set_progress, job.get(), _1, false));
+				} else {
+					dcp::filesystem::copy(existing_asset.file(), new_asset_filename);
+				}
+			}
 		}
 	}
 

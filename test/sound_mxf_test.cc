@@ -355,6 +355,34 @@ BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_reused_test)
 }
 
 
+/** A re-used sound MXF that is in two reels is in the DCP once, with the contents of the original, and the original is
+ *  not shared with the DCP: changing it afterwards does not change the DCP
+ */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_is_put_in_the_dcp_once_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_is_put_in_the_dcp_once_test_source", 6, true, {});
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_is_put_in_the_dcp_once_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_seconds(1) });
+	make_sound_only_dcp(film);
+
+	auto const in_dcp = film->dir(film->dcp_name()) / fmt::format("pcm_{}.mxf", dcp::SoundAsset(mxf).id());
+	check_file(mxf, in_dcp);
+
+	int count = 0;
+	for (auto i: boost::filesystem::directory_iterator(film->dir(film->dcp_name()))) {
+		if (i.path().filename().string().substr(0, 4) == "pcm_") {
+			++count;
+		}
+	}
+	BOOST_CHECK_EQUAL(count, 1);
+
+	boost::system::error_code ec;
+	BOOST_CHECK(!boost::filesystem::equivalent(mxf, in_dcp, ec));
+}
+
+
 /** A sound MXF that fills two whole reels is reused for both, each with its own entry point and duration */
 BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_two_reels_test)
 {

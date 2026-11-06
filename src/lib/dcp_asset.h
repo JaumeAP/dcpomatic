@@ -76,6 +76,12 @@ public:
 	boost::filesystem::path name_in_dcp() const {
 		return _name_in_dcp.get_value_or(_file.filename());
 	}
+	/** @return the name for the file in the DCP's folder if one was given.  A given name is made from the asset's ID, so the
+	 *  same name means the same asset.
+	 */
+	boost::optional<boost::filesystem::path> name_given() const {
+		return _name_in_dcp;
+	}
 
 private:
 	Type _type;

@@ -83,6 +83,34 @@ BOOST_AUTO_TEST_CASE(reuse_dcp_asset_test1)
 }
 
 
+/** The same DCP used twice, as two reels, puts its picture and sound into the new DCP once each */
+BOOST_AUTO_TEST_CASE(reuse_dcp_asset_same_dcp_in_two_reels_test)
+{
+	auto first = std::make_shared<DCPContent>("test/data/scaling_test_185_185");
+	auto second = std::make_shared<DCPContent>("test/data/scaling_test_185_185");
+	auto film = new_test_film("reuse_dcp_asset_same_dcp_in_two_reels_test", { first, second });
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->set_reel_type(ReelType::BY_VIDEO_CONTENT);
+	film->set_audio_channels(8);
+	film->set_interop(false);
+
+	make_and_verify_dcp(film);
+
+	check_video_passed_through(film);
+	check_audio_passed_through(film);
+
+	int pictures = 0;
+	int sounds = 0;
+	for (auto i: boost::filesystem::directory_iterator(film->dir(film->dcp_name()))) {
+		auto const name = i.path().filename().string();
+		pictures += name.substr(0, 4) == "j2c_" ? 1 : 0;
+		sounds += name.substr(0, 4) == "pcm_" ? 1 : 0;
+	}
+	BOOST_CHECK_EQUAL(pictures, 1);
+	BOOST_CHECK_EQUAL(sounds, 1);
+}
+
+
 /** No pass-through with the wrong standard */
 BOOST_AUTO_TEST_CASE(reuse_dcp_asset_test2)
 {
