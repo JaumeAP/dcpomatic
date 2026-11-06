@@ -354,7 +354,8 @@ ReelWriter::ReelWriter(
 	int reel_count,
 	bool text_only,
 	boost::filesystem::path output_dir,
-	shared_ptr<dcp::J2KPictureAsset> shared_picture
+	shared_ptr<dcp::J2KPictureAsset> shared_picture,
+	shared_ptr<SharedSound> shared_sound
 	)
 	: WeakConstFilm(weak_film)
 	, _output_dir(std::move(output_dir))
@@ -387,7 +388,18 @@ ReelWriter::ReelWriter(
 	} else {
 		setup_video(reusable_assets, job, period, standard);
 	}
-	setup_audio(reusable_assets, job, period, standard);
+	if (shared_sound) {
+		/* Another reel writes our sound, so we write none and have none of our own */
+		_shared_sound = shared_sound;
+	} else {
+		setup_audio(reusable_assets, job, period, standard);
+		if (_sound_asset) {
+			_own_sound = make_shared<SharedSound>();
+			_own_sound->asset = _sound_asset;
+			_own_sound->entry_point = _sound_entry_point;
+			_own_sound->duration = _sound_duration;
+		}
+	}
 }
 
 
@@ -722,6 +734,15 @@ ReelWriter::create_reel_sound(shared_ptr<dcp::Reel> reel, list<ReferencedReelAss
 		if (auto lang = film()->audio_language()) {
 			reel_asset->set_language(*lang);
 		}
+	} else if (_shared_sound) {
+		/* Another reel of this DCP wrote our sound.  Put it into the reel, with the entry point and duration that it has there */
+		reel_asset = make_shared<dcp::ReelSoundAsset>(_shared_sound->asset, _shared_sound->entry_point);
+		if (_shared_sound->duration) {
+			reel_asset->set_duration(std::min<int64_t>(*_shared_sound->duration, reel_asset->intrinsic_duration() - _shared_sound->entry_point));
+		}
+		if (auto lang = film()->audio_language()) {
+			reel_asset->set_language(*lang);
+		}
 	} else {
 		LOG_GENERAL("no sound asset of our own; look through {}", refs.size());
 		/* We don't have a sound asset of our own; hopefully we have one to reference */
@@ -1002,6 +1023,10 @@ ReelWriter::set_sound_ends(shared_ptr<const AudioBuffers> head, Frame head_frame
 	if (head || tail) {
 		/* The asset is longer than the reel: the CPL starts after the head and plays the reel's length */
 		_sound_duration = _period.duration().frames_round(film()->video_frame_rate());
+	}
+	if (_own_sound) {
+		_own_sound->entry_point = _sound_entry_point;
+		_own_sound->duration = _sound_duration;
 	}
 }
 

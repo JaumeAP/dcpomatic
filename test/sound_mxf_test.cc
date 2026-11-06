@@ -470,6 +470,134 @@ BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_rewritten_head_is_limited_test)
 }
 
 
+/** @return the number of sound MXFs in the DCP that @param film made */
+static int
+sound_files_in_dcp(std::shared_ptr<Film> film)
+{
+	int count = 0;
+	for (auto i: boost::filesystem::directory_iterator(film->dir(film->dcp_name()))) {
+		if (i.path().filename().string().substr(0, 4) == "pcm_") {
+			++count;
+		}
+	}
+	return count;
+}
+
+
+/** @return a film with the sound MXF @param mxf twice, one after the other, each one a whole reel */
+static std::shared_ptr<Film>
+film_with_sound_mxf_twice(string name, boost::filesystem::path mxf)
+{
+	auto film = film_for_public_mxf(name, mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	auto content = content_factory(mxf);
+	film->examine_and_add_content(content);
+	BOOST_REQUIRE(!wait_for_jobs());
+	BOOST_REQUIRE_EQUAL(film->content().size(), 2U);
+	film->content()[1]->set_position(film, film->content()[0]->end(film));
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ film->content()[0]->end(film) });
+	return film;
+}
+
+
+/** The same sound MXF as two whole reels, changed in the same way, is written once: both reels refer to the one asset */
+BOOST_AUTO_TEST_CASE(sound_mxf_repeated_is_written_once_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_repeated_is_written_once_test_source", 6, true, {}, 48000, 24, {}, 3);
+	auto film = film_with_sound_mxf_twice("sound_mxf_repeated_is_written_once_test", mxf);
+	for (auto content: film->content()) {
+		content->audio->set_gain(-3);
+	}
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), assets[1]->asset_ref().id());
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::SoundAsset(mxf).id());
+	BOOST_CHECK_EQUAL(sound_files_in_dcp(film), 1);
+}
+
+
+/** When the head and tail are kept, both reels refer to the one asset with the same entry point and duration */
+BOOST_AUTO_TEST_CASE(sound_mxf_repeated_with_head_and_tail_is_written_once_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_repeated_with_head_and_tail_is_written_once_test_source", 6, true, {}, 48000, 24, {}, 3);
+	auto film = film_with_sound_mxf_twice("sound_mxf_repeated_with_head_and_tail_is_written_once_test", mxf);
+	for (auto content: film->content()) {
+		content->audio->set_gain(-3);
+		content->set_trim_start(dcpomatic::ContentTime::from_frames(6, 24));
+		content->set_trim_end(dcpomatic::ContentTime::from_frames(3, 24));
+	}
+	film->content()[1]->set_position(film, film->content()[0]->end(film));
+	film->set_custom_reel_boundaries({ film->content()[0]->end(film) });
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), assets[1]->asset_ref().id());
+	for (auto asset: assets) {
+		BOOST_CHECK_EQUAL(asset->entry_point().get_value_or(0), 6);
+		BOOST_CHECK_EQUAL(asset->actual_duration(), 63);
+		BOOST_CHECK_EQUAL(asset->intrinsic_duration(), 72);
+	}
+	BOOST_CHECK_EQUAL(sound_files_in_dcp(film), 1);
+}
+
+
+/** The same sound MXF as two whole reels, changed in different ways, is written for each reel */
+BOOST_AUTO_TEST_CASE(sound_mxf_repeated_with_different_gains_is_written_twice_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_repeated_with_different_gains_is_written_twice_test_source", 6, true, {}, 48000, 24, {}, 3);
+	auto film = film_with_sound_mxf_twice("sound_mxf_repeated_with_different_gains_is_written_twice_test", mxf);
+	film->content()[0]->audio->set_gain(-3);
+	film->content()[1]->audio->set_gain(-6);
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != assets[1]->asset_ref().id());
+	BOOST_CHECK_EQUAL(sound_files_in_dcp(film), 2);
+}
+
+
+/** An encrypted film does not share a sound asset between reels: every KDM would list its key twice */
+BOOST_AUTO_TEST_CASE(sound_mxf_repeated_in_an_encrypted_film_is_written_twice_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_repeated_in_an_encrypted_film_is_written_twice_test_source", 6, true, {}, 48000, 24, {}, 3);
+	auto film = film_with_sound_mxf_twice("sound_mxf_repeated_in_an_encrypted_film_is_written_twice_test", mxf);
+	for (auto content: film->content()) {
+		content->audio->set_gain(-3);
+	}
+	film->set_encrypt_sound(true);
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA,
+			dcp::VerificationNote::Code::PARTIALLY_ENCRYPTED
+		});
+
+	BOOST_CHECK_EQUAL(sound_files_in_dcp(film), 2);
+}
+
+
+/** The hints, which use a writer that makes only text, can be made for a film that shares a sound asset */
+BOOST_AUTO_TEST_CASE(sound_mxf_repeated_hints_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_repeated_hints_test_source", 6, true, {}, 48000, 24, {}, 3);
+	auto film = film_with_sound_mxf_twice("sound_mxf_repeated_hints_test", mxf);
+	for (auto content: film->content()) {
+		content->audio->set_gain(-3);
+	}
+
+	Hints hints(film);
+	hints.start();
+	hints.join();
+	while (signal_manager->ui_idle()) {}
+	hints.rethrow();
+}
+
+
 /** With a delay the head and tail would not join the reel's sound, so nothing is kept */
 BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_rewritten_with_delay_keeps_nothing_test)
 {

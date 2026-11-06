@@ -25,6 +25,7 @@
 #include "audio_stream.h"
 #include "film.h"
 #include "frame_rate_change.h"
+#include "overlaps.h"
 #include "job.h"
 #include "sound_mxf_content.h"
 #include "sound_mxf_examiner.h"
@@ -272,6 +273,79 @@ SoundMXFContent::tail_audio(shared_ptr<const Film> film) const
 	/* The part of the tail that is next to the reel's sound */
 	auto const from = asset.intrinsic_duration() - trim;
 	return frames_audio(film, from, from + frames);
+}
+
+
+bool
+SoundMXFContent::written_alone_as_a_reel(shared_ptr<const Film> film) const
+{
+	/* The Atmos sync signal changes from frame to frame, an audio processor has state, and every KDM of an encrypted film would
+	 * list the key of a shared sound asset once for each reel that refers to it.  A delay moves sound across the reel's
+	 * boundaries and a speed change makes the sound another length.
+	 */
+	if (!audio || film->contains_atmos_content() || film->audio_processor() || film->encrypt_sound() || !frames_align_with(film)) {
+		return false;
+	}
+
+	/* If the file goes into the DCP as it is, every reel that has it refers to the file */
+	if (film->reuse_behaviour() == Film::ReuseBehaviour::COPY && !assets(film).empty()) {
+		return false;
+	}
+
+	DCPTimePeriod const period(position(), end(film));
+	auto const reels = film->reels();
+	if (std::find(reels.begin(), reels.end(), period) == reels.end()) {
+		return false;
+	}
+
+	auto has_audio = [](shared_ptr<const Content> c) {
+		return static_cast<bool>(c->audio);
+	};
+	return dcpomatic::overlaps(film, film->content(), has_audio, period.from, period.to).size() == 1;
+}
+
+
+string
+SoundMXFContent::sound_digest(shared_ptr<const Film> film) const
+{
+	return fmt::format(
+		"{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}",
+		digest(),
+		trim_start().get(),
+		trim_end().get(),
+		audio->gain(),
+		audio->delay(),
+		audio->fade_in().get(),
+		audio->fade_out().get(),
+		audio->stream()->mapping().digest(),
+		film->audio_channels(),
+		film->audio_frame_rate(),
+		film->video_frame_rate(),
+		film->interop()
+		);
+}
+
+
+shared_ptr<const SoundMXFContent>
+SoundMXFContent::shared_sound_source(shared_ptr<const Film> film) const
+{
+	if (!written_alone_as_a_reel(film)) {
+		return {};
+	}
+
+	auto const ours = sound_digest(film);
+	shared_ptr<const SoundMXFContent> found;
+	for (auto content: film->content()) {
+		auto other = std::dynamic_pointer_cast<const SoundMXFContent>(content);
+		if (!other || other.get() == this || other->position() >= position() || !other->written_alone_as_a_reel(film)) {
+			continue;
+		}
+		if (other->sound_digest(film) == ours && (!found || other->position() < found->position())) {
+			found = other;
+		}
+	}
+
+	return found;
 }
 
 

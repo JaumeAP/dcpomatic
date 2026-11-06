@@ -88,6 +88,12 @@ public:
 	/** @return the frames of the file after the end trim, as head_audio(), or nothing if there is no end trim */
 	std::shared_ptr<const AudioBuffers> tail_audio(std::shared_ptr<const Film> film) const;
 
+	/** @return an earlier content of the film that is a whole reel and whose sound, as the film writes it, is exactly the
+	 *  same as this one's, so that this reel can refer to the sound asset of that reel instead of writing its own.  Null if
+	 *  there is none, or if this content's sound is not written alone as a whole reel, or if the file goes into the DCP as it is.
+	 */
+	std::shared_ptr<const SoundMXFContent> shared_sound_source(std::shared_ptr<const Film> film) const;
+
 	/** @return one entry for each channel of the file: true if the channel has sound (see SoundMXFExaminer) */
 	std::vector<bool> channels_with_sound() const {
 		boost::mutex::scoped_lock lm(_mutex);
@@ -97,6 +103,14 @@ public:
 	static bool valid_mxf(boost::filesystem::path path);
 
 private:
+	/** @return true if the film writes this content's sound on its own, as a function of the file and the settings of
+	 *  this content only, and it fills one reel of the film
+	 */
+	bool written_alone_as_a_reel(std::shared_ptr<const Film> film) const;
+
+	/** @return something that is the same for two contents if and only if the film writes the same sound for them */
+	std::string sound_digest(std::shared_ptr<const Film> film) const;
+
 	/** @return the sound of frames [from, to) of the file, mapped for the film and with the content's gain */
 	std::shared_ptr<const AudioBuffers> frames_audio(std::shared_ptr<const Film> film, Frame from, Frame to) const;
 

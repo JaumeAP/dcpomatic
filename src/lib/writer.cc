@@ -90,22 +90,33 @@ Writer::Writer(weak_ptr<const Film> weak_film, weak_ptr<Job> weak_job, boost::fi
 		 * others refer to it.  The earlier reel has been made already, so its picture asset is there to refer to.
 		 */
 		shared_ptr<dcp::J2KPictureAsset> shared_picture;
+		shared_ptr<SharedSound> shared_sound;
 		if (!text_only) {
 			for (auto content: film()->content()) {
-				auto video_mxf = dynamic_pointer_cast<const VideoMXFContent>(content);
-				if (!video_mxf || DCPTimePeriod(video_mxf->position(), video_mxf->end(film())) != p) {
+				if (DCPTimePeriod(content->position(), content->end(film())) != p) {
 					continue;
 				}
-				if (auto source = video_mxf->shared_picture_source(film())) {
-					for (auto& other: _reels) {
-						if (other.period() == DCPTimePeriod(source->position(), source->end(film()))) {
-							shared_picture = other.picture_asset();
+				if (auto video_mxf = dynamic_pointer_cast<const VideoMXFContent>(content)) {
+					if (auto source = video_mxf->shared_picture_source(film())) {
+						for (auto& other: _reels) {
+							if (other.period() == DCPTimePeriod(source->position(), source->end(film()))) {
+								shared_picture = other.picture_asset();
+							}
+						}
+					}
+				}
+				if (auto sound_mxf = dynamic_pointer_cast<const SoundMXFContent>(content)) {
+					if (auto source = sound_mxf->shared_sound_source(film())) {
+						for (auto& other: _reels) {
+							if (other.period() == DCPTimePeriod(source->position(), source->end(film()))) {
+								shared_sound = other.own_sound();
+							}
 						}
 					}
 				}
 			}
 		}
-		_reels.emplace_back(weak_film, p, job, reel_index++, reels.size(), text_only, _output_dir, shared_picture);
+		_reels.emplace_back(weak_film, p, job, reel_index++, reels.size(), text_only, _output_dir, shared_picture, shared_sound);
 		LOG_GENERAL("  {} --> {}", to_string(p.from), to_string(p.to));
 	}
 

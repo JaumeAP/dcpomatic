@@ -61,6 +61,18 @@ namespace dcp {
 }
 
 
+/** A sound asset that a reel writes and other reels of the DCP refer to, and where in it they start and how much they play.
+ *  It is shared between those reels' writers because the entry point and the duration are known only after the writer is
+ *  made (when the head and tail of the sound are known).
+ */
+struct SharedSound
+{
+	std::shared_ptr<dcp::SoundAsset> asset;
+	Frame entry_point = 0;
+	boost::optional<Frame> duration;
+};
+
+
 class ReelWriter : public WeakConstFilm
 {
 public:
@@ -72,7 +84,8 @@ public:
 		int reel_count,
 		bool text_only,
 		boost::filesystem::path output_dir,
-		std::shared_ptr<dcp::J2KPictureAsset> shared_picture = {}
+		std::shared_ptr<dcp::J2KPictureAsset> shared_picture = {},
+		std::shared_ptr<SharedSound> shared_sound = {}
 		);
 
 	void write(std::shared_ptr<const dcp::Data> encoded, Frame frame, Eyes eyes);
@@ -87,6 +100,11 @@ public:
 	 *  it, and have the CPL play only the reel's part.  Either may be null.
 	 */
 	void set_sound_ends(std::shared_ptr<const AudioBuffers> head, Frame head_frames, std::shared_ptr<const AudioBuffers> tail);
+
+	/** The sound asset that this reel writes, for other reels to refer to, or null if it writes none */
+	std::shared_ptr<SharedSound> own_sound() const {
+		return _own_sound;
+	}
 
 	/** The J2K picture asset of this reel, or null if it has none */
 	std::shared_ptr<dcp::J2KPictureAsset> picture_asset() const {
@@ -175,6 +193,10 @@ private:
 	std::shared_ptr<const AudioBuffers> _sound_tail;
 	/** true once some of the reel's own sound has been written */
 	bool _sound_written = false;
+	/** our sound asset, as other reels refer to it, or null */
+	std::shared_ptr<SharedSound> _own_sound;
+	/** a sound asset written by another reel of this DCP, which this reel refers to, or null */
+	std::shared_ptr<SharedSound> _shared_sound;
 	std::shared_ptr<dcp::TextAsset> _subtitle_asset;
 	std::map<DCPTextTrack, std::shared_ptr<dcp::TextAsset>> _closed_caption_assets;
 	std::shared_ptr<dcp::AtmosAsset> _atmos_asset;
