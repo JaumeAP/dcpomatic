@@ -215,6 +215,9 @@ private:
 	std::shared_ptr<dcp::TextAsset> _subtitle_asset;
 	std::map<DCPTextTrack, std::shared_ptr<dcp::TextAsset>> _closed_caption_assets;
 	std::shared_ptr<dcp::AtmosAsset> _atmos_asset;
+	/** entry point and duration to use in the CPL for an Atmos asset that we re-used, if they are not 0 and the asset's length */
+	Frame _atmos_entry_point = 0;
+	boost::optional<Frame> _atmos_duration;
 	std::shared_ptr<dcp::AtmosAssetWriter> _atmos_asset_writer;
 
 	mutable FontMetrics _font_metrics;

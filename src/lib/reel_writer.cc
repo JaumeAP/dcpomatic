@@ -114,6 +114,8 @@ asset_id(DCPAsset::Type type, boost::filesystem::path file)
 			}
 		case DCPAsset::Type::AUDIO:
 			return dcp::SoundAsset(file).id();
+		case DCPAsset::Type::ATMOS:
+			return dcp::AtmosAsset(file).id();
 		default:
 			break;
 		}
@@ -229,6 +231,8 @@ ReelWriter::reuse_existing_asset(DCPAsset const& existing_asset, shared_ptr<Job>
 		break;
 	case DCPAsset::Type::ATMOS:
 		_atmos_asset = make_shared<dcp::AtmosAsset>(new_asset_filename);
+		_atmos_entry_point = existing_asset.entry_point();
+		_atmos_duration = existing_asset.duration();
 		break;
 	default:
 		break;
@@ -376,22 +380,25 @@ void
 ReelWriter::setup_atmos(vector<DCPAsset> const& reusable_assets, shared_ptr<Job> job, dcpomatic::DCPTimePeriod period)
 {
 	auto reusable_iter = std::find_if(reusable_assets.begin(), reusable_assets.end(), [period](DCPAsset const& asset) {
-		return asset.period() == period && asset.type() == DCPAsset::Type::ATMOS;
+		return asset.period().contains(period) && asset.type() == DCPAsset::Type::ATMOS;
 	});
 
 	if (reusable_iter == reusable_assets.end()) {
 		return;
 	}
 
+	auto const asset = asset_in_reel(*reusable_iter, period, film()->video_frame_rate());
+
 	/* Unlike for picture and sound, nothing checks later that the whole of an Atmos asset is the length
-	 * of the reel, and its sync would be out of step if it were not (the DCP is trimmed, for example).
+	 * of the reel, and its sync would be out of step if it were not (the DCP is trimmed, for example).  An asset that
+	 * says which part of the file to play has been checked against the reel already.
 	 */
-	if (dcp::AtmosAsset(reusable_iter->file()).intrinsic_duration() != period.duration().frames_round(film()->video_frame_rate())) {
-		LOG_GENERAL("Not re-using Atmos asset {}: its length is not that of the reel", reusable_iter->file().string());
+	if (!asset.duration() && dcp::AtmosAsset(asset.file()).intrinsic_duration() != period.duration().frames_round(film()->video_frame_rate())) {
+		LOG_GENERAL("Not re-using Atmos asset {}: its length is not that of the reel", asset.file().string());
 		return;
 	}
 
-	reuse_existing_asset(*reusable_iter, job);
+	reuse_existing_asset(asset, job);
 }
 
 
@@ -1033,7 +1040,11 @@ ReelWriter::create_reel(
 	create_reel_text(reel, refs, duration, output_dcp, ensure_subtitles, ensure_closed_captions);
 
 	if (_atmos_asset) {
-		reel->add(make_shared<dcp::ReelAtmosAsset>(_atmos_asset, 0));
+		auto reel_atmos = make_shared<dcp::ReelAtmosAsset>(_atmos_asset, _atmos_entry_point);
+		if (_atmos_duration) {
+			reel_atmos->set_duration(*_atmos_duration);
+		}
+		reel->add(reel_atmos);
 	}
 
 	return reel;

@@ -50,5 +50,10 @@ public:
 	dcpomatic::DCPTime full_length (std::shared_ptr<const Film> film) const override;
 	dcpomatic::DCPTime approximate_length () const override;
 
+	/** @return the file as an asset that can go into the DCP as it is, with any trim as its entry point and duration, or
+	 *  nothing if the film would not write the file's own Atmos
+	 */
+	std::vector<DCPAsset> assets(std::shared_ptr<const Film> film) const override;
+
 	static bool valid_mxf (boost::filesystem::path path);
 };

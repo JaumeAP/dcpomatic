@@ -22,6 +22,7 @@
 #include "atmos_content.h"
 #include "atmos_mxf_content.h"
 #include "film.h"
+#include "frame_rate_change.h"
 #include "job.h"
 #include <asdcp/KM_log.h>
 #include <dcp/atmos_asset.h>
@@ -35,6 +36,7 @@ using std::list;
 using std::make_shared;
 using std::string;
 using std::shared_ptr;
+using std::vector;
 using boost::optional;
 using namespace dcpomatic;
 
@@ -117,4 +119,54 @@ DCPTime
 AtmosMXFContent::approximate_length () const
 {
 	return DCPTime::from_frames (atmos->length(), 24);
+}
+
+
+vector<DCPAsset>
+AtmosMXFContent::assets(shared_ptr<const Film> film) const
+{
+	if (!atmos || film->interop()) {
+		return {};
+	}
+
+	auto const edit_rate = atmos->edit_rate();
+	if (edit_rate.denominator != 1 || edit_rate.numerator != film->video_frame_rate()) {
+		return {};
+	}
+
+	FrameRateChange const frc(film, shared_from_this());
+	if (frc.change_speed() || frc.skip() || frc.repeat() != 1) {
+		return {};
+	}
+
+	auto const rate = static_cast<double>(edit_rate.numerator);
+	if (trim_start() != trim_start().round(rate) || trim_end() != trim_end().round(rate)) {
+		return {};
+	}
+
+	shared_ptr<dcp::AtmosAsset> asset;
+	try {
+		asset = make_shared<dcp::AtmosAsset>(path(0));
+	} catch (dcp::ReadError&) {
+		return {};
+	} catch (dcp::MXFFileError&) {
+		return {};
+	}
+
+	/* An encrypted file has a key of its own, which the DCP's KDMs do not carry */
+	if (asset->encrypted()) {
+		return {};
+	}
+
+	DCPTimePeriod const period(position(), end(film));
+	return {
+		DCPAsset(
+			DCPAsset::Type::ATMOS,
+			path(0),
+			period,
+			trim_start().frames_round(rate),
+			period.duration().frames_round(film->video_frame_rate()),
+			boost::filesystem::path(fmt::format("atmos_{}.mxf", asset->id()))
+			)
+	};
 }
