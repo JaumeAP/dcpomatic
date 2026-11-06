@@ -231,6 +231,7 @@ public:
 
 private:
 
+	friend class Content;
 	friend struct ffmpeg_pts_offset_test;
 	friend struct best_dcp_frame_rate_test_single;
 	friend struct best_dcp_frame_rate_test_double;

@@ -31,6 +31,7 @@
 #include "lib/content_factory.h"
 #include "lib/content.h"
 #include "lib/ratio.h"
+#include "lib/video_content.h"
 #include "test.h"
 #include <boost/test/unit_test.hpp>
 
@@ -166,6 +167,54 @@ BOOST_AUTO_TEST_CASE (content_test7)
 	make_and_verify_dcp (film, { dcp::VerificationNote::Code::INVALID_PICTURE_FRAME_RATE_FOR_2K });
 
 	cl.run();
+}
+
+
+/** An untrimmed clone is at position 0 with no trims, and the content it was made from is left as it was */
+BOOST_AUTO_TEST_CASE(untrimmed_clone_test)
+{
+	auto content = content_factory("test/data/flat_red.png");
+	auto film = new_test_film("untrimmed_clone_test", content);
+	film->set_sequence(false);
+	content[0]->set_position(film, DCPTime::from_seconds(5));
+	content[0]->set_trim_start(ContentTime::from_seconds(1));
+	content[0]->set_trim_end(ContentTime::from_seconds(2));
+
+	auto copy = content[0]->untrimmed_clone();
+	BOOST_CHECK(copy->position() == DCPTime());
+	BOOST_CHECK(copy->trim_start() == ContentTime());
+	BOOST_CHECK(copy->trim_end() == ContentTime());
+	BOOST_CHECK(copy->path(0) == content[0]->path(0));
+
+	BOOST_CHECK(content[0]->position() == DCPTime::from_seconds(5));
+	BOOST_CHECK(content[0]->trim_start() == ContentTime::from_seconds(1));
+	BOOST_CHECK(content[0]->trim_end() == ContentTime::from_seconds(2));
+}
+
+
+/** An untrimmed clone has no fades, as the fades belong to the part that plays and not to the frames that the trims cut off */
+BOOST_AUTO_TEST_CASE(untrimmed_clone_has_no_fades_test)
+{
+	auto picture = content_factory("test/data/flat_red.png");
+	auto sound = content_factory("test/data/L.wav");
+	auto film = new_test_film("untrimmed_clone_has_no_fades_test", { picture[0], sound[0] });
+	picture[0]->video->set_fade_in(10);
+	picture[0]->video->set_fade_out(12);
+	sound[0]->audio->set_fade_in(ContentTime::from_seconds(1));
+	sound[0]->audio->set_fade_out(ContentTime::from_seconds(2));
+
+	auto picture_copy = picture[0]->untrimmed_clone();
+	BOOST_CHECK_EQUAL(picture_copy->video->fade_in(), 0);
+	BOOST_CHECK_EQUAL(picture_copy->video->fade_out(), 0);
+	auto sound_copy = sound[0]->untrimmed_clone();
+	BOOST_CHECK(sound_copy->audio->fade_in() == ContentTime());
+	BOOST_CHECK(sound_copy->audio->fade_out() == ContentTime());
+
+	/* The contents that were cloned keep their fades */
+	BOOST_CHECK_EQUAL(picture[0]->video->fade_in(), 10);
+	BOOST_CHECK_EQUAL(picture[0]->video->fade_out(), 12);
+	BOOST_CHECK(sound[0]->audio->fade_in() == ContentTime::from_seconds(1));
+	BOOST_CHECK(sound[0]->audio->fade_out() == ContentTime::from_seconds(2));
 }
 
 

@@ -116,6 +116,8 @@ public:
 
 private:
 
+	friend class Content;
+
 	/** Gain to apply to audio in dB */
 	double _gain = 0;
 	/** Delay to apply to audio (positive moves audio later) in milliseconds */

@@ -288,6 +288,26 @@ Content::clone() const
 }
 
 
+shared_ptr<Content>
+Content::untrimmed_clone() const
+{
+	auto copy = clone();
+	copy->_position = DCPTime();
+	copy->_trim_start = ContentTime();
+	copy->_trim_end = ContentTime();
+	/* The fades belong to the part that plays, not to the frames that the trims cut off */
+	if (copy->video) {
+		copy->video->_fade_in = 0;
+		copy->video->_fade_out = 0;
+	}
+	if (copy->audio) {
+		copy->audio->_fade_in = ContentTime();
+		copy->audio->_fade_out = ContentTime();
+	}
+	return copy;
+}
+
+
 string
 Content::technical_summary() const
 {
