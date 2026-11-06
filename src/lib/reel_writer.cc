@@ -92,6 +92,23 @@ mxf_metadata()
 }
 
 
+/** @return @param asset as it is played in the @param reel that it covers: for an asset that is made of several reels,
+ *  the asset with the entry point and duration of that reel's part of it.
+ */
+static DCPAsset
+asset_in_reel(DCPAsset const& asset, DCPTimePeriod reel, int frame_rate)
+{
+	if (asset.period() == reel) {
+		return asset;
+	}
+
+	auto const offset = DCPTime(reel.from - asset.period().from).frames_round(frame_rate);
+	return DCPAsset(
+		asset.type(), asset.file(), reel, asset.entry_point() + offset, reel.duration().frames_round(frame_rate), asset.name_in_dcp()
+		);
+}
+
+
 boost::filesystem::path
 ReelWriter::reuse_existing_asset(DCPAsset const& existing_asset, shared_ptr<Job> job)
 {
@@ -139,11 +156,11 @@ void
 ReelWriter::setup_video(vector<DCPAsset> const& reusable_assets, shared_ptr<Job> job, dcpomatic::DCPTimePeriod period, dcp::Standard standard)
 {
 	auto reusable_iter = std::find_if(reusable_assets.begin(), reusable_assets.end(), [period](DCPAsset const& asset) {
-		return asset.period() == period && asset.type() == DCPAsset::Type::VIDEO;
+		return asset.period().contains(period) && asset.type() == DCPAsset::Type::VIDEO;
 	});
 
 	if (reusable_iter != reusable_assets.end()) {
-		reuse_existing_asset(*reusable_iter, job);
+		reuse_existing_asset(asset_in_reel(*reusable_iter, period, film()->video_frame_rate()), job);
 	} else {
 		auto remembered_assets = film()->read_remembered_assets();
 
@@ -219,11 +236,11 @@ ReelWriter::setup_audio(vector<DCPAsset> const& reusable_assets, shared_ptr<Job>
 	}
 
 	auto reusable_iter = std::find_if(reusable_assets.begin(), reusable_assets.end(), [period](DCPAsset const& asset) {
-		return asset.period() == period && asset.type() == DCPAsset::Type::AUDIO;
+		return asset.period().contains(period) && asset.type() == DCPAsset::Type::AUDIO;
 	});
 
 	if (reusable_iter != reusable_assets.end()) {
-		reuse_existing_asset(*reusable_iter, job);
+		reuse_existing_asset(asset_in_reel(*reusable_iter, period, film()->video_frame_rate()), job);
 	} else {
 		auto lang = film()->audio_language();
 		_sound_asset = make_shared<dcp::SoundAsset>(

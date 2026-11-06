@@ -33,11 +33,13 @@
 #include "lib/job_manager.h"
 #include "lib/signal_manager.h"
 #include "lib/sound_mxf_content.h"
+#include "lib/video_content.h"
 #include "test.h"
 #include <dcp/cpl.h>
 #include <dcp/dcp.h>
 #include <dcp/language_tag.h>
 #include <dcp/reel.h>
+#include <dcp/reel_picture_asset.h>
 #include <dcp/reel_sound_asset.h>
 #include <dcp/sound_asset.h>
 #include <dcp/sound_asset_writer.h>
@@ -105,7 +107,8 @@ BOOST_AUTO_TEST_CASE(sound_mxf_makes_a_dcp_test)
  */
 static boost::filesystem::path
 write_sound_mxf(
-	string name, int channels, bool labels, std::vector<int> silent, int sampling_rate = 48000, int edit_rate = 24, boost::optional<dcp::Key> key = {}
+	string name, int channels, bool labels, std::vector<int> silent, int sampling_rate = 48000, int edit_rate = 24, boost::optional<dcp::Key> key = {},
+	int seconds = 2
 	)
 {
 	auto const path = boost::filesystem::path("build") / "test" / (name + ".mxf");
@@ -132,7 +135,7 @@ write_sound_mxf(
 		data[c] = std::find(silent.begin(), silent.end(), c) == silent.end() ? tone.data() : quiet.data();
 	}
 
-	for (int i = 0; i < 2 * edit_rate; ++i) {
+	for (int i = 0; i < seconds * edit_rate; ++i) {
 		writer->write(data.data(), channels, block);
 	}
 	writer->finalize();
@@ -349,6 +352,143 @@ BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_reused_test)
 	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), dcp::SoundAsset(mxf).id());
 	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 12);
 	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 30);
+}
+
+
+/** A sound MXF that fills two whole reels is reused for both, each with its own entry point and duration */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_two_reels_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_two_reels_test_source", 6, true, {});
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_two_reels_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_seconds(1) });
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	for (auto asset: assets) {
+		BOOST_CHECK_EQUAL(asset->asset_ref().id(), dcp::SoundAsset(mxf).id());
+	}
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 0);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 24);
+	BOOST_CHECK_EQUAL(assets[1]->entry_point().get_value_or(0), 24);
+	BOOST_CHECK_EQUAL(assets[1]->actual_duration(), 24);
+}
+
+
+/** As above with a trim at the start: the trim is added to the second reel's entry point too */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_two_reels_with_trim_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_two_reels_with_trim_test_source", 6, true, {}, 48000, 24, {}, 3);
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_two_reels_with_trim_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(6, 24));
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_seconds(1) });
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	for (auto asset: assets) {
+		BOOST_CHECK_EQUAL(asset->asset_ref().id(), dcp::SoundAsset(mxf).id());
+	}
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 6);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 24);
+	BOOST_CHECK_EQUAL(assets[1]->entry_point().get_value_or(0), 30);
+	BOOST_CHECK_EQUAL(assets[1]->actual_duration(), 42);
+}
+
+
+/** A sound MXF that starts in the middle of a reel is written again: it does not fill the reels it is in */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_not_on_reel_edges_is_not_reused_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_not_on_reel_edges_is_not_reused_test_source", 6, true, {});
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_not_on_reel_edges_is_not_reused_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->content()[0]->set_position(film, dcpomatic::DCPTime::from_frames(12, 24));
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_seconds(1) });
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::SoundAsset(mxf).id());
+	BOOST_CHECK(assets[1]->asset_ref().id() != dcp::SoundAsset(mxf).id());
+}
+
+
+/** A picture MXF and a sound MXF that are cut in the same way are cut at the same frames in the CPL of each reel */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_cuts_like_the_picture_test)
+{
+	auto still = content_factory("test/data/flat_red.png");
+	auto picture_film = new_test_film("sound_mxf_dcpasset_cuts_like_the_picture_test_picture", still);
+	still[0]->video->set_length(72);
+	make_and_verify_dcp(
+		picture_film,
+		{
+			dcp::VerificationNote::Code::MISSING_FFEC_IN_FEATURE,
+			dcp::VerificationNote::Code::MISSING_FFMC_IN_FEATURE,
+			dcp::VerificationNote::Code::INVALID_JPEG2000_GUARD_BITS_FOR_2K,
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA
+		});
+	auto const picture_mxf = find_file(picture_film->dir(picture_film->dcp_name()), "j2c_");
+	auto const sound_mxf = write_sound_mxf("sound_mxf_dcpasset_cuts_like_the_picture_test_sound", 6, true, {}, 48000, 24, {}, 3);
+
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_cuts_like_the_picture_test", sound_mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->examine_and_add_content(content_factory(picture_mxf));
+	BOOST_REQUIRE(!wait_for_jobs());
+	for (auto content: film->content()) {
+		content->set_trim_start(dcpomatic::ContentTime::from_frames(6, 24));
+		content->set_trim_end(dcpomatic::ContentTime::from_frames(3, 24));
+	}
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_frames(24, 24) });
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::MISSING_FFEC_IN_FEATURE,
+			dcp::VerificationNote::Code::MISSING_FFMC_IN_FEATURE,
+			dcp::VerificationNote::Code::INVALID_JPEG2000_GUARD_BITS_FOR_2K,
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA
+		});
+
+	dcp::DCP dcp(film->dir(film->dcp_name()));
+	dcp.read();
+	BOOST_REQUIRE_EQUAL(dcp.cpls().size(), 1U);
+	auto const reels = dcp.cpls()[0]->reels();
+	BOOST_REQUIRE_EQUAL(reels.size(), 2U);
+	for (auto reel: reels) {
+		BOOST_REQUIRE(reel->main_picture());
+		BOOST_REQUIRE(reel->main_sound());
+		BOOST_CHECK_EQUAL(reel->main_sound()->entry_point().get_value_or(0), reel->main_picture()->entry_point().get_value_or(0));
+		BOOST_CHECK_EQUAL(reel->main_sound()->actual_duration(), reel->main_picture()->actual_duration());
+	}
+	BOOST_CHECK_EQUAL(reels[0]->main_sound()->entry_point().get_value_or(0), 6);
+	BOOST_CHECK_EQUAL(reels[1]->main_sound()->entry_point().get_value_or(0), 30);
+	BOOST_CHECK_EQUAL(reels[1]->main_sound()->actual_duration(), 39);
+}
+
+
+/** A sound MXF that starts a reel but ends in the middle of another one is written again */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_ends_inside_a_reel_is_not_reused_test)
+{
+	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_ends_inside_a_reel_is_not_reused_test_source", 6, true, {});
+	auto film = film_for_public_mxf("sound_mxf_dcpasset_ends_inside_a_reel_is_not_reused_test", mxf);
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	auto still = content_factory("test/data/flat_red.png");
+	film->examine_and_add_content(still);
+	BOOST_REQUIRE(!wait_for_jobs());
+	still[0]->video->set_length(72);
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_seconds(1) });
+	make_sound_only_dcp(film);
+
+	auto const assets = dcp_sound_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::SoundAsset(mxf).id());
+	BOOST_CHECK(assets[1]->asset_ref().id() != dcp::SoundAsset(mxf).id());
 }
 
 

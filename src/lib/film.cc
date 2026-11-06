@@ -2845,8 +2845,23 @@ Film::reusable_dcp_assets() const
 			}
 		}
 		for (auto asset: i->assets(shared_from_this())) {
-			if (std::find(film_reels.begin(), film_reels.end(), asset.period()) == film_reels.end()) {
-				/* The asset's period does not match any reel in the DCP we will make */
+			auto const period = asset.period();
+			auto const starts_a_reel = std::any_of(film_reels.begin(), film_reels.end(), [period](dcpomatic::DCPTimePeriod reel) {
+				return reel.from == period.from;
+			});
+			auto const ends_a_reel = std::any_of(film_reels.begin(), film_reels.end(), [period](dcpomatic::DCPTimePeriod reel) {
+				return reel.to == period.to;
+			});
+			if (!starts_a_reel || !ends_a_reel) {
+				/* The asset's period does not start and end at the edges of reels in the DCP we will make, so it
+				 * is not made of whole reels.
+				 */
+				continue;
+			}
+			if (dynamic_pointer_cast<DCPContent>(i) && std::find(film_reels.begin(), film_reels.end(), period) == film_reels.end()) {
+				/* An asset of a DCP is only re-used when it is exactly one reel: its entry point is not known here, and
+				 * its period has already been cut by the DCP's trims.
+				 */
 				continue;
 			}
 			auto overlaps = overlapping_content(asset.period());

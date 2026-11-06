@@ -29,6 +29,7 @@
 #include "lib/dcp_content.h"
 #include "lib/film.h"
 #include "lib/text_content.h"
+#include "lib/video_content.h"
 #include "test.h"
 #include <boost/test/unit_test.hpp>
 
@@ -150,4 +151,35 @@ BOOST_AUTO_TEST_CASE(reuse_dcp_asset_test5)
 
 	check_video_not_passed_through(film);
 	check_audio_passed_through(film);
+}
+
+
+/** The assets of a DCP that has one reel are not re-used in a film that splits that reel in two: the asset's period is
+ *  not a reel of the film, and a trim in the input would put the entry points in the wrong place
+ */
+BOOST_AUTO_TEST_CASE(reuse_dcp_asset_one_reel_split_in_two_is_not_reused_test)
+{
+	auto still = content_factory("test/data/flat_red.png");
+	auto source = new_test_film("reuse_dcp_asset_one_reel_split_in_two_is_not_reused_test_source", still);
+	still[0]->video->set_length(72);
+	make_and_verify_dcp(
+		source,
+		{
+			dcp::VerificationNote::Code::MISSING_FFEC_IN_FEATURE,
+			dcp::VerificationNote::Code::MISSING_FFMC_IN_FEATURE,
+			dcp::VerificationNote::Code::INVALID_JPEG2000_GUARD_BITS_FOR_2K,
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA
+		});
+	auto const source_picture = find_file(source->dir(source->dcp_name()), "j2c_").filename();
+
+	auto input = std::make_shared<DCPContent>(source->dir(source->dcp_name()));
+	auto film = new_test_film("reuse_dcp_asset_one_reel_split_in_two_is_not_reused_test", { input });
+	film->set_reuse_behaviour(Film::ReuseBehaviour::COPY);
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_frames(36, 24) });
+	film->set_interop(false);
+
+	make_and_verify_dcp(film, { dcp::VerificationNote::Code::MISSING_CPL_METADATA });
+
+	BOOST_CHECK(!boost::filesystem::exists(film->dir(film->dcp_name()) / source_picture));
 }

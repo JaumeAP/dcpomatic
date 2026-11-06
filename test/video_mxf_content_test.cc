@@ -172,6 +172,45 @@ BOOST_AUTO_TEST_CASE(picture_mxf_dcpasset_reused_test)
 }
 
 
+/** A picture MXF that fills two whole reels is reused for both, each with its own entry point and duration */
+BOOST_AUTO_TEST_CASE(picture_mxf_dcpasset_two_reels_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_dcpasset_two_reels_test_source", "test/data/flat_red.png");
+	auto film = film_for_picture_mxf("picture_mxf_dcpasset_two_reels_test", mxf);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(6, 24));
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_frames(30, 24) });
+	make_picture_only_dcp(film);
+
+	auto const assets = dcp_picture_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	for (auto asset: assets) {
+		BOOST_CHECK_EQUAL(asset->asset_ref().id(), dcp::MonoJ2KPictureAsset(mxf).id());
+	}
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 6);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 30);
+	BOOST_CHECK_EQUAL(assets[1]->entry_point().get_value_or(0), 36);
+	BOOST_CHECK_EQUAL(assets[1]->actual_duration(), 36);
+}
+
+
+/** A picture MXF that starts in the middle of a reel is written again: it does not fill the reels it is in */
+BOOST_AUTO_TEST_CASE(picture_mxf_dcpasset_not_on_reel_edges_is_not_reused_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_dcpasset_not_on_reel_edges_is_not_reused_test_source", "test/data/flat_red.png");
+	auto film = film_for_picture_mxf("picture_mxf_dcpasset_not_on_reel_edges_is_not_reused_test", mxf);
+	film->content()[0]->set_position(film, dcpomatic::DCPTime::from_frames(12, 24));
+	film->set_reel_type(ReelType::CUSTOM);
+	film->set_custom_reel_boundaries({ dcpomatic::DCPTime::from_frames(36, 24) });
+	make_picture_only_dcp(film);
+
+	auto const assets = dcp_picture_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::MonoJ2KPictureAsset(mxf).id());
+	BOOST_CHECK(assets[1]->asset_ref().id() != dcp::MonoJ2KPictureAsset(mxf).id());
+}
+
+
 /** A picture MXF that the film crops is written again */
 BOOST_AUTO_TEST_CASE(picture_mxf_dcpasset_crop_is_not_reused_test)
 {
