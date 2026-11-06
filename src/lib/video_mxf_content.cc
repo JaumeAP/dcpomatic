@@ -175,7 +175,7 @@ VideoMXFContent::written_alone_as_a_reel(shared_ptr<const Film> film) const
 	}
 
 	/* If the file goes into the DCP as it is, every reel that has it refers to the file */
-	if (film->reuse_behaviour() == Film::ReuseBehaviour::COPY && !assets(film).empty()) {
+	if (!assets(film).empty()) {
 		return false;
 	}
 

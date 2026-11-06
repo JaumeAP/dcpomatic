@@ -398,16 +398,19 @@ BOOST_AUTO_TEST_CASE(picture_mxf_dcpasset_3d_frame_type_is_not_reused_test)
 }
 
 
-/** A picture MXF is written again when the film does not copy */
-BOOST_AUTO_TEST_CASE(picture_mxf_dcpasset_re_wrap_is_not_reused_test)
+/** A picture MXF that nothing changes is used as it is whatever the film's re-use behaviour is */
+BOOST_AUTO_TEST_CASE(picture_mxf_dcpasset_is_reused_whatever_the_reuse_behaviour_is_test)
 {
-	auto const mxf = make_picture_mxf("picture_mxf_dcpasset_re_wrap_is_not_reused_test_source", "test/data/flat_red.png");
-	auto film = film_for_picture_mxf("picture_mxf_dcpasset_re_wrap_is_not_reused_test", mxf, Film::ReuseBehaviour::RE_WRAP);
-	make_picture_only_dcp(film);
+	for (auto behaviour: { Film::ReuseBehaviour::RE_ENCODE, Film::ReuseBehaviour::RE_WRAP }) {
+		auto const name = "picture_mxf_dcpasset_is_reused_whatever_the_reuse_behaviour_is_test_" + std::to_string(static_cast<int>(behaviour));
+		auto const mxf = make_picture_mxf(name + "_source", "test/data/flat_red.png");
+		auto film = film_for_picture_mxf(name, mxf, behaviour);
+		make_picture_only_dcp(film);
 
-	auto const assets = dcp_picture_assets(film);
-	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
-	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::MonoJ2KPictureAsset(mxf).id());
+		auto const assets = dcp_picture_assets(film);
+		BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+		BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), dcp::MonoJ2KPictureAsset(mxf).id());
+	}
 }
 
 

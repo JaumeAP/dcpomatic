@@ -38,6 +38,7 @@
 #include <dcp/reel_atmos_asset.h>
 #include <dcp/reel_picture_asset.h>
 #include <dcp/reel_sound_asset.h>
+#include <dcp/reel_stereo_picture_asset.h>
 #include <dcp/reel_text_asset.h>
 #include <dcp/reel.h>
 #include <dcp/scope_guard.h>
@@ -1037,7 +1038,21 @@ DCPContent::assets(shared_ptr<const Film> film) const
 		for (auto reel_asset: (*cpl_reels_iter)->file_assets()) {
 			if (reel_asset->asset_ref().resolved()) {
 				if (auto file = reel_asset->asset_ref()->file()) {
+					/* A file is only put into the new DCP as it is if the CPL plays the whole of it, and that is the length of the
+					 * reel that it will be in (this content's trims shorten the reel).  Otherwise the new CPL would need an entry
+					 * point and a duration that are not known here.
+					 */
+					auto const whole_file = reel_asset->entry_point().get_value_or(0) == 0
+						&& reel_asset->actual_duration() == reel_asset->intrinsic_duration()
+						&& reel_asset->actual_duration() == reel_periods_iter->duration().frames_round(film->video_frame_rate());
+					if (!whole_file && !dynamic_pointer_cast<dcp::ReelTextAsset>(reel_asset)) {
+						continue;
+					}
 					if (dynamic_pointer_cast<dcp::ReelPictureAsset>(reel_asset)) {
+						/* A 3D picture asset cannot be in a 2D film, nor a 2D one in a 3D film */
+						if (static_cast<bool>(dynamic_pointer_cast<dcp::ReelStereoPictureAsset>(reel_asset)) != film->three_d()) {
+							continue;
+						}
 						assets.push_back({DCPAsset::Type::VIDEO, *file, *reel_periods_iter});
 					} else if (dynamic_pointer_cast<dcp::ReelSoundAsset>(reel_asset)) {
 						assets.push_back({DCPAsset::Type::AUDIO, *file, *reel_periods_iter});

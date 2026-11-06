@@ -132,15 +132,17 @@ BOOST_AUTO_TEST_CASE(atmos_mxf_dcpasset_two_reels_test)
 }
 
 
-/** An Atmos MXF is written again when the film does not copy */
-BOOST_AUTO_TEST_CASE(atmos_mxf_dcpasset_re_wrap_is_not_reused_test)
+/** An Atmos MXF that nothing changes is used as it is whatever the film's re-use behaviour is */
+BOOST_AUTO_TEST_CASE(atmos_mxf_dcpasset_is_reused_whatever_the_reuse_behaviour_is_test)
 {
-	auto film = film_for_atmos_mxf("atmos_mxf_dcpasset_re_wrap_is_not_reused_test", Film::ReuseBehaviour::RE_WRAP);
-	make_atmos_dcp(film);
+	for (auto behaviour: { Film::ReuseBehaviour::RE_ENCODE, Film::ReuseBehaviour::RE_WRAP }) {
+		auto film = film_for_atmos_mxf("atmos_mxf_dcpasset_is_reused_whatever_the_reuse_behaviour_is_test_" + std::to_string(static_cast<int>(behaviour)), behaviour);
+		make_atmos_dcp(film);
 
-	auto const assets = dcp_atmos_assets(film);
-	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
-	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::AtmosAsset(atmos_file).id());
+		auto const assets = dcp_atmos_assets(film);
+		BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+		BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), dcp::AtmosAsset(atmos_file).id());
+	}
 }
 
 

@@ -888,17 +888,20 @@ BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_gain_is_not_reused_test)
 }
 
 
-/** A sound MXF is written again when the film does not copy */
-BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_re_wrap_is_not_reused_test)
+/** A sound MXF that nothing changes is used as it is whatever the film's re-use behaviour is */
+BOOST_AUTO_TEST_CASE(sound_mxf_dcpasset_is_reused_whatever_the_reuse_behaviour_is_test)
 {
-	auto const mxf = write_sound_mxf("sound_mxf_dcpasset_re_wrap_is_not_reused_test_source", 6, true, {});
-	auto film = film_for_public_mxf("sound_mxf_dcpasset_re_wrap_is_not_reused_test", mxf);
-	film->set_reuse_behaviour(Film::ReuseBehaviour::RE_WRAP);
-	make_sound_only_dcp(film);
+	for (auto behaviour: { Film::ReuseBehaviour::RE_ENCODE, Film::ReuseBehaviour::RE_WRAP }) {
+		auto const name = "sound_mxf_dcpasset_is_reused_whatever_the_reuse_behaviour_is_test_" + std::to_string(static_cast<int>(behaviour));
+		auto const mxf = write_sound_mxf(name + "_source", 6, true, {});
+		auto film = film_for_public_mxf(name, mxf);
+		film->set_reuse_behaviour(behaviour);
+		make_sound_only_dcp(film);
 
-	auto const assets = dcp_sound_assets(film);
-	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
-	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::SoundAsset(mxf).id());
+		auto const assets = dcp_sound_assets(film);
+		BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+		BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), dcp::SoundAsset(mxf).id());
+	}
 }
 
 

@@ -2788,10 +2788,6 @@ Film::possible_reel_types() const
 vector<DCPAsset>
 Film::reusable_dcp_assets() const
 {
-	if (_reuse_behaviour != ReuseBehaviour::COPY) {
-		return {};
-	}
-
 	auto const film_reels = reels();
 	vector<DCPAsset> reusable;
 
@@ -2848,9 +2844,39 @@ Film::reusable_dcp_assets() const
 		});
 	};
 
+	/* Putting the assets of a DCP into the new DCP as they are leaves out what the film would do to the DCP's picture and
+	 * sound.  With "copying" the user has asked for that; otherwise a DCP that the film changes is written again.
+	 */
+	auto dcp_is_unchanged = [this](shared_ptr<const DCPContent> dcp, DCPAsset::Type type) {
+		FrameRateChange const frc(shared_from_this(), dcp);
+		if (frc.change_speed() || frc.skip() || frc.repeat() != 1) {
+			return false;
+		}
+		auto video = dcp->video;
+		if (type == DCPAsset::Type::VIDEO && video) {
+			if (!(video->actual_crop() == Crop()) || video->custom_ratio() || video->custom_size() || video->size() != frame_size() ||
+			    video->fade_in() != 0 || video->fade_out() != 0 || video->colour_conversion()) {
+				return false;
+			}
+		}
+		auto audio = dcp->audio;
+		if (type == DCPAsset::Type::AUDIO && audio) {
+			if (audio->gain() != 0 || audio->delay() != 0 || audio->fade_in() != dcpomatic::ContentTime() || audio->fade_out() != dcpomatic::ContentTime()) {
+				return false;
+			}
+		}
+		return true;
+	};
+
 	for (auto i: content()) {
 		if (auto dcp = dynamic_pointer_cast<DCPContent>(i)) {
 			if ((dcp->standard() == dcp::Standard::INTEROP) != interop()) {
+				continue;
+			}
+			/* An asset of an encrypted DCP would go into the new DCP still encrypted, with a key that its CPL does not carry,
+			 * where decoding and writing it again would make it readable.  Only "copying" asks for the file as it is.
+			 */
+			if (dcp->encrypted() && _reuse_behaviour != ReuseBehaviour::COPY) {
 				continue;
 			}
 		}
@@ -2873,6 +2899,22 @@ Film::reusable_dcp_assets() const
 				 * its period has already been cut by the DCP's trims.
 				 */
 				continue;
+			}
+			if (auto dcp = dynamic_pointer_cast<DCPContent>(i)) {
+				/* An asset that the new DCP refers to in the input DCP (a VF) is not put into the new DCP as well */
+				if ((asset.type() == DCPAsset::Type::VIDEO && dcp->reference_video()) ||
+				    (asset.type() == DCPAsset::Type::AUDIO && dcp->reference_audio()) ||
+				    (asset.type() == DCPAsset::Type::TEXT && (dcp->reference_text(TextType::OPEN_SUBTITLE) || dcp->reference_text(TextType::CLOSED_CAPTION)))) {
+					continue;
+				}
+				if (asset.type() == DCPAsset::Type::VIDEO && dcp->video && !dcp->video->use()) {
+					/* The picture of this DCP is not wanted in the new DCP at all */
+					continue;
+				}
+				if (_reuse_behaviour != ReuseBehaviour::COPY && (asset.type() == DCPAsset::Type::TEXT || !dcp_is_unchanged(dcp, asset.type()))) {
+					/* The film's settings for a DCP's text (position, size, colour) are not checked here */
+					continue;
+				}
 			}
 			auto overlaps = overlapping_content(asset.period());
 			switch (asset.type()) {

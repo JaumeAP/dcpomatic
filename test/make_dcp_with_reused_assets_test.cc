@@ -25,6 +25,7 @@
  */
 
 
+#include "lib/audio_content.h"
 #include "lib/content_factory.h"
 #include "lib/dcp_content.h"
 #include "lib/film.h"
@@ -85,6 +86,54 @@ BOOST_AUTO_TEST_CASE(reuse_dcp_asset_test1)
 
 	check_video_passed_through(film);
 	check_audio_passed_through(film);
+}
+
+
+/** Picture and sound are passed through whatever the film's re-use behaviour is */
+BOOST_AUTO_TEST_CASE(reuse_dcp_asset_whatever_the_reuse_behaviour_is_test)
+{
+	for (auto behaviour: { Film::ReuseBehaviour::RE_ENCODE, Film::ReuseBehaviour::RE_WRAP }) {
+		auto input = std::make_shared<DCPContent>("test/data/scaling_test_185_185");
+		auto film = new_test_film("reuse_dcp_asset_whatever_the_reuse_behaviour_is_test_" + std::to_string(static_cast<int>(behaviour)), { input });
+		film->set_reuse_behaviour(behaviour);
+		film->set_audio_channels(8);
+		film->set_interop(false);
+
+		make_and_verify_dcp(film);
+
+		check_video_passed_through(film);
+		check_audio_passed_through(film);
+	}
+}
+
+
+/** Without "copying", a DCP whose picture or sound the film changes is not passed through */
+BOOST_AUTO_TEST_CASE(reuse_dcp_asset_changed_content_is_not_passed_through_test)
+{
+	{
+		auto input = std::make_shared<DCPContent>("test/data/scaling_test_185_185");
+		auto film = new_test_film("reuse_dcp_asset_changed_content_is_not_passed_through_test_gain", { input });
+		film->set_reuse_behaviour(Film::ReuseBehaviour::RE_WRAP);
+		film->set_audio_channels(8);
+		film->set_interop(false);
+		input->audio->set_gain(-6);
+		make_and_verify_dcp(film);
+
+		check_video_passed_through(film);
+		check_audio_not_passed_through(film);
+	}
+
+	{
+		auto input = std::make_shared<DCPContent>("test/data/scaling_test_185_185");
+		auto film = new_test_film("reuse_dcp_asset_changed_content_is_not_passed_through_test_crop", { input });
+		film->set_reuse_behaviour(Film::ReuseBehaviour::RE_WRAP);
+		film->set_audio_channels(8);
+		film->set_interop(false);
+		input->video->set_left_crop(10);
+		make_and_verify_dcp(film);
+
+		check_video_not_passed_through(film);
+	}
 }
 
 
