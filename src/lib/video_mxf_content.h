@@ -20,6 +20,9 @@
 
 
 #include "content.h"
+#include "types.h"
+#include <dcp/data.h>
+#include <functional>
 
 
 class VideoMXFContent : public Content
@@ -63,6 +66,19 @@ public:
 	 *  goes into the DCP as it is.
 	 */
 	std::shared_ptr<const VideoMXFContent> shared_picture_source(std::shared_ptr<const Film> film) const;
+
+	/** @return true if the film writes this content's image again and the frames that its trims cut off are written too,
+	 *  so that the picture asset has the file's whole length and the CPL plays only the part inside the trims
+	 */
+	bool keeps_whole_length(std::shared_ptr<const Film> film) const;
+
+	/** @return the length of the file in frames, ignoring any trims */
+	Frame whole_length() const;
+
+	/** Encode frames [from, to) of the file with the changes that the content's settings make, and pass each to @param write */
+	void encode_frames(
+		std::shared_ptr<const Film> film, Frame from, Frame to, std::function<void (std::shared_ptr<const dcp::Data>)> write
+		) const;
 
 	static bool valid_mxf(boost::filesystem::path path);
 

@@ -31,6 +31,7 @@
 #include "reel_writer.h"
 #include "remembered_asset.h"
 #include "util.h"
+#include "video_mxf_content.h"
 #include <dcp/atmos_asset.h>
 #include <dcp/atmos_asset_writer.h>
 #include <dcp/certificate_chain.h>
@@ -117,6 +118,26 @@ asset_id(DCPAsset::Type type, boost::filesystem::path file)
 			break;
 		}
 	} catch (std::exception&) {
+	}
+
+	return {};
+}
+
+
+/** @return a picture MXF of @param film that keeps its whole length and starts (if @param head) or ends this @param period,
+ *  and has something cut off there, or null if there is none.
+ */
+static shared_ptr<const VideoMXFContent>
+find_picture_with_end(shared_ptr<const Film> film, DCPTimePeriod period, bool head)
+{
+	for (auto content: film->content()) {
+		auto picture = dynamic_pointer_cast<const VideoMXFContent>(content);
+		if (!picture || !picture->keeps_whole_length(film)) {
+			continue;
+		}
+		if (head ? (picture->position() == period.from && picture->trim_start() != ContentTime()) : (picture->end(film) == period.to && picture->trim_end() != ContentTime())) {
+			return picture;
+		}
 	}
 
 	return {};
@@ -227,7 +248,12 @@ ReelWriter::setup_video(vector<DCPAsset> const& reusable_assets, shared_ptr<Job>
 		auto remembered_assets = film()->read_remembered_assets();
 
 		DCPOMATIC_ASSERT(film()->directory());
-		auto existing_asset_filename = find_asset(remembered_assets, *film()->directory(), period, film()->video_identifier());
+		/* An asset with the head or tail of a picture MXF has frames beyond the reel, which are not in the info file, so
+		 * one is not looked for, and the one made here is not remembered: if the trims went, the CPL would play the head.
+		 */
+		auto existing_asset_filename = _picture_has_ends
+			? optional<boost::filesystem::path>()
+			: find_asset(remembered_assets, *film()->directory(), period, film()->video_identifier());
 		if (existing_asset_filename) {
 			_first_nonexistent_frame = check_existing_picture_asset(*existing_asset_filename);
 		}
@@ -268,8 +294,10 @@ ReelWriter::setup_video(vector<DCPAsset> const& reusable_assets, shared_ptr<Job>
 				LOG_GENERAL("Re-using partial asset {}: has frames up to {}", existing_asset_filename->string(), _first_nonexistent_frame);
 				dcp::filesystem::rename(*existing_asset_filename, new_asset_filename);
 			}
-			remembered_assets.push_back(RememberedAsset(new_asset_filename.filename(), period, film()->video_identifier()));
-			film()->write_remembered_assets(remembered_assets);
+			if (!_picture_has_ends) {
+				remembered_assets.push_back(RememberedAsset(new_asset_filename.filename(), period, film()->video_identifier()));
+				film()->write_remembered_assets(remembered_assets);
+			}
 			picture_asset->set_file(new_asset_filename);
 
 			dcp::Behaviour const behaviour = _first_nonexistent_frame > 0 ? dcp::Behaviour::OVERWRITE_EXISTING : dcp::Behaviour::MAKE_NEW;
@@ -382,11 +410,26 @@ ReelWriter::ReelWriter(
 	auto const standard = film()->interop() ? dcp::Standard::INTEROP : dcp::Standard::SMPTE;
 
 	auto reusable_assets = film()->reusable_dcp_assets();
+
+	/* Whether this reel has the head or the tail of a picture MXF is the same for a reel that writes the picture and for one
+	 * that refers to the picture of another reel, as the two have the same content, changed in the same way.
+	 */
+	_picture_head_content = find_picture_with_end(film(), period, true);
+	_picture_tail_content = find_picture_with_end(film(), period, false);
+	_picture_has_ends = _picture_head_content || _picture_tail_content;
+
 	if (shared_picture) {
 		/* Another reel writes our picture, so we write none and do not look for an old asset of our own */
 		_shared_picture = shared_picture;
 	} else {
 		setup_video(reusable_assets, job, period, standard);
+	}
+	if (_picture_has_ends && (_j2k_picture_asset_writer || _shared_picture)) {
+		if (_picture_head_content) {
+			_picture_head_frames = _picture_head_content->trim_start().frames_round(film()->video_frame_rate());
+		}
+		_picture_entry_point = _picture_head_frames;
+		_picture_duration = period.duration().frames_round(film()->video_frame_rate());
 	}
 	if (shared_sound) {
 		/* Another reel writes our sound, so we write none and have none of our own */
@@ -494,6 +537,34 @@ ReelWriter::fake_write(Frame frame, Eyes eyes)
 	}
 
 	_j2k_picture_asset_writer->fake_write(J2KFrameInfo(_info_file, frame, eyes));
+}
+
+
+void
+ReelWriter::write_picture_head()
+{
+	if (!_j2k_picture_asset_writer || !_picture_head_content) {
+		return;
+	}
+
+	_picture_head_content->encode_frames(film(), 0, _picture_head_frames, [this](shared_ptr<const dcp::Data> frame) {
+		_j2k_picture_asset_writer->write(frame->data(), frame->size());
+	});
+}
+
+
+void
+ReelWriter::write_picture_tail()
+{
+	if (!_j2k_picture_asset_writer || !_picture_tail_content) {
+		return;
+	}
+
+	auto const length = _picture_tail_content->whole_length();
+	auto const from = length - _picture_tail_content->trim_end().frames_round(film()->video_frame_rate());
+	_picture_tail_content->encode_frames(film(), from, length, [this](shared_ptr<const dcp::Data> frame) {
+		_j2k_picture_asset_writer->write(frame->data(), frame->size());
+	});
 }
 
 
@@ -698,7 +769,7 @@ ReelWriter::create_reel_picture(shared_ptr<dcp::Reel> reel, list<ReferencedReelA
 	Frame const period_duration = _period.duration().frames_round(film()->video_frame_rate());
 
 	DCPOMATIC_ASSERT(reel_asset);
-	if (_picture_duration && (_j2k_picture_asset || _mpeg2_picture_asset)) {
+	if (_picture_duration && (_j2k_picture_asset || _mpeg2_picture_asset || _shared_picture)) {
 		reel_asset->set_duration(*_picture_duration);
 		DCPOMATIC_ASSERT(reel_asset->entry_point().get_value_or(0) + *_picture_duration <= reel_asset->intrinsic_duration());
 	}

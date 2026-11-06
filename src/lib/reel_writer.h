@@ -41,6 +41,7 @@ class AudioBuffers;
 class Film;
 class InfoFileHandle;
 class Job;
+class VideoMXFContent;
 struct write_frame_info_test;
 
 namespace dcp {
@@ -100,6 +101,11 @@ public:
 	 *  it, and have the CPL play only the reel's part.  Either may be null.
 	 */
 	void set_sound_ends(std::shared_ptr<const AudioBuffers> head, Frame head_frames, std::shared_ptr<const AudioBuffers> tail);
+
+	/** Write the frames of a picture MXF that its start trim cuts off, if it starts this reel; call before any other picture */
+	void write_picture_head();
+	/** Write the frames of a picture MXF that its end trim cuts off, if it ends this reel; call after all other picture */
+	void write_picture_tail();
 
 	/** The sound asset that this reel writes, for other reels to refer to, or null if it writes none */
 	std::shared_ptr<SharedSound> own_sound() const {
@@ -182,6 +188,14 @@ private:
 	/** entry point and duration to use in the CPL for a picture asset that we re-used, if they are not 0 and the asset's length */
 	Frame _picture_entry_point = 0;
 	boost::optional<Frame> _picture_duration;
+	/** the picture MXF whose start trim this reel's picture asset keeps as a head, or null */
+	std::shared_ptr<const VideoMXFContent> _picture_head_content;
+	/** the picture MXF whose end trim this reel's picture asset keeps as a tail, or null */
+	std::shared_ptr<const VideoMXFContent> _picture_tail_content;
+	/** true if the picture asset has frames beyond this reel, so the CPL must say which of them to play */
+	bool _picture_has_ends = false;
+	/** frames of the picture asset before the frame that starts this reel */
+	Frame _picture_head_frames = 0;
 	std::shared_ptr<dcp::SoundAsset> _sound_asset;
 	std::shared_ptr<dcp::SoundAssetWriter> _sound_asset_writer;
 	/** entry point and duration to use in the CPL for a sound asset that we re-used, if they are not 0 and the asset's length */

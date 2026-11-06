@@ -43,6 +43,8 @@
 #include <dcp/dcp.h>
 #include <dcp/equality_options.h>
 #include <dcp/mono_j2k_picture_asset.h>
+#include <dcp/mono_j2k_picture_asset_reader.h>
+#include <dcp/mono_j2k_picture_frame.h>
 #include <dcp/reel.h>
 #include <dcp/reel_picture_asset.h>
 #include <boost/test/unit_test.hpp>
@@ -459,6 +461,203 @@ BOOST_AUTO_TEST_CASE(picture_mxf_dcpasset_encrypted_is_not_reused_test)
 		BOOST_REQUIRE_EQUAL(assets.size(), 1U);
 		BOOST_CHECK(assets[0]->asset_ref().id() != dcp::MonoJ2KPictureAsset(mxf).id());
 	}
+}
+
+
+/** @return the bytes of frame @param index of the picture MXF @param file */
+static std::vector<uint8_t>
+j2k_frame_bytes(boost::filesystem::path file, int index)
+{
+	auto frame = dcp::MonoJ2KPictureAsset(file).start_read()->get_frame(index);
+	return std::vector<uint8_t>(frame->data(), frame->data() + frame->size());
+}
+
+
+/** A picture MXF that is written again keeps the frames its trims cut off: the file is as long as the source, and the
+ *  CPL starts after the head and stops before the tail.  The kept frames have the crop too.
+ */
+BOOST_AUTO_TEST_CASE(picture_mxf_ends_are_kept_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_ends_are_kept_test_source", "test/data/flat_red.png");
+	auto film = film_for_picture_mxf("picture_mxf_ends_are_kept_test", mxf);
+	film->content()[0]->video->set_left_crop(10);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(3, 24));
+	film->content()[0]->set_trim_end(dcpomatic::ContentTime::from_frames(4, 24));
+	make_picture_only_dcp(film);
+
+	auto const assets = dcp_picture_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::MonoJ2KPictureAsset(mxf).id());
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 3);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 65);
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), 72);
+
+	auto const file = find_file(film->dir(film->dcp_name()), "j2c_");
+	/* The head and the tail are cropped like the frames in between, and the crop makes them differ from the source's */
+	BOOST_CHECK(j2k_frame_bytes(file, 0) == j2k_frame_bytes(file, 10));
+	BOOST_CHECK(j2k_frame_bytes(file, 71) == j2k_frame_bytes(file, 10));
+	BOOST_CHECK(j2k_frame_bytes(file, 0) != j2k_frame_bytes(mxf, 0));
+}
+
+
+/** The head and the tail are what the source has there: a fade belongs to the part that plays, not to the frames cut off */
+BOOST_AUTO_TEST_CASE(picture_mxf_ends_are_not_faded_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_ends_are_not_faded_test_source", "test/data/flat_red.png");
+	auto film = film_for_picture_mxf("picture_mxf_ends_are_not_faded_test", mxf);
+	film->content()[0]->video->set_left_crop(10);
+	film->content()[0]->video->set_fade_in(10);
+	film->content()[0]->video->set_fade_out(10);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(3, 24));
+	film->content()[0]->set_trim_end(dcpomatic::ContentTime::from_frames(4, 24));
+	make_picture_only_dcp(film);
+
+	auto const file = find_file(film->dir(film->dcp_name()), "j2c_");
+	BOOST_CHECK(j2k_frame_bytes(file, 0) == j2k_frame_bytes(file, 30));
+	BOOST_CHECK(j2k_frame_bytes(file, 71) == j2k_frame_bytes(file, 30));
+	/* The frames that play do fade */
+	BOOST_CHECK(j2k_frame_bytes(file, 3) != j2k_frame_bytes(file, 30));
+	BOOST_CHECK(j2k_frame_bytes(file, 67) != j2k_frame_bytes(file, 30));
+}
+
+
+/** With only an end trim the file starts where the reel does and keeps the tail */
+BOOST_AUTO_TEST_CASE(picture_mxf_tail_only_is_kept_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_tail_only_is_kept_test_source", "test/data/flat_red.png");
+	auto film = film_for_picture_mxf("picture_mxf_tail_only_is_kept_test", mxf);
+	film->content()[0]->video->set_left_crop(10);
+	film->content()[0]->set_trim_end(dcpomatic::ContentTime::from_frames(4, 24));
+	make_picture_only_dcp(film);
+
+	auto const assets = dcp_picture_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 0);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 68);
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), 72);
+}
+
+
+/** A picture MXF with other video over it keeps no head nor tail: the reel's image is not the file's alone */
+BOOST_AUTO_TEST_CASE(picture_mxf_ends_are_not_kept_with_other_video_over_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_ends_are_not_kept_with_other_video_over_test_source", "test/data/flat_red.png");
+	auto film = film_for_picture_mxf("picture_mxf_ends_are_not_kept_with_other_video_over_test", mxf);
+	film->content()[0]->video->set_left_crop(10);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(3, 24));
+	auto other = content_factory("test/data/flat_red.png");
+	film->examine_and_add_content(other);
+	BOOST_REQUIRE(!wait_for_jobs());
+	other[0]->video->set_length(72);
+	other[0]->set_position(film, dcpomatic::DCPTime());
+	make_picture_only_dcp(film);
+
+	auto const assets = dcp_picture_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 0);
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), assets[0]->actual_duration());
+}
+
+
+/** With COPY, a picture MXF that burnt text stops from going in as it is is written again, and keeps its head and tail */
+BOOST_AUTO_TEST_CASE(picture_mxf_ends_are_kept_when_burnt_text_stops_the_copy_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_ends_are_kept_when_burnt_text_stops_the_copy_test_source", "test/data/flat_red.png");
+	auto film = film_for_picture_mxf("picture_mxf_ends_are_kept_when_burnt_text_stops_the_copy_test", mxf);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(3, 24));
+	auto subtitles = content_factory("test/data/15s.srt");
+	film->examine_and_add_content(subtitles);
+	BOOST_REQUIRE(!wait_for_jobs());
+	subtitles[0]->text[0]->set_burn(true);
+	subtitles[0]->set_position(film, dcpomatic::DCPTime());
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::MISSING_FFEC_IN_FEATURE,
+			dcp::VerificationNote::Code::MISSING_FFMC_IN_FEATURE,
+			dcp::VerificationNote::Code::INVALID_JPEG2000_GUARD_BITS_FOR_2K,
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA,
+			dcp::VerificationNote::Code::MISSING_SUBTITLE_LANGUAGE
+		});
+
+	auto const assets = dcp_picture_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK(assets[0]->asset_ref().id() != dcp::MonoJ2KPictureAsset(mxf).id());
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 3);
+	/* The reel is as long as the subtitles, and the file has the 3 frames before it */
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), assets[0]->actual_duration() + 3);
+}
+
+
+/** The head and the tail are written encrypted, like the rest, in an encrypted film */
+BOOST_AUTO_TEST_CASE(picture_mxf_ends_are_kept_in_an_encrypted_film_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_ends_are_kept_in_an_encrypted_film_test_source", "test/data/flat_red.png");
+	auto film = film_for_picture_mxf("picture_mxf_ends_are_kept_in_an_encrypted_film_test", mxf);
+	film->set_encrypt_picture(true);
+	film->content()[0]->video->set_left_crop(10);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(3, 24));
+	film->content()[0]->set_trim_end(dcpomatic::ContentTime::from_frames(4, 24));
+	make_and_verify_dcp(
+		film,
+		{
+			dcp::VerificationNote::Code::MISSING_FFEC_IN_FEATURE,
+			dcp::VerificationNote::Code::MISSING_FFMC_IN_FEATURE,
+			dcp::VerificationNote::Code::INVALID_JPEG2000_GUARD_BITS_FOR_2K,
+			dcp::VerificationNote::Code::MISSING_CPL_METADATA,
+			dcp::VerificationNote::Code::PARTIALLY_ENCRYPTED
+		});
+
+	auto const assets = dcp_picture_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 3);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 65);
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), 72);
+}
+
+
+/** An asset written with a head and a tail is not found again once the trims are gone: the CPL would play the head */
+BOOST_AUTO_TEST_CASE(picture_mxf_ends_are_not_reused_after_the_trims_go_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_ends_are_not_reused_after_the_trims_go_test_source", "test/data/flat_red.png");
+	auto film = film_for_picture_mxf("picture_mxf_ends_are_not_reused_after_the_trims_go_test", mxf);
+	film->content()[0]->video->set_left_crop(10);
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime::from_frames(3, 24));
+	make_picture_only_dcp(film);
+
+	film->content()[0]->set_trim_start(dcpomatic::ContentTime());
+	make_picture_only_dcp(film);
+
+	auto const assets = dcp_picture_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 1U);
+	BOOST_CHECK_EQUAL(assets[0]->entry_point().get_value_or(0), 0);
+	BOOST_CHECK_EQUAL(assets[0]->actual_duration(), 72);
+	BOOST_CHECK_EQUAL(assets[0]->intrinsic_duration(), 72);
+}
+
+
+/** Two reels with the same picture MXF, trimmed and changed in the same way, share one asset that has the head and the tail */
+BOOST_AUTO_TEST_CASE(picture_mxf_ends_are_kept_when_the_reel_is_shared_test)
+{
+	auto const mxf = make_picture_mxf("picture_mxf_ends_are_kept_when_the_reel_is_shared_test_source", "test/data/flat_red.png");
+	auto film = film_with_picture_mxf_twice("picture_mxf_ends_are_kept_when_the_reel_is_shared_test", mxf, Film::ReuseBehaviour::RE_WRAP);
+	for (auto content: film->content()) {
+		content->video->set_left_crop(10);
+		content->set_trim_start(dcpomatic::ContentTime::from_frames(3, 24));
+		content->set_trim_end(dcpomatic::ContentTime::from_frames(4, 24));
+	}
+	film->set_custom_reel_boundaries({ film->content()[0]->end(film) });
+	make_picture_only_dcp(film);
+
+	auto const assets = dcp_picture_assets(film);
+	BOOST_REQUIRE_EQUAL(assets.size(), 2U);
+	BOOST_CHECK_EQUAL(assets[0]->asset_ref().id(), assets[1]->asset_ref().id());
+	for (auto asset: assets) {
+		BOOST_CHECK_EQUAL(asset->entry_point().get_value_or(0), 3);
+		BOOST_CHECK_EQUAL(asset->actual_duration(), 65);
+		BOOST_CHECK_EQUAL(asset->intrinsic_duration(), 72);
+	}
+	BOOST_CHECK_EQUAL(picture_files_in_dcp(film), 1);
 }
 
 
