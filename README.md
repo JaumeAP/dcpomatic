@@ -13,7 +13,7 @@ stops being an improvement here and is simply part of his code.
 
 The improvements, in plain words. All the links are pull requests to Carl.
 
-Subtitles, DKDMs, Atmos hints and channels:
+Subtitles, DKDMs, Atmos hints, channels and listening to HI and VI:
 
 1. [#61](https://github.com/cth103/dcpomatic/pull/61): stops DKDMs that another DCP-o-matic program deleted from
    coming back.
@@ -27,19 +27,22 @@ Subtitles, DKDMs, Atmos hints and channels:
    The second one covers a DCP whose own reels are mixed.
 5. [#72](https://github.com/cth103/dcpomatic/pull/72): warns about 6 and 8 channel files whose layout is not one
    that cinemas use.
+6. [#97](https://github.com/cth103/dcpomatic/pull/97): `View -> Audio` in the player and the main window lets you
+   listen to the HI or VI track on its own, to check that it is the right one and in sync. Each choice is only
+   enabled when the film really has that track.
 
 Sound MXF files added on their own (Carl has taken the first two parts as `AudioMXFContent`):
 
-6. [#75](https://github.com/cth103/dcpomatic/pull/75): only the channels that have sound are mapped.
+7. [#75](https://github.com/cth103/dcpomatic/pull/75): only the channels that have sound are mapped.
 
 DCDM export (a master for archive or grading, nine pull requests):
 
-7. [#87](https://github.com/cth103/dcpomatic/pull/87): content remembers the codec and pixel format of its source.
-8. [#88](https://github.com/cth103/dcpomatic/pull/88): a writer for mono 24-bit WAV files.
-9. [#89](https://github.com/cth103/dcpomatic/pull/89): a writer for 12-bit XYZ DPX images.
-10. [#90](https://github.com/cth103/dcpomatic/pull/90): checks that the sources are good enough for a master.
-11. [#91](https://github.com/cth103/dcpomatic/pull/91): works out the 5.1 or 7.1 audio layout of a master.
-12. [#92](https://github.com/cth103/dcpomatic/pull/92): a lossless JPEG 2000 writer for the pictures.
-13. [#93](https://github.com/cth103/dcpomatic/pull/93): the encoder that writes the master.
-14. [#94](https://github.com/cth103/dcpomatic/pull/94): `dcpomatic2_cli --export-format dcdm` and `dcdm-dpx`.
-15. [#95](https://github.com/cth103/dcpomatic/pull/95): `Jobs -> Export DCDM...` in the program.
+8. [#87](https://github.com/cth103/dcpomatic/pull/87): content remembers the codec and pixel format of its source.
+9. [#88](https://github.com/cth103/dcpomatic/pull/88): a writer for mono 24-bit WAV files.
+10. [#89](https://github.com/cth103/dcpomatic/pull/89): a writer for 12-bit XYZ DPX images.
+11. [#90](https://github.com/cth103/dcpomatic/pull/90): checks that the sources are good enough for a master.
+12. [#91](https://github.com/cth103/dcpomatic/pull/91): works out the 5.1 or 7.1 audio layout of a master.
+13. [#92](https://github.com/cth103/dcpomatic/pull/92): a lossless JPEG 2000 writer for the pictures.
+14. [#93](https://github.com/cth103/dcpomatic/pull/93): the encoder that writes the master.
+15. [#94](https://github.com/cth103/dcpomatic/pull/94): `dcpomatic2_cli --export-format dcdm` and `dcdm-dpx`.
+16. [#95](https://github.com/cth103/dcpomatic/pull/95): `Jobs -> Export DCDM...` in the program.
