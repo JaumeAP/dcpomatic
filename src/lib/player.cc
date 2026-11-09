@@ -21,6 +21,7 @@
 
 #include "atmos_decoder.h"
 #include "atmos_mxf_content.h"
+#include "atmos_reference_signal.h"
 #include "audio_buffers.h"
 #include "audio_content.h"
 #include "audio_decoder.h"
@@ -170,6 +171,7 @@ Player::Player(Player&& other)
 	, _tolerant(other._tolerant)
 	, _play_referenced(other._play_referenced.load())
 	, _making_dcp(other._making_dcp.load())
+	, _atmos_reference_only(other._atmos_reference_only.load())
 	, _next_video_time(other._next_video_time)
 	, _next_audio_time(other._next_audio_time)
 	, _dcp_decode_reduction(other._dcp_decode_reduction)
@@ -211,6 +213,7 @@ Player::operator=(Player&& other)
 	_tolerant = other._tolerant;
 	_play_referenced = other._play_referenced.load();
 	_making_dcp = other._making_dcp.load();
+	_atmos_reference_only = other._atmos_reference_only.load();
 	_next_video_time = other._next_video_time;
 	_next_audio_time = other._next_audio_time;
 	_dcp_decode_reduction = other._dcp_decode_reduction;
@@ -436,7 +439,16 @@ Player::setup_pieces()
 	}
 
 	_black = Empty(film, playlist(), bind(&have_video, _1), _playback_length);
-	_silent = Empty(film, playlist(), bind(&have_audio, _1), _playback_length);
+	/* In reference-only mode the Atmos is where the sound comes from, so it must not be filled with silence */
+	bool const atmos_reference_only = _atmos_reference_only;
+	_silent = Empty(
+		film,
+		playlist(),
+		[atmos_reference_only](shared_ptr<const Content> content) {
+			return have_audio(content) || (atmos_reference_only && content->atmos && content->can_be_played());
+		},
+		_playback_length
+		);
 
 	_next_video_time = boost::none;
 	_next_audio_time = boost::none;
@@ -728,6 +740,18 @@ Player::set_making_dcp()
 }
 
 
+void
+Player::set_atmos_reference_only(bool only)
+{
+	if (only == _atmos_reference_only) {
+		return;
+	}
+
+	_atmos_reference_only = only;
+	setup_pieces();
+}
+
+
 pair<shared_ptr<Piece>, optional<DCPTime>>
 Player::earliest_piece_and_time() const
 {
@@ -941,6 +965,17 @@ Player::pass()
 	}
 	if (!_silent.done() && _silent.position() < pull_to) {
 		pull_to = _silent.position();
+	}
+	if (_atmos_reference_only) {
+		/* The reference signal comes with the Atmos, which may come later than the audio of other pieces */
+		for (auto const& piece: _pieces) {
+			if (!piece->done && piece->decoder->atmos) {
+				auto const position = content_time_to_dcp(piece, max(piece->decoder->position(), piece->content->trim_start()));
+				if (position < pull_to) {
+					pull_to = position;
+				}
+			}
+		}
 	}
 
 	LOG_DEBUG_PLAYER("PLY: Emitting audio up to {}", to_string(pull_to));
@@ -1308,6 +1343,13 @@ Player::audio(weak_ptr<Piece> weak_piece, AudioStreamPtr stream, ContentAudio co
 
 	if (_audio_processor && !_disable_audio_processor) {
 		content_audio.audio = _audio_processor->run(content_audio.audio, film->audio_channels());
+	}
+
+	if (_atmos_reference_only) {
+		/* Only the Atmos reference signal is to be heard; keep the timing of this audio, but silence it */
+		auto silent = make_shared<AudioBuffers>(content_audio.audio->channels(), content_audio.audio->frames());
+		silent->make_silent();
+		content_audio.audio = silent;
 	}
 
 	/* Push */
@@ -1722,6 +1764,15 @@ Player::atmos(weak_ptr<Piece> weak_piece, ContentAtmos data)
 		);
 	if (ignore_atmos != piece->ignore_atmos.end()) {
 		return;
+	}
+
+	if (_atmos_reference_only && !_ignore_audio) {
+		auto const channels = film->audio_channels();
+		auto const centre = static_cast<int>(dcp::Channel::CENTRE);
+		auto const frames = DCPTime::from_frames(1, vfr).frames_round(film->audio_frame_rate());
+		if (auto audio = atmos_reference_audio(data.data->data(), data.data->size(), channels, channels > centre ? centre : 0, frames)) {
+			_audio_merger.push(audio, dcp_time);
+		}
 	}
 
 	Atmos(data.data, dcp_time, data.metadata);
