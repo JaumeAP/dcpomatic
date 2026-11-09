@@ -55,3 +55,9 @@ Sign language video (the interpreter video carried on sound channel 15):
     film has channel 15, so a DCP never declares sign language video that it does not carry.
 19. [#101](https://github.com/cth103/dcpomatic/pull/101): a mapped channel 15 gets its SLVS label in the sound file,
     as Bv2.1 asks. It needs the libdcp change [libdcp#18](https://github.com/cth103/libdcp/pull/18).
+
+Immersive audio named after who made it:
+
+20. [#102](https://github.com/cth103/dcpomatic/pull/102): an immersive audio track is named Atmos (`-ATMOS`,
+    `[Atmos]`) or IAB (`-IAB`, `[IAB]`) from the bits of its frames (Dolby's preamble and how its audio is coded),
+    not from who wrapped the file. `doc/immersive_audio.md` explains the differences between the two.

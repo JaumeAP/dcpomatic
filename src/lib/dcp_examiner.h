@@ -24,6 +24,7 @@
  */
 
 
+#include "immersive_audio_origin.h"
 #include "audio_examiner.h"
 #include "dcp_text_track.h"
 #include "dcpomatic_assert.h"
@@ -214,6 +215,11 @@ public:
 		return _atmos_edit_rate;
 	}
 
+	/** @return who made the first Atmos track file of the DCP, if it could be seen */
+	boost::optional<ImmersiveAudioOrigin> atmos_origin() const {
+		return _atmos_origin;
+	}
+
 	EnumIndexedVector<bool, TextType> has_non_zero_entry_point() const {
 		return _has_non_zero_entry_point;
 	}
@@ -288,6 +294,7 @@ private:
 	std::vector<bool> _reels_with_atmos;
 	Frame _atmos_length = 0;
 	dcp::Fraction _atmos_edit_rate;
+	boost::optional<ImmersiveAudioOrigin> _atmos_origin;
 	EnumIndexedVector<bool, TextType> _has_non_zero_entry_point;
 	VideoRange _video_range = VideoRange::FULL;
 	boost::optional<std::string> _chain;
