@@ -721,7 +721,12 @@ BOOST_AUTO_TEST_CASE(vf_referring_to_ov_ccap_without_subtitles_test)
 	auto vf_reel = vf_check.cpls()[0]->reels()[0];
 	BOOST_REQUIRE_EQUAL(vf_reel->closed_captions().size(), 1U);
 	BOOST_CHECK_EQUAL(vf_reel->closed_captions()[0]->id(), ov_check.cpls()[0]->reels()[0]->closed_captions()[0]->id());
-	BOOST_CHECK(!vf_reel->main_subtitle());
+	auto subtitle = vf_reel->main_subtitle();
+	BOOST_REQUIRE(subtitle);
+	BOOST_CHECK(subtitle->id() != vf_reel->closed_captions()[0]->id());
+	BOOST_CHECK_EQUAL(subtitle->language().get_value_or(""), "zxx");
+	BOOST_REQUIRE(subtitle->asset_ref().resolved());
+	BOOST_CHECK_EQUAL(subtitle->asset()->texts().size(), 1U);
 }
 
 
