@@ -48,3 +48,10 @@ DCDM export (a master for archive or grading, nine pull requests):
 15. [#93](https://github.com/cth103/dcpomatic/pull/93): the encoder that writes the master.
 16. [#94](https://github.com/cth103/dcpomatic/pull/94): `dcpomatic2_cli --export-format dcdm` and `dcdm-dpx`.
 17. [#95](https://github.com/cth103/dcpomatic/pull/95): `Jobs -> Export DCDM...` in the program.
+
+Sign language video (the interpreter video carried on sound channel 15):
+
+18. [#100](https://github.com/cth103/dcpomatic/pull/100): the sign language video language can only be set when the
+    film has channel 15, so a DCP never declares sign language video that it does not carry.
+19. [#101](https://github.com/cth103/dcpomatic/pull/101): a mapped channel 15 gets its SLVS label in the sound file,
+    as Bv2.1 asks. It needs the libdcp change [libdcp#18](https://github.com/cth103/libdcp/pull/18).
