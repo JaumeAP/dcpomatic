@@ -322,6 +322,7 @@ DCPContent::examine(shared_ptr<Job> job, bool tolerant)
 		 */
 		atmos->set_edit_rate(examiner->atmos_edit_rate());
 		atmos->set_length(examiner->atmos_length());
+		atmos->set_origin(examiner->atmos_origin());
 	}
 
 	vector<shared_ptr<TextContent>> new_text;
