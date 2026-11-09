@@ -99,6 +99,9 @@ enum {
 	ID_view_full_screen = DCPOMATIC_MAIN_MENU + 200,
 	ID_view_dual_screen,
 	ID_view_closed_captions,
+	ID_view_audio,
+	ID_view_audio_main,
+	ID_view_audio_atmos_reference,
 	ID_view_eye,
 	ID_view_eye_left,
 	ID_view_eye_right,
@@ -203,6 +206,8 @@ PlayerFrame::PlayerFrame(bool auto_play)
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_full_screen, this), ID_view_full_screen);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_dual_screen, this), ID_view_dual_screen);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_closed_captions, this), ID_view_closed_captions);
+	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_audio_changed, this), ID_view_audio_main);
+	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_audio_changed, this), ID_view_audio_atmos_reference);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_cpl, this, _1), ID_view_cpl, ID_view_cpl + MAX_CPLS);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_eye_changed, this, _1), ID_view_eye_left);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_eye_changed, this, _1), ID_view_eye_right);
@@ -534,6 +539,7 @@ PlayerFrame::prepare_to_play_film(optional<float> crop_to_ratio)
 	}
 
 	_viewer.set_film(_film);
+	update_view_audio_menu();
 	_viewer.seek(DCPTime(), true);
 	_viewer.set_eyes(_view_eye_left->IsChecked() ? Eyes::LEFT : Eyes::RIGHT);
 	_info->triggered_update();
@@ -691,6 +697,10 @@ PlayerFrame::setup_menu(wxMenuBar* m)
 	setup_menu();
 	view->AppendSeparator();
 	view->Append(ID_view_closed_captions, _("Closed captions..."));
+	auto audio_menu = new wxMenu;
+	_view_audio_main = audio_menu->AppendRadioItem(ID_view_audio_main, _("PCM"));
+	_view_audio_atmos_reference = audio_menu->AppendRadioItem(ID_view_audio_atmos_reference, _("Atmos"));
+	view->Append(ID_view_audio, _("Audio"), audio_menu);
 	_view_eye_menu = new wxMenu;
 	_view_eye_left = _view_eye_menu->AppendRadioItem(ID_view_eye_left, _("Left"));
 	_view_eye_menu->AppendRadioItem(ID_view_eye_right, _("Right"));
@@ -1061,6 +1071,36 @@ void
 PlayerFrame::view_closed_captions()
 {
 	_viewer.show_closed_captions();
+}
+
+
+void
+PlayerFrame::view_audio_changed()
+{
+	_viewer.set_listen_to_atmos_reference(_view_audio_atmos_reference->IsChecked());
+}
+
+
+/** Enable the Atmos reference choice only if the film has some Atmos; fall back to PCM if it has gone */
+void
+PlayerFrame::update_view_audio_menu()
+{
+	if (!_view_audio_atmos_reference) {
+		return;
+	}
+
+	auto const atmos_reference = _viewer.can_listen_to_atmos_reference();
+	_view_audio_atmos_reference->Enable(atmos_reference);
+
+	if (_viewer.listening_to_atmos_reference() && !atmos_reference) {
+		_viewer.set_listen_to_atmos_reference(false);
+	}
+
+	if (_viewer.listening_to_atmos_reference()) {
+		_view_audio_atmos_reference->Check(true);
+	} else {
+		_view_audio_main->Check(true);
+	}
 }
 
 
@@ -1569,6 +1609,7 @@ PlayerFrame::take_playlist_entry()
 	}
 
 	_viewer.set_film(_film);
+	update_view_audio_menu();
 	_viewer.seek(DCPTime(), true);
 	_viewer.set_eyes(_view_eye_left->IsChecked() ? Eyes::LEFT : Eyes::RIGHT);
 	_info->triggered_update();
