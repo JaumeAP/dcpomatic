@@ -455,14 +455,16 @@ BOOST_AUTO_TEST_CASE(immersive_audio_origin_film_test)
 	iab->set_position(film, dcpomatic::DCPTime::from_seconds(1));
 	BOOST_CHECK_MESSAGE(film->isdcf_name(false, false).find("-IAB_") != string::npos, film->isdcf_name(false, false));
 
-	/* A DCP that DCP-o-matic makes from Dolby's frames is written by libdcp, so it is not Dolby's any more */
+	/* A DCP that DCP-o-matic makes from a whole Atmos MXF uses that MXF as it is (#86), so it keeps Dolby's
+	 * CompanyName and stays Dolby's
+	 */
 	auto only_dolby = new_test_film("immersive_audio_origin_film_dcp", { content_factory("test/data/flat_red.png")[0], content_factory(write_atmos("immersive_audio_origin_film_dcp_source", "Dolby Laboratories", dolby_frame))[0] });
 	only_dolby->content()[0]->video->set_length(24);
 	make_and_verify_dcp(only_dolby, {}, false, false);
 	auto dcp = std::make_shared<DCPContent>(only_dolby->dir(only_dolby->dcp_name()));
 	auto from_dcp = new_test_film("immersive_audio_origin_film_dcp_reread", { dcp });
 	BOOST_REQUIRE(dcp->atmos);
-	BOOST_CHECK(dcp->atmos->origin() == ImmersiveAudioOrigin::IAB);
+	BOOST_CHECK(dcp->atmos->origin() == ImmersiveAudioOrigin::DOLBY);
 }
 
 
