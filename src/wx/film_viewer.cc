@@ -33,8 +33,10 @@
 #include "playhead_to_timecode_dialog.h"
 #include "simple_video_view.h"
 #include "wx_util.h"
+#include "lib/atmos_reference_signal.h"
 #include "lib/butler.h"
 #include "lib/config.h"
+#include "lib/content.h"
 #include "lib/constants.h"
 #include "lib/dcp_content.h"
 #include "lib/dcpomatic_log.h"
@@ -62,6 +64,7 @@ extern "C" {
 LIBDCP_DISABLE_WARNINGS
 #include <wx/tglbtn.h>
 LIBDCP_ENABLE_WARNINGS
+#include <algorithm>
 #include <iomanip>
 
 
@@ -161,6 +164,7 @@ FilmViewer::set_film(shared_ptr<Film> film)
 
 	/* A new film starts with the normal mix */
 	_listen_to = boost::none;
+	_listen_to_atmos_reference = false;
 
 	_film = film;
 
@@ -215,11 +219,12 @@ FilmViewer::set_film(shared_ptr<Film> film)
 void
 FilmViewer::set_listen_to(boost::optional<dcp::Channel> channel)
 {
-	if (channel == _listen_to) {
+	if (channel == _listen_to && !_listen_to_atmos_reference) {
 		return;
 	}
 
 	_listen_to = channel;
+	_listen_to_atmos_reference = false;
 	destroy_and_maybe_create_butler();
 }
 
@@ -228,6 +233,40 @@ bool
 FilmViewer::can_listen_to(dcp::Channel channel) const
 {
 	return _film && dcpomatic::film::channel_is_mapped(_film, channel);
+}
+
+
+void
+FilmViewer::set_listen_to_atmos_reference(bool listen)
+{
+	if (listen == _listen_to_atmos_reference && (!listen || !_listen_to)) {
+		return;
+	}
+
+	_listen_to_atmos_reference = listen;
+	if (listen) {
+		_listen_to = boost::none;
+	}
+	destroy_and_maybe_create_butler();
+}
+
+
+bool
+FilmViewer::can_listen_to_atmos_reference() const
+{
+	if (!_film) {
+		return false;
+	}
+
+	auto const content = _film->content();
+	return std::any_of(content.begin(), content.end(), [](shared_ptr<const Content> c) { return static_cast<bool>(c->atmos); });
+}
+
+
+bool
+FilmViewer::immersive_audio_is_dolby() const
+{
+	return _film && dcpomatic::film::immersive_audio_is_dolby(_film);
 }
 
 
@@ -263,14 +302,19 @@ FilmViewer::create_butler()
 #endif
 
 	DCPOMATIC_ASSERT(_player);
+	_player->set_atmos_reference_only(_listen_to_atmos_reference);
 	_player->seek(_video_view->position(), true);
 
 	auto& audio = AudioBackend::instance()->rtaudio();
 
+	/* The Player puts the Atmos reference signal in the film's centre channel, if it has one */
+	auto const reference_in_centre = _listen_to_atmos_reference && _film->audio_channels() > static_cast<int>(dcp::Channel::CENTRE);
+
 	_butler = std::make_shared<Butler>(
 		_film,
 		*_player,
-		_listen_to ? listen_to_mapping(*_listen_to, _audio_channels) : Config::instance()->audio_mapping(_audio_channels),
+		reference_in_centre ? atmos_reference_output_mapping(_audio_channels) :
+			_listen_to ? listen_to_mapping(*_listen_to, _audio_channels) : Config::instance()->audio_mapping(_audio_channels),
 		_audio_channels,
 		AV_PIX_FMT_RGB24,
 		VideoRange::FULL,

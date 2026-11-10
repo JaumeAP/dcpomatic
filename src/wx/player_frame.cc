@@ -103,6 +103,7 @@ enum {
 	ID_view_audio_main,
 	ID_view_audio_hi,
 	ID_view_audio_vi,
+	ID_view_audio_atmos_reference,
 	ID_view_eye,
 	ID_view_eye_left,
 	ID_view_eye_right,
@@ -210,6 +211,7 @@ PlayerFrame::PlayerFrame(bool auto_play)
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_audio_changed, this), ID_view_audio_main);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_audio_changed, this), ID_view_audio_hi);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_audio_changed, this), ID_view_audio_vi);
+	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_audio_changed, this), ID_view_audio_atmos_reference);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_cpl, this, _1), ID_view_cpl, ID_view_cpl + MAX_CPLS);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_eye_changed, this, _1), ID_view_eye_left);
 	Bind(wxEVT_MENU, boost::bind(&PlayerFrame::view_eye_changed, this, _1), ID_view_eye_right);
@@ -703,6 +705,7 @@ PlayerFrame::setup_menu(wxMenuBar* m)
 	_view_audio_main = audio_menu->AppendRadioItem(ID_view_audio_main, _("Main mix"));
 	_view_audio_hi = audio_menu->AppendRadioItem(ID_view_audio_hi, _("Hearing impaired (HI)"));
 	_view_audio_vi = audio_menu->AppendRadioItem(ID_view_audio_vi, _("Visually impaired (VI)"));
+	_view_audio_atmos_reference = audio_menu->AppendRadioItem(ID_view_audio_atmos_reference, _("Atmos"));
 	view->Append(ID_view_audio, _("Audio"), audio_menu);
 	_view_eye_menu = new wxMenu;
 	_view_eye_left = _view_eye_menu->AppendRadioItem(ID_view_eye_left, _("Left"));
@@ -1084,13 +1087,15 @@ PlayerFrame::view_audio_changed()
 		_viewer.set_listen_to(dcp::Channel::HI);
 	} else if (_view_audio_vi->IsChecked()) {
 		_viewer.set_listen_to(dcp::Channel::VI);
+	} else if (_view_audio_atmos_reference->IsChecked()) {
+		_viewer.set_listen_to_atmos_reference(true);
 	} else {
 		_viewer.set_listen_to(boost::none);
 	}
 }
 
 
-/** Enable the HI and VI choices only if the film has those channels mapped; fall back to the
+/** Enable the HI, VI and Atmos reference choices only if the film has those channels mapped; fall back to the
  *  main mix if the one we were listening to has gone.
  */
 void
@@ -1100,6 +1105,13 @@ PlayerFrame::update_view_audio_menu()
 	auto const vi = _viewer.can_listen_to(dcp::Channel::VI);
 	_view_audio_hi->Enable(hi);
 	_view_audio_vi->Enable(vi);
+	auto const atmos_reference = _viewer.can_listen_to_atmos_reference();
+	_view_audio_atmos_reference->Enable(atmos_reference);
+	/* Named after who made the immersive audio, as the ISDCF name is */
+	_view_audio_atmos_reference->SetItemLabel(_viewer.immersive_audio_is_dolby() ? _("Atmos") : _("IAB"));
+	if (_viewer.listening_to_atmos_reference() && !atmos_reference) {
+		_viewer.set_listen_to(boost::none);
+	}
 
 	auto listen_to = _viewer.listen_to();
 	if ((listen_to == dcp::Channel::HI && !hi) || (listen_to == dcp::Channel::VI && !vi)) {
@@ -1107,7 +1119,9 @@ PlayerFrame::update_view_audio_menu()
 		listen_to = boost::none;
 	}
 
-	if (listen_to == dcp::Channel::HI) {
+	if (_viewer.listening_to_atmos_reference()) {
+		_view_audio_atmos_reference->Check(true);
+	} else if (listen_to == dcp::Channel::HI) {
 		_view_audio_hi->Check(true);
 	} else if (listen_to == dcp::Channel::VI) {
 		_view_audio_vi->Check(true);

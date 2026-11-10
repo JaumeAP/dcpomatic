@@ -41,6 +41,9 @@ bool reels_fit_inside(std::shared_ptr<const Film> film, dcpomatic::DCPTimePeriod
 std::string reuse_behaviour_to_string(Film::ReuseBehaviour behaviour);
 Film::ReuseBehaviour reuse_behaviour_from_string(std::string const& behaviour);
 
+/** @return true if all the film's immersive audio is known to be Dolby Atmos (see immersive_audio_origin()), as the ISDCF name has it */
+bool immersive_audio_is_dolby(std::shared_ptr<const Film> film);
+
 
 }
 }

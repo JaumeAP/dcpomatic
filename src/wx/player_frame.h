@@ -148,6 +148,7 @@ private:
 	wxMenuItem* _view_audio_main = nullptr;
 	wxMenuItem* _view_audio_hi = nullptr;
 	wxMenuItem* _view_audio_vi = nullptr;
+	wxMenuItem* _view_audio_atmos_reference = nullptr;
 	wxMenuItem* _view_eye = nullptr;
 	wxMenuItem* _view_eye_left = nullptr;
 	wxMenu* _view_eye_menu = nullptr;

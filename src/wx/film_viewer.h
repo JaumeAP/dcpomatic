@@ -92,6 +92,16 @@ public:
 	/** @return true if the film has some content mapped to this channel, so that there is something to hear */
 	bool can_listen_to(dcp::Channel channel) const;
 
+	/** Listen to the reference signal of the film's Dolby Atmos frames (see atmos_reference_signal()) in place of the normal mix */
+	void set_listen_to_atmos_reference(bool listen);
+	bool listening_to_atmos_reference() const {
+		return _listen_to_atmos_reference;
+	}
+	/** @return true if the film has some Atmos, which might carry a reference signal */
+	bool can_listen_to_atmos_reference() const;
+	/** @return true if all the film's immersive audio is known to be Dolby Atmos (see immersive_audio_origin()), false if some is IAB */
+	bool immersive_audio_is_dolby() const;
+
 	void set_film(std::shared_ptr<Film>);
 	std::shared_ptr<Film> film() const {
 		return _film;
@@ -218,6 +228,7 @@ private:
 
 	int _audio_channels = 0;
 	boost::optional<dcp::Channel> _listen_to;
+	bool _listen_to_atmos_reference = false;
 	unsigned int _audio_block_size = 1024;
 	bool _playing = false;
 	int _suspended = 0;
