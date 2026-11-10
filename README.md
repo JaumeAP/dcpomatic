@@ -61,3 +61,6 @@ Immersive audio named after who made it:
 20. [#102](https://github.com/cth103/dcpomatic/pull/102): an immersive audio track is named Atmos (`-ATMOS`,
     `[Atmos]`) or IAB (`-IAB`, `[IAB]`) from the bits of its frames (Dolby's preamble and how its audio is coded),
     not from who wrapped the file. `doc/immersive_audio.md` explains the differences between the two.
+21. [#104](https://github.com/cth103/dcpomatic/pull/104): `View -> Audio` can also play the reference signal that
+    every certified Dolby Atmos mix carries, in the centre, to check that the Atmos plays and is in sync. It is named
+    Atmos or IAB as #102 says.

@@ -60,6 +60,7 @@
 #include "wx/wx_util.h"
 #include "wx/wx_variant.h"
 #include "lib/analytics.h"
+#include "lib/atmos_content.h"
 #include "lib/audio_content.h"
 #include "lib/check_content_job.h"
 #include "lib/cinema.h"
@@ -256,6 +257,7 @@ enum {
 	ID_view_audio_main,
 	ID_view_audio_hi,
 	ID_view_audio_vi,
+	ID_view_audio_atmos_reference,
 	ID_view_video_waveform,
 	ID_tools_version_file,
 	ID_tools_hints,
@@ -374,6 +376,7 @@ public:
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::view_audio_changed, this),      ID_view_audio_main);
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::view_audio_changed, this),      ID_view_audio_hi);
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::view_audio_changed, this),      ID_view_audio_vi);
+		Bind(wxEVT_MENU, boost::bind(&DOMFrame::view_audio_changed, this),      ID_view_audio_atmos_reference);
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::view_video_waveform, this),     ID_view_video_waveform);
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::tools_version_file, this),      ID_tools_version_file);
 		Bind(wxEVT_MENU, boost::bind(&DOMFrame::tools_hints, this),             ID_tools_hints);
@@ -1213,12 +1216,14 @@ private:
 			_film_viewer.set_listen_to(dcp::Channel::HI);
 		} else if (_view_audio_vi->IsChecked()) {
 			_film_viewer.set_listen_to(dcp::Channel::VI);
+		} else if (_view_audio_atmos_reference->IsChecked()) {
+			_film_viewer.set_listen_to_atmos_reference(true);
 		} else {
 			_film_viewer.set_listen_to(boost::none);
 		}
 	}
 
-	/** Enable the HI and VI choices only if some content is mapped to those channels; fall back to the
+	/** Enable the HI, VI and Atmos reference choices only if some content is mapped to those channels; fall back to the
 	 *  main mix if the one we were listening to has gone.
 	 */
 	void update_view_audio_menu()
@@ -1231,6 +1236,13 @@ private:
 		auto const vi = _film_viewer.can_listen_to(dcp::Channel::VI);
 		_view_audio_hi->Enable(hi);
 		_view_audio_vi->Enable(vi);
+		auto const atmos_reference = _film_viewer.can_listen_to_atmos_reference();
+		_view_audio_atmos_reference->Enable(atmos_reference);
+		/* Named after who made the immersive audio, as the ISDCF name is */
+		_view_audio_atmos_reference->SetItemLabel(_film_viewer.immersive_audio_is_dolby() ? _("Atmos") : _("IAB"));
+		if (_film_viewer.listening_to_atmos_reference() && !atmos_reference) {
+			_film_viewer.set_listen_to(boost::none);
+		}
 
 		auto listen_to = _film_viewer.listen_to();
 		if ((listen_to == dcp::Channel::HI && !hi) || (listen_to == dcp::Channel::VI && !vi)) {
@@ -1238,7 +1250,9 @@ private:
 			listen_to = boost::none;
 		}
 
-		if (listen_to == dcp::Channel::HI) {
+		if (_film_viewer.listening_to_atmos_reference()) {
+			_view_audio_atmos_reference->Check(true);
+		} else if (listen_to == dcp::Channel::HI) {
 			_view_audio_hi->Check(true);
 		} else if (listen_to == dcp::Channel::VI) {
 			_view_audio_vi->Check(true);
@@ -1249,7 +1263,7 @@ private:
 
 	void film_content_change(ChangeType type, int property)
 	{
-		if (type == ChangeType::DONE && property == AudioContentProperty::STREAMS) {
+		if (type == ChangeType::DONE && (property == AudioContentProperty::STREAMS || property == AtmosContentProperty::ORIGIN)) {
 			update_view_audio_menu();
 		}
 	}
@@ -1611,6 +1625,7 @@ private:
 		_view_audio_main = audio_menu->AppendRadioItem(ID_view_audio_main, _("Main mix"));
 		_view_audio_hi = audio_menu->AppendRadioItem(ID_view_audio_hi, _("Hearing impaired (HI)"));
 		_view_audio_vi = audio_menu->AppendRadioItem(ID_view_audio_vi, _("Visually impaired (VI)"));
+		_view_audio_atmos_reference = audio_menu->AppendRadioItem(ID_view_audio_atmos_reference, _("Atmos"));
 		view->Append(ID_view_audio, _("Audio"), audio_menu);
 		add_item(view, _("Video waveform..."), ID_view_video_waveform, NEEDS_FILM);
 
@@ -1810,6 +1825,7 @@ private:
 	wxMenuItem* _view_audio_main = nullptr;
 	wxMenuItem* _view_audio_hi = nullptr;
 	wxMenuItem* _view_audio_vi = nullptr;
+	wxMenuItem* _view_audio_atmos_reference = nullptr;
 	boost::signals2::scoped_connection _config_changed_connection;
 	boost::signals2::scoped_connection _dkdms_changed_connection;
 	boost::signals2::scoped_connection _analytics_message_connection;
