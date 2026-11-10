@@ -37,7 +37,7 @@ Sound MXF files added on their own (Carl has taken the first two parts as `Audio
 
 8. [#75](https://github.com/cth103/dcpomatic/pull/75): only the channels that have sound are mapped.
 
-DCDM export (a master for archive or grading, nine pull requests):
+DCDM export and import (a master for archive or grading, ten pull requests):
 
 9. [#87](https://github.com/cth103/dcpomatic/pull/87): content remembers the codec and pixel format of its source.
 10. [#88](https://github.com/cth103/dcpomatic/pull/88): a writer for mono 24-bit WAV files.
@@ -48,19 +48,22 @@ DCDM export (a master for archive or grading, nine pull requests):
 15. [#93](https://github.com/cth103/dcpomatic/pull/93): the encoder that writes the master.
 16. [#94](https://github.com/cth103/dcpomatic/pull/94): `dcpomatic2_cli --export-format dcdm` and `dcdm-dpx`.
 17. [#95](https://github.com/cth103/dcpomatic/pull/95): `Jobs -> Export DCDM...` in the program.
+18. [#105](https://github.com/cth103/dcpomatic/pull/105): adding the folder of an exported DCDM (`Add folder...` or
+    `dcpomatic2_create`) sets up the film to make a DCP of it again: every reel in its place, each sound file on its
+    channel, Atmos, closed captions in their track, and the pictures re-encoded.
 
 Sign language video (the interpreter video carried on sound channel 15):
 
-18. [#100](https://github.com/cth103/dcpomatic/pull/100): the sign language video language can only be set when the
+19. [#100](https://github.com/cth103/dcpomatic/pull/100): the sign language video language can only be set when the
     film has channel 15, so a DCP never declares sign language video that it does not carry.
-19. [#101](https://github.com/cth103/dcpomatic/pull/101): a mapped channel 15 gets its SLVS label in the sound file,
+20. [#101](https://github.com/cth103/dcpomatic/pull/101): a mapped channel 15 gets its SLVS label in the sound file,
     as Bv2.1 asks. It needs the libdcp change [libdcp#18](https://github.com/cth103/libdcp/pull/18).
 
 Immersive audio named after who made it:
 
-20. [#102](https://github.com/cth103/dcpomatic/pull/102): an immersive audio track is named Atmos (`-ATMOS`,
+21. [#102](https://github.com/cth103/dcpomatic/pull/102): an immersive audio track is named Atmos (`-ATMOS`,
     `[Atmos]`) or IAB (`-IAB`, `[IAB]`) from the bits of its frames (Dolby's preamble and how its audio is coded),
     not from who wrapped the file. `doc/immersive_audio.md` explains the differences between the two.
-21. [#104](https://github.com/cth103/dcpomatic/pull/104): `View -> Audio` can also play the reference signal that
+22. [#104](https://github.com/cth103/dcpomatic/pull/104): `View -> Audio` can also play the reference signal that
     every certified Dolby Atmos mix carries, in the centre, to check that the Atmos plays and is in sync. It is named
     Atmos or IAB as #102 says.
