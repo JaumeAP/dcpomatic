@@ -22,6 +22,9 @@
 #include "audio_stream.h"
 #include "dcpomatic_time.h"
 #include "ffmpeg_stream.h"
+extern "C" {
+#include <libavcodec/codec_par.h>
+}
 
 
 struct ffmpeg_pts_offset_test;
@@ -30,15 +33,17 @@ struct ffmpeg_pts_offset_test;
 class FFmpegAudioStream : public FFmpegStream, public AudioStream
 {
 public:
-	FFmpegAudioStream(std::string name, int id, int index, int frame_rate, Frame length, int channels, int bit_depth)
+	FFmpegAudioStream(std::string name, std::string codec_name_, int id, int index, Frame length, AVCodecParameters const* codecpar)
 		: FFmpegStream(name, id, index)
-		, AudioStream(frame_rate, length, channels, bit_depth)
-	{}
-
-	FFmpegAudioStream(std::string name, std::string codec_name_, int id, int index, int frame_rate, Frame length, int channels, int bit_depth)
-		: FFmpegStream(name, id, index)
-		, AudioStream(frame_rate, length, channels, bit_depth)
+		, AudioStream(
+			codecpar->sample_rate,
+			length,
+			codecpar->ch_layout.nb_channels,
+			codecpar->bits_per_raw_sample ? codecpar->bits_per_raw_sample : codecpar->bits_per_coded_sample
+		)
 		, codec_name(codec_name_)
+		, channel_layout(codecpar->ch_layout)
+		, channel_layout_name(describe(codecpar->ch_layout))
 	{}
 
 	FFmpegAudioStream(std::string name, int id, int index, int frame_rate, Frame length, AudioMapping mapping, int bit_depth)
@@ -54,15 +59,15 @@ public:
 
 	boost::optional<dcpomatic::ContentTime> first_audio;
 	boost::optional<std::string> codec_name;
-	/** true if the file says that this stream is 7.1 (e.g. a WAV with that channel mask); only known
-	 *  after examining the file, as it is used just to set up the default mapping.
-	 */
-	bool seven_one = false;
+	/* Not serialized to XML */
+	AVChannelLayout channel_layout;
 	/** FFmpeg's name for the channel layout that the file says this stream has (e.g. "7.1(wide)"), if it says one */
-	boost::optional<std::string> channel_layout;
+	boost::optional<std::string> channel_layout_name;
 
 private:
 	friend struct ffmpeg_pts_offset_test;
+
+	static boost::optional<std::string> describe(AVChannelLayout const& layout);
 
 	/* Constructor for tests */
 	FFmpegAudioStream()

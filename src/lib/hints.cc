@@ -140,10 +140,10 @@ Hints::check_non_cinema_layouts()
 			continue;
 		}
 		auto stream = ffmpeg->ffmpeg_audio_streams().front();
-		if (!stream->channel_layout) {
+		if (!stream->channel_layout_name) {
 			continue;
 		}
-		auto const& layout = *stream->channel_layout;
+		auto const& layout = *stream->channel_layout_name;
 		bool const six = stream->channels() == 6 && layout != "5.1" && layout != "5.1(side)";
 		bool const eight = stream->channels() == 8 && layout != "7.1";
 		if (six || eight) {

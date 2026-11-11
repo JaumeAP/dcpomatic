@@ -28,6 +28,7 @@
 #include "atmos_content.h"
 #include "audio_content.h"
 #include "audio_processor.h"
+#include "audio_util.h"
 #include "change_signaller.h"
 #include "cinema.h"
 #include "config.h"
@@ -41,6 +42,7 @@
 #include "environment_info.h"
 #include "examine_content_job.h"
 #include "exceptions.h"
+#include "ffmpeg_audio_stream.h"
 #include "ffmpeg_content.h"
 #include "ffmpeg_subtitle_stream.h"
 #include "file_log.h"
@@ -1584,7 +1586,7 @@ void
 Film::add_content(vector<shared_ptr<Content>> const& content)
 {
 	bool any_atmos = false;
-	bool any_rear_surround = false;
+	bool mapped_to_seven_one = false;
 
 	for (auto c: content) {
 		if (_template_film) {
@@ -1599,14 +1601,13 @@ Film::add_content(vector<shared_ptr<Content>> const& content)
 		}
 
 		if (c->audio) {
-			/* Look for a channel mapped to Lrs or Rrs other than the 11th and 12th of a file, which is where the
-			 * plain 1:1 mapping puts them: that is not a change from what the file would do anyway.
-			 */
-			auto const mapping = c->audio->mapping();
-			for (int input = 0; input < mapping.input_channels(); ++input) {
-				for (auto output: { static_cast<int>(dcp::Channel::BSL), static_cast<int>(dcp::Channel::BSR) }) {
-					if (output < mapping.output_channels() && input != output && mapping.get(input, output) > 0) {
-						any_rear_surround = true;
+			for (auto stream: c->audio->streams()) {
+				if (auto ffmpeg_stream = dynamic_pointer_cast<FFmpegAudioStream>(stream)) {
+					if (channel_layout_equals(ffmpeg_stream->channel_layout, AV_CHANNEL_LAYOUT_7POINT1)) {
+						/* We deliberately treated this file as 7.1 so make sure we have enough
+						 * film channels so we can see the result of the mapping.
+						 */
+						mapped_to_seven_one = true;
 					}
 				}
 			}
@@ -1617,8 +1618,7 @@ Film::add_content(vector<shared_ptr<Content>> const& content)
 	maybe_set_container_and_resolution();
 	maybe_set_interop();
 
-	/* Content mapped to Lrs or Rrs (e.g. a 7.1 file) would not be heard with fewer than 12 channels */
-	if (any_rear_surround && _audio_channels < 12) {
+	if (mapped_to_seven_one && _audio_channels < 12) {
 		set_audio_channels(12);
 	}
 

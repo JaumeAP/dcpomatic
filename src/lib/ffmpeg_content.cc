@@ -20,6 +20,7 @@
 */
 
 #include "audio_content.h"
+#include "audio_util.h"
 #include "config.h"
 #include "constants.h"
 #include "exceptions.h"
@@ -59,32 +60,6 @@ using std::shared_ptr;
 using std::dynamic_pointer_cast;
 using boost::optional;
 using namespace dcpomatic;
-
-
-/** Map a 7.1 file in the order of its channel mask, when there is no audio processor and the
- *  mapping reaches the rear surrounds.
- *
- *  A 7.1 file has its channels in the order of the bits of its mask: the back pair on 5 and 6
- *  and the side pair on 7 and 8.  The rear surrounds are the backs, not HI and VI.
- */
-static
-void
-map_seven_one_by_mask(AudioMapping& mapping, bool seven_one, AudioProcessor const* processor)
-{
-	if (!seven_one || processor || mapping.output_channels() <= static_cast<int>(dcp::Channel::BSR)) {
-		return;
-	}
-
-	for (auto input: { 4, 5, 6, 7 }) {
-		for (int output = 0; output < mapping.output_channels(); ++output) {
-			mapping.set(input, output, 0);
-		}
-	}
-	mapping.set(4, dcp::Channel::BSL, 1);
-	mapping.set(5, dcp::Channel::BSR, 1);
-	mapping.set(6, dcp::Channel::LS, 1);
-	mapping.set(7, dcp::Channel::RS, 1);
-}
 
 
 FFmpegContent::FFmpegContent(boost::filesystem::path p)
@@ -349,12 +324,17 @@ FFmpegContent::examine(shared_ptr<const Film> film, shared_ptr<Job> job, bool to
 				audio->add_stream(i);
 			}
 
-			auto as = examiner->audio_streams().front();
-			auto m = as->mapping();
+			auto audio_stream = examiner->audio_streams().front();
+			auto mapping = audio_stream->mapping();
 			auto const processor = film ? film->audio_processor() : nullptr;
-			m.make_default(processor, first_path);
-			map_seven_one_by_mask(m, as->seven_one, processor);
-			as->set_mapping(m);
+			mapping.make_default(processor, first_path);
+			if (channel_layout_equals(audio_stream->channel_layout, AV_CHANNEL_LAYOUT_7POINT1) && !processor && mapping.output_channels() >= static_cast<int>(dcp::Channel::BSR)) {
+				mapping.map_to_single_output(4, dcp::Channel::BSL, 1);
+				mapping.map_to_single_output(5, dcp::Channel::BSR, 1);
+				mapping.map_to_single_output(6, dcp::Channel::LS, 1);
+				mapping.map_to_single_output(7, dcp::Channel::RS, 1);
+			}
+			audio_stream->set_mapping(mapping);
 		}
 
 		_subtitle_streams = examiner->subtitle_streams();
