@@ -20,8 +20,9 @@ Subtitles, DKDMs, Atmos hints, channels and listening to HI and VI:
 2. [#62](https://github.com/cth103/dcpomatic/pull/62): adds an empty open subtitle track whenever there are closed
    captions, so that some servers do not show the closed captions on the screen. Its empty text starts 4 seconds
    into the first reel, as Bv2.1 asks.
-3. [#70](https://github.com/cth103/dcpomatic/pull/70): a 7.1 sound file now goes to the right speakers, including
-   the rear ones, and the project gets 12 channels.
+3. [#70](https://github.com/cth103/dcpomatic/pull/70): Carl has taken this one (a 7.1 sound file goes to the right
+   speakers, including the rear ones, and the project gets 12 channels) in his own way, so the Plus now uses his
+   code for it.
 4. [#71](https://github.com/cth103/dcpomatic/pull/71) and [#73](https://github.com/cth103/dcpomatic/pull/73): warn
    when some reels of a DCP have Atmos and others do not, because some cinema processors then do not play the Atmos.
    The second one covers a DCP whose own reels are mixed.
