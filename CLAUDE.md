@@ -75,36 +75,42 @@ This file is committed on branch `claude-runbook` (commit `e0f1618fe`); later ed
 ## 2. Open PRs and their Beta versions
 
 All PRs are to `cth103/dcpomatic`; the heads are fork branches (`JaumeAP/dcpomatic`). Open PR count: 18 on 2026-11-15
-(#61, #62, #72, #75, #87 to #92, #94 to #97, #99, #100, #101, #105). The table below is the 2026-11-05 state and is
-stale: Carl has taken or we have closed the others, and #93 was closed on 2026-11-14. #96 (re-use the Atmos asset of an
-input DCP) is open but its base is `v2.19.x`, so the Plus does not carry it. #63 was closed by Carl; fork PR #16 for the
-same branch was closed by us on 2026-11-05.
+(#61, #62, #72, #75, #87 to #92, #94 to #97, #99, #100, #101, #105). #63 was closed by Carl; fork PR #16 for the same branch
+was closed by us on 2026-11-05. The PRs of 2026-11-05 that are no longer open (#60, #65 to #71, #73, #74, #76 to #86) were
+taken by Carl or closed by us; which is which was not checked one by one. #93 was closed without merge on 2026-11-14.
 
-| PR (cth103) | Carl head branch (fork) | Beta branch (fork `beta-compat/*`) | Beta tests passing |
-|---|---|---|---|
-| 60 | atmos-reference-carl | atmos-reference | 12 |
-| 61 | dkdm-reload-from-disk | dkdm | 24 |
-| 62 | empty-open-subtitle-carl | empty-subtitle | 5 |
-| 65 | video-mxf-decoder-ignore | video-mxf-ignore | 2 |
-| 66 | atmos-decoder-ignore | atmos-decoder-ignore | 6 |
-| 67 | content-untrimmed-clone | untrimmed-clone | 9 |
-| 68 | sound-mxf-1 | sound-mxf (stack to #85) | 83 |
-| 70 | 7-1-mask-mapping | seven-one | 10 |
-| 71 | atmos-reels-hint | atmos-hints | 23 |
-| 72 | non-cinema-layout-hint | layout-hint | 12 |
-| 73 | atmos-reels-hint-dcp | atmos-hints | 23 |
-| 74–85 | sound-mxf-1b … sound-mxf-14-no-recopy | sound-mxf | 83 |
-| 86 | sound-mxf-15-atmos | atmos-mxf (also has #60, #66, #86) | 103 |
-| 87–95 | dcdm-1-source-metadata … dcdm-9-gui | dcdm | 80 |
+| PR (cth103) | Head branch (fork) | Base | Beta branch (fork `beta-compat/*`) | Beta tests passing (2026-11-05) |
+|---|---|---|---|---|
+| 61 | dkdm-reload-from-disk | main | dkdm | 24 |
+| 62 | empty-open-subtitle-carl | main | empty-subtitle | 5 |
+| 72 | non-cinema-layout-hint | main | layout-hint | 12 |
+| 75 | sound-mxf-2 | main | sound-mxf | 83 (stack, before the 2026-11-09 update) |
+| 87 | dcdm-1-source-metadata | main | dcdm | 80 (#87 to #95 together) |
+| 88 | dcdm-2-wav-writer | main | dcdm | same |
+| 89 | dcdm-3-dpx-writer | main | dcdm | same |
+| 90 | dcdm-4-quality-gate | main | dcdm | same |
+| 91 | dcdm-5-audio-layout | main | dcdm | same |
+| 92 | dcdm-6-j2k-writer | main | dcdm | same |
+| 94 | dcdm-8-cli | main | dcdm | same |
+| 95 | dcdm-9-gui | main | dcdm | same |
+| 96 | atmos-dcpasset | `v2.19.x` | none: the PR is already the Beta version | 64 cases (in the PR text) |
+| 97 | listen-hi-vi | main | listen-hi-vi | not recorded |
+| 99 | fix-referenced-ccap-as-subtitle | main | referenced-ccap | not recorded |
+| 100 | fix-sign-language-channel-check | main | sign-language-channel-check | not recorded |
+| 101 | sign-language-mca-label | main | sign-language-mca-label | not recorded |
+| 105 | dcdm-10-import | main | not checked (`beta-compat/dcdm` may not have it) | not recorded |
 
+- Heads of #61, #62, #72 and #87 to #95 are from the 2026-11-05 table; the others were read from the PRs on 2026-11-15.
+  #101 needs libdcp#18 (cth103/libdcp). #94, #95 and #105 build on the DCDM series (#87 to #92 and the code of the
+  closed #93, which is in `main`).
 - Beta test counts are per changed files (`beta_check.sh`), "no errors: yes".
 - Not ported to the Beta: `5fa3bc536` (arm64 reference frame in `remake_with_subtitle_test`, PR #86). Test-only, Apple silicon.
 - Fork PR #16 (`hi-vi-mapping-carl`) closed 2026-11-05. Carl's `f6daea8d1` adapted #63.
 - Comments posted on each of the 33 PRs (2026-11-05) say: Standard = this PR; Beta = `beta-compat/<branch>`.
   The original PR descriptions were not changed.
-- PR #93 (`dcdm-7-film-encoder`): the head was pushed on 2026-11-05 from `4ae71546e` to `44422b22d` (fast-forward), adding
-  the test correction. Its branch does not build on `carl` alone: `dcdm_audio_layout.h` comes from `dcdm-5`. Its own
-  Standard test is `carl` plus the commits of `dcdm-1` … `dcdm-7`, in that order (clean cherry-picks).
+- PR #93 (`dcdm-7-film-encoder`, closed 2026-11-14, head `44422b22d`): its branch does not build on `carl` alone:
+  `dcdm_audio_layout.h` comes from `dcdm-5`. Its own Standard test was `carl` plus the commits of `dcdm-1` … `dcdm-7`,
+  in that order (clean cherry-picks). The branch stays on the fork.
 
 ## 3. Branches in the fork (`JaumeAP/dcpomatic`)
 
@@ -154,10 +160,14 @@ same branch was closed by us on 2026-11-05.
 
 ## 7. Open decisions (not done)
 
-1. Create `beta-plus` on the fork (push) and its ruleset: waiting for approval.
-2. Run the tests of `beta-plus`: pending.
-3. Plus libdcp separate prefix (§4.2).
-4. Dual-version PR text (done as comments, see §2). Descriptions not edited.
+1. Done: `beta-plus` is on the fork (`origin/beta-plus`, 2026-11-15). Not checked: whether it has a ruleset and
+   whether it holds the PRs added since 2026-11-05 (#96, #97, #99, #100, #101, #105 and the Beta side of #75).
+2. Run the tests of `beta-plus`: not known to be done.
+3. Plus libdcp separate prefix (§4.2). #101 depends on libdcp#18, so this is now due.
+4. Dual-version PR text: done as comments on the 33 PRs of 2026-11-05 (§2). The PRs opened since (#96 to #105) have
+   no such comment. Descriptions not edited.
+5. Decide what to do with the `DCDMFilmEncoder` code in `main` now that #93 is closed (the README no longer lists
+   it): keep it, or remove it together with #94, #95 and #105.
 
 ## 8. Test-data collections (`test/data`)
 
