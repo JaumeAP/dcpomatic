@@ -98,7 +98,7 @@ taken by Carl or closed by us; which is which was not checked one by one. #93 wa
 | 99 | fix-referenced-ccap-as-subtitle | main | referenced-ccap | not recorded |
 | 100 | fix-sign-language-channel-check | main | sign-language-channel-check | not recorded |
 | 101 | sign-language-mca-label | main | sign-language-mca-label | not recorded |
-| 105 | dcdm-10-import | main | not checked (`beta-compat/dcdm` may not have it) | not recorded |
+| 105 | dcdm-10-import | main | none yet (`beta-compat/dcdm` has no `dcdm_import`) | not recorded |
 
 - Heads of #61, #62, #72 and #87 to #95 are from the 2026-11-05 table; the others were read from the PRs on 2026-11-15.
   #101 needs libdcp#18 (cth103/libdcp). #94, #95 and #105 build on the DCDM series (#87 to #92 and the code of the
@@ -160,8 +160,11 @@ taken by Carl or closed by us; which is which was not checked one by one. #93 wa
 
 ## 7. Open decisions (not done)
 
-1. Done: `beta-plus` is on the fork (`origin/beta-plus`, 2026-11-15). Not checked: whether it has a ruleset and
-   whether it holds the PRs added since 2026-11-05 (#96, #97, #99, #100, #101, #105 and the Beta side of #75).
+1. Done: `beta-plus` is on the fork (`origin/beta-plus` = `aec2e162c`, 67 commits over `origin/beta`, 2026-11-15).
+   Its ruleset is the shared `26609507` (deletion only); it has no fast-forward ruleset of its own (§0.5). Checked by commit subject, not by content: it holds #97, #99, #100, #101, #61, #62, #72, #75
+   (whether its `sound-mxf` stack is the version from before or after 2026-11-09 was not checked) and #87 to #95.
+   It lacks #96 (`atmos-dcpasset`, 2 commits; no `atmos_is_reusable`) and #105 (no Beta version of the DCDM import
+   exists: no `dcdm_import` in `beta-plus` or in `beta-compat/dcdm`). Adding them needs approval (§0.6).
 2. Run the tests of `beta-plus`: not known to be done.
 3. Plus libdcp separate prefix (§4.2). #101 depends on libdcp#18, so this is now due.
 4. Dual-version PR text: done as comments on the 33 PRs of 2026-11-05 (§2). The PRs opened since (#96 to #105) have
