@@ -35,7 +35,7 @@ Sound MXF files added on their own (Carl has taken the first two parts as `Audio
 
 7. [#75](https://github.com/cth103/dcpomatic/pull/75): only the channels that have sound are mapped.
 
-DCDM export and import (a master for archive or grading, ten pull requests):
+DCDM export and import (a master for archive or grading, nine pull requests):
 
 8. [#87](https://github.com/cth103/dcpomatic/pull/87): content remembers the codec and pixel format of its source.
 9. [#88](https://github.com/cth103/dcpomatic/pull/88): a writer for mono 24-bit WAV files.
@@ -43,16 +43,15 @@ DCDM export and import (a master for archive or grading, ten pull requests):
 11. [#90](https://github.com/cth103/dcpomatic/pull/90): checks that the sources are good enough for a master.
 12. [#91](https://github.com/cth103/dcpomatic/pull/91): works out the 5.1 or 7.1 audio layout of a master.
 13. [#92](https://github.com/cth103/dcpomatic/pull/92): a lossless JPEG 2000 writer for the pictures.
-14. [#93](https://github.com/cth103/dcpomatic/pull/93): the encoder that writes the master.
-15. [#94](https://github.com/cth103/dcpomatic/pull/94): `dcpomatic2_cli --export-format dcdm` and `dcdm-dpx`.
-16. [#95](https://github.com/cth103/dcpomatic/pull/95): `Jobs -> Export DCDM...` in the program.
-17. [#105](https://github.com/cth103/dcpomatic/pull/105): adding the folder of an exported DCDM (`Add folder...` or
+14. [#94](https://github.com/cth103/dcpomatic/pull/94): `dcpomatic2_cli --export-format dcdm` and `dcdm-dpx`.
+15. [#95](https://github.com/cth103/dcpomatic/pull/95): `Jobs -> Export DCDM...` in the program.
+16. [#105](https://github.com/cth103/dcpomatic/pull/105): adding the folder of an exported DCDM (`Add folder...` or
     `dcpomatic2_create`) sets up the film to make a DCP of it again: every reel in its place, each sound file on its
     channel, Atmos, closed captions in their track, and the pictures re-encoded.
 
 Sign language video (the interpreter video carried on sound channel 15):
 
-18. [#100](https://github.com/cth103/dcpomatic/pull/100): the sign language video language can only be set when the
+17. [#100](https://github.com/cth103/dcpomatic/pull/100): the sign language video language can only be set when the
     film has channel 15, so a DCP never declares sign language video that it does not carry.
-19. [#101](https://github.com/cth103/dcpomatic/pull/101): a mapped channel 15 gets its SLVS label in the sound file,
+18. [#101](https://github.com/cth103/dcpomatic/pull/101): a mapped channel 15 gets its SLVS label in the sound file,
     as Bv2.1 asks. It needs the libdcp change [libdcp#18](https://github.com/cth103/libdcp/pull/18).
