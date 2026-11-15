@@ -1,6 +1,7 @@
 # DCP-o-matic public tree: branches, builds, rules and runbook
 
-Status as of 2026-11-05. Public repository only: `~/projects/dcpomatic`, origin `JaumeAP/dcpomatic`,
+Status as of 2026-11-15 (the lines in §1 and the PR count in §2 were rechecked that day; the build, test and
+Beta-version details were not, and still date from 2026-11-05). Public repository only: `~/projects/dcpomatic`, origin `JaumeAP/dcpomatic`,
 upstream `git.carlh.net/git/dcpomatic.git` (Carl). Do not mention or touch the private repository here.
 This file is committed on branch `claude-runbook` (commit `e0f1618fe`); later edits are not committed unless asked.
 
@@ -26,29 +27,37 @@ This file is committed on branch `claude-runbook` (commit `e0f1618fe`); later ed
 ## 1. The four lines
 
 1. **Standard** = Carl's `upstream/main`. Fork branch `carl`.
-   - `carl` = `f6daea8d1` = `upstream/main` (checked 2026-11-05).
+   - `carl` = `27fa1947e` = `upstream/main` (checked 2026-11-15; 14 commits after `f6daea8d1`, among them
+     `AudioMXFContent` and Carl's Atmos-reels hint).
    - Ruleset `26591009` ("carl: fast-forward only, no delete"): no deletion, no non-fast-forward, no bypass. It cannot
      check that commits come from `upstream/main`.
-   - Local worktree `~/projects/dcpomatic-std-build`, detached at `f6daea8d1`, with `test/data` at `3ca0f15` (the gitlink).
+   - Local worktree `~/projects/dcpomatic-std-build`, detached at `ee8e4d9d3` (2026-11-15), with `test/data` at
+     `3ca0f15` (the gitlink of `carl` and of `main`).
      Its DCDM series and the test correction are kept on the local branch `dcdm-series-7-on-carl` and the stash
      `dcdm-test-fix` (the stash can be dropped).
 2. **Plus** = Standard + our open PRs. Fork branch `main`. Updated whenever we say "plus".
-   - `origin/main` = `0b40358f5` (checked 2026-11-05): `carl` (`f6daea8d1`) plus 44 commits: the PR commits, the test
-     correction for `dcdm_atmos_trimmed_test` (`b23e726ac`) and the README (`0b40358f5`).
-   - The README (`README.md`) lists the pending PRs in plain words, 32 items, no #63. Keep it right when a PR is added,
-     changed or taken by Carl.
-   - Local worktree `~/projects/dcpomatic-plus-check`, branch `plus-check` (same commit as `origin/main`).
+   - `origin/main` = `6033dadfa` (checked 2026-11-15): contains `carl` (`27fa1947e`, merged as `1b19ea31e`) and is 60
+     commits ahead of `origin/carl`. Last change: PR #29 (`readme-drop-93`), merged with a merge commit.
+   - The README (`README.md`) lists the pending PRs in plain words, 18 items (#61, #62, #70 as taken by Carl, #72,
+     #97, #99, #75, #87 to #92, #94, #95, #105, #100, #101). Keep it right when a PR is added, changed, closed or
+     taken by Carl.
+   - PR #93 (`dcdm-7-film-encoder`) was closed without merge on 2026-11-14. Its code (`DCDMFilmEncoder`) is still in
+     `main`, because #94 and #95 depend on it; it is no longer in the README list.
+   - The worktree `~/projects/dcpomatic-plus-check` and the branch `plus-check` no longer exist. A Plus worktree is
+     `~/projects/dcpomatic-std-plus`, branch `std-plus` (`509c4462e`, 2026-11-15).
    - `origin/main` was force-pushed on 2026-11-05 from `737ad5618` (old Plus) with a lease. Its README was re-added in
      `0b40358f5` after the force push had dropped it.
    - The 256 unit-test cases of the 20 test files touched by the PRs pass on the Plus (2026-11-05, `b23e726ac`; the
      README commit changes no code).
 3. **Beta** = Carl's `upstream/v2.19.x`. Fork branch `beta`.
-   - `beta` = `14724280e` = `upstream/v2.19.x` (checked 2026-11-05), created on the fork that day.
+   - `beta` = `462fd34df` = `upstream/v2.19.x` (checked 2026-11-15; it was `14724280e` on 2026-11-05).
    - Ruleset `26608646` ("beta: fast-forward only, no delete"): no deletion, no non-fast-forward, no bypass.
-   - Local worktree `~/projects/dcpomatic-2.19`, detached at `14724280e`, `test/data` = `dbead97`
+   - Local worktree `~/projects/dcpomatic-2.19` (on 2026-11-15: branch `loose-reuse-always`, `452f76287`), `test/data` = `dbead97`
      (`/Volumes/INATECK 1TB/builds/test-data-2.19`) when tests run.
-4. **Beta plus** = Beta + our open PRs, in their Beta versions. Fork branch `beta-plus`: NOT on the fork yet.
-   - Local branch `beta-plus` in worktree `~/projects/dcpomatic-beta-plus`, from `14724280e`, 43 commits (2026-11-05).
+4. **Beta plus** = Beta + our open PRs, in their Beta versions. Fork branch `beta-plus`: ON the fork now
+   (`origin/beta-plus` = `aec2e162c`, 2026-11-15).
+   - Local branch `beta-plus` in worktree `~/projects/dcpomatic-beta-plus` (`1456be34e`, 2026-11-15). On 2026-11-05 it
+     was from `14724280e` with 43 commits.
    - Built: `beta-plus: build OK` (`scratchpad/build_beta_plus.sh`, output `/Volumes/INATECK 1TB/builds/dcpomatic-beta-plus/build`).
    - Every PR commit of the 12 `beta-compat/*` branches has its subject in `beta-plus`. Some commits are in it under
      another hash (the same content), and the duplicates were skipped.
@@ -65,8 +74,11 @@ This file is committed on branch `claude-runbook` (commit `e0f1618fe`); later ed
 
 ## 2. Open PRs and their Beta versions
 
-All PRs are to `cth103/dcpomatic`; the heads are fork branches (`JaumeAP/dcpomatic`). Open PR count: 33 (#63 closed by Carl;
-fork PR #16 for the same branch closed by us on 2026-11-05).
+All PRs are to `cth103/dcpomatic`; the heads are fork branches (`JaumeAP/dcpomatic`). Open PR count: 18 on 2026-11-15
+(#61, #62, #72, #75, #87 to #92, #94 to #97, #99, #100, #101, #105). The table below is the 2026-11-05 state and is
+stale: Carl has taken or we have closed the others, and #93 was closed on 2026-11-14. #96 (re-use the Atmos asset of an
+input DCP) is open but its base is `v2.19.x`, so the Plus does not carry it. #63 was closed by Carl; fork PR #16 for the
+same branch was closed by us on 2026-11-05.
 
 | PR (cth103) | Carl head branch (fork) | Beta branch (fork `beta-compat/*`) | Beta tests passing |
 |---|---|---|---|
