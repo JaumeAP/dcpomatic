@@ -188,3 +188,35 @@ taken by Carl or closed by us; which is which was not checked one by one. #93 wa
 5. Beta check, 2026-11-05: tree `14724280e`, Beta data `dbead97`, cases above: exit 0, no errors.
 6. Standard check, 2026-11-05: clean tree `f6daea8d1` (no PR commits), libdcp `277f5ff2`, own data `3ca0f15` (the gitlink
    of `carl`), same cases: exit 0, no errors.
+
+## 9. Build stacks on the two machines (read 2026-11-15)
+
+Neither machine follows Carl's recipe as it stands. The two stacks differ, so a result from one is not a result for
+the other. The Mac mini inventory comes from a read-only `manifest.sh` run (full file in the session scratchpad, not
+kept); the Mac Studio description comes from its own `CLAUDE.md`, read over `ssh macstudio`. Not verified: the real
+library versions in the Mac Studio `prefix/` (it lives in iCloud, which the path guard blocks).
+
+1. **Mac mini** (this machine). Recipe: `~/projects/osx-environment-upstream`, commit `44d99aa` (branches
+   `fix/libssh-cmake4`, `v2.18.x`), with local edits to `config.sh`: `-j10`, SDK 26.5 from Xcode, `CBS_BUILD_ARCH=aarch64`,
+   variant arm64. Dependency prefix `~/projects/cdist-work-std-main`, deployment target `minos=11.0`, no Homebrew or
+   `/usr/local` path in any dependency line. Library versions: libdcp 1.10.67, libsub 1.6.65, libcxml 0.17.17,
+   libasdcp-dcpomatic 1.0.10, libopenjp2 2.5.2, FFmpeg 7.0.1 (libavcodec 61.3.100). Archives of the recipe: Boost
+   1.84.0, libxml2 2.12.3, OpenSSL 3.2.0, ICU 74.1, wxWidgets 3.2.12, dav1d 0.9.2. `libdcp` for Standard and Plus is
+   built apart in `~/projects/deps-libdcp-277` (§4). Trees on 2026-11-15: `dcpomatic-std-build` at `ee8e4d9d3` (carl
+   plus the #75 commit, 1 uncommitted file, not `origin/carl`), `dcpomatic-std-plus` at `509c4462e`,
+   `dcpomatic-beta-plus` at `1456be34e`, `dcpomatic-2.19` at `452f76287`. All four binaries fail to start with
+   `DYLD_FALLBACK_LIBRARY_PATH=<prefix>/lib`: `Library not loaded: libboost_system.dylib` (cause not looked into).
+2. **Mac Studio** (`ssh macstudio`, account `Claude`). Public repo `/Users/Claude/projects/dcpomatic` on `main` at
+   `7d8446b69` (before PR #29; its `origin/carl`, `origin/beta` and `origin/beta-plus` match ours), with an untracked
+   `CLAUDE.md`. The build is in `~/Documents/Claude/dcpomatic-carl/` (not in `~/projects`), from source into its own
+   `prefix/` with Carl's method, Homebrew only for build tools, target macOS 11.0. Built 2026-11-15: Standard
+   (`origin/carl` `27fa1947e`) and Plus (`main` `7d8446b69`, 1 m 56 s, 14 tools), both with `--disable-tests`, so no
+   unit tests, no `--enable-disk` (lwext4), GUI window not looked at. Versions in its `CLAUDE.md`: Boost 1.85.0,
+   libxml2 2.12.10, OpenSSL 3.3.2, ICU 74.2, wxWidgets 3.3.4, FFmpeg 7.1.1, libdcp 1.10.67, libsub 1.6.65, libcxml
+   0.17.17, asdcplib 1.0.10. It pins libxml2 2.12.10 because Homebrew's 2.15.4 crashes the GUI in
+   `dcp::EncryptedKDM::as_xml` (`xmlAddID`). Its `osx-environment` and `cdist` clones are reference only. An older
+   Homebrew-based build in `~/Documents/Claude/dcpomatic-std/` builds but its GUI crashes; it can go when the user
+   is happy with `dcpomatic-carl`.
+3. **Mismatch to settle.** The Mac Studio session first said its stack was `osx-environment` v2.20.x (`1ba55eb`) with
+   Boost 1.89, libxml2 2.15.1, OpenSSL 3.6.0, ICU 78.1, wxWidgets 3.3.1; its own `CLAUDE.md` says otherwise (list in
+   item 2). Which stack is the reference for Standard and Plus is not decided; the user was told.
