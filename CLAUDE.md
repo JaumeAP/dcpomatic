@@ -217,6 +217,16 @@ library versions in the Mac Studio `prefix/` (it lives in iCloud, which the path
    `dcp::EncryptedKDM::as_xml` (`xmlAddID`). Its `osx-environment` and `cdist` clones are reference only. An older
    Homebrew-based build in `~/Documents/Claude/dcpomatic-std/` builds but its GUI crashes; it can go when the user
    is happy with `dcpomatic-carl`.
-3. **Mismatch to settle.** The Mac Studio session first said its stack was `osx-environment` v2.20.x (`1ba55eb`) with
-   Boost 1.89, libxml2 2.15.1, OpenSSL 3.6.0, ICU 78.1, wxWidgets 3.3.1; its own `CLAUDE.md` says otherwise (list in
-   item 2). Which stack is the reference for Standard and Plus is not decided; the user was told.
+3. **Reference stack (decided 2026-11-15): Carl's `osx-environment` branch `v2.18.x`**, as on the Mac mini
+   (item 1). Reasons: it is Carl's published recipe for the line Standard and Plus follow (`upstream/main` is
+   2.18.51); its libxml2 2.12.3 is in the 2.12 family that the Mac Studio found safe for the GUI, while the
+   `v2.20.x` recipe (`1ba55eb`) is reported to carry libxml2 2.15.1, the family that crashed it (not checked in
+   `1ba55eb` itself); the Mac Studio stack is its own build, not Carl's recipe, and cannot be reproduced by others.
+   The Mac Studio session had first said its stack was `v2.20.x` (Boost 1.89, libxml2 2.15.1, OpenSSL 3.6.0, ICU
+   78.1, wxWidgets 3.3.1); its own `CLAUDE.md` says otherwise (item 2).
+4. **What the decision does not cover.** The existing Mac mini binaries have bare library names and no rpath, so they
+   start only with `DYLD_FALLBACK_LIBRARY_PATH=~/projects/osx-environment-upstream/arm64/11.0/lib:~/projects/cdist-work-std-main/lib`
+   (with it, `dcpomatic2_cli --version` prints `ee8e4d9d3`); they would fail the Mac Studio's check of no bare names.
+   The Mac mini trees are not at the Standard and Plus commits (item 1) and have to be rebuilt before a result from
+   them counts. The Mac Studio builds have no unit tests (`--disable-tests`). Its stack stays as a second, independent
+   check, not as the reference.
