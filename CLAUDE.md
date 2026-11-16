@@ -4,9 +4,13 @@
 Everything that is not a direct instruction is inside HTML comments, which Claude Code strips before loading this file
 into context. Read the comments in the file itself when you need the background.
 
-STATUS 2026-11-16: the Standard (origin/carl = upstream/main, 27fa1947e) builds and its GUI runs, target macOS 11.0.
+STATUS 2026-11-16: the Standard builds and its GUI runs, target macOS 11.0.
 Unit tests: 671 of 671 pass (2026-11-16, 2125 s) with the private data, OpenJPEG built with -ffp-contract=off, ffprobe
-linked next to unit-tests, and the real_encode_with_server change on fork branch real-encode-loopback (05348a3cc, no PR).
+linked next to unit-tests, and a test change in real_encode_with_server (fork branch real-encode-loopback, 05348a3cc).
+PENDING: that change was merged into the fork's carl (PR #30, 907c191dc), so carl is NOT a literal copy of Carl's main
+(27fa1947e) any more; the carl ruleset forbids the force-push that would undo it, and the user has not decided how.
+With the macos-test-tools broadcast fake, Carl's unchanged real_encode_with_server passes on its own; the full suite
+has not been run on literal Carl code, nor on the Plus since the private data and the OpenJPEG rebuild.
 Not done: --enable-disk (lwext4), a visual check of the GUI window.
 -->
 
@@ -31,7 +35,8 @@ Not done: --enable-disk (lwext4), a visual check of the GUI window.
 4. Run from `dcpomatic/`: `source ../scripts/common.sh; export DCPOMATIC_GRAPHICS=$PWD/graphics; build/src/tools/dcpomatic2` (GUI) or `build/src/tools/dcpomatic2_cli`.
 5. Diagnose a crash without a debugger: `waf configure --enable-debug --enable-asan`, run with `ASAN_OPTIONS=symbolize=0`, resolve frames with `atos -o <dylib> -arch arm64 -l 0x0 <offset>`.
 6. Reconfigure after ccache appears or changes: `bash scripts/build-dcpomatic.sh configure` (waf stores the compiler path at configure time).
-7. Unit tests: configure with `TESTS=1 bash scripts/build-dcpomatic.sh configure`, build, then `bash scripts/run-tests.sh dcpomatic` (or `dcpomatic-plus`; about 35 minutes; log `logs/tests-<tree>.log`, last line `exit=0` when all pass). The private data is `JaumeAP/test-private-data`, cloned as `dcpomatic-test-private/` next to the trees; `no_use_video_test2/` comes from its `large-files` release (`no_use_video_test2.tar`, extracted there). Extra arguments go to `unit-tests` (`--run_test=<name>`). UDP to 255.255.255.255 fails on this Mac (`No route to host`, any interface; subnet broadcast, unicast and `ping` work), so `run-tests.sh` loads `scripts/bcast_to_loopback.c` (built to `build/bcast_to_loopback.dylib`) with `DYLD_INSERT_LIBRARIES`: it sends those datagrams to 127.0.0.1 and repeats each one every second, which makes Carl's unchanged `real_encode_with_server` pass (its only hello before the encode ends comes before the server listens).
+7. Unit tests: configure with `TESTS=1 bash scripts/build-dcpomatic.sh configure`, build, then `bash scripts/run-tests.sh dcpomatic` (or `dcpomatic-plus`; about 35 minutes; log `logs/tests-<tree>.log`, last line `exit=0` when all pass). The private data is `JaumeAP/test-private-data`, cloned as `dcpomatic-test-private/` next to the trees; `no_use_video_test2/` comes from its `large-files` release (`no_use_video_test2.tar`, extracted there). Extra arguments go to `unit-tests` (`--run_test=<name>`). UDP to 255.255.255.255 fails on this Mac (`No route to host`, any interface; subnet broadcast, unicast and `ping` work), so `run-tests.sh` loads `bcast_to_loopback.dylib` with `DYLD_INSERT_LIBRARIES`: it sends those datagrams to 127.0.0.1 and repeats each one every second, which makes Carl's unchanged `real_encode_with_server` pass (its only hello before the encode ends comes before the server listens).
+8. The broadcast fake lives only on the fork branch `macos-test-tools` (no shared history with the code, protected against deletion), checked out as `macos-test-tools/`; its `build.sh` builds `macos-test-tools/build/bcast_to_loopback.dylib`. Never put it in a code branch (`carl` stays a literal copy of Carl's `main`; `main` is the Plus). `build-dcpomatic.sh build` and `run-tests.sh` call `test_tools` (`scripts/common.sh`) first, which checks the branch out if missing and builds the library only when it is missing or out of date.
 
 <!--
 PLUS BUILT 2026-11-15: worktree dcpomatic-plus/ (detached at main 7d8446b69), 1m56s, 0 errors, 14 tools, minos 11.0, 0
@@ -45,6 +50,7 @@ LAYOUT (checked 2026-11-16)
 - sdk/: MacOSX11.0.sdk (SDKROOT).
 - dcpomatic/: git worktree of origin/carl, detached. dcpomatic-plus/: worktree of main.
 - dcpomatic-test-private/: clone of JaumeAP/test-private-data (synthetic stand-ins for Carl's private test data).
+- macos-test-tools/: worktree of the fork branch macos-test-tools (bcast_to_loopback.c, build.sh; build/ is ignored).
 - scripts/: common.sh, carl-env.sh, cmake-wrapper/, ffmpeg.sh, batch5.sh, batch6.sh, build-dcpomatic.sh,
   fix-install-names.sh, run-tests.sh, manifest.sh (inventory to diff against the other computer).
 - src/: clean git copies of Carl's libraries (asdcplib, ffcmp, leqm-nrt, libcxml, libdcp, libsub, libttf), built with waf.
