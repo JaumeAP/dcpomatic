@@ -325,10 +325,22 @@ BOOST_AUTO_TEST_CASE(real_encode_with_server)
 	auto film = new_test_film("real_encode_with_server", content, &cl);
 	film->set_interop(false);
 
-	EncodeServerFinder::instance();
-
 	EncodeServer server(true, 4);
 	thread server_thread(boost::bind(&EncodeServer::run, &server));
+
+	/* Find the local server by asking it directly rather than by broadcast,
+	 * which some sandboxes and networks refuse, and wait until it has been
+	 * found: the finder only searches every 10 seconds, and the encode can be
+	 * over before its second search.  Setting the servers wakes the finder's
+	 * search up, so do it again until the server answers.
+	 */
+	Config::instance()->set_use_any_servers(false);
+	EncodeServerFinder::instance();
+	for (int i = 0; i < 20 && EncodeServerFinder::instance()->servers().empty(); ++i) {
+		Config::instance()->set_servers({"127.0.0.1"});
+		dcpomatic_sleep_milliseconds(500);
+	}
+	BOOST_REQUIRE(!EncodeServerFinder::instance()->servers().empty());
 
 	make_and_verify_dcp(film);
 
@@ -337,6 +349,9 @@ BOOST_AUTO_TEST_CASE(real_encode_with_server)
 
 	BOOST_CHECK(server.frames_encoded() > 0);
 	EncodeServerFinder::drop();
+
+	Config::instance()->set_servers({});
+	Config::instance()->set_use_any_servers(true);
 
 	cl.run();
 }
