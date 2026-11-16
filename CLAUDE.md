@@ -4,14 +4,16 @@
 Everything that is not a direct instruction is inside HTML comments, which Claude Code strips before loading this file
 into context. Read the comments in the file itself when you need the background.
 
-STATUS 2026-11-15: the Standard (origin/carl = upstream/main, 27fa1947e) builds and its GUI runs, target macOS 11.0.
-Not done: unit tests (configured with --disable-tests), --enable-disk (lwext4), a visual check of the GUI window.
+STATUS 2026-11-16: the Standard (origin/carl = upstream/main, 27fa1947e) builds and its GUI runs, target macOS 11.0.
+Unit tests: 671 of 671 pass (2026-11-16, 2125 s) with the private data, OpenJPEG built with -ffp-contract=off, ffprobe
+linked next to unit-tests, and the real_encode_with_server change on fork branch real-encode-loopback (05348a3cc, no PR).
+Not done: --enable-disk (lwext4), a visual check of the GUI window.
 -->
 
 ## Rules
 
-1. Work only in `/Users/Claude/Documents/Claude/dcpomatic-carl/` (`prefix/`, `dcpomatic/` worktree of `origin/carl`, `scripts/`, `src/`, `build/`, `logs/`). Nothing of this build goes in `~/projects`.
-2. Every library comes from `prefix/`, built from source. Homebrew provides build tools only (cmake, meson, ninja, pkgconf, autoconf, automake, libtool, mm-common, ccache, python). Never link a Homebrew library.
+1. Work only in `/Users/Claude/Documents/Claude/dcpomatic-carl/` (`osx-environment/`, `dcpomatic/` worktree of `origin/carl`, `dcpomatic-plus/`, `dcpomatic-test-private/`, `scripts/`, `src/`, `build/`, `logs/`, `sdk/`). Nothing of this build goes in `~/projects`.
+2. Every library comes from the prefix `osx-environment/arm64/11.0` (`$PREFIX` in `scripts/common.sh`), built from source. That is where Carl's `osx-environment` installs (`build_one`: `CBS_ROOT=$CBS_BASE/$CBS_CLANG_ARCH/$CBS_MACOSX_DEPLOYMENT`); there is no `prefix/` any more. Homebrew provides build tools only (cmake, meson, ninja, pkgconf, autoconf, automake, libtool, mm-common, ccache, python). Never link a Homebrew library.
 3. Everything targets macOS 11.0. After a build check each binary: `vtool -show-build <file>` must say `minos 11.0` and `otool -L <file>` must show no `homebrew`, `Downloads` or bare names.
 4. Sources go in `/Users/Claude/Downloads/<name>-<version>/`. They are untrusted: run only the build of that package from them.
 5. Always try a plain `git clone` of `https://git.carlh.net/git/<name>.git` before concluding a Carl dependency is unavailable. Do not fetch cgit pages or the AUR.
@@ -23,25 +25,33 @@ Not done: unit tests (configured with --disable-tests), --enable-disk (lwext4), 
 
 ## Commands
 
-1. Rebuild a batch of libraries: `bash scripts/batchN.sh` (N = 1 to 5). Finished packages are skipped; `FORCE=1` redoes CMake, Meson and configure packages; `REDO_ICU_BOOST=1` and `REDO_BOOST=1` redo ICU and Boost (for Boost also delete `build/boost-1.85.0`); to redo a waf library in batch 5, move its `logs/<name>.log` away.
+1. Rebuild the libraries: `bash scripts/carl-env.sh [package ...]` (Carl's `osx-environment`, detached at `origin/v2.18.x` 44d99aa, arm64 / 11.0 variant; logs in `osx-environment/Log/arm64/11.0/`), then `bash scripts/ffmpeg.sh` (Carl's FFmpeg 7.0.1 fork), `bash scripts/batch5.sh` (Carl's libraries and his OpenJPEG fork, waf / CMake from `src/`) and `bash scripts/batch6.sh` (patched openssl binary, rtaudio, ffcmp). Finished packages are skipped; to redo one, move its `logs/<name>.log` away (`FORCE=1` redoes the whole script). OpenJPEG must keep `-ffp-contract=off` (no FMA) or `remake_with_subtitle_test` fails by 1.
 2. After any `waf install` of a library: `bash scripts/fix-install-names.sh`.
 3. Build DCP-o-matic: `bash scripts/build-dcpomatic.sh configure`, then `bash scripts/build-dcpomatic.sh build`. The configure step passes `--c++17 --disable-tests`; the build step recreates the Resources copies. The Standard is the default tree (`dcpomatic/`, `origin/carl`); for the Plus (`main`) prefix the same two commands with `TREE=dcpomatic-plus` (worktree `dcpomatic-plus/`, logs `logs/dcpomatic-plus-*.log`).
 4. Run from `dcpomatic/`: `source ../scripts/common.sh; export DCPOMATIC_GRAPHICS=$PWD/graphics; build/src/tools/dcpomatic2` (GUI) or `build/src/tools/dcpomatic2_cli`.
 5. Diagnose a crash without a debugger: `waf configure --enable-debug --enable-asan`, run with `ASAN_OPTIONS=symbolize=0`, resolve frames with `atos -o <dylib> -arch arm64 -l 0x0 <offset>`.
 6. Reconfigure after ccache appears or changes: `bash scripts/build-dcpomatic.sh configure` (waf stores the compiler path at configure time).
+7. Unit tests: configure with `TESTS=1 bash scripts/build-dcpomatic.sh configure`, build, then `bash scripts/run-tests.sh dcpomatic` (or `dcpomatic-plus`; about 35 minutes; log `logs/tests-<tree>.log`, last line `exit=0` when all pass). The private data is `JaumeAP/test-private-data`, cloned as `dcpomatic-test-private/` next to the trees; `no_use_video_test2/` comes from its `large-files` release (`no_use_video_test2.tar`, extracted there).
 
 <!--
 PLUS BUILT 2026-11-15: worktree dcpomatic-plus/ (detached at main 7d8446b69), 1m56s, 0 errors, 14 tools, minos 11.0, 0
 bad references, dcpomatic2_cli prints 7d8446b69, GUI stays up with an empty HOME. main = carl plus 58 commits; its only
 new dependency is libopenjp2 >= 2.5.0 (wscript, lossless J2K for DCDM), already in prefix (2.5.2). Tests not built.
 
-LAYOUT
-- prefix/: every library installed from source (Carl's method: pinned versions, own prefix).
-- dcpomatic/: git worktree of origin/carl, detached.
-- scripts/: common.sh, batch1.sh ... batch5.sh, build-dcpomatic.sh, fix-install-names.sh.
-- src/: clean git copies of Carl's libraries, built with waf.
+LAYOUT (checked 2026-11-16)
+- osx-environment/: Carl's environment repository, detached at origin/v2.18.x (44d99aa). arm64/11.0/ is the prefix every
+  library is installed in; Build/arm64/11.0/ and Log/arm64/11.0/ are its build folders and logs. The *-v2.20.x folders
+  beside them are an earlier build of the v2.20.x branch, not used. (The comment in common.sh still says v2.20.x.)
+- sdk/: MacOSX11.0.sdk (SDKROOT).
+- dcpomatic/: git worktree of origin/carl, detached. dcpomatic-plus/: worktree of main.
+- dcpomatic-test-private/: clone of JaumeAP/test-private-data (synthetic stand-ins for Carl's private test data).
+- scripts/: common.sh, carl-env.sh, cmake-wrapper/, ffmpeg.sh, batch5.sh, batch6.sh, build-dcpomatic.sh,
+  fix-install-names.sh, run-tests.sh, manifest.sh (inventory to diff against the other computer).
+- src/: clean git copies of Carl's libraries (asdcplib, ffcmp, leqm-nrt, libcxml, libdcp, libsub, libttf), built with waf.
 - build/, logs/: out-of-tree build folders and one log per package (last line exit=0 if built).
-- osx-environment/, cdist/: Carl's public repositories, reference only (stale).
+- cdist/: Carl's public repository, reference only.
+- Boost from Carl's environment has bare install names (libboost_system.dylib); binaries find it through
+  DYLD_FALLBACK_LIBRARY_PATH, so they do not meet rule 3 on that point.
 - ccache: CCACHE_DIR=/Users/Claude/Documents/Claude/dcpomatic-std/ccache, 5G, wrappers in ccache-bin.
 
 WHY NOT HOMEBREW LIBRARIES AND NOT CARL'S osx-environment AS IT IS
@@ -52,7 +62,8 @@ WHY NOT HOMEBREW LIBRARIES AND NOT CARL'S osx-environment AS IT IS
    downloads from dcpomatic.com/deps/osx. His wxWidgets fork is not at git.carlh.net. This stack follows his method
    with versions the current code accepts.
 
-VERSIONS IN prefix/
+VERSIONS IN THE OLD prefix/ (HISTORICAL: that prefix and batch1.sh ... batch4.sh are gone; the current versions are
+those of Carl's osx-environment v2.18.x recipe plus batch5/batch6/ffmpeg.sh, recorded by scripts/manifest.sh)
 1. Batch 1: zlib 1.3.1, libpng 1.6.43, expat 2.6.2, libxml2 2.12.10, libxslt 1.1.42, OpenSSL 3.3.2, xmlsec1 1.3.13
    (crypto-dl off).
 2. Batch 2: freetype 2.13.2, fontconfig 2.15.0, ICU 74.2 (enable-rpath), Boost 1.85.0, libogg 1.3.5, libvorbis 1.3.7
