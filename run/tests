@@ -85,6 +85,10 @@ if [ "$(uname)" == "Darwin" ]; then
     ln -s ../../../openssl/apps/openssl build/test/openssl
     # We need to find ffcmp in here
     export PATH=$PATH:$HOME/workspace/bin
+    # Send UDP broadcasts to 127.0.0.1 so that the encode server tests find their server (see test/bcast_to_loopback.cc)
+    if [ -f build/test/libbcast_to_loopback.dylib ]; then
+        export DYLD_INSERT_LIBRARIES=$PWD/build/test/libbcast_to_loopback.dylib
+    fi
     if [ -d "$environment/$(uname -m)/11.0" ]; then
         export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$environment/$(uname -m)/11.0/lib:$DIR/../../../lib
     else
