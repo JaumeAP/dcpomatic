@@ -7,10 +7,10 @@ into context. Read the comments in the file itself when you need the background.
 STATUS 2026-11-16: the Standard builds and its GUI runs, target macOS 11.0.
 Unit tests: 671 of 671 pass (2026-11-16, 2125 s) with the private data, OpenJPEG built with -ffp-contract=off, ffprobe
 linked next to unit-tests, and a test change in real_encode_with_server (fork branch real-encode-loopback, 05348a3cc).
-PENDING: that change was merged into the fork's carl (PR #30, 907c191dc), so carl is NOT a literal copy of Carl's main
-(27fa1947e) any more; the carl ruleset forbids the force-push that would undo it, and the user has not decided how.
-With the macos-test-tools broadcast fake, Carl's unchanged real_encode_with_server passes on its own; the full suite
-has not been run on literal Carl code, nor on the Plus since the private data and the OpenJPEG rebuild.
+That change was merged into carl by PR #30 and taken out again the same day (ruleset lifted for the force-push and put
+back): carl is again the literal 27fa1947e = upstream/main. With the macos-test-tools broadcast fake, Carl's unchanged
+real_encode_with_server passes; the full suite has not been run on literal Carl code, nor on the Plus since the
+private data and the OpenJPEG rebuild.
 Not done: --enable-disk (lwext4), a visual check of the GUI window.
 -->
 
