@@ -226,3 +226,10 @@ def build(bld):
 
     obj.target = 'unit-tests'
     obj.install_path = ''
+
+    if bld.env.TARGET_OSX:
+        # Loaded into unit-tests by run/tests: fakes a working UDP broadcast (see bcast_to_loopback.cc)
+        obj = bld(features='cxx cxxshlib')
+        obj.source = 'bcast_to_loopback.cc'
+        obj.target = 'bcast_to_loopback'
+        obj.install_path = ''
