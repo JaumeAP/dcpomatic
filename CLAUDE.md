@@ -41,7 +41,7 @@ new dependency is libopenjp2 >= 2.5.0 (wscript, lossless J2K for DCDM), already 
 LAYOUT (checked 2026-11-16)
 - osx-environment/: Carl's environment repository, detached at origin/v2.18.x (44d99aa). arm64/11.0/ is the prefix every
   library is installed in; Build/arm64/11.0/ and Log/arm64/11.0/ are its build folders and logs. The *-v2.20.x folders
-  beside them are an earlier build of the v2.20.x branch, not used. (The comment in common.sh still says v2.20.x.)
+  beside them are an earlier build of the v2.20.x branch, not used.
 - sdk/: MacOSX11.0.sdk (SDKROOT).
 - dcpomatic/: git worktree of origin/carl, detached. dcpomatic-plus/: worktree of main.
 - dcpomatic-test-private/: clone of JaumeAP/test-private-data (synthetic stand-ins for Carl's private test data).
