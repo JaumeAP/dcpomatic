@@ -110,7 +110,7 @@ def build(bld):
     if bld.env.TARGET_LINUX:
         uselib += 'DL '
 
-    cli_tools = ['dcpomatic_cli', 'dcpomatic_server_cli', 'server_test', 'dcpomatic_kdm_cli', 'dcpomatic_create', 'dcpomatic_map']
+    cli_tools = ['dcpomatic_cli', 'dcpomatic_server_cli', 'server_test', 'dcpomatic_kdm_cli', 'dcpomatic_create', 'dcpomatic_map', 'dcpomatic_script']
     if bld.env.ENABLE_DISK and not bld.env.DISABLE_GUI:
         cli_tools.append('dcpomatic_disk_writer')
 
@@ -124,6 +124,9 @@ def build(bld):
         obj.uselib = uselib
         obj.includes = ['..']
         obj.use    = ['libdcpomatic2']
+        if t == 'dcpomatic_script':
+            obj.uselib += ' LUA'
+            obj.use.append('libdcpomatic2-lua')
         obj.source = '%s.cc' % t
         if (bld.env.TARGET_WINDOWS_64 or bld.env.TARGET_WINDOWS_32) and t == 'dcpomatic_disk_writer':
             obj.source += ' ../../%s' % (make_rc(t, None, bld.env.VARIANT))
