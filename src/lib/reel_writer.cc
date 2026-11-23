@@ -97,7 +97,14 @@ mxf_metadata()
  *  subtitle / closed caption files.
  */
 ReelWriter::ReelWriter(
-	weak_ptr<const Film> weak_film, DCPTimePeriod period, shared_ptr<Job> job, int reel_index, int reel_count, bool text_only, boost::filesystem::path output_dir
+	weak_ptr<const Film> weak_film,
+	DCPTimePeriod period,
+	shared_ptr<Job> job,
+	int reel_index,
+	int reel_count,
+	bool text_only,
+	boost::filesystem::path output_dir,
+	optional<dcp::LanguageTag> open_text_language
 	)
 	: WeakConstFilm(weak_film)
 	, _output_dir(std::move(output_dir))
@@ -107,6 +114,7 @@ ReelWriter::ReelWriter(
 	, _content_summary(film()->content_summary(period))
 	, _job(job)
 	, _text_only(text_only)
+	, _open_text_language(open_text_language)
 	, _info_file(film()->info_file(period), dcp::filesystem::exists(film()->info_file(period)) ? "r+b" : "wb")
 	, _font_metrics(film()->frame_size().height)
 {
@@ -426,7 +434,8 @@ maybe_add_text(
 	shared_ptr<const Film> film,
 	DCPTimePeriod period,
 	boost::filesystem::path output_dcp,
-	bool text_only
+	bool text_only,
+	optional<dcp::LanguageTag> language
 	)
 {
 	Frame const period_duration = period.duration().frames_round(film->video_frame_rate());
@@ -495,6 +504,9 @@ maybe_add_text(
 				);
 		}
 		reel->add(reel_asset);
+		if (language) {
+			reel_asset->set_language(*language);
+		}
 	}
 
 	return reel_asset;
@@ -648,7 +660,19 @@ ReelWriter::create_reel_text(
 	) const
 {
 	auto subtitle = maybe_add_text<dcp::ReelInteropTextAsset, dcp::ReelSMPTETextAsset, dcp::ReelTextAsset>(
-		_subtitle_asset, dcp::TextType::OPEN_SUBTITLE, duration, reel, _reel_index, _reel_count, _content_summary, refs, film(), _period, output_dcp, _text_only
+		_subtitle_asset,
+		dcp::TextType::OPEN_SUBTITLE,
+		duration,
+		reel,
+		_reel_index,
+		_reel_count,
+		_content_summary,
+		refs,
+		film(),
+		_period,
+		output_dcp,
+		_text_only,
+		_open_text_language
 		);
 
 	if (!subtitle && ensure_subtitles) {
@@ -665,15 +689,9 @@ ReelWriter::create_reel_text(
 			film(),
 			_period,
 			output_dcp,
-			_text_only
+			_text_only,
+			_open_text_language
 			);
-	}
-
-	if (subtitle) {
-		/* We have a subtitle asset that we either made or are referencing */
-		if (auto main_language = open_subtitle_language()) {
-			subtitle->set_language(*main_language);
-		}
 	}
 
 	for (auto iter = ensure_closed_captions.begin(); iter != ensure_closed_captions.end(); ) {
@@ -683,15 +701,23 @@ ReelWriter::create_reel_text(
 		/* Try to make a reel asset out of either written_asset or one of the referenced assets */
 		auto asset = maybe_add_text<dcp::ReelInteropTextAsset, dcp::ReelSMPTETextAsset, dcp::ReelTextAsset>(
 			written_asset == _closed_caption_assets.end() ? shared_ptr<dcp::TextAsset>() : written_asset->second,
-			dcp::TextType::CLOSED_CAPTION, duration, reel, _reel_index, _reel_count, _content_summary, refs, film(), _period, output_dcp, _text_only
+			dcp::TextType::CLOSED_CAPTION,
+			duration,
+			reel,
+			_reel_index,
+			_reel_count,
+			_content_summary,
+			refs,
+			film(),
+			_period,
+			output_dcp,
+			_text_only,
+			written_asset == _closed_caption_assets.end() ? optional<dcp::LanguageTag>() : written_asset->first.language
 			);
 
 		/* Fill in some details for the reel asset if we know them */
 		if (asset && written_asset != _closed_caption_assets.end()) {
 			asset->set_annotation_text(written_asset->first.name);
-			if (written_asset->first.language) {
-				asset->set_language(written_asset->first.language.get());
-			}
 		}
 
 		if (asset) {
@@ -716,7 +742,8 @@ ReelWriter::create_reel_text(
 			film(),
 			_period,
 			output_dcp,
-			_text_only
+			_text_only,
+			no_linguistic_content()
 			);
 		DCPOMATIC_ASSERT(a);
 		a->set_annotation_text(i.name);
@@ -849,35 +876,17 @@ ReelWriter::write(shared_ptr<const AudioBuffers> audio)
 }
 
 
-/** @return the language of our open subtitles: the film's, or "no linguistic content" (BCP 47) if the film's
- *  open text is all burnt in or it has none (for example a film with only closed captions), so that an empty
- *  open subtitle asset still has a language.
- */
-optional<dcp::LanguageTag>
-ReelWriter::open_subtitle_language() const
-{
-	bool no_open_text = false;
-	auto lang = film()->open_text_languages(&no_open_text).first;
-	if (!lang && no_open_text) {
-		lang = dcp::LanguageTag("zxx");
-	}
-	return lang;
-}
-
-
 shared_ptr<dcp::TextAsset>
 ReelWriter::empty_text_asset(TextType type, optional<DCPTextTrack> track, bool with_dummy) const
 {
 	shared_ptr<dcp::TextAsset> asset;
 	optional<string> font;
 
-	auto lang = film()->open_text_languages();
-	lang.first = open_subtitle_language();
 	if (film()->interop()) {
 		auto s = make_shared<dcp::InteropTextAsset>();
 		s->set_movie_title(film()->name());
 		if (is_open(type)) {
-			s->set_language(lang.first ? lang.first->as_string() : "Unknown");
+			s->set_language(_open_text_language ? _open_text_language->as_string() : "Unknown");
 		} else if (track->language) {
 			s->set_language(track->language->as_string());
 		}
@@ -887,8 +896,8 @@ ReelWriter::empty_text_asset(TextType type, optional<DCPTextTrack> track, bool w
 		auto s = make_shared<dcp::SMPTETextAsset>();
 		s->set_content_title_text(film()->name());
 		s->set_metadata(mxf_metadata());
-		if (is_open(type) && lang.first) {
-			s->set_language(*lang.first);
+		if (is_open(type) && _open_text_language) {
+			s->set_language(*_open_text_language);
 		} else if (track && track->language) {
 			s->set_language(dcp::LanguageTag(track->language->as_string()));
 		}
