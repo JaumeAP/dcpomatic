@@ -71,7 +71,8 @@ public:
 		int reel_index,
 		int reel_count,
 		bool text_only,
-		boost::filesystem::path output_dir
+		boost::filesystem::path output_dir,
+		boost::optional<dcp::LanguageTag> open_text_language
 		);
 
 	void write(std::shared_ptr<const dcp::Data> encoded, Frame frame, Eyes eyes);
@@ -107,7 +108,6 @@ private:
 
 	Frame check_existing_picture_asset(boost::filesystem::path asset);
 	bool existing_picture_frame_ok(dcp::File& asset_file, Frame frame);
-	boost::optional<dcp::LanguageTag> open_subtitle_language() const;
 	std::shared_ptr<dcp::TextAsset> empty_text_asset(TextType type, boost::optional<DCPTextTrack> track, bool with_dummy) const;
 
 	std::shared_ptr<dcp::ReelPictureAsset> create_reel_picture(std::shared_ptr<dcp::Reel> reel, std::list<ReferencedReelAsset> const & refs) const;
@@ -137,6 +137,7 @@ private:
 	boost::optional<std::string> _content_summary;
 	std::weak_ptr<Job> _job;
 	bool _text_only;
+	boost::optional<dcp::LanguageTag> _open_text_language;
 
 	dcp::ArrayData _default_font;
 

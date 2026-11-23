@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(closed_captions_with_italics_test)
 
 
 /** Some servers show closed captions on screen if there is no open subtitle track, so a DCP with
- *  closed captions and no open subtitles gets an empty open subtitle track.
+ *  closed captions and no open subtitles should get an empty subtitle track.
  */
 BOOST_AUTO_TEST_CASE(closed_captions_get_empty_open_subtitles)
 {
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(closed_captions_get_empty_open_subtitles)
 	auto film = new_test_film("closed_captions_get_empty_open_subtitles", { content });
 	film->set_name("Captions");
 	content->only_text()->set_type(TextType::CLOSED_CAPTION);
-	content->only_text()->set_dcp_track(DCPTextTrack("Captions", dcp::LanguageTag("en-US")));
+	content->only_text()->set_dcp_track(DCPTextTrack("Captions", dcp::LanguageTag("en")));
 	auto const name = film->isdcf_name(false, false);
 
 	make_and_verify_dcp(
@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(closed_captions_empty_open_subtitles_start_after_4s)
 	film->set_reel_type(ReelType::BY_VIDEO_CONTENT);
 	content->set_position(film, dcpomatic::DCPTime());
 	content->only_text()->set_type(TextType::CLOSED_CAPTION);
-	content->only_text()->set_dcp_track(DCPTextTrack("Captions", dcp::LanguageTag("en-US")));
+	content->only_text()->set_dcp_track(DCPTextTrack("Captions", dcp::LanguageTag("en")));
 
 	make_and_verify_dcp(
 		film,

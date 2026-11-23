@@ -690,8 +690,8 @@ BOOST_AUTO_TEST_CASE(ccaps_can_be_referred_and_filled_test)
 
 
 /** Check that a VF which refers to an OV's closed captions, and has no open subtitles, does not take
- *  the referenced closed captions for its open subtitles (and so write them twice), but gets its own
- *  empty open subtitle track as any DCP with closed captions does.
+ *  the referenced closed captions for its open subtitles (and so write them twice).  Closed captions
+ *  always come with an (empty) open subtitle track, so there is one, but it is not the closed caption.
  */
 BOOST_AUTO_TEST_CASE(vf_referring_to_ov_ccap_without_subtitles_test)
 {
